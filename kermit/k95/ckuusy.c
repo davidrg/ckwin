@@ -12,13 +12,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Most recent update:
-    Sun Feb 23 09:39:28 2014
+    Fri Apr 14 14:37:46 2023 (function prototypes and declations)
 */
 #include "ckcdeb.h"
 
@@ -39,13 +39,58 @@ extern int debtim;
 #endif /* CK_SSL */
 #include <signal.h>
 
+#ifdef CK_ANSIC
+/* prototype for static funtion - fdc 30 November 2022 */
+static int xx_ftp( char *, char * );
+#endif /* CK_ANSIC */
+
 #ifdef OS2
 #include <io.h>
+#include "ckocon.h"
 #ifdef KUI
 #include "ikui.h"
 extern struct _kui_init kui_init;
 #endif /* KUI */
+_PROTOTYP( int os2settitle, (char *, int) );
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 #endif /* OS2 */
+
+/*
+  ckcfnp.c: new to C-Kermit 1.0.  Prototypes for functions used in
+  multiple modules.  This header file should be included only after
+  all others that define symbols or typedefs needed for the prototypes.
+*/
+#include "ckcfnp.h"
+
+#ifdef OS2
+#endif /* OS2 */
+
+/* Prototypes for static functions used only in this module */
+#ifdef CK_ANSIC
+#ifdef USE_CL_INT
+/*
+  Clang 16 wrongly says cl_int() has no prototype.
+  But it does have a prototype and it has an ANSI function declaration.
+  In Clang 17 this will be a fatal error and C-Kermit can't be built any more.
+  cl_int() is for trapping Ctrl-C before C-Kermit enters its command parser.
+  Let's see if we can live without it - fdc, Fri Apr 14 14:35:16 2023
+*/  
+static SIGTYP cl_int( int );            /* SIGTYP is typdef'd in ckcdeb.h */
+#endif /* USE_CL_INT */
+static int pmsg( char * );
+static int fmsg( char * );
+#ifdef TNCODE
+static int dotnarg( char );
+#endif /* TNCODE */
+#ifdef RLOGCODE
+static int dorlgarg( char );
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+static int dossharg(char );
+#endif /* SSHBUILTIN */
+#endif /* CK_ANSIC */
 
 extern int inserver, fncnv, f_save, xfermode;
 #ifdef PATTERNS
@@ -132,10 +177,12 @@ extern int nopush;
 extern struct keytab os2devtab[];
 extern int nos2dev;
 extern int ttslip;
-extern int tt_scroll, tt_escape;
+extern int tt_scroll, tt_escape, tt_scroll_usr;
 #ifdef OS2PM
 extern int os2pm;
 #endif /* OS2PM */
+extern int usageparm;
+extern unsigned long startflags;
 #endif /* OS2 */
 
 #ifdef CK_NETBIOS
@@ -146,18 +193,7 @@ extern unsigned char NetBiosAdapter;
 #undef XFATAL
 #endif /* XFATAL */
 
-#ifdef TNCODE
-_PROTOTYP(static int dotnarg, (char x) );
-#endif /* TNCODE */
-#ifdef RLOGCODE
-_PROTOTYP(static int dorlgarg, (char x) );
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-_PROTOTYP(static int dossharg, (char x) );
-#endif /* SSHBUILTIN */
-
 int haveftpuid = 0;			/* Have FTP user ID */
-static int have_cx = 0;			/* Have connection */
 
 static char * failmsg = NULL;		/* Failure message */
 
@@ -173,10 +209,27 @@ extern int nmdm, telephony;
 extern struct keytab mdmtab[];
 extern int usermdm, dialudt;
 #endif /* NODIAL */
-_PROTOTYP(static int pmsg, (char *) );
-_PROTOTYP(static int fmsg, (char *) );
-static int pmsg(s) char *s; { printf("%s\n", s); return(0); }
-static int fmsg(s) char *s; { fatal(s); return(0); }
+
+static int
+#ifdef CK_ANSIC
+pmsg( char *s )
+#else
+pmsg(s) char *s;
+#endif /* CK_ANSIC */
+{
+    printf("%s\n", s); return(0);
+}
+
+static int
+#ifdef CK_ANSIC
+fmsg( char *s )
+#else
+fmsg(s) char *s;
+#endif /* CK_ANSIC */
+{
+    fatal(s); return(0);
+}
+
 #define XFATAL(s) return(what==W_COMMAND?pmsg(s):fmsg(s))
 #else
 #define XFATAL fatal
@@ -213,10 +266,6 @@ struct keytab urltab[] = {
 };
 int nurltab = sizeof(urltab)/sizeof(struct keytab) - 1;
 
-#ifndef URLBUFLEN
-#define URLBUFLEN 1024
-#endif /* URLBUFLEN */
-static char urlbuf[URLBUFLEN];
 struct urldata g_url = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 
 /* u r l p a r s e  --  Parse a possible URL */
@@ -248,9 +297,16 @@ struct urldata g_url = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 */
 
 int
-urlparse(s,url) char *s; struct urldata * url; {
+#ifdef CK_ANSIC
+urlparse( char *s, struct urldata * url )
+#else
+urlparse(s,url) char *s; struct urldata * url;
+#endif /* CK_ANSIC */
+{
     char * p = NULL, * urlbuf = NULL;
+#ifdef COMMENT
     int x;
+#endif /* COMMENT */
 
     if (!s || !url)
         return(0);
@@ -446,11 +502,13 @@ char *hlp2[] = {
 "  -L                Negotiate Telnet Binary Output only\n",
 "  -x                Require Encryption\n",
 "  -D                Disable forward-X\n",
+#ifndef NOICP
 "  -T cert=file      Use certificate in file\n",
 "  -T key=file       Use private key in file\n",
 "  -T crlfile=file   Use CRL in file\n",
 "  -T crldir=dir     Use CRLs in directory\n",
 "  -T cipher=string  Use only ciphers in string\n",
+#endif /* NOICP */
 "  -f                Forward credentials to host\n",
 "  -k realm          Set default Kerberos realm\n",
 ""
@@ -493,7 +551,12 @@ char * arghlp[128];                     /* Argument for option */
 int optact[128];                        /* Action-option flag */
 
 VOID
-fatal2(msg1,msg2) char *msg1, *msg2; {
+#ifdef CK_ANSIC
+fatal2( char *msg1, char *msg2 )
+#else
+fatal2(msg1,msg2) char *msg1, *msg2;
+#endif /* CK_ANSIC */
+{
     char buf[256];
     if (!msg1) msg1 = "";
     if (!msg2) msg2 = "";
@@ -506,22 +569,38 @@ fatal2(msg1,msg2) char *msg1, *msg2; {
       fatal((char *)buf);
 }
 
+#ifdef USE_CL_INT
+/*
+  cl_int() ("command-line interrupt") is for trapping Ctrl-C as
+  C-Kermit executes any command-line options before entering its
+  command parser.  But cl_int() generates an inexplicable
+  "non-prototype" warning by Clang 15 that will turn into a fatal
+  error in Clang C2x.  Look, here's the prototype right here, in which
+  SIGTYP is typedef'd appropriately in ckcdeb.h, which has already
+  been processed above.  fdc - Fri Apr 14 14:51:22 2023
+*/
 static SIGTYP
 #ifdef CK_ANSI
-cl_int(int dummy)
+cl_int( int dummy )               /* Command-line interrupt handler */
 #else /* CK_ANSI */
-cl_int(dummy) int dummy;
+cl_int( dummy ) int dummy;
 #endif /* CK_ANSI */
-{					/* Command-line interrupt handler */
+{
     doexit(BAD_EXIT,1);
     SIGRETURN;
 }
+#endif /* USE_CL_INT */
 
 #ifdef NEWFTP
 extern int ftp_action, ftp_cmdlin;
 
 static int
-xx_ftp(host, port) char * host, * port; {
+#ifdef CK_ANSIC
+xx_ftp( char * host, char * port ) 
+#else
+xx_ftp(host, port) char * host, * port;
+#endif /* CK_ANSIC */
+{
 #ifdef CK_URL
     extern int haveurl;
 #endif /* CK_URL */
@@ -623,6 +702,8 @@ char * http_hlp[] = {
     ""
 };
 
+#ifdef CK_SSL
+#ifndef NOICP
 #define HT_CERTFI 0
 #define HT_OKCERT 1
 #define HT_KEY    2
@@ -638,6 +719,8 @@ static struct keytab httpztab[] = {
     { "", 0, 0 }
 };
 static int nhttpztab = sizeof(httpztab) / sizeof(struct keytab) - 1;
+#endif /* NOICP */
+#endif /* CK_SSL */
 #endif /* NOHTTP */
 
 /*  U S A G E */
@@ -713,7 +796,9 @@ cmdlin() {
     action = 0;
     cflg = 0;
 
+#ifdef USE_CL_INT
     signal(SIGINT,cl_int);
+#endif /* USE_CL_INT */
 
 /* Here we handle different "Command Line Personalities" */
 
@@ -728,6 +813,7 @@ cmdlin() {
 #endif /* OS2 */
 
         debug(F100,"http personality","",0);
+#ifndef NOICP
 #ifdef CK_URL
         if (haveurl) {
             int type;
@@ -790,6 +876,7 @@ cmdlin() {
             doexit(x ? GOOD_EXIT : BAD_EXIT, -1);
         } else 
 #endif /* CK_URL */
+#endif /* NOICP */
 	  {
 	      int http_action = 0;
 	      char * host = NULL, * svc = NULL, * lpath = NULL;
@@ -801,7 +888,6 @@ cmdlin() {
 		  debug(F111,"cmdlin http xargv",*xargv,xargc);
 		  xp = *xargv+1;
 		  if (**xargv == '-') { /* Got an option */
-		      int xx;
 		      x = *(*xargv+1);	/* Get the option letter */
 		      switch (x) {
 			case 'd':	/* Debug */
@@ -859,6 +945,7 @@ cmdlin() {
 			  break;
 
 #ifdef CK_SSL
+#ifndef NOICP
                         case 'z': {
 			    /* *xargv contains a value of the form tag=value */
 			    /* we need to lookup the tag and save the value  */
@@ -902,6 +989,7 @@ cmdlin() {
 			    free(p);
 			    break;
                         }
+#endif /* NOICP */
 #endif /* CK_SSL */
 
 			case 'h':	/* Help */
@@ -1325,15 +1413,14 @@ cmdlin() {
 
 #ifdef SSHBUILTIN
       if (howcalled == I_AM_SSH) {	/* If I was called as SSH... */
-          extern char * ssh_hst, * ssh_cmd, * ssh_prt;
 	  debug(F100,"ssh personality","",0);
 #ifdef CK_URL
 	  if (haveurl) {
-              makestr(&ssh_hst,g_url.hos);
-              makestr(&ssh_prt,g_url.svc);
-	      ckstrncpy(ttname,ssh_hst,TTNAMLEN+1);
+              ssh_set_sparam(SSH_SPARAM_HST, g_url.hos);
+              ssh_set_sparam(SSH_SPARAM_PRT,g_url.svc);
+	          ckstrncpy(ttname,ssh_get_sparam(SSH_SPARAM_HST),TTNAMLEN+1);
               ckstrncat(ttname,":",TTNAMLEN+1);
-              ckstrncat(ttname,ssh_prt,TTNAMLEN+1);
+              ckstrncat(ttname,ssh_get_sparam(SSH_SPARAM_PRT),TTNAMLEN+1);
           }
 	  else 
 #endif /* CK_URL */
@@ -1372,7 +1459,7 @@ cmdlin() {
                       }
                   } else {			/* No dash must be hostname */
                       ckstrncpy(ttname,*xargv,TTNAMLEN+1);
-                      makestr(&ssh_hst,ttname);
+                      ssh_set_sparam(SSH_SPARAM_HST, ttname);
                       debug(F110,"cmdlin ssh host",ttname,0);
 #ifndef NOICP
 #ifndef NODIAL
@@ -1400,7 +1487,7 @@ cmdlin() {
 			  nhcount = 0;
                       if (nhcount == 1) { /* Still OK, so make substitution */
                           ckstrncpy(ttname,nh_p[0],TTNAMLEN+1);
-                          makestr(&ssh_hst,ttname);
+                          ssh_set_sparam(SSH_SPARAM_HST, ttname);
                           debug(F110,"cmdlin lunet substitution",ttname,0);
                       }
 #endif /* NODIAL */
@@ -1410,7 +1497,7 @@ cmdlin() {
                           xargv++;
                           ckstrncat(ttname,":",TTNAMLEN+1);
                           ckstrncat(ttname,*xargv,TTNAMLEN+1);
-                          makestr(&ssh_prt,*xargv);
+                          ssh_set_sparam(SSH_SPARAM_PRT,*xargv);
                           debug(F110,"cmdlin telnet host2",ttname,0);
                       }
 #ifdef COMMENT
@@ -1422,7 +1509,7 @@ cmdlin() {
                           if (nh_px[0][0]) {
                               ckstrncat(ttname,":",TTNAMLEN+1);
                               ckstrncat(ttname,nh_px[0][0],TTNAMLEN+1);
-                              makestr(&ssh_prt,nh_px[0][0]);
+                              ssh_set_sparam(SSH_SPARAM_PRT,nh_px[0][0]);
                           }
                       }
 
@@ -2360,8 +2447,14 @@ iniopthlp() {
     inixopthlp();
 }
 
+#ifndef NOICP
 int
-doxarg(s,pre) char ** s; int pre; {
+#ifdef CK_ANSIC
+doxarg( char ** s, int pre )
+#else
+doxarg(s,pre) char ** s; int pre;
+#endif /* CK_ANSIC */
+{
 #ifdef IKSD
 #ifdef CK_LOGIN
     extern int ckxsyslog, ckxwtmp, ckxanon;
@@ -2411,6 +2504,19 @@ doxarg(s,pre) char ** s; int pre; {
       return(-1);                       /* fail. */
 
     /* Handle prescan versus post-initialization file */
+
+#ifdef OS2
+    if (x == XA_HELP) {
+        noinit = 1;
+        startflags |= 2;    /* No network DLLs */
+        startflags |= 4;    /* No TAPI DLLs */
+        startflags |= 8;    /* No Security DLLs */
+        startflags |= 16;   /* No Zmodem DLLs */
+        startflags |= 32;   /* Stdin */
+        startflags |= 64;   /* Stdout */
+        usageparm = 1;      /* Showing usage and exiting */
+    }
+#endif
 
     if (((xargtab[z].flgs & CM_PRE) || (c == '+')) && !pre)
       return(0);
@@ -2688,18 +2794,32 @@ doxarg(s,pre) char ** s; int pre; {
         kui_init.nCmdShow = SW_MINIMIZE;
         break;
 
-      case XA_XPOS:
-        if (!rdigits(p))
-          return(-1);
-	kui_init.pos_init++;
-	kui_init.pos_x = atoi(p);
+      case XA_XPOS: {
+			char* temp = p;
+			/* rdigits doesn't consider '-' to be a digit, so we've got to skip
+			 * over it if we want to handle negative screen coordinates. atoi
+			 * handles it fine, so we only need to skip over it for rdigits.
+			 * Negative screen coordinates are required for screens to the left
+			 * of or above of the primary display. */
+			if (temp[0] == '-')
+				temp = p+1;
+        	if (!rdigits(temp))
+          		return(-1);
+			kui_init.pos_init++;
+			kui_init.pos_x = atoi(p);
+		}
         break;
 
-      case XA_YPOS:
-        if (!rdigits(p))
-          return(-1);
-	kui_init.pos_init++;
-	kui_init.pos_y = atoi(p);
+      case XA_YPOS: {
+      		char* temp = p;
+			/* See comment above for why we're doing this */
+      		if (temp[0] == '-')
+      			temp = p+1;
+      		if (!rdigits(temp))
+      			return(-1);
+			kui_init.pos_init++;
+			kui_init.pos_y = atoi(p);
+		}
         break;
 
       case XA_FNAM: {
@@ -2775,7 +2895,7 @@ doxarg(s,pre) char ** s; int pre; {
 #endif /* NOPUSH */
 #ifdef OS2
     case XA_LOCK:
-        tt_scroll = 0;
+        tt_scroll = tt_scroll_usr = 0;
         tt_escape = 0;
 #ifndef NOPUSH
         nopush = 1;
@@ -2792,7 +2912,7 @@ doxarg(s,pre) char ** s; int pre; {
         break;
 #endif /* KUI */
       case XA_NOSCROLL:
-        tt_scroll = 0;
+        tt_scroll = tt_scroll_usr = 0;
         break;
       case XA_NOESCAPE:
         tt_escape = 0;
@@ -2910,6 +3030,7 @@ doxarg(s,pre) char ** s; int pre; {
     }
     return(0);
 }
+#endif /* NOICP */
 
 #ifdef IKSD
 #ifdef IKSDCONF
@@ -3393,7 +3514,7 @@ extern char *line, *tmpbuf;             /* Character buffers for anything */
         debug(F000,"doarg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOICP
 	  case '-':			/* Extended commands... */
 	    if (doxarg(xargv,0) < 0) {
 		XFATAL("Extended option error");
@@ -4375,18 +4496,18 @@ dotnarg(x) char x;
         debug(F000,"dotnarg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOICP
 	  case '-':			/* Extended commands... */
             if (doxarg(xargv,0) < 0) {
                 XFATAL("Extended option error");
             } /* Full thru... */
 	  case '+':			/* Extended command for prescan() */
             return(0);
-#else  /* COMMENT */
+#else  /* NOICP */
 	  case '-':
 	  case '+':
 	    XFATAL("Extended options not configured");
-#endif /* COMMENT */
+#endif /* NOICP */
 
 /*
  * -#                Kermit 95 Startup Flags
@@ -4586,18 +4707,18 @@ dorlgarg(x) char x;
         debug(F000,"dorlgarg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOICP
 	  case '-':			/* Extended commands... */
             if (doxarg(xargv,0) < 0) {
             XFATAL("Extended option error");
             } /* Full thru... */
 	  case '+':			/* Extended command for prescan() */
             return(0);
-#else  /* COMMENT */
+#else  /* NOICP */
 	  case '-':
 	  case '+':
 	    XFATAL("Extended options not configured");
-#endif /* COMMENT */
+#endif /* NOICP */
 
 /*
  * -d                Debug
@@ -4677,18 +4798,18 @@ dossharg(x) char x;
         debug(F000,"dossharg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOCICP
 	  case '-':			/* Extended commands... */
             if (doxarg(xargv,0) < 0) {
                 XFATAL("Extended option error");
             } /* Full thru... */
 	  case '+':			/* Extended command for prescan() */
             return(0);
-#else  /* COMMENTP */
+#else  /* NOICP */
 	  case '-':
 	  case '+':
 	    XFATAL("Extended options not configured");
-#endif /* COMMENT */
+#endif /* NOICP */
 
 /*
  * -d                Debug

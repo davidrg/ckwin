@@ -53,6 +53,7 @@ KToolBar::KToolBar( K_GLOBAL* kg, int resid )
     , numButtons( 0 )
     , numBitmaps( 0 )
     , toolbarid( resid )
+    , visible( TRUE )
 {
 }
 
@@ -100,7 +101,7 @@ void KToolBar::initButtons( int numbut, int numbit, ToolBitmapDef* def )
         memcpy( &(tbd->tbbutton), &((def[i]).tbbutton), sizeof(TBBUTTON) );
         text = (def[i]).helptext;
         if( text ) {
-            int len = strlen( text );
+            size_t len = strlen( text );
             tbd->helptext = new char[len+1];
             memset( tbd->helptext, '\0', len+1 );
             strncpy( tbd->helptext, text, len );
@@ -128,7 +129,7 @@ void KToolBar::createWin( KWin* par )
     //
     hWnd = CreateToolbarEx( parent->hwnd()  // parent
                 , style                     // toolbar styles
-                , ::GetGlobalID()           // toolbar id
+                , (UINT) ::GetGlobalID()           // toolbar id
                 , numBitmaps                // number of bitmaps
                 , hInst                     // bitmap instance
                 , toolbarid                 // resource id for bitmap
@@ -145,7 +146,11 @@ void KToolBar::createWin( KWin* par )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-char* KToolBar::findBubbleHelp( int idx )
+#if defined(_MSC_VER) && _MSC_VER < 1300
+char* KToolBar::findBubbleHelp( UINT idx )
+#else
+char* KToolBar::findBubbleHelp( UINT_PTR idx )
+#endif
 {
     for( int i = 0; i < numButtons; i++ )
     {
@@ -162,6 +167,24 @@ void KToolBar::size( int width, int height )
 {
     // toolbar will resize itself at top of window
     SendMessage( hWnd, TB_AUTOSIZE, 0L, 0L );
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KToolBar::setVisible( Bool visible ) {
+    if (visible == this->visible) return;
+
+    if (!visible) {
+        // Hide the toolbar
+        ShowWindow(hwnd(), SW_HIDE);
+        SetParent(hwnd(), NULL);
+    } else {
+        // Show the toolbar
+        ShowWindow(hwnd(), SW_SHOW);
+        SetParent(hwnd(), parent->hwnd());
+    }
+
+    this->visible = visible;
 }
 
 /*------------------------------------------------------------------------
@@ -265,7 +288,11 @@ void KToolBar::createTermTypeCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "Terminal Type";
         tinfo.hwnd = hWnd;
+#if defined(_MSC_VER) && _MSC_VER < 1300
         tinfo.uId = (UINT) hWndTermTypeCombo;
+#else
+        tinfo.uId = (UINT_PTR) hWndTermTypeCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
@@ -273,8 +300,13 @@ void KToolBar::createTermTypeCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndTermTypeCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndTermTypeCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndTermTypeCombo );
 }
 
@@ -342,7 +374,11 @@ void KToolBar::createCharsetCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "SET TERMINAL REMOTE-CHARSET";
         tinfo.hwnd = hWnd;
+#if defined(_MSC_VER) && _MSC_VER < 1300
         tinfo.uId = (UINT) hWndCharsetCombo;
+#else
+        tinfo.uId = (UINT_PTR) hWndCharsetCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
@@ -350,8 +386,13 @@ void KToolBar::createCharsetCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndCharsetCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndCharsetCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndCharsetCombo );
 }
 
@@ -419,7 +460,11 @@ void KToolBar::createFontNameCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "Font Name";
         tinfo.hwnd = hWnd;
+#if defined(_MSC_VER) && _MSC_VER < 1300
         tinfo.uId = (UINT) hWndFontNameCombo;
+#else
+        tinfo.uId = (UINT_PTR) hWndFontNameCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
@@ -427,8 +472,13 @@ void KToolBar::createFontNameCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndFontNameCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndFontNameCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndFontNameCombo );
 }
 
@@ -499,7 +549,11 @@ void KToolBar::createFontHeightCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "Font Height (points)";
         tinfo.hwnd = hWnd;
+#if defined(_MSC_VER) && _MSC_VER < 1300
         tinfo.uId = (UINT) hWndFontHeightCombo;
+#else
+        tinfo.uId = (UINT_PTR) hWndFontHeightCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
@@ -507,14 +561,19 @@ void KToolBar::createFontHeightCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndFontHeightCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndFontHeightCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndFontHeightCombo );
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
+Bool KToolBar::message( HWND hpar, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )
@@ -545,9 +604,9 @@ Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
                 if ( (HWND)lParam == hWndTermTypeCombo ) {
                     // user is changing the terminal type
                     //
-                    int cursel = SendMessage( hWndTermTypeCombo, CB_GETCURSEL, 0, 0 );
+                    LRESULT cursel = SendMessage( hWndTermTypeCombo, CB_GETCURSEL, 0, 0 );
                     if( cursel >= 0 ) {
-                        long len = SendMessage( hWndTermTypeCombo, CB_GETLBTEXTLEN, cursel, 0 );
+                        long len = (long)SendMessage( hWndTermTypeCombo, CB_GETLBTEXTLEN, cursel, 0 );
                         char* tmp = new char[len+1];
                         SendMessage( hWndTermTypeCombo, CB_GETLBTEXT, cursel, (LPARAM)tmp );
 
@@ -567,9 +626,9 @@ Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
                 } else if ( (HWND)lParam == hWndCharsetCombo ) {
                     // user is changing the terminal type
                     //
-                    int cursel = SendMessage( hWndCharsetCombo, CB_GETCURSEL, 0, 0 );
+                    LRESULT cursel = SendMessage( hWndCharsetCombo, CB_GETCURSEL, 0, 0 );
                     if( cursel >= 0 ) {
-                        long len = SendMessage( hWndCharsetCombo, CB_GETLBTEXTLEN, cursel, 0 );
+                        long len = (long)SendMessage( hWndCharsetCombo, CB_GETLBTEXTLEN, cursel, 0 );
                         char* tmp = new char[len+1];
                         SendMessage( hWndCharsetCombo, CB_GETLBTEXT, cursel, (LPARAM)tmp );
 
@@ -584,9 +643,9 @@ Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
                 } else if ( (HWND)lParam == hWndFontNameCombo ) {
                     // user is changing the terminal font
                     //
-                    int cursel = SendMessage( hWndFontNameCombo, CB_GETCURSEL, 0, 0 );
+                    LRESULT cursel = SendMessage( hWndFontNameCombo, CB_GETCURSEL, 0, 0 );
                     if( cursel >= 0 ) {
-                        long len = SendMessage( hWndFontNameCombo, CB_GETLBTEXTLEN, cursel, 0 );
+                        long len = (long)SendMessage( hWndFontNameCombo, CB_GETLBTEXTLEN, cursel, 0 );
                         char* tmp = new char[len+1];
                         SendMessage( hWndFontNameCombo, CB_GETLBTEXT, cursel, (LPARAM)tmp );
 
@@ -602,9 +661,9 @@ Bool KToolBar::message( HWND hpar, UINT msg, UINT wParam, LONG lParam )
                 } else if ( (HWND)lParam == hWndFontHeightCombo ) {
                     // user is changing the terminal font
                     //
-                    int cursel = SendMessage( hWndFontHeightCombo, CB_GETCURSEL, 0, 0 );
+                    LRESULT cursel = SendMessage( hWndFontHeightCombo, CB_GETCURSEL, 0, 0 );
                     if( cursel >= 0 ) {
-                        long len = SendMessage( hWndFontHeightCombo, CB_GETLBTEXTLEN, cursel, 0 );
+                        long len = (long)SendMessage( hWndFontHeightCombo, CB_GETLBTEXTLEN, cursel, 0 );
                         char* tmp = new char[len+1], *p;
                         int halfpoint = 0;
                         SendMessage( hWndFontHeightCombo, CB_GETLBTEXT, cursel, (LPARAM)tmp );

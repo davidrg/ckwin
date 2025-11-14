@@ -25,6 +25,13 @@
 #include "ckotvi.h"
 #include "ckokey.h"
 
+void ApplyPageAttribute(int, int, int, vtattrib); /* ckowys.c */
+void ApplyLineAttribute(int, int, int, vtattrib); /* ckowys.c */
+void doreset(int); /* ckoco3.c */
+unsigned char charset(enum charsetsize, unsigned short, struct _vtG *); /* ckoco3.c */
+void prtline(int, unsigned short); /* ckoco3.c */
+int os2settitle(char *, int); /* ckotio.c */
+
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
 extern int  printon, aprint, cprint, uprint, xprint, seslog ;
@@ -32,12 +39,12 @@ extern int  insertmode, tnlm, decssdt ;
 extern int  escstate, debses, decscnm, tt_cursor ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap, tt_modechg ;
-extern int  wherex[], wherey[], margintop, marginbot, marginleft, marginright ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute, colorstatus;
+extern cell_video_attr_t colorstatus;
 extern char * udkfkeys[];
 extern int tt_senddata;
 extern struct _vtG G[4];
@@ -146,7 +153,8 @@ hpattroff( void )
 void
 hpctrl( int ch )
 {
-    int i,j,x,y;
+    int i;
+    extern vscrn_t vscrn[];
 
     switch ( ch ) {
     case ETX:
@@ -188,15 +196,15 @@ hpctrl( int ch )
             break;
 
         i = wherex[VTERM];
-        if (i < marginright)
+        if (i < vscrn_c_page_margin_right(VTERM))
         {
             do {
                 i++;
                 cursorright(0);
             } while ((htab[i] != 'T') &&
-                      (i <= marginright-1));
+                      (i <= vscrn_c_page_margin_right(VTERM)-1));
         }
-        if ( i == marginright ) {
+        if ( i == vscrn_c_page_margin_right(VTERM) ) {
             wrtch(CK_CR);
             wrtch(LF);
         }
@@ -343,10 +351,11 @@ hpparam( int * num, int * alpha, int * relative )
 void
 hpascii( int ch )
 {
-    int i=0,j=0,k=0,m=0,n=0,x=0,y=0,z=0;
+    int i=0,j=0,m=0,n=0,x=0,y=0,z=0;
     vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ;
     viocell blankvcell;
     char debbuf[256]="";
+    extern vscrn_t vscrn[];
 
     if ( xprint ) {
         /* RECORD MODE */
@@ -2129,7 +2138,6 @@ hpascii( int ch )
             case '.':
             case '/': {
                 int ch2;
-                int len=0;
                 do {
                     if ((x = hpparam(&n,&ch2,&y)) < 0)
                         break;
@@ -2214,7 +2222,7 @@ hpascii( int ch )
                 }
                 if ( debses )
                     break;
-                marginleft = wherex[VTERM];
+                vscrn_setc_page_margin_left(VTERM, wherex[VTERM]);
                 break;
             case '5':
                 /* Set Right Margin */
@@ -2225,7 +2233,7 @@ hpascii( int ch )
                 }
                 if ( debses )
                     break;
-                marginright = wherex[VTERM];
+                vscrn_setc_page_margin_right(VTERM, wherex[VTERM]);
                 break;
 #ifdef COMMENT
             case '6':
@@ -2244,10 +2252,10 @@ hpascii( int ch )
                 }
                 if ( debses )
                     break;
-                margintop = 1;
-                marginbot = VscrnGetHeight(VTERM);
-                marginleft =1;
-                marginright=VscrnGetWidth(VTERM);
+                vscrn_setc_page_margin_top(VTERM, 1);
+                vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM));
+                vscrn_setc_page_margin_left(VTERM, 1);
+                vscrn_setc_page_margin_right(VTERM, VscrnGetWidth(VTERM));
                 break;
 #ifdef COMMENT
             case ':':
@@ -2471,15 +2479,15 @@ hpascii( int ch )
                     break;
 
                 i = wherex[VTERM];
-                if (i < marginright)
+                if (i < vscrn_c_page_margin_right(VTERM))
                 {
                     do {
                         i++;
                         cursorright(0);
                     } while ((htab[i] != 'T') &&
-                              (i <= marginright-1));
+                              (i <= vscrn_c_page_margin_right(VTERM)-1));
                 }
-                if ( i == marginright ) {
+                if ( i == vscrn_c_page_margin_right(VTERM) ) {
                     wrtch(CK_CR);
                     wrtch(LF);
                 }
@@ -2521,10 +2529,11 @@ hpascii( int ch )
                 VscrnScroll(VTERM,
                              DOWNWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'M':
                 /* Delete Line */
@@ -2539,10 +2548,11 @@ hpascii( int ch )
                 VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
 #ifdef COMMENT
             case 'N':
@@ -2560,7 +2570,7 @@ hpascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,
@@ -2606,7 +2616,8 @@ hpascii( int ch )
                              -(tt_status[VTERM]?2:1),
                              1,
                              TRUE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'T':
                 /* Roll Down */
@@ -2624,7 +2635,8 @@ hpascii( int ch )
                              -(tt_status[VTERM]?2:1),
                              1,
                              TRUE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'U':
                 /* Next Page */
@@ -2773,7 +2785,7 @@ hpascii( int ch )
                     int x;
                     for ( x=wherex[VTERM]-1;x<VscrnGetWidth(VTERM);x++ ) {
                         if ( !VscrnGetVtCharAttr(VTERM, x, wherey[VTERM]-1).unerasable ) {
-                            unsigned short ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                            unsigned short ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, FALSE )->c ;
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;

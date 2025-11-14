@@ -1,0 +1,13 @@
+; File SEND-TERMINFO.KSC
+; Version 1.0
+;
+; Transmits Kermit 95s terminfo file to the remote host and passes it through
+; the Terminfo entry-description compiler (tic) to install it.
+;
+; C-Kermit (not gkermit) must be installed on the remote host, along with the
+; tic utility. Both kermit and tic must be in your path on the remote machine.
+; And the remote machine must be sitting at the shell.
+;
+
+output kermit -C "receive /command /as-name:{tic -x -},exit"\{13}
+send \v(exedir)/k95.src

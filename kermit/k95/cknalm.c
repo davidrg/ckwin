@@ -15,6 +15,7 @@
 */
 
 #include <windows.h>
+#include <process.h>
 
 #define TIMER_COUNT 65
 struct _timerInfo
@@ -92,7 +93,7 @@ ckTimerStart( UINT interval, UINT precision, LPTIMECALLBACK pTimeProc, DWORD use
    timers[i].event = event ;
    timers[i].inuse = 1 ;
 
-   if ( (HANDLE) _beginthread( TimerThread, 65536, &timers[i] ) != (HANDLE) INVALID_HANDLE_VALUE )
+   if ( (HANDLE) _beginthread( TimerThread, 65536, (void *)&timers[i] ) != (HANDLE) INVALID_HANDLE_VALUE )
       return i ;
    else
       return 0 ;

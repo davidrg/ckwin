@@ -5,7 +5,7 @@
 
 typedef struct _K_CLIENT_PAINT {
     unsigned short*  textBuffer;
-    unsigned char*  attrBuffer;
+    cell_video_attr_t* attrBuffer;
     unsigned short* effectBuffer;
     unsigned short* lineAttr;
     int             len;
@@ -17,9 +17,11 @@ typedef struct _K_CLIENT_PAINT {
     unsigned long   scrolltop;
     unsigned long   end; 
     unsigned long   maxWidth;
+    int             page;
+    int             page_length;
 } K_CLIENT_PAINT;
 
-struct videobuffer_struct;
+struct vscrn_struct;
 struct videoline_struct;
 class IKTerm 
 {
@@ -27,6 +29,8 @@ public:
     IKTerm( BYTE whichbuffer, K_CLIENT_PAINT* );
     ~IKTerm();
     BOOL getDrawInfo();
+    BOOL getDrawInfo(BYTE vscrn_number);
+
     BOOL newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UINT sysKey );
     BOOL keyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown );
     BOOL virtkeyEvent( UINT virtkey, LONG lKeyData, UINT keyDown );
@@ -43,11 +47,11 @@ private:
 
     int x, y;
     int xs, ys, c, xo, yo, xho;
-    videobuffer_struct* vbuf;
+    vscrn_struct* vbuf;
     videoline_struct* line;
     int cursor_offset;
     unsigned short *textBuffer;
-    unsigned char  *attrBuffer;
+    cell_video_attr_t *attrBuffer;
     unsigned short *effectBuffer, *lineAttr;
     int incnt;
     unsigned short vt_char_attrs;

@@ -39,6 +39,26 @@
 #include "ckokey.h"
 #include "ckowys.h"
 #include "ckctel.h"
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
+
+void udkreset();                /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+void setkeyclick(int);          /* ckoco3.c */
+void selclrscreen(BYTE, CHAR);  /* ckoco3.c */
+void setborder();               /* ckocon.c */
+int os2settitle(char *, int);   /* ckotio.c */
+int unhex(char);                /* ckucmd.c */
+USHORT tx_lucidasub(USHORT);    /* ckcuni.c */
+USHORT tx_usub(USHORT);         /* ckcuni.c */
+USHORT tx_hslsub(USHORT);       /* ckcuni.c */
+
+#ifdef CK_NAWS                          /* Negotiate About Window Size */
+#ifdef RLOGCODE
+_PROTOTYP( int rlog_naws, (void) );     /* ckcnet.c */
+#endif /* RLOGCODE */
+#endif /* CK_NAWS */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -47,16 +67,17 @@ extern int  insertmode, tnlm, ttmdm, decssdt, cmask;
 extern int  escstate, debses, decscnm, tt_cursor ;
 #ifdef PCTERM
 extern int tt_pcterm;
+VOID setpcterm(int);
 #endif /* PCTERM */
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_modechg ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute, colorstatus;
+extern cell_video_attr_t colorstatus;
 extern char * udkfkeys[];
 extern int tt_senddata ;
 extern int tt_hidattr;
@@ -323,7 +344,7 @@ wyse_backtab( VOID )
 void
 wysectrl( int ch )
 {
-    int i,j;
+    extern vscrn_t vscrn[];
 
     if ( !xprint ) {
     switch ( ch ) {
@@ -377,7 +398,7 @@ wysectrl( int ch )
         debug(F110,"Wyse Ctrl","Line Feed",0);
         if ( debses )
             break;
-        if ( autoscroll && !protect || wherey[VTERM] < marginbot )
+        if ( autoscroll && !protect || wherey[VTERM] < vscrn_c_page_margin_bot(VTERM) )
             wrtch((char) LF);
         break;
     case VT:
@@ -562,6 +583,7 @@ wysecharattr( int ch )
     a.unerasable = attrib.unerasable ;  /* Erasable */
     a.graphic = FALSE ;                 /* Not graphic character */
     a.wyseattr = FALSE ;                /* WYSE attribute */
+    a.italic = FALSE;                   /* No Italic */
 
     debug(F111,"Wyse","Character Attribute",ch);
 
@@ -798,7 +820,7 @@ void
 ApplyPageAttribute( int vmode, int x, int y, vtattrib vta )
 {
     vtattrib oldvta, prevvta ;
-    int rc ;
+    extern vscrn_t vscrn[];
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
     prevvta = VscrnGetVtCharAttr( vmode, x-1, y-1 ) ;
@@ -811,7 +833,7 @@ ApplyPageAttribute( int vmode, int x, int y, vtattrib vta )
     oldvta = prevvta ;
     while ( TRUE ) {
         if ( ++x > VscrnGetWidth(vmode) ) {
-            if ( ++y > marginbot ) {
+            if ( ++y > vscrn_c_page_margin_bot(VTERM) ) {
                 break  ;                /* we are done */
             }
             x = 1 ;
@@ -965,9 +987,10 @@ wysedefkey( int key )
 void
 wyseascii( int ch )
 {
-    int i,j,k,n,x,y,z;
+    int j,x,y,z;
     vtattrib attr ;
     viocell blankvcell;
+    extern vscrn_t vscrn[];
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
@@ -1265,7 +1288,7 @@ wyseascii( int ch )
 
                 for ( x=0;x<=wherex[VTERM]-1;x++ ) {
                     if ( !VscrnGetVtCharAttr(VTERM, x, wherey[VTERM]-1).unerasable ) {
-                        int ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                        int ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
@@ -1313,7 +1336,7 @@ wyseascii( int ch )
                         xe = VscrnGetWidth(VTERM)-1;
                     for ( x=0;x<=xe;x++ )
                         if ( !VscrnGetVtCharAttr(VTERM, x, y).unerasable ) {
-                            int ch = VscrnGetCell( VTERM, x, y )->c ;
+                            int ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                             if ( ch || !wy_nullsuppress ) {
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
@@ -1375,7 +1398,7 @@ wyseascii( int ch )
                         sendchars("\x1b)",2);
                         fs = 1 ;
                     }
-                    ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                    ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
                     if ( ch  || !wy_nullsuppress ) {
                         if ( tt_senddata ) {
                             unsigned char * bytes;
@@ -1426,7 +1449,7 @@ wyseascii( int ch )
                             sendchars("\x1b)",2);
                             fs = 1 ;
                         }
-                        ch = VscrnGetCell( VTERM, x, y )->c;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
@@ -1656,7 +1679,8 @@ wyseascii( int ch )
                     break;
                 if ( !protect )
                     VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                                 marginbot - 1, 1, FALSE, SP);
+                                 vscrn_c_page_margin_bot(VTERM) - 1,
+                                 1, FALSE, SP, FALSE);
                 break;
             case 'F': {
                 /* Enters a message in the host message field.  This has     */
@@ -1846,7 +1870,7 @@ wyseascii( int ch )
                     unsigned char * bytes;
                     int nbytes;
                     unsigned short ch = VscrnGetCell( VTERM, wherex[VTERM]-1,
-                                       wherey[VTERM]-1 )->c;
+                                       wherey[VTERM]-1, TRUE )->c;
                     if ( ck_isunicode() )
                         nbytes = utorxlat(ch,&bytes);
                     else
@@ -1892,7 +1916,7 @@ wyseascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollRt(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1, wherey[VTERM] - 1,
                                VscrnGetWidth(VTERM) - 1, 1, blankvcell);
@@ -1905,10 +1929,11 @@ wyseascii( int ch )
                 VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'S': {
                 /* Sends a message unprotected */
@@ -1928,7 +1953,7 @@ wyseascii( int ch )
                 /* First figure out if we have markers, STX then ETX */
                 for ( y=0;y<h;y++ )
                     for ( x=0;x<w;x++ ) {
-                        ch = VscrnGetCell( VTERM, x, y )->c ;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                         if ( ch == STX && xs < 0 && ys < 0 ) {
                             xs = x+1 ;
                             ys = y ;
@@ -1948,7 +1973,7 @@ wyseascii( int ch )
                 for ( y=ys;y<=ye; y++ ) {
                     for ( x=(y==ys)?xs:0 ; x <= (y==ye?xe:w-1) ; x++ )
                         if ( !VscrnGetVtCharAttr(VTERM, x, y).unerasable ) {
-                            ch = VscrnGetCell( VTERM, x, y )->c;
+                            ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                             if ( ch || !wy_nullsuppress ) {
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
@@ -2011,9 +2036,12 @@ wyseascii( int ch )
             case 'V':
                 if ( ISWY60(tt_type_mode) ) {
                     /* Clear cursor column - wy60 */
-                    viocell cell = {SP,geterasecolor(VTERM)};
                     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                     vtattrib vta = attrib;
+                    viocell cell;
+
+                    cell.c = SP;
+                    cell.video_attr = geterasecolor(VTERM);
 
                     debug(F110,"Wyse Escape","Clear cursor column",0);
                     if ( debses )
@@ -2028,8 +2056,11 @@ wyseascii( int ch )
                 else {
                     /* Sets a protected column */
                     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                    viocell cell = {SP,geterasecolor(VTERM)};
                     vtattrib vta ;
+                    viocell cell;
+
+                    cell.c = SP;
+                    cell.video_attr = geterasecolor(VTERM);
 
                     debug(F110,"Wyse Escape","Sets a protected column",0);
                     if ( debses )
@@ -2056,7 +2087,7 @@ wyseascii( int ch )
                                           wherex[VTERM]-1,
                                           wherey[VTERM]-1 ) ;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,
@@ -2146,7 +2177,7 @@ wyseascii( int ch )
                 char keydef[256] = "" ;
                 int dir = wyinc() ;
                 int key = wyinc() ;
-                int i=0,j=0 ;
+                int i=0;
                 int keyi = -1 ;
 
                 if ( dir == '~' ) {
@@ -3066,42 +3097,42 @@ wyseascii( int ch )
                     case '2': {
                         /* Set MODEM port receive handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set Modem port RX handshaking",0);
                         break;
                     }
                     case '3': {
                         /* Set AUX port receive handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set AUX port RX handshaking",0);
                         break;
                     }
                     case '4': {
                         /* Set MODEM port transmit handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set Modem port TX handshaking",0);
                         break;
                     }
                     case '5': {
                         /* Set AUX port transmit handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set AUX port TX handshaking",0);
                         break;
                     }
                     case '6': {
                         /* Set maximum data transmission speed */
                         /* maxspd */
-                        int maxspd = wyinc();
+                        /*int maxspd =*/ wyinc();
                         debug(F110,"Wyse Escape","Set Max Data TX speed",0);
                         break;
                     }
                     case '7': {
                         /* Set maximum function key transmission speed */
                         /* max */
-                        int max = wyinc() ;
+                        /*int max =*/ wyinc() ;
                         debug(F110,"Wyse Escape","Set Max Function Key TX speed",0);
                         break;
                     }
@@ -3137,7 +3168,7 @@ wyseascii( int ch )
                     case '\\': {
                         /* 325 or 160 - Select Bell Tone */
                         /* 0 off, 1 Low pitch, 2,3 High pitch */
-                        int tone = wyinc() ;
+                        /*int tone =*/ wyinc() ;
                         debug(F110,"Wyse Escape","Select Bell Tone",0);
                         if ( debses )
                             break;
@@ -3395,7 +3426,7 @@ wyseascii( int ch )
                         if ( debses )
                             break;
                         blankvcell.c = SP ;
-                        blankvcell.a = geterasecolor(VTERM) ;
+                        blankvcell.video_attr = geterasecolor(VTERM) ;
                         VscrnScrollRt( VTERM,
                                        0, wherex[VTERM]-1,
                                        VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
@@ -3428,7 +3459,7 @@ wyseascii( int ch )
                         if ( debses )
                             break;
                         blankvcell.c = SP ;
-                        blankvcell.a = geterasecolor(VTERM) ;
+                        blankvcell.video_attr = geterasecolor(VTERM) ;
                         VscrnScrollRt( VTERM,
                                        0, wherex[VTERM]-1,
                                        VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
@@ -4151,7 +4182,7 @@ wyseascii( int ch )
                 /* First figure out if we have markers, STX then ETX */
                 for ( y=0;y<h;y++ )
                     for ( x=0;x<w;x++ ) {
-                        ch = VscrnGetCell( VTERM, x, y )->c ;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                         if ( ch == STX && xs < 0 && ys < 0 ) {
                             xs = x+1 ;
                             ys = y ;
@@ -4180,7 +4211,7 @@ wyseascii( int ch )
                             sendchars("\x1b)",2);
                             fs = 1 ;
                         }
-                        ch = VscrnGetCell( VTERM, x, y )->c;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
@@ -4748,7 +4779,7 @@ wyseascii( int ch )
                     break;
                 case '1': {
                     /* Split screen horizontally and clear screen */
-                    int line = wyinc();
+                    /*int line =*/ wyinc();
 
                     debug(F110,"Wyse Escape","Split screen horizontally and clear screen",0);
                     if ( debses )

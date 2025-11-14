@@ -132,6 +132,7 @@ BOOL pseudo_console_available() {
 #endif
 }
 
+#ifdef CK_CONPTY
 BOOL create_pipes(PHANDLE inputReader, PHANDLE inputWriter,
                   PHANDLE outputReader, PHANDLE outputWriter) {
     if (!CreatePipe(inputReader, inputWriter, NULL, 0))
@@ -158,13 +159,12 @@ BOOL create_pipes(PHANDLE inputReader, PHANDLE inputWriter,
 HRESULT open_pseudo_console(COORD size, HANDLE input_pipe, HANDLE output_pipe)
 {
     HRESULT hr = S_OK;
-#ifdef CK_CONPTY
+
     hr = p_CreatePseudoConsole(size, input_pipe, output_pipe, 0, &hPc);
-#endif
+
     return hr;
 }
 
-#ifdef CK_CONPTY
 HRESULT prepare_startup_info(STARTUPINFOEX * psi)
 {
     // Prepare Startup Information structure
@@ -208,12 +208,10 @@ HRESULT prepare_startup_info(STARTUPINFOEX * psi)
 
     return S_OK;
 }
-#endif
 
 BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
                              LPPROCESS_INFORMATION lpProcessInformation,
                              PHANDLE hInputWriter, PHANDLE hOutputReader ) {
-#ifdef CK_CONPTY
     HANDLE hInputReader, hOutputWriter;
     STARTUPINFOEX startupInfo;
     BOOL result;
@@ -234,8 +232,8 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
 
     if (FAILED(hResult)) {
         debug(F101, "ConPTY open failed with result", "", result);
-        CloseHandle(hInputWriter); hInputWriter = NULL;
-        CloseHandle(hOutputReader); hOutputReader = NULL;
+        CloseHandle(*hInputWriter); *hInputWriter = NULL;
+        CloseHandle(*hOutputReader); *hOutputReader = NULL;
         return FALSE;
     }
 
@@ -245,8 +243,8 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
     if (FAILED(hResult)) {
         debug(F101, "Closing PTY; Prepare startup info failed with result", "", result);
         close_pseudo_console();
-        CloseHandle(hInputWriter); hInputWriter = NULL;
-        CloseHandle(hOutputReader); hOutputReader = NULL;
+        CloseHandle(*hInputWriter); *hInputWriter = NULL;
+        CloseHandle(*hOutputReader); *hOutputReader = NULL;
         return FALSE;
     }
 
@@ -265,31 +263,24 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
    if (!result) {
         debug(F100, "Create process failed", "", 0);
         close_pseudo_console();
-        CloseHandle(hInputWriter); hInputWriter = NULL;
-        CloseHandle(hOutputReader); hOutputReader = NULL;
+        CloseHandle(*hInputWriter); *hInputWriter = NULL;
+        CloseHandle(*hOutputReader); *hOutputReader = NULL;
         return FALSE;
    }
 
    debug(F100, "Subprocess started successfully", "", 0);
 
    return TRUE;
-#else
-   return FALSE;
-#endif
 }
 
 void resize_pseudo_console(COORD new_size) {
-#ifdef CK_CONPTY
     p_ResizePseudoConsole(hPc, new_size);
-#endif
 }
 
 void close_pseudo_console() {
-#ifdef CK_CONPTY
-
     p_ClosePseudoConsole(hPc);
-
-#endif
 }
+
+#endif /* CK_CONPTY */
 
 #endif

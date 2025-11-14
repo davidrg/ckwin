@@ -68,10 +68,16 @@ extern int OSVer;
 #include "ckocon.h"                     /* defs common to console routines */
 #include "ckokey.h"
 
-videobuffer vscrn[VNUM]  = {{0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0},
-                            {0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0},
-                            {0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0},
-                            {0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0}};
+vscrn_t vscrn[VNUM]/*CMD*/=  {{0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
+                   /*VTERM*/  {0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,1},
+                   /*VCS*/    {0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
+                   /*VSTATUS*/{0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0}};
+/*                             ^ ^ ^ Cursor  ^  ^  ^  ^  H  ---- Bookmarks --------------  ^ ^ ^ ^
+                               | | |  X Y P  |  |  |  Width                                | | | |
+                               | | Pages     |  |  markbot                           Hscroll | | |
+                               | Page count   |  marktop                         Display Height | |
+                               View page      Popup                          Page Cursor Coupling Allow alternate buffer
+*/
 extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor;
 int tt_attr_bug = 0;
@@ -85,13 +91,14 @@ int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
 extern int updmode ;
 extern int priority ;
 extern int tt_modechg;
-extern unsigned char defaultattribute ;
-extern unsigned char colornormal;
-extern unsigned char reverseattribute ;
-extern unsigned char italicattribute;
-extern unsigned char graphicattribute ;
-extern unsigned char underlineattribute ;
-extern unsigned char borderattribute ;
+extern cell_video_attr_t defaultattribute ;
+extern cell_video_attr_t colornormal;
+extern cell_video_attr_t reverseattribute ;
+extern cell_video_attr_t italicattribute;
+extern cell_video_attr_t graphicattribute ;
+extern cell_video_attr_t underlineattribute ;
+extern cell_video_attr_t borderattribute ;
+extern cell_video_attr_t crossedoutattribute;
 
 extern vtattrib attrib, cmdattrib;
 extern bool cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[] ;
@@ -113,11 +120,11 @@ extern int inserver;
 #endif /* IKSD */
 
 extern int tt_cursor;                   /* Cursor type */
-extern int tt_status[];                 /* Status line displayed ? */
+extern int tt_status[VNUM];             /* Status line displayed ? */
 
-extern unsigned char     colorstatus     ;
-extern unsigned char     colorselect ;
-extern unsigned char     colorcmd;
+extern cell_video_attr_t     colorstatus;
+extern cell_video_attr_t     colorselect;
+extern cell_video_attr_t     colorcmd;
 
 extern enum markmodes markmodeflag[] ;
 
@@ -132,6 +139,9 @@ BOOL    FontSaved = 0 ;
 BYTE vmode = VCMD ;
 extern int decsasd ;
 int pwidth, pheight;            /* Physical screen width, height */
+
+int ttgcwsz();                  /* ckocon.c */
+int os2settitle(char *, int);   /* ckotio.c */
 
 /*---------------------------------------------------------------------------*/
 /* ReadCellStr                                                               */
@@ -216,7 +226,7 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
             for ( i=0; i<len ; i++ )
             {
                 ((viocell *)CellStr)[i].c = wchars[i] ;
-                ((viocell *)CellStr)[i].a = attrs[i] ;
+                ((viocell *)CellStr)[i].video_attr = cell_video_attr_from_vio_attribute(attrs[i]);
             }
         }
     }
@@ -255,7 +265,7 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
             for ( i=0; i<len ; i++ )
             {
                 CellStr[i].c = tchars[i] ;
-                CellStr[i].a = attrs[i] ;
+                CellStr[i].video_attr = cell_video_attr_from_vio_attribute(attrs[i]);
             }
         }
     }
@@ -272,6 +282,7 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
 /* WrtCellStr                                                                */
 /*---------------------------------------------------------------------------*/
 #ifdef NT
+#ifndef KUI
 USHORT
 OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
@@ -325,7 +336,11 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
         for ( i=0; i<len ; i++ )
         {
             wchars[i] = CellStr[i].c ;
-            attrs[i] = CellStr[i].a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(CellStr[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacterW( VioHandle, wchars, len, coord, &written ) ;
         if ( !rc ) {
@@ -357,7 +372,11 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
         for ( i=0; i<len ; i++ )
         {
             tchars[i] = ((viocell *)CellStr)[i].c ;
-            attrs[i] = ((viocell *)CellStr)[i].a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(((viocell *)CellStr)[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacter( VioHandle, tchars, len, coord, &written ) ;
         if ( !rc ) {
@@ -393,12 +412,14 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
     }
     return(0);
 }
+#endif /* KUI */
 #endif /* NT */
 
 USHORT
 WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
 #ifdef NT
+#ifndef KUI
     static CHAR_INFO *lpBuffer = NULL;  // pointer to buffer with data to write
     static COORD dwBufferSize  = {0,0}; // column-row size of source buffer
     COORD dwBufferCoord = {0,0};        // upper-left cell to write from
@@ -441,7 +462,11 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         for ( i=0; i<Length ; i++ )
         {
             lpBuffer[i].Char.UnicodeChar = CellStr[i].c ;
-            lpBuffer[i].Attributes       = CellStr[i].a ;
+#ifdef CK_COLORS_16
+            lpBuffer[i].Attributes       = cell_video_attr_to_win32_console(CellStr[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputW( VioHandle, lpBuffer, dwBufferSize, dwBufferCoord,
                              &WriteRegion ) ;
@@ -459,7 +484,11 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         for ( i=0; i<Length ; i++ )
         {
             lpBuffer[i].Char.AsciiChar = CellStr[i].c ;
-            lpBuffer[i].Attributes       = CellStr[i].a ;
+#ifdef CK_COLORS_16
+            lpBuffer[i].Attributes     = cell_video_attr_to_win32_console(CellStr[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutput( VioHandle, lpBuffer, dwBufferSize, dwBufferCoord,
                             &WriteRegion ) ;
@@ -480,6 +509,7 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         rc = 2 ;
     }
    return(0);
+#endif /* KUI */
 #else /* NT */
    return VioWrtCellStr( (PCH) CellStr, Length*sizeof(viocell), Row, Column, VioHandle ) ;
 #endif /* NT */
@@ -547,7 +577,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
 
         while ( count < Length ) {
             if ( vpo->c == vpn->c &&
-                 vpo->a == vpn->a )
+                 cell_video_attr_equal(vpo->video_attr, vpn->video_attr) )
             {
                 count++;
                 vpo++;
@@ -565,7 +595,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
             /* Find the length of the change */
             while ( count < Length &&
                 (vpn->c != vpo->c ||
-                    vpn->a != vpo->a) ) {
+                    !cell_video_attr_equal(vpn->video_attr, vpo->video_attr)) ) {
                 count++;
                 ccount++;
                 vpo++;
@@ -589,6 +619,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
 
 }
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* WrtNCell                                                                  */
 /*---------------------------------------------------------------------------*/
@@ -645,7 +676,11 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
         for ( i=0; i<Times ; i++ )
         {
             wchars[i] = Cell.c ;
-            attrs[i] = Cell.a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(Cell.video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacterW( VioHandle, wchars, Times, coord, &written ) ;
         if ( !rc ) {
@@ -678,7 +713,11 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
         for ( i=0; i<Times ; i++ )
         {
             tchars[i] = Cell.c ;
-            attrs[i] = Cell.a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(Cell.video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacter( VioHandle, tchars, Times, coord, &written ) ;
         if ( !rc ) {
@@ -719,15 +758,17 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
    return VioWrtNCell( (PCH) &Cell, Times, Row, Column, VioHandle ) ;
 #endif /* NT */
 }
+#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* WrtCharStrAtt                                                             */
 /*---------------------------------------------------------------------------*/
 USHORT
 WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
-                      PBYTE Attr )
+                      cell_video_attr_t* Attr )
 {
 #ifdef NT
+#ifndef KUI
     static LPWSTR wchars = NULL;
     static LPTSTR tchars = NULL ;
     static LPWORD attrs = NULL ;
@@ -777,7 +818,11 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         for ( i=0; i<Length ; i++ )
         {
             wchars[i] = CharStr[i] ;
-            attrs[i] = *Attr ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(*Attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacterW( VioHandle, wchars, Length, coord, &written ) ;
         if ( !rc ) {
@@ -810,7 +855,11 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         for ( i=0; i<Length ; i++ )
         {
             tchars[i] = CharStr[i] ;
-            attrs[i] = *Attr ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(*Attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacter( VioHandle, tchars, Length, coord, &written ) ;
         if ( !rc ) {
@@ -846,7 +895,7 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         rc = 2 ;
     }
     return rc ;
-
+#endif /* KUI */
 #else /* NT */
    return VioWrtCharStrAtt( CharStr, Length, Row, Column, Attr, VioHandle ) ;
 #endif /* NT */
@@ -948,8 +997,9 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
                      );
 #endif /* COMMENT */
 
-    if ( ModeData->col <= 0 || ModeData->row <= 0 )
-        return -1 ;
+    /* ModeData->col and ModeData->row are unsigned so can never be <= 0
+     if ( ModeData->col <= 0 || ModeData->row <= 0 )
+        return -1 ;*/
 
     rc = RequestScreenMutex( 5000 );
     if ( rc )
@@ -1062,11 +1112,11 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
         {
             rc = GetLastError() ;
             debug(F101,"Set Mode SetConsoleWindowInfo failed","",rc ) ;
-            if ( error == ERROR_INVALID_HANDLE ) {
+            /*if ( error == ERROR_INVALID_HANDLE ) {
                 debug(F101,"SetMode VioHandle","",VioHandle);
                 VioHandle = GetStdHandle( STD_OUTPUT_HANDLE );
                 debug(F101,"SetMode GetStdHandle(STD_OUTPUT_HANDLE)","",VioHandle);
-            }
+            }*/
             ReleaseScreenMutex() ;
             return 3;
         }
@@ -1086,11 +1136,11 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
         {
             rc = GetLastError() ;
             debug(F101,"SetMode SetConsoleScreenBufferSize failed","",rc ) ;
-            if ( error == ERROR_INVALID_HANDLE ) {
+            /*if ( error == ERROR_INVALID_HANDLE ) {
                 debug(F101,"SetMode VioHandle","",VioHandle);
                 VioHandle = GetStdHandle( STD_OUTPUT_HANDLE );
                 debug(F101,"SetMode GetStdHandle(STD_OUTPUT_HANDLE)","",VioHandle);
-            }
+            }*/
             ReleaseScreenMutex() ;
             return 3;
         }
@@ -1768,9 +1818,9 @@ VscrnClean( int vmode )
 #endif 
     return rc ;
 }
-/*---------------------------------------------------------------------------*/
-/* VscrnScrollLf                                                             */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnScrollLf                                            | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
 USHORT
 VscrnScrollLf( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
                  USHORT RightCol, USHORT Columns, viocell Cell )
@@ -1778,6 +1828,7 @@ VscrnScrollLf( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     /* all position values above start at zero like Vio functions */
     SHORT x=0,y=0 ;
     videoline * line = NULL ;
+    vscrn_page_t* page;
 
     if ( Columns == 0 )
         return NO_ERROR ;
@@ -1789,13 +1840,14 @@ VscrnScrollLf( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( !vscrn_cursor_page_valid(vmode) )
         return(3);
 
-    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
+    page = &vscrn_cursor_page(vmode);
 
+    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
     for ( y = TopRow ; y <= BotRow ; y++ ) {
-        line = &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount] ;
+        line = &page->lines[(page->top+y)%page->linecount] ;
         for ( x = LeftCol ; x <= RightCol ; x++ ){
             if ( x - Columns < LeftCol )
                 continue ;
@@ -1812,9 +1864,9 @@ VscrnScrollLf( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     return NO_ERROR ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnScrollRt                                                             */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnScrollRt                                            | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
 USHORT
 VscrnScrollRt( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
                  USHORT RightCol, USHORT Columns, viocell Cell )
@@ -1822,6 +1874,7 @@ VscrnScrollRt( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     /* all position values above start at zero like Vio functions */
     SHORT x=0,y=0 ;
     videoline * line = NULL ;
+    vscrn_page_t* page ;
 
     if ( Columns == 0 )
         return NO_ERROR ;
@@ -1833,13 +1886,15 @@ VscrnScrollRt( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( !vscrn_cursor_page_valid(vmode) )
         return(3);
+
+    page = &vscrn_cursor_page(vmode);
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
     for ( y = TopRow ; y <= BotRow ; y++ ) {
-        line = &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount] ;
+        line = &page->lines[(page->top+y)%page->linecount] ;
         for ( x = RightCol ; x >= LeftCol ; x-- ){
             if ( x + Columns > RightCol )
                 continue ;
@@ -1856,9 +1911,9 @@ VscrnScrollRt( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     return NO_ERROR ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnScrollDn                                                             */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnScrollDn                                            | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
 /* WARNING - Up and Dn not fully implemented */
 
 USHORT
@@ -1868,6 +1923,7 @@ VscrnScrollDn( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     /* all position values above start at zero like Vio functions */
     SHORT x=0,y=0 ;
     videoline * toline = NULL, * fromline = NULL ;
+    vscrn_page_t* page;
 
     if ( Rows == 0 )
         return NO_ERROR ;
@@ -1879,23 +1935,25 @@ VscrnScrollDn( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( !vscrn_cursor_page_valid(vmode) )
         return(3);
+
+    page = &vscrn_cursor_page(vmode);
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
     for ( y = BotRow ; y >= TopRow ; y-- ){
         if ( y + Rows > BotRow )
             continue ;
-        toline = &vscrn[vmode].lines[(vscrn[vmode].top+y-Rows)%vscrn[vmode].linecount] ;
-        fromline = &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount] ;
+        toline = &page->lines[(page->top+y-Rows)%page->linecount] ;
+        fromline = &page->lines[(page->top+y)%page->linecount] ;
         for ( x = LeftCol ; x <= RightCol ; x++ ) {
             toline->cells[x] = fromline->cells[x] ;
             toline->vt_char_attrs[x] = fromline->vt_char_attrs[x];
         }
     }
     for ( y = TopRow + Rows - 1 ; y >= TopRow ; y-- ){
-        toline = &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount] ;
+        toline = &page->lines[(page->top+y)%page->linecount] ;
         for ( x = LeftCol ; x <= RightCol ; x++ ) {
             toline->cells[x] = Cell ;
             toline->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
@@ -1907,9 +1965,9 @@ VscrnScrollDn( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     return NO_ERROR ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnScrollUp                                                             */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnScrollUp                                            | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
 USHORT
 VscrnScrollUp( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
                  USHORT RightCol, USHORT Rows, viocell Cell )
@@ -1917,6 +1975,7 @@ VscrnScrollUp( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     /* all position values above start at zero like Vio functions */
     SHORT x=0,y=0 ;
     videoline * toline = NULL, * fromline = NULL ;
+    vscrn_page_t* page;
 
     if ( Rows == 0 )
         return NO_ERROR ;
@@ -1928,23 +1987,25 @@ VscrnScrollUp( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( !vscrn_cursor_page_valid(vmode) )
         return(3);
+
+    page = &vscrn_cursor_page(vmode);
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
     for ( y = TopRow ; y <= BotRow ; y++ ){
         if ( y - Rows < TopRow )
             continue ;
-        toline = &vscrn[vmode].lines[(vscrn[vmode].top+y-Rows)%vscrn[vmode].linecount] ;
-        fromline = &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount] ;
+        toline = &page->lines[(page->top+y-Rows)%page->linecount] ;
+        fromline = &page->lines[(page->top+y)%page->linecount] ;
         for ( x = LeftCol ; x <= RightCol ; x++ ) {
             toline->cells[x] = fromline->cells[x] ;
             toline->vt_char_attrs[x] = fromline->vt_char_attrs[x];
             }
     }
     for ( y = BotRow - Rows + 1 ; y <= BotRow ; y++ ){
-        toline = &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount] ;
+        toline = &page->lines[(page->top+y)%page->linecount] ;
         for ( x = LeftCol ; x <= RightCol ; x++ ) {
             toline->cells[x] = Cell ;
             toline->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
@@ -1957,31 +2018,31 @@ VscrnScrollUp( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnWrtCell                                                              */
+/* VscrnWrtCell                                             | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
 USHORT
 VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
 {
     int i ;
     videoline * line ;
-    unsigned char cellcolor = geterasecolor(vmode);
+    cell_video_attr_t cellcolor = geterasecolor(vmode);
 
-    if ( Row < 0 || Row > VscrnGetHeight(vmode)-(tt_status[vmode]?2:1) )
+    if ( Row > VscrnGetHeight(vmode)-(tt_status[vmode]?2:1) )
         return ERROR_VIO_ROW ;
 
-    if ( Col < 0 || Col > VscrnGetWidth(vmode) -1 )
+    if ( Col > VscrnGetWidth(vmode) -1 )
         return ERROR_VIO_COL ;
 
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    line = VscrnGetLineFromTop( vmode, Row ) ;
+    line = VscrnGetLineFromTop( vmode, Row, FALSE ) ;
 
     if (line->width == 0) {
         line->width = VscrnGetWidth(vmode)  ;
         for ( i=0 ; i<MAXTERMCOL  ; i++ ) {
             line->cells[i].c = ' ' ;
-            line->cells[i].a = cellcolor ;
+            line->cells[i].video_attr = cellcolor ;
             line->vt_char_attrs[i] = VT_CHAR_ATTR_NORMAL ;
         }
     }
@@ -1998,17 +2059,18 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
         (att.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
         (att.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
         (att.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
+        (att.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
         (att.wyseattr   ? WY_CHAR_ATTR         : 0) ;
     line->hyperlinks[Col] = att.hyperlink ? att.linkid : 0;
     return NO_ERROR ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnWrtCharStrAtt                                                        */
+/* VscrnWrtCharStrAtt                                       | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
 USHORT
 VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
-                    USHORT Row, USHORT Column, PBYTE Attr )
+                    USHORT Row, USHORT Column, cell_video_attr_t* Attr )
 {
     USHORT rc = 0;
     int i ;
@@ -2035,12 +2097,12 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
             }
             else
                 cell.c = CharStr[i];
-            cell.a = *Attr;
+            cell.video_attr = *Attr;
 
             if (Column > VscrnGetWidth(vmode==VSTATUS?VTERM:vmode)) {
                 Column = 1;
                 if (Row >= height) {
-                    VscrnScroll(vmode,UPWARD, 0, height-1, 1, 1, SP) ;
+                    VscrnScroll(vmode,UPWARD, 0, height-1, 1, 1, SP, FALSE) ;
                     Row = height;
                 } else {
                     Row++;
@@ -2054,7 +2116,7 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
             switch (CharStr[i]) {
             case LF:
                 if (Row >= height) {
-                    VscrnScroll(vmode,UPWARD, 0, height-1, 1, 1, SP);
+                    VscrnScroll(vmode,UPWARD, 0, height-1, 1, 1, SP, FALSE);
                     Row = height;
                 } else {
                     Row++;
@@ -2087,14 +2149,14 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
                 }
                 else
                     cell.c = CharStr[i];
-                cell.a = *Attr;
+                cell.video_attr = *Attr;
 
                 VscrnWrtCell(vmode, cell, (vmode == VTERM ? attrib : cmdattrib),
                               Row - 1, Column - 1);
                 if (++Column > VscrnGetWidth(vmode)) {
                     Column = 1;
                     if (Row >= height) {
-                        VscrnScroll(vmode,UPWARD, 0,height-1, 1, 1, SP) ;
+                        VscrnScroll(vmode,UPWARD, 0,height-1, 1, 1, SP, FALSE) ;
                         Row = height;
                     }
                     else {
@@ -2112,11 +2174,11 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
 
 
 /*---------------------------------------------------------------------------*/
-/* VscrnWrtCharStrAtt                                                        */
+/* VscrnWrtUCS2StrAtt                                       | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
 USHORT
 VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
-                    USHORT Row, USHORT Column, PBYTE Attr )
+                    USHORT Row, USHORT Column, cell_video_attr_t* Attr )
 {
     USHORT rc = 0;
     int i ;
@@ -2137,7 +2199,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
             }
             else
                 cell.c = UCS2Str[i];
-            cell.a = *Attr;
+            cell.video_attr = *Attr;
 
             if (Column > VscrnGetWidth(vmode==VSTATUS?VTERM:vmode)) {
                 Column = 1;
@@ -2145,7 +2207,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                      -(tt_status[vmode]?1:0)) {
                     VscrnScroll(vmode,UPWARD, 0,
                                  VscrnGetHeight(vmode)
-                                 -(tt_status[vmode]?2:1), 1, 1, SP) ;
+                                 -(tt_status[vmode]?2:1), 1, 1, SP, FALSE) ;
                 } else {
                     Row++;
                     if (Row == VscrnGetHeight(vmode)
@@ -2163,7 +2225,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                 if (Row == VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) {
                     VscrnScroll(vmode,UPWARD, 0,
                                  VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
-                                 1, 1, SP) ;
+                                 1, 1, SP, FALSE) ;
                 } else {
                     Row++;
                     if (Row > VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))
@@ -2197,7 +2259,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                 }
                 else
                     cell.c = UCS2Str[i];
-                cell.a = *Attr;
+                cell.video_attr = *Attr;
 
                 VscrnWrtCell(vmode, cell, (vmode == VTERM ? attrib : cmdattrib),
                               Row - 1, Column - 1);
@@ -2207,7 +2269,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                          -(tt_status[vmode]?1:0)) {
                         VscrnScroll(vmode,UPWARD, 0,
                                      VscrnGetHeight(vmode)
-                                     -(tt_status[vmode]?2:1), 1, 1, SP) ;
+                                     -(tt_status[vmode]?2:1), 1, 1, SP, FALSE) ;
                     }
                     else {
                         Row++;
@@ -2226,63 +2288,102 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
 }
 
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetLineFromTop                                                       */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetLineFromTop                                      | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 videoline *
-VscrnGetLineFromTop( BYTE vmode, SHORT y )  /* zero based */
+VscrnGetPageLineFromTop( BYTE vmode, SHORT y, int page_number )  /* zero based */
 {
+    vscrn_page_t* page;
+
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    if ( vscrn[vmode].lines == NULL )
-        return(NULL);
+	if (!vscrn_page_valid(vmode, page_number) ) {
+		return (NULL);
+	}
+
+	page = &vscrn[vmode].pages[page_number];
 
     while ( y < 0 )
-        y += vscrn[vmode].linecount ;
+        y += page->linecount ;
 
-    return &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount] ;
+    return &page->lines[(page->top+y)%page->linecount] ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetLine                                                              */
-/*---------------------------------------------------------------------------*/
+videoline *
+VscrnGetLineFromTop( BYTE vmode, SHORT y, BOOL view_page )
+{
+	return VscrnGetPageLineFromTop(
+		vmode, y, vscrn_current_page_number(vmode, view_page));
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetLine                                             | Page: View     */
+/*----------------------------------------------------------+----------------*/
 videoline *
 VscrnGetLine( BYTE vmode, SHORT y )  /* zero based */
 {
+    vscrn_page_t* page;
+
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( !vscrn_view_page_valid(vmode) )
         return(NULL);
 
-    while ( y < 0 )
-        y += vscrn[vmode].linecount ;
+    page = &vscrn_view_page(vmode);
 
-    return &vscrn[vmode].lines[y%vscrn[vmode].linecount] ;
+    while ( y < 0 )
+        y += page->linecount ;
+
+    return &page->lines[y%page->linecount] ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnSetWidth                                                             */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetWidth                                            | Page: All      */
+/*----------------------------------------------------------+----------------*/
 VOID
 VscrnSetWidth( BYTE vmode, int width )
 {
     int y=0;
+    int i=0;
     videoline * pline = NULL;
+
+    /* If we end up in here while the cursor is on the status line
+       (DECSASD_STATUS), then we end up setting the width of the status line
+       instead of the terminal screen! The terminal screen ends up being messed
+       up and the status line breaks too. The terminal and status line should
+       always be the same width anyway, so it doesn't make any sense to do funny
+       things here.
+            -- DG, 2025-08-10
 
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
+*/
 
-    if ( vscrn[vmode].lines == NULL )
+    if (vmode == VTERM) {
+        /* Keep the status line and terminal the same width. */
+        VscrnSetWidth(VSTATUS, width);
+    }
+
+    if ( vscrn[vmode].pages == NULL )
         return;
 
     vscrn[vmode].width = width ;
 
-    if (vscrn[vmode].linecount && vscrn[vmode].lines != NULL) {
-        for ( y=0;y<vscrn[vmode].height;y++ ) {
-            pline = &vscrn[vmode].lines[(vscrn[vmode].top+y)%vscrn[vmode].linecount];
-            pline->width = width;
+    /* Set width of *all* pages */
+    for (i = 0; i < vscrn[vmode].page_count; i++) {
+        vscrn_page_t* page = &vscrn[vmode].pages[i];
+
+        if ( page->lines == NULL )
+            return;
+
+        if (page->linecount && page->lines != NULL) {
+            for ( y=0;y<vscrn[vmode].height;y++ ) {
+                pline = &page->lines[(page->top+y)%page->linecount];
+                pline->width = width;
+            }
         }
     }
 #ifdef KUI
@@ -2299,14 +2400,18 @@ VscrnSetWidth( BYTE vmode, int width )
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnSetHeight                                                            */
+/* VscrnSetHeight                                           | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 VOID
 VscrnSetHeight( BYTE vmode, int height )
 {
 
+    /* If we're SASD_STATUS, that doesn't mean we should be setting the height
+       of the status line when VTERM is specified - the status line has a fixed
+       height!
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
+    */
 
     vscrn[vmode].height = height ;
 #ifdef KUI
@@ -2323,125 +2428,173 @@ VscrnSetHeight( BYTE vmode, int height )
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnSetDisplayHeight                                                            */
+/* VscrnSetDisplayHeight                                    | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 VOID
 VscrnSetDisplayHeight( BYTE vmode, int height )
 {
 
+    /* The status line has a height of 1. Its a line. If we've been asked to set
+       the height of VTERM, the caller will have meant VTERM.
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     vscrn[vmode].display_height = height ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnGetWidth                                                             */
+/* VscrnGetWidth                                            | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 int
 VscrnGetWidth( BYTE vmode )
 {
+    /* Doesn't make sense to do this. VTERM and VSTATUS should be the same width.
+        -- DG 2025-08-10
+
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
+    */
 
    return vscrn[vmode].width ? vscrn[vmode].width : MAXTERMCOL;
 }
 /*---------------------------------------------------------------------------*/
-/* VscrnGetHeight                                                            */
+/* VscrnGetHeight                                           | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 int
-VscrnGetHeight( BYTE vmode )
+VscrnGetHeightEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
    return vscrn[vmode].height ? vscrn[vmode].height : MAXTERMROW;
 }
+
+/* All callers of this function should be checked to see if they should *always*
+ * get VTERM when they ask for it, rather than VTERM or maybe VSTATUS depending
+ * on what the host is up to. Many of them probably should maybe get VSTATUS,
+ * but for some when they say VTERM they really do mean VTERM and so should be
+ * calling VscrnGetHeightEx. */
+int VscrnGetHeight( BYTE vmode ) {
+    return VscrnGetHeightEx(vmode, TRUE);
+}
+
 /*---------------------------------------------------------------------------*/
-/* VscrnGetDisplayHeight                                                            */
+/* VscrnGetDisplayHeight                                    | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 int
 VscrnGetDisplayHeight( BYTE vmode )
 {
+    /*  This caused the KUI window to shrink whenever the cursor was on the
+        status line, as VscrnGetDisplayHeight() would end up returning the
+        status line height (1) instead of the terminal height. Same problem with
+        the call to VscrnGetHeight, though its less clear that that one should
+        disregard DECSASD in all cases.
+            -- DG, 2025-08-10
+
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
    return vscrn[vmode].display_height ? vscrn[vmode].display_height : VscrnGetHeight(vmode);
+    */
+
+    return vscrn[vmode].display_height
+        ? vscrn[vmode].display_height
+        : VscrnGetHeightEx(vmode, FALSE);
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnSetBookmark                                                          */
+/* VscrnSetBookmark                                         | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 VOID
 VscrnSetBookmark( BYTE vmode, int mark, int linenum )
 {
+    /* No bookmarks on the status line, regardless of if its host-writable
+        -- DG, 2025-008-10
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
    vscrn[vmode].bookmark[mark] = linenum ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnGetBookmark                                                          */
+/* VscrnGetBookmark                                         | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 int
 VscrnGetBookmark( BYTE vmode, int mark )
 {
+    /* No bookmarks on the status line, regardless of if its host-writable
+        -- DG, 2025-008-10
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
    return vscrn[vmode].bookmark[mark];
 }
 /*---------------------------------------------------------------------------*/
-/* VscrnGetLineVtAttr                                                        */
+/* VscrnGetLineVtAttr                                       | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
+/* Called only by isdoublewidth() which is used to determine how far the cursor
+ * can move horizontally */
 USHORT
 VscrnGetLineVtAttr( BYTE vmode, SHORT y ) /* zero based */
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    return VscrnGetLineFromTop(vmode,y)->vt_line_attr ;
+    return VscrnGetLineFromTop(vmode,y,FALSE)->vt_line_attr ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnSetLineVtAttr                                                        */
+/* VscrnSetLineVtAttr                                       | Page: ?        */
 /*---------------------------------------------------------------------------*/
+/* Commented out as it doesn't appear to be used at all.Not adapted for
+ * multiple page support - DG, 28-SEP-2025
 USHORT
-VscrnSetLineVtAttr( BYTE vmode, SHORT y, USHORT attr ) /* zero based */
+VscrnSetLineVtAttr( BYTE vmode, SHORT y, USHORT attr ) /* zero based * /
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
     return (VscrnGetLineFromTop(vmode,y)->vt_line_attr = attr) ;
 }
+*/
 
 /*---------------------------------------------------------------------------*/
-/* VscrnGetCells                                                             */
+/* VscrnGetCells                                            | Page: Specified*/
 /*---------------------------------------------------------------------------*/
+/* Currently this is only called by functions for printing.
+ */
 viocell *
-VscrnGetCells( BYTE vmode, SHORT y )
+VscrnGetCells( BYTE vmode, SHORT y, int page )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    return VscrnGetLineFromTop(vmode,y)->cells ;
+    return VscrnGetPageLineFromTop(vmode,y,page)->cells ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnGetCell                                                              */
+/* VscrnGetCell                                             | Page: Specified*/
 /*---------------------------------------------------------------------------*/
 viocell *
-VscrnGetCell( BYTE vmode, SHORT x, SHORT y )
+VscrnGetPageCell( BYTE vmode, SHORT x, SHORT y, int page )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    return &VscrnGetLineFromTop(vmode,y)->cells[x] ;
+    return &VscrnGetPageLineFromTop(vmode,y,page)->cells[x] ;
+}
+
+viocell *
+VscrnGetCell( BYTE vmode, SHORT x, SHORT y, BOOL view_page )
+{
+    if ( vmode == VTERM && decsasd == SASD_STATUS )
+        vmode = VSTATUS ;
+
+    return &VscrnGetLineFromTop(vmode,y,view_page)->cells[x] ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnGetVtCharAttr                                                        */
+/* VscrnGetVtCharAttr                                       | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
 vtattrib
 VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
@@ -2453,7 +2606,7 @@ VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    line = VscrnGetLineFromTop(vmode,y);
+    line = VscrnGetLineFromTop(vmode,y,FALSE);
     attr = line->vt_char_attrs[x] ;
 
     vta.bold            = attr & VT_CHAR_ATTR_BOLD ? 1 : 0 ;
@@ -2466,6 +2619,7 @@ VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
     vta.unerasable      = attr & VT_CHAR_ATTR_PROTECTED ? 1 : 0 ;
     vta.graphic         = attr & VT_CHAR_ATTR_GRAPHIC ? 1 : 0 ;
     vta.wyseattr        = attr & WY_CHAR_ATTR ? 1 : 0 ;
+    vta.crossedout      = attr & VT_CHAR_ATTR_CROSSEDOUT ? 1 : 0 ;
     vta.hyperlink       = attr & VT_CHAR_ATTR_HYPERLINK ? 1 : 0;
     vta.linkid          = attr & VT_CHAR_ATTR_HYPERLINK ? line->hyperlinks[x] : 0;
 
@@ -2473,8 +2627,11 @@ VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnSetVtCharAttr                                                        */
+/* VscrnSetVtCharAttr                                       | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
+/* Only used by TVI, HP, Hazeltine and Wyse emulation - not by VT, so it
+ * doesn't need to care about paging. For now it uses the Cursor page to keep
+ * with VscrnGetVtCharAttr. */
 USHORT
 VscrnSetVtCharAttr( BYTE vmode, SHORT x, SHORT y, vtattrib vta )
 {
@@ -2494,95 +2651,108 @@ VscrnSetVtCharAttr( BYTE vmode, SHORT x, SHORT y, vtattrib vta )
                 (vta.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
                 (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
                 (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
+                (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
                 (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
                 (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
-    line = VscrnGetLineFromTop(vmode,y);
+    line = VscrnGetLineFromTop(vmode,y,FALSE);
     line->vt_char_attrs[x] = attr;
     line->hyperlinks[x] = vta.linkid;
     return attr;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnMoveTop                                                              */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnMoveTop                                             | Page: View     */
+/*----------------------------------------------------------+----------------*/
+/* This is used by the screen scrolling KVerbs - K_DNONE, K_DNHSCN,
+ * K_DNSCN, etc */
 LONG
 VscrnMoveTop( BYTE vmode, LONG y )
 {
     LONG newtop, beg, end ;
+    vscrn_page_t* page ;
 
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+    /*if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
+        vmode = VSTATUS ;*/
 
-    end = vscrn[vmode].end ;
-    beg = vscrn[vmode].beg ;
-    newtop = vscrn[vmode].top + y ;
+    page = &vscrn_view_page(vmode);
+
+    end = page->end ;
+    beg = page->beg ;
+    newtop = page->top + y ;
 
     if ( beg > end ) {
-        end += vscrn[vmode].linecount ;
-        if ( beg > vscrn[vmode].top )
-            newtop += vscrn[vmode].linecount ;
+        end += page->linecount ;
+        if ( beg > page->top )
+            newtop += page->linecount ;
         }
 
     if ( newtop < beg || newtop > end
-         - VscrnGetHeight(vmode) + (tt_status[vmode]?2:2) )
+         - VscrnGetHeightEx(vmode,FALSE) + (tt_status[vmode]?2:2) )
         return -1 ;
 
     while ( newtop < 0 )
-        newtop += vscrn[vmode].linecount ;
+        newtop += page->linecount ;
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-    vscrn[vmode].top = (newtop)%vscrn[vmode].linecount ;
+    page->top = (newtop)%page->linecount ;
     ReleaseVscrnMutex( vmode );
-    return vscrn[vmode].top ;
+    return page->top ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnMoveScrollTop                                                        */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnMoveScrollTop                                       | Page: View     */
+/*----------------------------------------------------------+----------------*/
+/* This is used by the mark mode as well as the screen scrolling KVerbs such as
+ * K_DNONE, K_DNHSCN, K_DNSCN, etc */
 LONG
 VscrnMoveScrollTop( BYTE vmode, LONG y )
 {
     LONG newscrolltop, top, beg, end ;
+    vscrn_page_t* page ;
 
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+    /*if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
+        vmode = VSTATUS ;*/
+
+    page = &vscrn_view_page(vmode);
 
     if (!scrollflag[vmode])
-        vscrn[vmode].scrolltop = vscrn[vmode].top ;
+        page->scrolltop = page->top ;
 
-    end = vscrn[vmode].end ;
-    beg = vscrn[vmode].beg ;
-    top = vscrn[vmode].top ;
-    newscrolltop = vscrn[vmode].scrolltop + y ;
+    end = page->end ;
+    beg = page->beg ;
+    top = page->top ;
+    newscrolltop = page->scrolltop + y ;
 
     if ( beg > end ) {
-        end += vscrn[vmode].linecount ;
-        if ( beg > vscrn[vmode].top )
-            top += vscrn[vmode].linecount ;
-        if ( beg > vscrn[vmode].scrolltop )
-            newscrolltop += vscrn[vmode].linecount ;
+        end += page->linecount ;
+        if ( beg > page->top )
+            top += page->linecount ;
+        if ( beg > page->scrolltop )
+            newscrolltop += page->linecount ;
         }
 
     debug(F111,"VscrnMoveScrollTop","newscrolltop",newscrolltop);
     debug(F111,"VscrnMoveScrollTop","end---",
-           end-(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1);
+           end-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))+1);
     if ( newscrolltop < beg ||
          newscrolltop > end
-         - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) + 1)
+         - (VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)) + 1)
         return -1 ;
 
     while ( newscrolltop < 0 )
-        newscrolltop += vscrn[vmode].linecount ;
+        newscrolltop += page->linecount ;
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-    vscrn[vmode].scrolltop = (newscrolltop)%vscrn[vmode].linecount ;
+    page->scrolltop = (newscrolltop)%page->linecount ;
     ReleaseVscrnMutex( vmode ) ;
-    return vscrn[vmode].scrolltop ;
+    return page->scrolltop ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnMoveBegin                                                            */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnMoveBegin                                           | Page: ?        */
+/*----------------------------------------------------------+----------------*/
+/* Commented out as it doesn't appear to be used at all. Not adapted for
+ * multiple page support - DG, 2-JUN-2025
 LONG
 VscrnMoveBegin( BYTE vmode, LONG y )
 {
@@ -2597,10 +2767,13 @@ VscrnMoveBegin( BYTE vmode, LONG y )
     ReleaseVscrnMutex( vmode ) ;
     return vscrn[vmode].beg ;
 }
+*/
 
-/*---------------------------------------------------------------------------*/
-/* VscrnMoveEnd                                                              */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnMoveEnd                                             | Page: ?        */
+/*----------------------------------------------------------+----------------*/
+/* Commented out as it doesn't appear to be used at all. Not adapted for
+ * multiple page support - DG, 2-JUN-2025
 LONG
 VscrnMoveEnd( BYTE vmode, LONG y )
 {
@@ -2626,46 +2799,78 @@ VscrnMoveEnd( BYTE vmode, LONG y )
     ReleaseVscrnMutex( vmode ) ;
     return vscrn[vmode].end ;
 }
+*/
 
 /*---------------------------------------------------------------------------*/
-/* VscrnGetLineWidth                                                         */
+/* VscrnGetLineWidth                                       | Page: Specified*/
 /*---------------------------------------------------------------------------*/
 UCHAR
-VscrnGetLineWidth( BYTE vmode, SHORT y )
+VscrnGetLineWidth( BYTE vmode, SHORT y, BOOL view_page )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    return VscrnGetLineFromTop(vmode,y)->width ;
+    return VscrnGetLineFromTop(vmode,y,view_page)->width ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetTop                                                               */
-/*---------------------------------------------------------------------------*/
+UCHAR
+VscrnGetPageLineWidth( BYTE vmode, SHORT y, int page )
+{
+    if ( vmode == VTERM && decsasd == SASD_STATUS )
+        vmode = VSTATUS ;
+
+    return VscrnGetPageLineFromTop(vmode,y,page)->width ;
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetPageTop                                          | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 ULONG
-VscrnGetTop( BYTE vmode )
+VscrnGetPageTop( BYTE vmode, BOOL orStatusLine, int page )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
-    return vscrn[vmode].top ;
+    return vscrn[vmode].pages[page].top ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetScrollTop                                                         */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetTop                                              | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 ULONG
-VscrnGetScrollTop( BYTE vmode )
+VscrnGetTop( BYTE vmode, BOOL orStatusLine, BOOL view )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
-
-    return vscrn[vmode].scrolltop ;
+    return VscrnGetPageTop(
+		vmode, orStatusLine,
+		vscrn_current_page_number(vmode, view));
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetScrollTop                                                         */
-/*---------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetScrollTop                                        | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+ULONG
+VscrnGetPageScrollTop( BYTE vmode, BOOL orStatusLine, int page )
+{
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine)
+        vmode = VSTATUS ;
+
+    return vscrn[vmode].pages[page].scrolltop ;
+}
+
+/* One place in VscrnScroll may sometimes need the cursor page instead of the
+ * view page. Rather than adding the parameter 'TRUE' to all but one calls to
+ * VscrnGetScrollTop we just have two versions of the function. */
+ULONG
+VscrnGetScrollTop( BYTE vmode, BOOL orStatusLine )
+{
+    return VscrnGetPageScrollTop(vmode, orStatusLine, vscrn[vmode].view_page);
+}
+
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetScrollHoriz                                      | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
 ULONG
 VscrnGetScrollHorz( BYTE vmode )
 {
@@ -2675,68 +2880,158 @@ VscrnGetScrollHorz( BYTE vmode )
     return vscrn[vmode].hscroll ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetBegin                                                             */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetPageBegin                                        | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+/* Gets the beginning of the specified virtual screen page
+ *
+ * Parameters
+ *  vmode
+ *		The screen buffer to get the beginning of
+ *	orStatusLine
+ *		If the cursor is in the status line, should the beginning of the status
+ *      line be returned instead of the beginning of the specified virtual
+ *      screen?
+ *	page
+ *		Page to get the beginning of
+ */
 ULONG
-VscrnGetBegin( BYTE vmode )
+VscrnGetPageBegin( BYTE vmode, BOOL orStatusLine, int page )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
-    return vscrn[vmode].beg ;
+    return vscrn[vmode].pages[page].beg;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetEnd                                                               */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetBegin                                            | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+/* Gets the beginning of the specified virtual screens current page
+ *
+ * Parameters
+ *  vmode
+ *		The screen buffer to get the beginning of
+ *	orStatusLine
+ *		If the cursor is in the status line, should the beginning of the status
+ *      line be returned instead of the beginning of the specified virtual
+ *      screen?
+ *	view_page
+ *		If there is more than one current page (view and cursor), should the
+ *      the beginning of the view page be returned rather than the cursor page?
+ */
 ULONG
-VscrnGetEnd( BYTE vmode )
+VscrnGetBegin( BYTE vmode, BOOL orStatusLine, BOOL view_page )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+	return VscrnGetPageBegin(
+		vmode, orStatusLine, vscrn_current_page_number(vmode, view_page));
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetPageEnd                                          | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+/* Gets the end of the specified virtual screen page
+ *
+ * Parameters:
+ *	vmode
+ *		Virtual screen to get the end of
+ *	orStatusLine
+ *		If the cursor is in the status line, should the beginning of the status
+ *      line be returned instead of the beginning of the specified virtual
+ *      screen?
+ *	page
+ *		Page to get the end of
+ */
+ULONG
+VscrnGetPageEnd( BYTE vmode, BOOL orStatusLine, int page )
+{
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
-    return vscrn[vmode].end ;
+    return vscrn[vmode].pages[page].end ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnSetTop                                                               */
-/*---------------------------------------------------------------------------*/
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetEnd                                              | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+/* Gets the end of the specified virtual screen
+ *
+ * Parameters:
+ *	vmode
+ *		Virtual screen to get the end of
+ *	orStatusLine
+ *		If the cursor is in the status line, should the beginning of the status
+ *      line be returned instead of the beginning of the specified virtual
+ *      screen?
+ *	view_page
+ *		If there is more than one current page (view and cursor), should the
+ *      the beginning of the view page be returned rather than the cursor page?
+ */
+ULONG
+VscrnGetEnd( BYTE vmode, BOOL orStatusLine, BOOL view_page )
+{
+	return VscrnGetPageEnd(
+		vmode, orStatusLine, vscrn_current_page_number(vmode, view_page));
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetPageTop                                          | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 LONG
-VscrnSetTop( BYTE vmode, LONG y )
+VscrnSetPageTop( BYTE vmode, LONG y, BOOL orStatusLine, int page )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     while ( y < 0 )
-        y += vscrn[vmode].linecount ;
+        y += vscrn[vmode].pages[page].linecount ;
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-    vscrn[vmode].top = y%vscrn[vmode].linecount ;
+    vscrn[vmode].pages[page].top = y%vscrn[vmode].pages[page].linecount ;
     ReleaseVscrnMutex( vmode );
-    return vscrn[vmode].top ;
+    return vscrn[vmode].pages[page].top ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnSetScrollTop                                                         */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetTop                                              | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+LONG
+VscrnSetTop( BYTE vmode, LONG y, BOOL orStatusLine, BOOL view )
+{
+    return VscrnSetPageTop(vmode, y, orStatusLine,
+		vscrn_current_page_number(vmode, view));
+}
+
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetScrollTop                                        | Page: View     */
+/*----------------------------------------------------------+----------------*/
+/* Used for scrollback */
 LONG
 VscrnSetScrollTop( BYTE vmode, LONG y )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+    vscrn_page_t* page;
+
+    /*if ( vmode == VTERM && decsasd == SASD_STATUS)
+        vmode = VSTATUS ; */
+
+    page = &vscrn_view_page(vmode);
 
     while ( y < 0 )
-        y += vscrn[vmode].linecount ;
+        y += page->linecount ;
+
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-    vscrn[vmode].scrolltop = y%vscrn[vmode].linecount ;
+    page->scrolltop = y%page->linecount ;
     ReleaseVscrnMutex( vmode );
-    return vscrn[vmode].scrolltop ;
+    return page->scrolltop ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnSetScrollHorz                                                         */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetScrollHorz                                       | Page: ?        */
+/*----------------------------------------------------------+----------------*/
+/* Commented out as it doesn't appear to be used at all. Not adapted for
+ * multiple page support - DG, 2-JUN-2025
 LONG
 VscrnSetScrollHorz( BYTE vmode, LONG h )
 {
@@ -2748,69 +3043,108 @@ VscrnSetScrollHorz( BYTE vmode, LONG h )
     ReleaseVscrnMutex( vmode );
     return vscrn[vmode].hscroll ;
 }
+*/
 
-/*---------------------------------------------------------------------------*/
-/* VscrnSetBegin                                                             */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetPageBegin                                        | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 LONG
-VscrnSetBegin( BYTE vmode, LONG y )
+VscrnSetPageBegin( BYTE vmode, LONG y, int page )
+{
+
+    if ( vmode == VTERM && decsasd == SASD_STATUS )
+        vmode = VSTATUS ;
+
+    while ( y < 0 )
+        y += vscrn[vmode].pages[page].linecount ;
+
+    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
+    vscrn[vmode].pages[page].beg = y%vscrn[vmode].pages[page].linecount ;
+    ReleaseVscrnMutex( vmode );
+    return vscrn[vmode].pages[page].beg ;
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetBegin                                            | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+LONG
+VscrnSetBegin( BYTE vmode, LONG y, BOOL view )
+{
+   return VscrnSetPageBegin(
+		vmode, y, vscrn_current_page_number(vmode, view));
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetPageEnd                                          | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+LONG
+VscrnSetPageEnd( BYTE vmode, LONG y, int page )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
     while ( y < 0 )
-        y += vscrn[vmode].linecount ;
+        y += vscrn[vmode].pages[page].linecount ;
+
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-    vscrn[vmode].beg = y%vscrn[vmode].linecount ;
+    vscrn[vmode].pages[page].end = y%vscrn[vmode].pages[page].linecount ;
     ReleaseVscrnMutex( vmode );
-    return vscrn[vmode].beg ;
+    return vscrn[vmode].pages[page].end ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnSetEnd                                                               */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetEnd                                              | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 LONG
-VscrnSetEnd( BYTE vmode, LONG y )
+VscrnSetEnd( BYTE vmode, LONG y, BOOL view )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
-
-    while ( y < 0 )
-        y += vscrn[vmode].linecount ;
-    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-    vscrn[vmode].end = y%vscrn[vmode].linecount ;
-    ReleaseVscrnMutex( vmode );
-    return vscrn[vmode].end ;
+    return VscrnSetPageEnd(
+		vmode, y, vscrn_current_page_number(vmode, view));
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetBufferSize                                                        */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetPageBufferSize                                   | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 ULONG
-VscrnGetBufferSize( BYTE vmode )
+VscrnGetPageBufferSize( BYTE vmode, BOOL orStatusLine, int page )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
-    return vscrn[vmode].linecount ;
+    if (!vscrn_page_valid(vmode, page)) {
+        return 0;
+    }
+
+    return vscrn[vmode].pages[page].linecount ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnSetCurPos                                                            */
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetBufferSize                                       | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+ULONG
+VscrnGetBufferSize( BYTE vmode, BOOL orStatusLine, BOOL view )
+{
+    return VscrnGetPageBufferSize(
+		vmode, orStatusLine,
+		vscrn_current_page_number(vmode, view));
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnSetCurPos                                           | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
 position *
-VscrnSetCurPos( BYTE vmode, SHORT x, SHORT y )
+VscrnSetCurPosEx( BYTE vmode, SHORT x, SHORT y, BOOL orStatusLine )
 {
 #ifdef KUI_COMMENT
     char buf[30];
 #endif /* KUI */
 
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     vscrn[vmode].cursor.x = x%VscrnGetWidth(vmode)  ;
     vscrn[vmode].cursor.y = y
-      %(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) ;
+      %(VscrnGetHeightEx(vmode, orStatusLine)-(tt_status[vmode]?1:0)) ;
 
 #ifdef KUI_COMMENT
     ckmakmsg(buf,30,ckitoa(vscrn[vmode].cursor.x+1),", ",
@@ -2821,16 +3155,26 @@ VscrnSetCurPos( BYTE vmode, SHORT x, SHORT y )
     return &vscrn[vmode].cursor ;
 }
 
-/*---------------------------------------------------------------------------*/
-/* VscrnGetCurPos                                                            */
-/*---------------------------------------------------------------------------*/
 position *
-VscrnGetCurPos( BYTE vmode )
+VscrnSetCurPos( BYTE vmode, SHORT x, SHORT y ) {
+    return VscrnSetCurPosEx(vmode, x, y, TRUE);
+}
+
+/*----------------------------------------------------------+----------------*/
+/* VscrnGetCurPos                                           | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+position *
+VscrnGetCurPosEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     return &vscrn[vmode].cursor ;
+}
+
+position *
+VscrnGetCurPos( BYTE vmode ) {
+    return VscrnGetCurPosEx(vmode, TRUE);
 }
 
 
@@ -2839,35 +3183,99 @@ static unsigned short * attrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 
 /*---------------------------------------------------------------------------*/
-/* VscrnSetBufferSize                                                        */
+/* VscrnSetBufferSize                                       | Page: All      */
 /*---------------------------------------------------------------------------*/
+/* This is the function responsible for *creating* screen buffes. It is called
+ * from two places: VscrnInit, and clearscrollback.
+ *
+ * Parameters:
+ *  vmode
+ *      The screen buffer to create (or recreate with a new size)
+ *  newsize
+ *      Number of *scrollback lines* for page zero. All other pages have no
+ *      scrollback and use MAXTERMROW or newsize, whichever is *smaller* as
+ *      MAXTERMROW is the most K95 will ever render on screen.
+ *  new_page_count
+ *      Number of pages the vscrn should have.
+ *
+ * If newsize is smaller than the last call, or new_page_count different, the
+ * existing vscrn is discarded and a new one allocated.
+ */
 ULONG
-VscrnSetBufferSize( BYTE vmode, ULONG newsize )
+VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 {
+    /* Old sizes for page 0 only */
     static ULONG oldsize[VNUM]={0,0,0,0} ;
-    int i ;
-    videobuffer TmpScrn ;
+    static int   old_page_count[VNUM] = {1,1,1,1};
+    int i, pagenum, total_lines = 0 ;
     videoline * line ;
     ULONG rc = FALSE ;  /* Determines whether clearscreen needs to be called */
+    bool reset_pages = FALSE;
 
+    /* Don't see why VscrnSetBufferSize should act on the status line rather
+       than terminal if the host happens to put the cursor there.
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
-    debug(F101,"SetBufferSize","",newsize);
-    debug(F101,"SetBufferSize linecount","",vscrn[vmode].linecount);
+    /*   This is the function responsible for *creating* the screen buffer. It
+     *   is called from two places:
+     *     - VscrnInit - to create the initial buffers
+     *     - clearscrollback - to throw the old ones away and recreate them
+     *   The new size supplied by VscrnInit is the number of *scrollback lines*.
+     *	 This should apply only to page zero. Sizes for subsequent pages will be
+     *   MAXTERMROW or newsize, whichever is *smaller*. The K95 window will
+     *   never display *more* than MAXTERMROW so there is no point in having the
+     *   pages 1+ any larger.
+     */
+
+	/* TODO: I don't like this function. Its a bit inflexible. Ideally a chunk
+	 *   of it should be refactored into a SetPageSize() which just does the
+	 *   work for one page, and then this function calls SetPageSize() for each
+     *   page. Ideally the memory allocation process would be a bit different
+	 *   too - making each line MAXTERMCOL bytes long is both very wasteful,
+     *   and ultimately puts an arbitrary limit on maximum terminal width
+     *   (currently this is enough to fill a single 4K display with a 10pt
+     *   font on modern Windows hosts). Its probably going to have to change
+     *   substantially if/when support for sixels or higher unicode planes is
+	 *   needed too.
+     */
+
+    debug(F111,"SetBufferSize","vmode",vmode);
+    debug(F111,"SetBufferSize","newsize",newsize);
+    debug(F111,"SetBufferSize","pages",vscrn[vmode].page_count);
+    if (vscrn_view_page_valid(vmode)) {
+        debug(F101,"SetBufferSize page 0 linecount","",vscrn[vmode].pages[0].linecount);
+    } else {
+        debug(F100,"SetBufferSize page 0 invalid","",0);
+    }
 
     /* Wait for exclusive access to the screen */
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
-    if ( newsize < oldsize[vmode] ) { /* erase entire buffer and start again. */
-        free(vscrn[vmode].lines) ;
-        vscrn[vmode].linecount = 0 ;
-        vscrn[vmode].lines = 0 ;
-        vscrn[vmode].beg = 0 ;
-        vscrn[vmode].top = 0 ;
-        vscrn[vmode].scrolltop = 0 ;
-        vscrn[vmode].end = 0 ;
-        vscrn[vmode].cursor.x = vscrn[vmode].cursor.y = 0 ;
+    if ( newsize < oldsize[vmode] || new_page_count != old_page_count[vmode]) {
+         /* erase entire buffer and start again. */
+        debug(F100, "SetBufferSize discarding old buffer", "", 0);
+        if (vscrn[vmode].pages != NULL) {
+		    for (pagenum = 0; pagenum < old_page_count[vmode]; pagenum++ ) {
+			    free(vscrn[vmode].pages[pagenum].lines);
+			    vscrn[vmode].pages[pagenum].linecount = 0 ;
+			    vscrn[vmode].pages[pagenum].lines = 0 ;
+			    vscrn[vmode].pages[pagenum].beg = 0 ;
+        	    vscrn[vmode].pages[pagenum].top = 0 ;
+        	    vscrn[vmode].pages[pagenum].scrolltop = 0 ;
+        	    vscrn[vmode].pages[pagenum].end = 0 ;
+		    }
+
+            /* Free the pages array in case the page count has changed */
+            free(vscrn[vmode].pages);
+            vscrn[vmode].pages=NULL ;
+        }
+
+		/* move cursor to 0(0,0) and display to page 0 */
+        vscrn[vmode].cursor.x = vscrn[vmode].cursor.y =
+            vscrn[vmode].cursor.p = 0 ;
+		vscrn[vmode].view_page = 0;
+
         vscrn[vmode].marktop = 0 ;
         vscrn[vmode].markbot = 0 ;
         for ( i=0 ; i < 10 ; i++ )
@@ -2878,161 +3286,284 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
         attrmem[vmode]=NULL ;
     }
 
-    if ( vscrn[vmode].linecount == newsize ) {
+    if (vscrn[vmode].pages == NULL) {
+        debug(F111, "SetBufferSize allocating space for", "page_count", vscrn[vmode].page_count);
+        vscrn[vmode].page_count = new_page_count;
+        vscrn[vmode].pages = (vscrn_page_t*)malloc(
+            sizeof(vscrn_page_t) * vscrn[vmode].page_count);
+        memset(vscrn[vmode].pages, 0,
+               sizeof(vscrn_page_t) * vscrn[vmode].page_count);
+    }
+
+    /* We only care about the first pages size - all others have a fixed size */
+    if ( vscrn[vmode].pages[0].linecount == newsize ) {
+        debug(F100, "SetBufferSize no size change - done", "", 0);
+		/* Page 0 is already of the desired size - nothing more to do */
         ReleaseVscrnMutex( vmode ) ;
         return rc ;
     }
-    else if ( vscrn[vmode].linecount == 0 ) {
-        debug( F101,"VscrnSetBufferSize malloc size","",
-               newsize*sizeof(videoline) ) ;
-        vscrn[vmode].linecount = newsize ;
-        vscrn[vmode].lines = malloc(vscrn[vmode].linecount * sizeof(videoline)) ;
-        if ( !vscrn[vmode].lines )
-            fatal("VscrnSetBufferSize: unable to allocate memory for vscrn[].lines!");
-        vscrn[vmode].top = 0 ;
-        vscrn[vmode].scrolltop = 0 ;
-        vscrn[vmode].beg = 0 ;
+    else if ( vscrn[vmode].pages[0].linecount == 0 ) {
+		/* Page 0 isn't initialised, so we'll assume the others aren't either.
+		 * Re-initialise everything! */
+        debug(F100, "SetBufferSize allocating buffer space", "", 0);
+
         vscrn[vmode].width = tt_cols[vmode] ;
         vscrn[vmode].height = tt_rows[vmode]+(tt_status[vmode]?1:0);
-        vscrn[vmode].end = vscrn[vmode].height - 1 ;
+
+        for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
+            /* newsize only applies to the first page. Subsequent pages are all
+             * of MAXTERMROW or newsize lines, whichever is smaller */
+            int page_lines = pagenum == 0
+                ? newsize
+                : newsize < MAXTERMROW ? newsize : MAXTERMROW;
+            total_lines += page_lines;
+
+            debug(F101, "SetBufferSize allocating buffer space for page", "", pagenum);
+            debug(F111, "SetBufferSize allocating buffer space", "page_lines", page_lines);
+            debug(F111, "SetBufferSize allocating buffer space", "total_lines", total_lines);
+
+            debug( F101,"VscrnSetBufferSize malloc size","",
+                   page_lines*sizeof(videoline) ) ;
+            vscrn[vmode].pages[pagenum].linecount = page_lines ;
+            vscrn[vmode].pages[pagenum].lines = malloc(
+					page_lines * sizeof(videoline)) ;
+            if ( !vscrn[vmode].pages[pagenum].lines )
+                fatal("VscrnSetBufferSize: unable to allocate memory for"
+                      " vscrn[].pages[].lines!");
+            vscrn[vmode].pages[pagenum].top = 0 ;
+            vscrn[vmode].pages[pagenum].scrolltop = 0 ;
+            vscrn[vmode].pages[pagenum].beg = 0 ;
+            vscrn[vmode].pages[pagenum].end = vscrn[vmode].height - 1;
+			vscrn[vmode].pages[pagenum].margintop = 1;
+			vscrn[vmode].pages[pagenum].marginbot = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
+			vscrn[vmode].pages[pagenum].marginleft = 1;
+			vscrn[vmode].pages[pagenum].marginright = vscrn[vmode].width;
+        }
+
         vscrn[vmode].cursor.x = 0 ;
         vscrn[vmode].cursor.y = 0 ;
+        vscrn[vmode].cursor.p = 0 ;
         vscrn[vmode].marktop = -1 ;
         vscrn[vmode].markbot = -1 ;
+        if ( vscrn[vmode].popup != NULL )
+            free(vscrn[vmode].popup) ;
         vscrn[vmode].popup = NULL ;
         for ( i=0 ; i<10 ; i++)
            vscrn[vmode].bookmark[i] = -1 ;
 
-        cellmem[vmode] = malloc( (vscrn[vmode].linecount + 1) * MAXTERMCOL * sizeof(viocell) ) ;
+        debug( F101,"VscrnSetBufferSize for total cell count", "",
+               (total_lines + 1) * MAXTERMCOL);
+        debug( F101,"VscrnSetBufferSize cellmem size","",
+               (total_lines + 1) * MAXTERMCOL * sizeof(viocell) ) ;
+        debug( F101,"VscrnSetBufferSize attrmem size","",
+                (total_lines + 1) * MAXTERMCOL * sizeof(short)) ;
+        debug( F101,"VscrnSetBufferSize hyperlinkmem size","",
+                (total_lines + 1) * MAXTERMCOL * sizeof(short)) ;
+
+        cellmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(viocell) ) ;
         if ( !cellmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for cellmem[]!");
-        attrmem[vmode] = malloc( (vscrn[vmode].linecount + 1) * MAXTERMCOL * sizeof(short) ) ;
+        attrmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !attrmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for attrmem[]!");
-        hyperlinkmem[vmode] = malloc( (vscrn[vmode].linecount + 1) * MAXTERMCOL * sizeof(short) ) ;
+        hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
 
-        for ( i=0 ; i<vscrn[vmode].linecount ; i++ ) {
-            vscrn[vmode].lines[i].width = 0 ;
-            vscrn[vmode].lines[i].cells = cellmem[vmode] + i * MAXTERMCOL ;
-            vscrn[vmode].lines[i].vt_char_attrs = attrmem[vmode] + i * MAXTERMCOL ;
-            vscrn[vmode].lines[i].vt_line_attr = VT_LINE_ATTR_NORMAL ;
-            vscrn[vmode].lines[i].hyperlinks = hyperlinkmem[vmode] + i * MAXTERMCOL ;
-            vscrn[vmode].lines[i].markbeg = -1 ;
-            vscrn[vmode].lines[i].markshowend = -1 ;
-            vscrn[vmode].lines[i].markend = -1 ;
+		/* Loop over all lines in all pages assigning memory to them. As the
+         * various per-cell members are allocated in big blocks of memory, we
+         * need to keep track of not just which line in which page we're working
+         * with, but also which line in the set of all lines in all pages (i) */
+        debug(F100, "VscrnSetBufferSize allocating cell memory to lines", "", 0);
+		i = 0;
+		for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
+			int end_line = i + vscrn[vmode].pages[pagenum].linecount;
+            int j, mem_offset;
+        	for (j = 0 ; j < vscrn[vmode].pages[pagenum].linecount ; j++ ) {
+                i++;
+                mem_offset = i * MAXTERMCOL;
+
+            	vscrn[vmode].pages[pagenum].lines[j].width = 0 ;
+            	vscrn[vmode].pages[pagenum].lines[j].cells = cellmem[vmode] + mem_offset ;
+            	vscrn[vmode].pages[pagenum].lines[j].vt_char_attrs = attrmem[vmode] + mem_offset ;
+            	vscrn[vmode].pages[pagenum].lines[j].vt_line_attr = VT_LINE_ATTR_NORMAL ;
+            	vscrn[vmode].pages[pagenum].lines[j].hyperlinks = hyperlinkmem[vmode] + mem_offset ;
+            	vscrn[vmode].pages[pagenum].lines[j].markbeg = -1 ;
+            	vscrn[vmode].pages[pagenum].lines[j].markshowend = -1 ;
+            	vscrn[vmode].pages[pagenum].lines[j].markend = -1 ;
             }
+		}
 
         rc = TRUE ;
-        }
-    else if ( vscrn[vmode].linecount < newsize ) {
+    }
+    else if ( vscrn[vmode].pages[0].linecount < newsize ) {
+		/* Page 0 needs to be enlarged. Reallocate with a larger size and copy
+         * everything over. */
+        vscrn_t          TmpScrn ;
         viocell *        oldcellmem = cellmem[vmode] ;
         unsigned short * oldattrmem = attrmem[vmode] ;
         unsigned short * oldhyperlinkmem = hyperlinkmem[vmode] ;
+        int              old_lines;
 
+		/* Allocate a new vscrn of the desired size */
         memset(&TmpScrn,0,sizeof(TmpScrn));
-        TmpScrn.linecount = newsize ;
-        TmpScrn.lines = malloc(TmpScrn.linecount * sizeof(videoline)) ;
-        if ( !TmpScrn.lines )
-            fatal("VscrnSetBufferSize: unable to allocate memory for TmpScrn[].lines!");
-        TmpScrn.beg = 0 ;
-        TmpScrn.scrolltop = 0 ;
-        TmpScrn.top = (vscrn[vmode].beg <= vscrn[vmode].top) ? (vscrn[vmode].top - vscrn[vmode].beg)
-                            : (vscrn[vmode].top + vscrn[vmode].linecount - vscrn[vmode].beg) ;
-        TmpScrn.end = (TmpScrn.top + vscrn[vmode].height - 1)%TmpScrn.linecount ;
+		total_lines = 0;
+        old_lines = 0;
+
+        TmpScrn.page_count = new_page_count;
+        TmpScrn.pages = (vscrn_page_t*)malloc(
+            sizeof(vscrn_page_t) * TmpScrn.page_count);
+        memset(TmpScrn.pages, 0, sizeof(vscrn_page_t) * TmpScrn.page_count);
+
+		for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
+			/* newsize only applies to the first page. Subsequent pages are all
+             * of MAXTERMROW or newsize lines, whichever is smaller */
+			int page_lines = pagenum == 0
+                ? newsize
+                : newsize < MAXTERMROW ? newsize : MAXTERMROW;
+            total_lines += page_lines;
+            old_lines += vscrn[vmode].pages[pagenum].linecount;
+
+			TmpScrn.pages[pagenum].linecount = page_lines ;
+			TmpScrn.pages[pagenum].lines = malloc(page_lines * sizeof(videoline)) ;
+			if ( !TmpScrn.pages[pagenum].lines ) {
+            	fatal("VscrnSetBufferSize: unable to allocate memory for"
+						" TmpScrn.pages[].lines!");
+			}
+			TmpScrn.pages[pagenum].beg = 0 ;
+        	TmpScrn.pages[pagenum].scrolltop = 0 ;
+
+        	TmpScrn.pages[pagenum].top =
+				(vscrn[vmode].pages[pagenum].beg <= vscrn[vmode].pages[pagenum].top)
+					? (vscrn[vmode].pages[pagenum].top
+						- vscrn[vmode].pages[pagenum].beg)
+                    : (vscrn[vmode].pages[pagenum].top
+						+ vscrn[vmode].pages[pagenum].linecount
+						- vscrn[vmode].pages[pagenum].beg) ;
+        	TmpScrn.pages[pagenum].end = (TmpScrn.pages[pagenum].top
+					+ vscrn[vmode].height - 1) %
+						TmpScrn.pages[pagenum].linecount ;
+            TmpScrn.pages[pagenum].margintop = vscrn[vmode].pages[pagenum].margintop;
+            TmpScrn.pages[pagenum].marginbot = vscrn[vmode].pages[pagenum].marginbot;
+            TmpScrn.pages[pagenum].marginleft = vscrn[vmode].pages[pagenum].marginleft;
+            TmpScrn.pages[pagenum].marginright = vscrn[vmode].pages[pagenum].marginright;
+		}
+
         TmpScrn.cursor = vscrn[vmode].cursor ;
         TmpScrn.popup = vscrn[vmode].popup ;
         TmpScrn.marktop = TmpScrn.markbot = -1 ;
-                TmpScrn.width = vscrn[vmode].width ;
-                TmpScrn.height = vscrn[vmode].height ;
-        for ( i = 0 ; i < 10 ; i++ )
-           TmpScrn.bookmark[i] = (vscrn[vmode].beg <= vscrn[vmode].bookmark[i]) ?
-              (vscrn[vmode].bookmark[i] - vscrn[vmode].beg) :
-              ( vscrn[vmode].bookmark[i] + vscrn[vmode].linecount - vscrn[vmode].beg ) ;
+        TmpScrn.width = vscrn[vmode].width ;
+        TmpScrn.height = vscrn[vmode].height ;
 
-        cellmem[vmode] = malloc( (TmpScrn.linecount + 1) * MAXTERMCOL * sizeof(viocell) ) ;
+        for ( i = 0 ; i < 10 ; i++ ) {
+			/* Bookmarks are only supported on page 0 as thats the only one with
+			   scrollback */
+           TmpScrn.bookmark[i] = (vscrn[vmode].pages[0].beg <= vscrn[vmode].bookmark[i]) ?
+              (vscrn[vmode].bookmark[i] - vscrn[vmode].pages[0].beg) :
+              ( vscrn[vmode].bookmark[i] + vscrn[vmode].pages[0].linecount - vscrn[vmode].pages[0].beg ) ;
+		}
+
+        cellmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(viocell) ) ;
         if ( !cellmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for cellmem[]!");
-        memcpy( cellmem[vmode], oldcellmem, (vscrn[vmode].linecount + 1)
+        memcpy( cellmem[vmode], oldcellmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(viocell) ) ;
 
-        attrmem[vmode] = malloc( (TmpScrn.linecount + 1) * MAXTERMCOL * sizeof(short) ) ;
+        attrmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !attrmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for attrmem[]!");
-        memcpy( attrmem[vmode], oldattrmem, (vscrn[vmode].linecount + 1)
+        memcpy( attrmem[vmode], oldattrmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(short) ) ;
 
-        hyperlinkmem[vmode] = malloc( (TmpScrn.linecount + 1) * MAXTERMCOL * sizeof(short) ) ;
+        hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
-        memcpy( hyperlinkmem[vmode], oldhyperlinkmem, (vscrn[vmode].linecount + 1)
+        memcpy( hyperlinkmem[vmode], oldhyperlinkmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(short) ) ;
 
-        for ( i=0 ; i<vscrn[vmode].linecount ; i++ ) {
-            line = &vscrn[vmode].lines[(vscrn[vmode].beg+i)%vscrn[vmode].linecount] ;
-            TmpScrn.lines[i].width = line->width ;
-            line->width = 0 ;
-            TmpScrn.lines[i].cells = line->cells + (cellmem[vmode] - oldcellmem) ;
-            line->cells = NULL ;
-            TmpScrn.lines[i].vt_char_attrs = line->vt_char_attrs
-                + (attrmem[vmode] - oldattrmem);
-            line->vt_char_attrs = 0 ;
-            TmpScrn.lines[i].hyperlinks = line->hyperlinks
-                + (hyperlinkmem[vmode] - oldhyperlinkmem);
-            line->hyperlinks = 0 ;
-            TmpScrn.lines[i].vt_line_attr = line->vt_line_attr ;
-            line->vt_line_attr = 0 ;
-            line->markbeg = -1 ;
-            line->markshowend = -1 ;
-            line->markend = -1 ;
-        }
+		total_lines = 0;
+		for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
+			/* Initialise each line in the new vscrn page that exists in the old
+			 * vscrn page, in order */
+        	for ( i=0 ; i<vscrn[vmode].pages[pagenum].linecount ; i++ ) {
+				/* Grab the line from the old vscrn page */
+            	line = &vscrn[vmode].pages[pagenum].lines[
+					(vscrn[vmode].pages[pagenum].beg+i) %
+						vscrn[vmode].pages[pagenum].linecount] ;
 
-        for ( i ; i < TmpScrn.linecount ; i++ ) {
-            TmpScrn.lines[i].width = 0 ;
-            TmpScrn.lines[i].cells = cellmem[vmode] + (i+1) * MAXTERMCOL ;
-            TmpScrn.lines[i].vt_char_attrs = attrmem[vmode] + (i+1) * MAXTERMCOL ;
-            TmpScrn.lines[i].hyperlinks = hyperlinkmem[vmode] + (i+1) * MAXTERMCOL ;
-            TmpScrn.lines[i].vt_line_attr = VT_LINE_ATTR_NORMAL ;
-            TmpScrn.lines[i].markbeg = -1 ;
-            TmpScrn.lines[i].markshowend = -1 ;
-            TmpScrn.lines[i].markend = -1 ;
+				/* Set the matching line in the new vscrn page to the same width */
+            	TmpScrn.pages[pagenum].lines[i].width = line->width ;
+            	line->width = 0 ;
+
+				/* Assign it some memory */
+                TmpScrn.pages[pagenum].lines[i].cells = cellmem[vmode] + (line->cells - oldcellmem);
+            	line->cells = NULL ;
+
+            	TmpScrn.pages[pagenum].lines[i].vt_char_attrs = line->vt_char_attrs
+                	+ (attrmem[vmode] - oldattrmem);
+            	line->vt_char_attrs = 0 ;
+
+            	TmpScrn.pages[pagenum].lines[i].hyperlinks = line->hyperlinks
+                	+ (hyperlinkmem[vmode] - oldhyperlinkmem);
+            	line->hyperlinks = 0 ;
+
+            	TmpScrn.pages[pagenum].lines[i].vt_line_attr = line->vt_line_attr ;
+            	line->vt_line_attr = 0 ;
+            	line->markbeg = -1 ;
+            	line->markshowend = -1 ;
+            	line->markend = -1 ;
+			}
+
+			/* Then initialise any additional new lines in the page */
+        	for ( i ; i < TmpScrn.pages[pagenum].linecount ; i++ ) {
+            	TmpScrn.pages[pagenum].lines[i].width = 0 ;
+            	TmpScrn.pages[pagenum].lines[i].cells = cellmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
+            	TmpScrn.pages[pagenum].lines[i].vt_char_attrs = attrmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
+            	TmpScrn.pages[pagenum].lines[i].hyperlinks = hyperlinkmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
+            	TmpScrn.pages[pagenum].lines[i].vt_line_attr = VT_LINE_ATTR_NORMAL ;
+            	TmpScrn.pages[pagenum].lines[i].markbeg = -1 ;
+            	TmpScrn.pages[pagenum].lines[i].markshowend = -1 ;
+            	TmpScrn.pages[pagenum].lines[i].markend = -1 ;
+        	}
+
+			total_lines += i;
+			free(vscrn[vmode].pages[pagenum].lines) ;
         }
 
         free(oldcellmem) ;
         free(oldattrmem) ;
         free(oldhyperlinkmem) ;
-        free(vscrn[vmode].lines) ;
         vscrn[vmode] = TmpScrn ;
-        }
+    }
 
     ReleaseVscrnMutex( vmode ) ;
 
-    debug(F101,"SetBufferSize linecount","",vscrn[vmode].linecount);
-    debug(F101,"SetBufferSize lines","",vscrn[vmode].lines);
-    debug(F101,"SetBufferSize beg","",vscrn[vmode].beg);
-    debug(F101,"SetBufferSize top","",vscrn[vmode].top);
-    debug(F101,"SetBufferSize end","",vscrn[vmode].end);
+    debug(F101,"SetBufferSize linecount","",vscrn[vmode].pages[0].linecount);
+    debug(F101,"SetBufferSize lines","",vscrn[vmode].pages[0].lines);
+    debug(F101,"SetBufferSize beg","",vscrn[vmode].pages[0].beg);
+    debug(F101,"SetBufferSize top","",vscrn[vmode].pages[0].top);
+    debug(F101,"SetBufferSize end","",vscrn[vmode].pages[0].end);
     debug(F101,"SetBufferSize cursor.x","",vscrn[vmode].cursor.x);
     debug(F101,"SetBufferSize cursor.y","",vscrn[vmode].cursor.y);
 
     oldsize[vmode] = newsize ;
+    old_page_count[vmode] = vscrn[vmode].page_count;
     return rc ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnScroll                                                               */
+/* VscrnScrollPage                                          | Page: Specified*/
 /*---------------------------------------------------------------------------*/
 void
-VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
-             int nlines, int savetobuffer, CHAR fillchar) {
+VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
+             int nlines, int savetobuffer, CHAR fillchar, int page) {
     /* topmargin and bottommargin are zero based */
     viocell blankcell;
     videoline * line ;
     videoline   linetodelete ;
     int i,x;
     long  obeg, oend, otop, nbeg, nend, ntop ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -3041,7 +3572,7 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
         vmode = VSTATUS ;
 
     blankcell.c = fillchar ;
-    blankcell.a = cellcolor ;
+    blankcell.video_attr = cellcolor ;
 
     if ( updmode == TTU_SMOOTH )
         msleep(1) ;
@@ -3059,25 +3590,24 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
     switch (updown) {
         case UPWARD:
             if (savetobuffer && topmargin == 0) {
-                if (topmargin)
-                    {
+                if (topmargin) {
                     debug(F101,"WARNING scroll: savetobuffer but topmargin not zero","",topmargin);
-                    }
+                }
 
-                while ( scrollflag[vmode] && VscrnGetBegin(vmode) == VscrnGetScrollTop(vmode)
-                    && (VscrnGetEnd(vmode)+1)%VscrnGetBufferSize(vmode) == VscrnGetBegin(vmode) ) {
+                while ( scrollflag[vmode] && VscrnGetPageBegin(vmode, TRUE, page) == VscrnGetPageScrollTop(vmode, TRUE, page)
+                    && (VscrnGetPageEnd(vmode,TRUE,page)+1)%VscrnGetPageBufferSize(vmode, TRUE, page) == VscrnGetPageBegin(vmode, TRUE, page) ) {
                     ReleaseVscrnMutex(vmode);
                     msleep(1000);  /* give up time slice and wait for room */
                     RequestVscrnMutex(vmode,SEM_INDEFINITE_WAIT);
-                    }
+                }
 
-                obeg = VscrnGetBegin(vmode) ;
-                oend = VscrnGetEnd(vmode) ;
+                obeg = VscrnGetPageBegin(vmode, TRUE, page) ;
+                oend = VscrnGetPageEnd(vmode, TRUE, page) ;
                 if ( oend < obeg )
-                    oend += VscrnGetBufferSize(vmode) ;
-                otop = VscrnGetTop(vmode) ;
+                    oend += VscrnGetPageBufferSize(vmode, TRUE, page) ;
+                otop = VscrnGetPageTop(vmode, TRUE, page) ;
                 if ( otop < obeg )
-                    otop += VscrnGetBufferSize(vmode) ;
+                    otop += VscrnGetPageBufferSize(vmode, TRUE, page) ;
 
                 ntop = otop + nlines ;
 
@@ -3085,54 +3615,55 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
                                         -(tt_status[vmode]?2:1) > oend ) {
                     nend = ntop + VscrnGetHeight(vmode)
                                                 -(tt_status[vmode]?2:1) ;
-                    VscrnSetEnd( vmode, nend ) ;
-                    if ( obeg > 0 || obeg == 0 && nend >= VscrnGetBufferSize(vmode) - 1 ) {
-                        nbeg = VscrnSetBegin( vmode,nend + 1 ) ;
-                        }
+                    VscrnSetPageEnd( vmode, nend, page ) ;
+                    if ( obeg > 0 || obeg == 0 && nend >= VscrnGetPageBufferSize(vmode, TRUE, page) - 1 ) {
+                        nbeg = VscrnSetPageBegin( vmode,nend + 1, page ) ;
                     }
+                }
 
                 for ( i = 0 ; i < nlines ; i++ ) {
-                    line = VscrnGetLineFromTop(vmode,VscrnGetHeight(vmode)+i
-                                                -(tt_status[vmode]?1:0)) ;
+                    line = VscrnGetPageLineFromTop(vmode,VscrnGetHeight(vmode)+i
+                                                -(tt_status[vmode]?1:0), page) ;
                     if (line == NULL || line->cells == NULL) {
                         debug(F100,"VscrnScroll to buffer - line->cells = NULL","",0);
                         break;
-                        }
+                    }
                     if (line->vt_char_attrs == NULL) {
                         debug(F100,"VscrnScroll to buffer - line->vt_char_attrs = NULL","",0);
                         break;
-                        }
+                    }
                     line->width = VscrnGetWidth(vmode)  ;
                     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                    for ( x = 0 ; x < MAXTERMCOL ; x++ )
-                        {
+                    for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
                         line->cells[x] = blankcell ;
                         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
-                        }
                     }
+                }
 
-                VscrnSetTop( vmode,ntop ) ;
+                VscrnSetPageTop( vmode,ntop, TRUE, page ) ;
                 if ( bottommargin != VscrnGetHeight(vmode)
                                         -(tt_status[vmode]?2:1) )
-                    VscrnScroll(vmode,DOWNWARD, bottommargin, VscrnGetHeight(vmode)
-                                 -(tt_status[vmode]?2:1), 1, FALSE, fillchar) ;
-                }
+                    VscrnScrollPage(vmode,DOWNWARD, bottommargin, VscrnGetHeight(vmode)
+                                 -(tt_status[vmode]?2:1), 1, FALSE, fillchar, page) ;
+            }
             else {
+                vscrn_page_t *p = &vscrn[vmode].pages[page];
+
                 for ( i = topmargin ; i <= bottommargin - nlines ; i++ ) {
                     /* save line to be deleted */
-                    linetodelete = *VscrnGetLineFromTop(vmode,i) ;
+                    linetodelete = *VscrnGetPageLineFromTop(vmode, i, page) ;
 
                     /* then copy back a line */
-                    line = VscrnGetLineFromTop(vmode,nlines+i) ;
+                    line = VscrnGetPageLineFromTop(vmode, nlines+i, page) ;
                     if ( line == NULL )
                         break;
-                    vscrn[vmode].lines[(vscrn[vmode].top+i)%vscrn[vmode].linecount] = *line ;
+                    p->lines[(p->top+i)%p->linecount] = *line ;
                     line->cells = linetodelete.cells ;
                     line->vt_char_attrs = linetodelete.vt_char_attrs ;
-                    }
+                }
 
                 for ( i = nlines-1 ; i >= 0 ; i-- ) {
-                    line = VscrnGetLineFromTop(vmode,bottommargin-i) ;
+                    line = VscrnGetPageLineFromTop(vmode, bottommargin-i, page) ;
                     if (line == NULL || line->cells == NULL) {
                         debug(F100,"VscrnScroll to buffer - line->cells = NULL","",0);
                         }
@@ -3150,46 +3681,50 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
                 }
 #ifndef NOKVERBS
             if ( scrollstatus[vmode] && !tt_roll[vmode] && !markmodeflag[vmode] ) {
-                if ( (VscrnGetTop(vmode)+VscrnGetHeight(vmode)
-                                        -(tt_status[vmode]?2:1))%VscrnGetBufferSize(vmode)
-                    == VscrnGetEnd(vmode) )
+                if ( (VscrnGetPageTop(vmode, TRUE, page)+VscrnGetHeight(vmode)
+                                        -(tt_status[vmode]?2:1))%VscrnGetPageBufferSize(vmode, TRUE, page)
+                    == VscrnGetPageEnd(vmode, TRUE, page) ) {
                     putkverb( vmode, K_ENDSCN ) ;
                 }
+            }
 #endif /* NOKVERBS */
             break;
 
-        case DOWNWARD:
+        case DOWNWARD: {
+            vscrn_page_t *p = &vscrn[vmode].pages[page];
+
             for ( i = bottommargin ; i >= topmargin+nlines ; i-- ) {
                 /* save line to be deleted */
-                linetodelete = *VscrnGetLineFromTop(vmode,i) ;
+                linetodelete = *VscrnGetPageLineFromTop(vmode, i, page) ;
 
                 /* then copy back a line */
-                line = VscrnGetLineFromTop(vmode,i-nlines) ;
+                line = VscrnGetPageLineFromTop(vmode, i-nlines, page) ;
                 if ( line == NULL )
                     break;
-                vscrn[vmode].lines[(vscrn[vmode].top+i)%vscrn[vmode].linecount] = *line ;
+
+                p->lines[(p->top+i)%p->linecount] = *line ;
+
                 line->cells = linetodelete.cells ;
                 line->vt_char_attrs = linetodelete.vt_char_attrs ;
-                }
+            }
 
             for ( i = 0 ; i < nlines ; i++ ) {
-                line = VscrnGetLineFromTop(vmode,topmargin+i) ;
+                line = VscrnGetPageLineFromTop(vmode, topmargin+i, page) ;
                 if (line == NULL || line->cells == NULL) {
                     debug(F100,"VscrnScroll to buffer - line->cells = NULL","",0);
-                    }
+                }
                 if (line->vt_char_attrs == NULL) {
                     debug(F100,"VscrnScroll to buffer - line->vt_char_attrs = NULL","",0);
-                    }
+                }
                 line->width = VscrnGetWidth(vmode)  ;
                 line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                for ( x = 0 ; x < MAXTERMCOL ; x++ )
-                    {
+                for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
                     line->cells[x] = blankcell ;
                     line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
-                    }
                 }
-                break;
-
+            }
+            break;
+        }
         default: /* ignore */ ;
     }
     ReleaseVscrnMutex( vmode ) ;
@@ -3198,51 +3733,68 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
 
 
 /*---------------------------------------------------------------------------*/
-/* VscrnMark                                                                 */
+/* VscrnScroll                                              | Page: Specified*/
+/*---------------------------------------------------------------------------*/
+void
+VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
+             int nlines, int savetobuffer, CHAR fillchar, BOOL view_page) {
+
+	VscrnScrollPage(
+		vmode,updown, topmargin, bottommargin, nlines, savetobuffer, fillchar,
+		vscrn_current_page_number(vmode, view_page));
+}
+
+
+/*---------------------------------------------------------------------------*/
+/* VscrnMark                                                | Page: View     */
 /*---------------------------------------------------------------------------*/
 void
 VscrnMark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
 {
     int x ;
     LONG yy, marktop, markbot, beg, end ;
+	vscrn_page_t *page = &vscrn_view_page(vmode);
 
     if ( xbeg < 0 || xend < 0 )
         return ;
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( !vscrn_view_page_valid(vmode) )
         return;
 
     while ( y < 0 )
-        y += vscrn[vmode].linecount ;
-    y = y%vscrn[vmode].linecount ;
+        y += page->linecount ;
+    y = y%page->linecount ;
 
-    if ( xend >= vscrn[vmode].lines[y].width )
-        xend = vscrn[vmode].lines[y].width-1 ;
+    if ( xend >= page->lines[y].width )
+        xend = page->lines[y].width-1 ;
 
-    yy = ( y - vscrn[vmode].beg + vscrn[vmode].linecount ) % vscrn[vmode].linecount ;
+    yy = ( y - page->beg + page->linecount )
+			% page->linecount ;
     beg = 0 ;
-    end = ( vscrn[vmode].end - vscrn[vmode].beg + vscrn[vmode].linecount ) % vscrn[vmode].linecount ;
-    marktop = ( vscrn[vmode].marktop - vscrn[vmode].beg + vscrn[vmode].linecount ) % vscrn[vmode].linecount ;
-    markbot = ( vscrn[vmode].markbot - vscrn[vmode].beg + vscrn[vmode].linecount ) % vscrn[vmode].linecount ;
+    end = ( page->end - page->beg
+			+ page->linecount ) % page->linecount ;
+    marktop = ( vscrn[vmode].marktop - page->beg + page->linecount ) % page->linecount ;
+    markbot = ( vscrn[vmode].markbot - page->beg + page->linecount ) % page->linecount ;
 
     if ( vscrn[vmode].marktop == -1 || vscrn[vmode].markbot == -1 )
     {
        vscrn[vmode].marktop = vscrn[vmode].markbot = y ;
-       vscrn[vmode].lines[y].markbeg = xbeg ;
-       vscrn[vmode].lines[y].markend = xend ;
+       page->lines[y].markbeg = xbeg ;
+       page->lines[y].markend = xend ;
     }
     else
     {
         if ( yy >= marktop && yy <= markbot ) {
-            if ( vscrn[vmode].lines[y].markbeg == -1 ||
-                xbeg < vscrn[vmode].lines[y].markbeg )
-                vscrn[vmode].lines[y].markbeg = xbeg ;
-            if ( vscrn[vmode].lines[y].markend == -1 ||
-                xend > vscrn[vmode].lines[y].markend )
-                vscrn[vmode].lines[y].markend = xend ;
+            if ( page->lines[y].markbeg == -1 ||
+                xbeg < page->lines[y].markbeg )
+                page->lines[y].markbeg = xbeg ;
+            if ( page->lines[y].markend == -1 ||
+                xend > page->lines[y].markend )
+                page->lines[y].markend = xend ;
             }
         else {
             if ( yy < marktop ) {
@@ -3251,152 +3803,160 @@ VscrnMark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
             else {
                 vscrn[vmode].markbot = y ;
                 }
-            vscrn[vmode].lines[y].markbeg = xbeg ;
-            vscrn[vmode].lines[y].markend = xend ;
+            page->lines[y].markbeg = xbeg ;
+            page->lines[y].markend = xend ;
             }
         }
 
-    vscrn[vmode].lines[y].markshowend = vscrn[vmode].lines[y].markend ;
-    if ( vscrn[vmode].lines[y].markend >= 0 &&
-        vscrn[vmode].lines[y].markbeg >= 0 ) {
-        for ( x = vscrn[vmode].lines[y].markend ; x >= vscrn[vmode].lines[y].markbeg ; x-- ) {
-            if (vscrn[vmode].lines[y].cells[x].c == ' ')
-                vscrn[vmode].lines[y].markshowend-- ;
+    page->lines[y].markshowend = page->lines[y].markend ;
+    if ( page->lines[y].markend >= 0 &&
+        page->lines[y].markbeg >= 0 ) {
+        for ( x = page->lines[y].markend ; x >= page->lines[y].markbeg ; x-- ) {
+            if (page->lines[y].cells[x].c == ' ')
+                page->lines[y].markshowend-- ;
             else
                 break ;
             }
         }
 
-    if ( vscrn[vmode].lines[y].markshowend < vscrn[vmode].lines[y].markbeg )
-            vscrn[vmode].lines[y].markshowend = -1 ;
+    if ( page->lines[y].markshowend < page->lines[y].markbeg )
+            page->lines[y].markshowend = -1 ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnUnmark                                                               */
+/* VscrnUnmark                                              | Page: View     */
 /*---------------------------------------------------------------------------*/
 void
 VscrnUnmark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
 {
     int x ;
+	vscrn_page_t* page;
 
     if ( xbeg < 0 || xend < 0 )
         return ;
 
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+	page = &vscrn_view_page(vmode);
 
-    if ( vscrn[vmode].lines == NULL )
+    /* No marking on the status line, even if it is host-writable
+    if ( vmode == VTERM && decsasd == SASD_STATUS )
+        vmode = VSTATUS ; */
+
+    if ( page->lines == NULL )
         return;
 
     while ( y < 0 )
-        y += vscrn[vmode].linecount ;
-    y = y%vscrn[vmode].linecount ;
+        y += page->linecount ;
+    y = y%page->linecount ;
 
     if ( vscrn[vmode].marktop != -1 && vscrn[vmode].markbot != -1 ) {
         if ( vscrn[vmode].marktop <= vscrn[vmode].markbot ) {
             if ( y >= vscrn[vmode].marktop && y <= vscrn[vmode].markbot ) {
-                if ( xbeg <= vscrn[vmode].lines[y].markbeg && xend >= vscrn[vmode].lines[y].markend )
-                    vscrn[vmode].lines[y].markbeg = vscrn[vmode].lines[y].markend = -1 ;
-                else if ( xbeg <= vscrn[vmode].lines[y].markbeg && xend < vscrn[vmode].lines[y].markend )
-                    vscrn[vmode].lines[y].markbeg = xend + 1 ;
-                else if ( xbeg > vscrn[vmode].lines[y].markbeg && xend >= vscrn[vmode].lines[y].markend )
-                    vscrn[vmode].lines[y].markend = xbeg - 1 ;
+                if ( xbeg <= page->lines[y].markbeg && xend >= page->lines[y].markend )
+                    page->lines[y].markbeg = page->lines[y].markend = -1 ;
+                else if ( xbeg <= page->lines[y].markbeg && xend < page->lines[y].markend )
+                    page->lines[y].markbeg = xend + 1 ;
+                else if ( xbeg > page->lines[y].markbeg && xend >= page->lines[y].markend )
+                    page->lines[y].markend = xbeg - 1 ;
                 }
             }
         else {
             if ( y >= vscrn[vmode].marktop || y <= vscrn[vmode].markbot ) {
-                if ( xbeg <= vscrn[vmode].lines[y].markbeg && xend >= vscrn[vmode].lines[y].markend )
-                    vscrn[vmode].lines[y].markbeg = vscrn[vmode].lines[y].markend = -1 ;
-                else if ( xbeg <= vscrn[vmode].lines[y].markbeg && xend < vscrn[vmode].lines[y].markend )
-                    vscrn[vmode].lines[y].markbeg = xend + 1 ;
-                else if ( xbeg > vscrn[vmode].lines[y].markbeg && xend >= vscrn[vmode].lines[y].markend )
-                    vscrn[vmode].lines[y].markend = xbeg - 1 ;
+                if ( xbeg <= page->lines[y].markbeg && xend >= page->lines[y].markend )
+                    page->lines[y].markbeg = page->lines[y].markend = -1 ;
+                else if ( xbeg <= page->lines[y].markbeg && xend < page->lines[y].markend )
+                    page->lines[y].markbeg = xend + 1 ;
+                else if ( xbeg > page->lines[y].markbeg && xend >= page->lines[y].markend )
+                    page->lines[y].markend = xbeg - 1 ;
                 }
             }
 
         if ( y == vscrn[vmode].marktop &&
             y == vscrn[vmode].markbot &&
-            vscrn[vmode].lines[y].markbeg == -1 &&
-            vscrn[vmode].lines[y].markend == -1 )
+            page->lines[y].markbeg == -1 &&
+            page->lines[y].markend == -1 )
             vscrn[vmode].marktop = vscrn[vmode].markbot = -1 ;  /* marktop,markbot are long */
         else if ( y == vscrn[vmode].marktop &&
-            vscrn[vmode].lines[y].markbeg == -1 &&
-            vscrn[vmode].lines[y].markend == -1 )
-            vscrn[vmode].marktop = (vscrn[vmode].marktop+1)%vscrn[vmode].linecount ;
+            page->lines[y].markbeg == -1 &&
+            page->lines[y].markend == -1 )
+            vscrn[vmode].marktop = (vscrn[vmode].marktop+1)%page->linecount ;
         else if ( y == vscrn[vmode].markbot &&
-            vscrn[vmode].lines[y].markbeg == -1 &&
-            vscrn[vmode].lines[y].markend == -1 )
-            vscrn[vmode].markbot = (vscrn[vmode].markbot-1+vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+            page->lines[y].markbeg == -1 &&
+            page->lines[y].markend == -1 )
+            vscrn[vmode].markbot = (vscrn[vmode].markbot-1+page->linecount)%page->linecount ;
         }
 
-    vscrn[vmode].lines[y].markshowend = vscrn[vmode].lines[y].markend ;
-    if ( vscrn[vmode].lines[y].markend >= 0 &&
-        vscrn[vmode].lines[y].markbeg >= 0 ) {
-        for ( x = vscrn[vmode].lines[y].markend ; x >= vscrn[vmode].lines[y].markbeg ; x-- ) {
-            if (vscrn[vmode].lines[y].cells[x].c == ' ')
-                vscrn[vmode].lines[y].markshowend-- ;
+    page->lines[y].markshowend = page->lines[y].markend ;
+    if ( page->lines[y].markend >= 0 &&
+        page->lines[y].markbeg >= 0 ) {
+        for ( x = page->lines[y].markend ; x >= page->lines[y].markbeg ; x-- ) {
+            if (page->lines[y].cells[x].c == ' ')
+                page->lines[y].markshowend-- ;
             else
                 break ;
             }
         }
 
-    if ( vscrn[vmode].lines[y].markshowend < vscrn[vmode].lines[y].markbeg )
-            vscrn[vmode].lines[y].markshowend = -1 ;
+    if ( page->lines[y].markshowend < page->lines[y].markbeg )
+            page->lines[y].markshowend = -1 ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnUnmarkAll                                                            */
+/* VscrnUnmarkAll                                           | Page: View     */
 /*---------------------------------------------------------------------------*/
 void
 VscrnUnmarkAll( BYTE vmode )
 {
     long y ;
+	vscrn_page_t* page = &vscrn_view_page(vmode);
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( page->lines == NULL )
         return;
 
     if ( vscrn[vmode].marktop != -1 && vscrn[vmode].markbot != -1 ) {
         if ( vscrn[vmode].marktop <= vscrn[vmode].markbot ) {
             for ( y = vscrn[vmode].marktop ; y <= vscrn[vmode].markbot ; y++ )
-                vscrn[vmode].lines[y].markbeg =
-                    vscrn[vmode].lines[y].markshowend =
-                    vscrn[vmode].lines[y].markend = -1 ;
+                page->lines[y].markbeg =
+                    page->lines[y].markshowend =
+                    page->lines[y].markend = -1 ;
             }
         else {
-            for ( y = vscrn[vmode].marktop ; y < vscrn[vmode].linecount ; y++ )
-                vscrn[vmode].lines[y].markbeg =
-                    vscrn[vmode].lines[y].markshowend =
-                    vscrn[vmode].lines[y].markend = -1 ;
+            for ( y = vscrn[vmode].marktop ; y < page->linecount ; y++ )
+                page->lines[y].markbeg =
+                    page->lines[y].markshowend =
+                    page->lines[y].markend = -1 ;
             for ( y = 0 ; y <= vscrn[vmode].markbot ; y++ )
-                vscrn[vmode].lines[y].markbeg =
-                    vscrn[vmode].lines[y].markshowend =
-                    vscrn[vmode].lines[y].markend = -1 ;
+                page->lines[y].markbeg =
+                    page->lines[y].markshowend =
+                    page->lines[y].markend = -1 ;
             }
         }
     vscrn[vmode].marktop = vscrn[vmode].markbot = -1 ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnIsLineMarked                                                         */
+/* VscrnIsLineMarked                                        | Page: View     */
 /*---------------------------------------------------------------------------*/
 BOOL
 VscrnIsLineMarked( BYTE vmode, LONG y )
 {
     BOOL rc = FALSE ;
+	vscrn_page_t* page = &vscrn_view_page(vmode);
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( page->lines == NULL )
         return rc;
 
     if ( vscrn[vmode].marktop != -1 && vscrn[vmode].markbot != -1 ) {
         while ( y < 0 )
-            y += vscrn[vmode].linecount ;
-        y = y%vscrn[vmode].linecount ;
+            y += page->linecount ;
+        y = y%page->linecount ;
 
         if ( vscrn[vmode].marktop <= vscrn[vmode].markbot ) {
             rc = ( y >= vscrn[vmode].marktop && y <= vscrn[vmode].markbot ) ;
@@ -3410,31 +3970,33 @@ VscrnIsLineMarked( BYTE vmode, LONG y )
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnIsMarked                                                             */
+/* VscrnIsMarked                                            | Page: View     */
 /*---------------------------------------------------------------------------*/
 BOOL
 VscrnIsMarked( BYTE vmode, LONG y, SHORT x )
 {
     BOOL rc = FALSE ;
+	vscrn_page_t* page = &vscrn_view_page(vmode);
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
-    if ( vscrn[vmode].lines == NULL )
+    if ( page->lines == NULL )
         return rc;
 
     if ( vscrn[vmode].marktop != -1 && vscrn[vmode].markbot != -1 ) {
         while ( y < 0 )
-            y += vscrn[vmode].linecount ;
-        y = y%vscrn[vmode].linecount ;
+            y += page->linecount ;
+        y = y%page->linecount ;
 
         if ( vscrn[vmode].marktop <= vscrn[vmode].markbot ) {
             rc = ( y >= vscrn[vmode].marktop && y <= vscrn[vmode].markbot &&
-                x >= vscrn[vmode].lines[y].markbeg && x <= vscrn[vmode].lines[y].markend ) ;
+                x >= page->lines[y].markbeg && x <= page->lines[y].markend ) ;
             }
         else {
             rc = ( ( y >= vscrn[vmode].marktop || y <= vscrn[vmode].markbot ) &&
-                x >= vscrn[vmode].lines[y].markbeg && x <= vscrn[vmode].lines[y].markend ) ;
+                x >= page->lines[y].markbeg && x <= page->lines[y].markend ) ;
             }
         }
 
@@ -3442,7 +4004,7 @@ VscrnIsMarked( BYTE vmode, LONG y, SHORT x )
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnIsPopup                                                              */
+/* VscrnIsPopup                                             | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 bool
 VscrnIsPopup( BYTE vmode )
@@ -3455,13 +4017,14 @@ VscrnIsPopup( BYTE vmode )
 }
 
 /*---------------------------------------------------------------------------*/
-/* VscrnSetPopup                                                             */
+/* VscrnSetPopup                                            | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 void
 VscrnSetPopup( BYTE vmode, videopopup * pu )
 {
+    /* Popups on the status line? I don't think so!
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     /* Wait for exclusive access to the screen */
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
@@ -3478,7 +4041,7 @@ VscrnSetPopup( BYTE vmode, videopopup * pu )
 }
 
 /*---------------------------------------------------------------------------*/
-/* ResetPopup                                                                */
+/* ResetPopup                                               | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 void
 VscrnResetPopup( BYTE vmode )
@@ -3533,6 +4096,10 @@ IsURLChar( USHORT ch )
 #endif /* COMMENT */
 }
 
+/*---------------------------------------------------------------------------*/
+/* IsCellPartOfURL                                          | Page: View     */
+/*---------------------------------------------------------------------------*/
+/* This ONLY called from the renderer, so it must be view-page only */
 int
 IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
 {
@@ -3578,9 +4145,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
 
     rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
     if ( scrollflag[mode] )
-        line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + brow );
+        line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
     else
-        line = VscrnGetLineFromTop( mode, brow );
+        line = VscrnGetLineFromTop( mode, brow, TRUE );
     rc = ReleaseVscrnMutex( mode ) ;
     if ( !line || line->width == 0 )
         return(retval = 0);
@@ -3613,9 +4180,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
         brow--;
         rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + brow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
         else
-            line = VscrnGetLineFromTop( mode, brow );
+            line = VscrnGetLineFromTop( mode, brow, TRUE );
         rc = ReleaseVscrnMutex( mode ) ;
         if ( !line || line->width == 0 )
             return(retval = 0);
@@ -3627,9 +4194,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
     /* Find the end of the URL */
     rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
     if ( scrollflag[mode] )
-        line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + erow );
+        line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
     else
-        line = VscrnGetLineFromTop( mode, erow );
+        line = VscrnGetLineFromTop( mode, erow, TRUE );
     rc = ReleaseVscrnMutex( mode ) ;
     if ( !line || line->width == 0 )
         return(retval = 0);
@@ -3645,9 +4212,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
                     erow--;
                     rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
                     if ( scrollflag[mode] )
-                        line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + erow );
+                        line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
                     else
-                        line = VscrnGetLineFromTop( mode, erow );
+                        line = VscrnGetLineFromTop( mode, erow, TRUE );
                     rc = ReleaseVscrnMutex( mode ) ;
                     if ( !line || line->width == 0 )
                         return(retval = 0);
@@ -3663,9 +4230,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
                         erow--;
                         rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
                         if ( scrollflag[mode] )
-                            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + erow );
+                            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
                         else
-                            line = VscrnGetLineFromTop( mode, erow );
+                            line = VscrnGetLineFromTop( mode, erow, TRUE );
                         rc = ReleaseVscrnMutex( mode ) ;
                         if ( !line || line->width == 0 )
                             return(retval = 0);
@@ -3683,9 +4250,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
         erow++;
         rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + erow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
         else
-            line = VscrnGetLineFromTop( mode, erow );
+            line = VscrnGetLineFromTop( mode, erow, TRUE );
         rc = ReleaseVscrnMutex( mode ) ;
         if ( !line || line->width == 0 )
             return(retval = 0);
@@ -3705,9 +4272,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
     if ( brow == erow ) {
         rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + brow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
         else
-            line = VscrnGetLineFromTop( mode, brow );
+            line = VscrnGetLineFromTop( mode, brow, TRUE );
         rc = ReleaseVscrnMutex( mode ) ;
         cells = line->cells;
 
@@ -3718,9 +4285,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
         /* handle the first row - bcol to end */
         rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + brow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
         else
-            line = VscrnGetLineFromTop( mode, brow );
+            line = VscrnGetLineFromTop( mode, brow, TRUE );
         rc = ReleaseVscrnMutex( mode ) ;
         cells = line->cells;
 
@@ -3731,9 +4298,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
         for ( j=brow+1; j<erow; j++ ) {
             rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
             if ( scrollflag[mode] )
-                line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + j );
+                line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + j );
             else
-                line = VscrnGetLineFromTop( mode, j );
+                line = VscrnGetLineFromTop( mode, j, TRUE );
             rc = ReleaseVscrnMutex( mode ) ;
             cells = line->cells;
 
@@ -3744,9 +4311,9 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
         /* handle the last row - begin to ecol */
         rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + erow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
         else
-            line = VscrnGetLineFromTop( mode, erow );
+            line = VscrnGetLineFromTop( mode, erow, TRUE );
         rc = ReleaseVscrnMutex( mode ) ;
         cells = line->cells;
 
@@ -3809,9 +4376,13 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
     return(retval);
 }
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
-/* TermScrnUpd                                                               */
+/* TermScrnUpd                                              | Page: View     */
 /*---------------------------------------------------------------------------*/
+/* This is the thread that handles rendering the entre UI on OS/2 (in a VIO
+ * window), and in the console-mode (non-KUI) version on Windows.
+ */
 #define URLMINCNT 4096
 #define NEW_EXCLUSIVE 1
 void
@@ -3825,7 +4396,6 @@ TermScrnUpd( void * threadinfo)
                    xho,                 /* horizontal scrolling offset */
                    xo, yo ;             /* offsets for Popup positioning */
     position cursor ;
-    char buffer[MAXTERMCOL+1] ;
     APIRET rc ;
     char * status ;
     int cursor_offset = 0 ;
@@ -3842,13 +4412,12 @@ TermScrnUpd( void * threadinfo)
     extern int decssdt ;
     extern char hoststatusline[] ;
     extern int tt_modechg;
+    extern bool decssdt_override;
     int old_tt_update ;
     int avm ;                           /* Active vmode */
     int prty = priority;
-#ifndef KUI
-    CK_VIDEOMODEINFO mi;
-#endif /* KUI */
     int incnt = 0;
+	vscrn_page_t* page = NULL;
 
 #ifndef ONETERMUPD
     vmode = VTERM ;
@@ -3876,10 +4445,18 @@ TermScrnUpd( void * threadinfo)
         fatal("TermScrnUpd: Unable to allocate memory for Video Display Workspace");
     }
     defaultcell.c = ' ' ;
-    defaultcell.a = vmode == VCMD ? colorcmd :
+    defaultcell.video_attr = vmode == VCMD ? colorcmd :
       (colorreset ? colornormal : defaultattribute) ;
     defaultflipcell = defaultcell ;
-    byteswapcolors( defaultflipcell.a ) ;
+    /* This commented out as it's a meaningless expression - byteswapcolors
+     * doesn't alter its parameter; it returns a value that you've got to store
+     * somewhere. There is no source control history for K95 so I've no idea why
+     * this line is here. Its it a bug? Is it really supposed to be
+     * defaultflipcell.video_attr = byteswapcolors( defaultflipcell.video_attr )? Or is it just
+     * some old left-over code that should have been deleted as part of some
+     * past refactoring? I have no idea.  -- DG
+    byteswapcolors( defaultflipcell.video_attr ) ;
+     */
     debug(F101,"VscrnGetWidth() ","",VscrnGetWidth(vmode) ) ;
     debug(F101,"VscrnGetDisplayHeight()","",VscrnGetDisplayHeight(vmode)) ;
     WrtNCell( defaultcell, VscrnGetWidth(vmode)  * (VscrnGetDisplayHeight(vmode)), 0, 0 ) ;
@@ -3907,6 +4484,9 @@ TermScrnUpd( void * threadinfo)
             old_tt_update = tt_update ;
         }
         avm = vmode ;
+
+		/* Get current page on screen */
+		page = &vscrn_view_page(avm);
 
 #ifdef NT
         if ( prty != priority ) {
@@ -4013,10 +4593,10 @@ TermScrnUpd( void * threadinfo)
 #endif /* NEW_EXCLUSIVE */
                 /* Get the next line */
                 if (!scrollflag[avm]) {
-                    line = &vscrn[avm].lines[(vscrn[avm].top+y)%vscrn[avm].linecount] ;
+                    line = &page->lines[(page->top+y)%page->linecount] ;
                 }
                 else {
-                    line = &vscrn[avm].lines[(vscrn[avm].scrolltop+y)%vscrn[avm].linecount] ;
+                    line = &page->lines[(page->scrolltop+y)%page->linecount] ;
                 }
 
                 /* copy the screen data to the buffer */
@@ -4041,23 +4621,23 @@ TermScrnUpd( void * threadinfo)
                                 if ( blinkon )
                                 {
                                     pDcell->c = pScell->c ;
-                                    pDcell->a = (pDcell+1)->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr = (pDcell+1)->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                                 else
                                 {
                                     pDcell->c = ' ' ;
-                                    pDcell->a = (pDcell+1)->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr = (pDcell+1)->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                             }
                             else
                             {
                                 pDcell->c = pScell->c ;
-                                pDcell->a = (pDcell+1)->a =
-                                    ComputeColorFromAttr( avm, pScell->a,
+                                pDcell->video_attr = (pDcell+1)->video_attr =
+                                    ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
                             }
                             (pDcell+1)->c = ' ' ;
@@ -4083,23 +4663,23 @@ TermScrnUpd( void * threadinfo)
                                 if ( blinkon )
                                 {
                                     pDcell->c = pScell->c ;
-                                    pDcell->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                                 else
                                 {
                                     pDcell->c = ' ' ;
-                                    pDcell->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                             }
                             else
                             {
                                 pDcell->c = pScell->c ;
-                                pDcell->a =
-                                    ComputeColorFromAttr( avm, pScell->a,
+                                pDcell->video_attr =
+                                    ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
                             }
                         }
@@ -4111,8 +4691,8 @@ TermScrnUpd( void * threadinfo)
                     }
 #ifdef VSCRN_DEBUG
                     debug(F111,"TermScrnUpd","OUCH!",
-                          (scrollflag[avm]?(vscrn[avm].scrolltop+y)
-                           :(vscrn[avm].top+y))%vscrn[avm].linecount);
+                          (scrollflag[avm]?(page->scrolltop+y)
+                           :(page->top+y))%page->linecount);
 #endif /* VSCRN_DEBUG */
                 }
 
@@ -4136,7 +4716,7 @@ TermScrnUpd( void * threadinfo)
                         }
                         else
                             thecells[c+xo+i].c = vscrn[avm].popup->c[y-yo][i];
-                        thecells[c+xo+i].a = vscrn[avm].popup->a;
+                        thecells[c+xo+i].video_attr = vscrn[avm].popup->video_attr;
                     }
                 }
                 c += xs;        /* advance the pointer in the buffer */
@@ -4144,10 +4724,10 @@ TermScrnUpd( void * threadinfo)
         }
         else {  /* were in marking mode */
             for ( y = 0 ; y < ys ; y++ ) {
-                line = &vscrn[avm].lines[(vscrn[avm].scrolltop+y)%vscrn[avm].linecount] ;
+                line = &page->lines[(page->scrolltop+y)%page->linecount] ;
 
                 if (line != NULL && line->cells) {
-                    if ( VscrnIsLineMarked(avm,vscrn[avm].scrolltop+y) ) {
+                    if ( VscrnIsLineMarked(avm,page->scrolltop+y) ) {
                         if ( line->vt_line_attr & VT_LINE_ATTR_DOUBLE_WIDE )
                         {
                             for ( x = 0 ; x < xs/2 ; x++ ) {
@@ -4175,8 +4755,8 @@ TermScrnUpd( void * threadinfo)
                                     else
                                         pDcell->c = pScell->c ;
                                     (pDcell+1)->c = ' ' ;
-                                    pDcell->a =
-                                        (pDcell+1)->a = colorselect ;
+                                    pDcell->video_attr =
+                                        (pDcell+1)->video_attr = colorselect ;
                                 }
                                 else if ( line->markshowend != -1 &&
                                          x+xho >= line->markbeg*2 &&
@@ -4192,8 +4772,8 @@ TermScrnUpd( void * threadinfo)
                                     else
                                         pDcell->c = pScell->c ;
                                     (pDcell+1)->c = ' ' ;
-                                    pDcell->a =
-                                        (pDcell+1)->a = colorselect ;
+                                    pDcell->video_attr =
+                                        (pDcell+1)->video_attr = colorselect ;
                                 }
                                 else
                                 {
@@ -4203,22 +4783,22 @@ TermScrnUpd( void * threadinfo)
                                         if ( blinkon )
                                         {
                                             pDcell->c = pScell->c ;
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                         else
                                         {
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                     }
                                     else
                                     {
                                         pDcell->c = pScell->c ;
-                                        pDcell->a = (pDcell+1)->a =
-                                            ComputeColorFromAttr( avm, pScell->a,
+                                        pDcell->video_attr = (pDcell+1)->video_attr =
+                                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                                  vt_char_attrs );
                                     }
                                     (pDcell+1)->c = ' ' ;
@@ -4250,7 +4830,7 @@ TermScrnUpd( void * threadinfo)
                                     }
                                     else
                                         pDcell->c = pScell->c ;
-                                    pDcell->a = colorselect ;
+                                    pDcell->video_attr = colorselect ;
                                 }
                                 else
                                 {
@@ -4260,23 +4840,23 @@ TermScrnUpd( void * threadinfo)
                                         if ( blinkon )
                                         {
                                             pDcell->c = pScell->c ;
-                                            pDcell->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs);
                                         }
                                         else
                                         {
                                             pDcell->c = ' ' ;
-                                            pDcell->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                     }
                                     else
                                     {
                                         pDcell->c = pScell->c ;
-                                        pDcell->a =
-                                            ComputeColorFromAttr( avm, pScell->a,
+                                        pDcell->video_attr =
+                                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                                  vt_char_attrs );
                                     }
                                 }
@@ -4305,15 +4885,15 @@ TermScrnUpd( void * threadinfo)
                                         if ( blinkon )
                                         {
                                             pDcell->c = pScell->c ;
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs);
                                         }
                                         else
                                         {
                                             pDcell->c = ' ' ;
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                     }
@@ -4321,8 +4901,8 @@ TermScrnUpd( void * threadinfo)
                                     {
                                         pDcell->c = pScell->c ;
                                         (pDcell+1)->c = ' ' ;
-                                        pDcell->a = (pDcell+1)->a =
-                                            ComputeColorFromAttr( avm, pScell->a,
+                                        pDcell->video_attr = (pDcell+1)->video_attr =
+                                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                                  vt_char_attrs );                                    }
                                 }
                             }
@@ -4350,8 +4930,8 @@ TermScrnUpd( void * threadinfo)
                                     }
                                     else
                                         pDcell->c = pScell->c ;
-                                    pDcell->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                             }
@@ -4384,7 +4964,7 @@ TermScrnUpd( void * threadinfo)
                         }
                         else
                             thecells[c+xo+i].c = vscrn[avm].popup->c[y-yo][i];
-                        thecells[c+xo+i].a = vscrn[avm].popup->a;
+                        thecells[c+xo+i].video_attr = vscrn[avm].popup->video_attr;
                     }
                 }
                 c += xs;
@@ -4396,10 +4976,11 @@ TermScrnUpd( void * threadinfo)
         
         /* Status Line Display */
         if ( avm == VTERM && tt_status[VTERM] && decssdt != SSDT_BLANK ||
-             avm != VTERM && tt_status[avm])
-        {
-            if ( avm == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[VTERM] == 1) {
-                line = &vscrn[VSTATUS].lines[0] ;
+             avm != VTERM && tt_status[avm] /* TODO || decssdt_override */ )
+        {                    /* TODO: when we sort out terminal resizing on modern windows */
+            if ( avm == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[VTERM] == 1
+                    && !decssdt_override && !scrollflag[VTERM]) {
+                line = &vscrn_view_page(VSTATUS).lines[0] ;
                 if ( line != NULL )
                 for ( x = 0 ; x < xs ; x++ ) {
                     vt_char_attrs = line->vt_char_attrs[x];
@@ -4412,23 +4993,23 @@ TermScrnUpd( void * threadinfo)
                         if ( blinkon )
                         {
                             pDcell->c = pScell->c ;
-                            pDcell->a =
-                                ComputeColorFromAttr( avm, pScell->a,
+                            pDcell->video_attr =
+                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                      vt_char_attrs );
                         }
                         else
                         {
                             pDcell->c = ' ' ;
-                            pDcell->a =
-                                ComputeColorFromAttr( avm, pScell->a,
+                            pDcell->video_attr =
+                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                      vt_char_attrs );
                         }
                     }
                     else
                     {
                         pDcell->c = pScell->c ;
-                        pDcell->a =
-                            ComputeColorFromAttr( avm, pScell->a,
+                        pDcell->video_attr =
+                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                  vt_char_attrs );
                     }
                 }
@@ -4447,7 +5028,7 @@ TermScrnUpd( void * threadinfo)
                     }
                     else
                         thecells[c].c = status[x] ;
-                    thecells[c].a = colorstatus ;
+                    thecells[c].video_attr = colorstatus ;
                     c++ ;
                 }
             }
@@ -4463,12 +5044,12 @@ TermScrnUpd( void * threadinfo)
         /* only calculated an offset if Roll mode is INSERT */
         cursor_offset = (scrollstatus[avm] && tt_roll[avm]
                          && markmodeflag[avm] == notmarking ) ?
-                             (vscrn[avm].top + vscrn[avm].linecount
-                              - vscrn[avm].scrolltop)%vscrn[avm].linecount : 0 ;
-        if ( VscrnIsPopup(avm) || !cursorena[avm] ||
+                             (page->top + page->linecount
+                              - page->scrolltop)%page->linecount : 0 ;
+        if ( (VscrnIsPopup(avm) || !cursorena[avm] || !cursor_on_visible_page(avm) ||
             vscrn[avm].cursor.x - xho < 0 ||  vscrn[avm].cursor.x - xho >= pwidth ||
             vscrn[avm].cursor.y + cursor_offset >= VscrnGetDisplayHeight(avm)
-            -(tt_status[avm]?1:0) ) {
+            -(tt_status[avm]?1:0)) && markmodeflag[avm] == notmarking ) {
             killcursor(avm) ;
         }
         else {
@@ -4479,7 +5060,7 @@ TermScrnUpd( void * threadinfo)
             rc = RequestVscrnMutex( avm, SEM_INDEFINITE_WAIT ) ;
             if ( !rc ) {
 #endif /* NEW_EXCLUSIVE */
-                line = &vscrn[avm].lines[(vscrn[avm].top+vscrn[avm].cursor.y)%vscrn[avm].linecount];
+                line = &page->lines[(page->top+vscrn[avm].cursor.y)%page->linecount];
                 if ( line != NULL )
                 if ( line->vt_line_attr & VT_LINE_ATTR_DOUBLE_WIDE ) {
                     if ((vscrn[avm].cursor.x - xho)*2 != cursor.x ||
@@ -4514,6 +5095,13 @@ TermScrnUpd( void * threadinfo)
         ReleaseScreenMutex() ;
     }
 
+#ifndef ONETERMUPD
+    /*
+     * When ONETERMUPD is defined, the above loop is while(1) and contains
+     * no breaks which means it runs forever - that means all the code here
+     * is unreachable so don't try to compile it (or we get unreachable code
+     * warnings)
+     */
     StopVscrnTimer() ;
 
 #ifdef NT
@@ -4530,7 +5118,9 @@ TermScrnUpd( void * threadinfo)
     free(thecells) ;
     PostTermScrnUpdThreadDownSem();
     ckThreadEnd(threadinfo) ;
+#endif /* ONETERMUPD */
 }
+#endif /* KUI */
 
 #ifdef PCFONTS
 APIRET
@@ -4673,7 +5263,6 @@ killcursor( BYTE vmode ) {
 void
 newcursor( BYTE vmode ) {
     CK_CURSORINFO vci;
-    int cell, bottom, top;
 
     debug(F100,"newcursor","",0);
     if (cursoron[vmode])                        /* It's already on */
@@ -4716,30 +5305,133 @@ newcursor( BYTE vmode ) {
     }
 }
 
+/*---------------------------------------------------------------------------*/
+/* shovscrn                                                 | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* This function implements the hidden SHOW VSCRN command */
+size_t
+vscrn_size_bytes(BYTE vnum) {
+    int i = 0;
+    size_t result;
+    size_t cellsize = sizeof(viocell)     /* viocell */
+            + sizeof(short)     /* attributes */
+            + sizeof(short);    /* hyperlink IDs */
+    size_t vlinesize = sizeof(videoline) + MAXTERMCOL * cellsize;
+
+    result = sizeof(vscrn_t);
+    result += vscrn[vnum].page_count * sizeof(vscrn_page_t);
+
+    for (i = 0; i < vscrn[vnum].page_count; i++) {
+        if (vscrn_page_valid(vnum, i)) {
+            result += sizeof(vscrn_page_t);
+            result += vscrn[vnum].pages[i].linecount * vlinesize;
+        }
+    }
+
+    if (vscrn[vnum].popup != NULL) {
+        result += sizeof(videopopup);
+    }
+
+    return result;
+}
+
 void
 shovscrn(void)
 {
+	int maxPages = vscrn[VCMD].page_count;
+	int i;
+
+	if (vscrn[VTERM].page_count > maxPages) maxPages = vscrn[VTERM].page_count;
+ 	if (vscrn[VCS].page_count > maxPages) maxPages = vscrn[VCS].page_count;
+
     printf("\n");
     printf("Virtual Screen settings:\n");
     printf("                ____VCMD____ ___VTERM____ ____VCS_____\n");
-    printf("     linecount: %12d %12d %12d\n", vscrn[VCMD].linecount,
-            vscrn[VTERM].linecount, vscrn[VCS].linecount) ;
-    printf("         lines: %12s %12s %12s\n",
-            vscrn[VCMD].lines ? "allocated" : "Null",
-            vscrn[VTERM].lines ? "allocated" : "Null",
-            vscrn[VCS].lines ? "allocated" : "Null") ;
-    printf("           beg: %12d %12d %12d\n", vscrn[VCMD].beg,
-            vscrn[VTERM].beg, vscrn[VCS].beg ) ;
-    printf("           top: %12d %12d %12d\n", vscrn[VCMD].top,
-            vscrn[VTERM].top, vscrn[VCS].top ) ;
-    printf("     scrolltop: %12d %12d %12d\n", vscrn[VCMD].scrolltop,
-            vscrn[VTERM].scrolltop, vscrn[VCS].scrolltop) ;
-    printf("           end: %12d %12d %12d\n", vscrn[VCMD].end,
-            vscrn[VTERM].end, vscrn[VCS].end ) ;
-    printf("        cursor:      %3d,%3d      %3d,%3d      %3d,%3d\n",
-            vscrn[VCMD].cursor.x, vscrn[VCMD].cursor.y,
-            vscrn[VTERM].cursor.x, vscrn[VTERM].cursor.y,
-            vscrn[VCS].cursor.x, vscrn[VCS].cursor.y) ;
+	for (i = 0; i < maxPages; i++) {
+#define SHOVSCRN_OUTPARAM(fmt) printf(fmt, i+1);
+
+		SHOVSCRN_OUTPARAM(" p%02d linecount:");
+        if (vscrn_page_valid(VCMD, i))
+            printf(" %12d", vscrn[VCMD].pages[i].linecount);
+		else printf("             ");
+
+		if (vscrn_page_valid(VTERM, i))
+            printf(" %12d", vscrn[VTERM].pages[i].linecount);
+		else printf("             ");
+
+		if (vscrn_page_valid(VCS, i))
+            printf(" %12d", vscrn[VCS].pages[i].linecount);
+		else printf("             ");
+		printf("\n");
+
+		SHOVSCRN_OUTPARAM("     p%02d lines:");
+		if (vscrn_page_valid(VCMD, i))
+			printf(" %12s",  vscrn[VCMD].pages[i].lines ? "allocated" : "Null");
+		else printf("             ");
+
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12s", vscrn[VTERM].pages[i].lines ? "allocated" : "Null");
+		else printf("             ");
+
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12s", vscrn[VCS].pages[i].lines ? "allocated" : "Null");
+		else printf("             ");
+		printf("\n");
+
+		SHOVSCRN_OUTPARAM("       p%02d beg:");
+		if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].beg);
+		else printf("             ");
+
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].beg);
+		else printf("             ");
+
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].beg);
+		else printf("             ");
+        printf("\n");
+
+		SHOVSCRN_OUTPARAM("       p%02d top:");
+        if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].top);
+		else printf("             ");
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].top);
+		else printf("             ");
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].top);
+		else printf("             ");
+		printf("\n");
+
+		SHOVSCRN_OUTPARAM(" p%02d scrolltop:");
+        if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].scrolltop);
+		else printf("             ");
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].scrolltop);
+		else printf("             ");
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].scrolltop);
+		else printf("             ");
+		printf("\n");
+
+		SHOVSCRN_OUTPARAM("       p%02d end:");
+        if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].end);
+		else printf("             ");
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].end);
+		else printf("             ");
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].end);
+		else printf("             ");
+		printf("\n");
+	}
+    printf("        cursor:  %02d(%03d,%03d)  %02d(%03d,%03d)  %02d(%03d,%03d)\n",
+            vscrn[VCMD].cursor.p, vscrn[VCMD].cursor.x, vscrn[VCMD].cursor.y,
+            vscrn[VTERM].cursor.p, vscrn[VTERM].cursor.x, vscrn[VTERM].cursor.y,
+            vscrn[VCS].cursor.p, vscrn[VCS].cursor.x, vscrn[VCS].cursor.y) ;
     printf("         popup: %12s %12s %12s\n",
             vscrn[VCMD].popup ? "yes" : "no",
             vscrn[VTERM].popup ? "yes" : "no",
@@ -4768,28 +5460,69 @@ shovscrn(void)
             vscrn[VCMD].display_height,
             vscrn[VTERM].display_height,
             vscrn[VCS].display_height) ;
+    printf("memory (bytes): %12d %12d %12d\n",
+            vscrn_size_bytes(VCMD),
+            vscrn_size_bytes(VTERM),
+            vscrn_size_bytes(VCS));
     printf("\n");
+    printf("\nStructure memory requirements:\n");
+    printf("\tOne vscrn_t is: %d bytes\n", sizeof(vscrn_t));
+    printf("\tOne vscrn_page_t is: %d byts\n", sizeof(vscrn_page_t));
+    printf("\tOne videoline is: %d bytes\n", sizeof(videoline));
+    printf("\tOne viocell is: %d bytes\n", sizeof(viocell));
+    printf("\tvideopopup is: %d bytes\n", sizeof(videopopup));
+    printf("Total memory requirements:\n");
+    {
+        size_t cellsize = sizeof(viocell)     /* viocell */
+            + sizeof(short)     /* attributes */
+            + sizeof(short);    /* hyperlink IDs */
+        printf("\tOne cell is: %d bytes (viocell + attributes + hyperlink IDs)\n",
+              cellsize);
+        printf("\tOne videoline contains %d cells requiring: %d bytes\n",
+               MAXTERMCOL,
+               sizeof(videoline) + MAXTERMCOL * cellsize);
+        printf("\tOne page is at least %d lines requiring: %d bytes\n",
+               MAXTERMROW,
+               sizeof(vscrn_page_t) + MAXTERMROW * (sizeof(videoline) + MAXTERMCOL * cellsize));
+    }
 }
 
+/*---------------------------------------------------------------------------*/
+/* VscrnInit                                                | Page: All      */
+/*---------------------------------------------------------------------------*/
 APIRET
 VscrnInit( BYTE vmode )
 {
-   extern int tt_szchng[], tt_scrsize[] ;
-   extern int cmd_rows, cmd_cols, marginbot ;
+   extern int tt_szchng[], tt_scrsize[], tt_pages[] ;
+   extern int cmd_rows, cmd_cols ;
    extern int updmode, tt_updmode, SysInited ;
    extern ascreen commandscreen, vt100screen ;
-   extern unsigned char                 /* Video attribute bytes */
+   extern cell_video_attr_t           /* Video attribute bytes */
       attribute,                      /* Current video attribute byte */
       underlineattribute,
+      blinkattribute,
+      boldattribute,
+      dimattribute,
       savedattribute,                 /* Saved video attribute byte */
       defaultattribute;               /* Default video attribute byte */
    extern int scrninitialized[] ;
-   extern unsigned char colornormal, colorunderline, colorborder,
-    colorreverse, colorgraphic, colorcmd, coloritalic ;
+   extern cell_video_attr_t colornormal, colorunderline, colorborder,
+    colorreverse, colorgraphic, colorcmd, coloritalic, colorblink, colorbold,
+    colordim, colorcrossedout ;
    BYTE clrscr = 0 ;
 #ifndef KUI
    CK_VIDEOMODEINFO m;
 #endif /* KUI */
+    int old_height;
+
+    /* Because a bunch of Vscrn functions act on VSTATUS rather than VTERM when
+     * DECSASD is SASD_STATUS, if we want to be sure everything acts on VTERM
+     * (as thats what we're initialising), we have to switch back to
+     * SASD_TERMINAL while we do this. Ideally we'd go through all those
+     * functions and make them less surprising, but that would be a substantial
+     * amount of work that may just introduce more bugs. */
+    int decsasd_backup = decsasd;
+    decsasd = SASD_TERMINAL;
 
    debug(F111,"VscrnInit","vmode",vmode);
 #ifndef KUI
@@ -4804,7 +5537,9 @@ VscrnInit( BYTE vmode )
            ttgcwsz();
    }
 
-   if ( VscrnGetBufferSize(vmode) != tt_scrsize[vmode] || VscrnGetWidth(vmode)  <= 0
+   /* We only care about the size of page 0 - all other pages have a fixed size
+    * in relation to the first page - same with, one screen in height. */
+   if ( VscrnGetPageBufferSize(vmode, TRUE, 0) != tt_scrsize[vmode] || VscrnGetWidth(vmode)  <= 0
         || VscrnGetHeight(vmode) <= 0 || tt_cols[vmode] <= 0 || tt_rows[vmode] <= 0 ) 
    {
        scrninitialized[vmode] = 0;
@@ -4836,98 +5571,133 @@ VscrnInit( BYTE vmode )
           italicattribute = coloritalic;
           graphicattribute = colorgraphic ;
           borderattribute = colorborder ;
+          blinkattribute = colorblink ;
+          boldattribute = colorbold ;
+          crossedoutattribute = colorcrossedout ;
+          dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
       }
-      if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0) ||
-           VscrnGetHeight(VTERM) < 0 ||
-           marginbot > tt_rows[VTERM] )
-         marginbot = tt_rows[VTERM];
+      old_height = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
    }
 
    VscrnSetWidth( vmode, tt_cols[vmode] ) ;
    VscrnSetHeight( vmode, tt_rows[vmode]+(tt_status[vmode]?1:0) );
 
     /* Initialize paging info */
-    clrscr = VscrnSetBufferSize( vmode, tt_scrsize[vmode] ) ;
+    clrscr = VscrnSetBufferSize( vmode, tt_scrsize[vmode], tt_pages[vmode] ) ;
+
+    if ( vmode == VTERM ) {
+        int p;
+        for (p = 0; p < vscrn[VTERM].page_count; p++) {
+            int margin = vscrn_page_margin_bot(VTERM,p);
+            if ( margin == old_height ||
+               VscrnGetHeight(VTERM) < 0 || margin > tt_rows[VTERM] ) {
+               vscrn_set_page_margin_bot(VTERM, p, tt_rows[VTERM]);
+            }
+        }
+    }
 
     if ( tt_szchng[vmode] ) {
         LONG sz ;
         /* Wait for exclusive access to the screen */
         RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-        sz = (VscrnGetEnd(vmode) - VscrnGetTop(vmode)
-               + VscrnGetBufferSize(vmode) + 1)%VscrnGetBufferSize(vmode) ;
-        if ( !clrscr )
-            if ( sz > tt_rows[vmode] )
-            {
-                if ( !VscrnIsClear(vmode) ) {
-                    VscrnScroll( vmode, UPWARD, 0, sz-1, sz-1, TRUE, SP ) ;
-                    clrscr = 1 ;
-                }
-            }
+        if ( !clrscr ) {
+            int p;
+			for (p = 0; p < vscrn[vmode].page_count; p++) {
+        		sz = (VscrnGetPageEnd(vmode,FALSE,p) - VscrnGetPageTop(vmode,FALSE,p)
+               		+ VscrnGetPageBufferSize(vmode, FALSE,p) + 1)%VscrnGetPageBufferSize(vmode,FALSE,p) ;
+            	if ( sz > tt_rows[vmode] )
+            	{
+                	if ( !VscrnIsClear(vmode, p ) ) {
+                    	VscrnScrollPage( vmode, UPWARD, 0, sz-1, sz-1, TRUE, SP, p ) ;
+                    	clrscr = 1 ;
+                	}
+            	}
 #ifdef COMMENT
-            else if ( tt_szchng[vmode] == 2 ) /* Status Line Turned On */
-            {
-                if (!VscrnIsClear(vmode)) {
-                    VscrnScroll( vmode, UPWARD, 0, sz, sz, TRUE, SP ) ;
-                    clrscr = 1 ;
-                }
-                else {
-                }
-            }
+            	else if ( tt_szchng[vmode] == 2 ) /* Status Line Turned On */
+            	{
+                	if (!VscrnIsClear(vmode, p)) {
+                    	VscrnScrollPage( vmode, UPWARD, 0, sz, sz, TRUE, SP, p ) ;
+                    	clrscr = 1 ;
+                	}
+                	else {
+                	}
+            	}
 #endif
-            else
-            {
-                int             x,y ;
-                videoline *     line ;
-                int             foo = 0;
+            	else
+            	{
+                	int             x,y ;
+                	videoline *     line ;
+                	int             foo = 0;
 
-                if ( VscrnGetEnd(vmode) == VscrnGetBufferSize(vmode) ||
-                     VscrnGetEnd(vmode) + 1 == VscrnGetBegin(vmode) )
-                    foo++;
+                	if ( VscrnGetPageEnd(vmode,TRUE,p) == VscrnGetPageBufferSize(vmode,FALSE,p) ||
+                    	 VscrnGetPageEnd(vmode,TRUE,p) + 1 == VscrnGetPageBegin(vmode,FALSE,p) ) {
+                    	foo++;
+					}
 
-                VscrnSetEnd( vmode, VscrnGetTop(vmode) +
-                             VscrnGetHeight(vmode)-1
-                             -(tt_status[vmode]?1:0)) ;
-                if ( foo )
-                    VscrnSetBegin( vmode, VscrnGetEnd(vmode) + 1);
+                	VscrnSetPageEnd(
+						vmode,
+						VscrnGetPageTop(vmode,TRUE,p)
+							+ VscrnGetHeight(vmode)-1
+							-(tt_status[vmode]?1:0),
+						p) ;
 
-                for ( y = sz ;
-                      y < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ;
-                      y++ ) {
-                    line = VscrnGetLineFromTop(vmode,y) ;
-                    if ( line ) {
-                        line->width = VscrnGetWidth(vmode)  ;
-                        line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                        for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
-                            line->cells[x].c = ' ' ;
-                            line->cells[x].a = vmode == VTERM ? attribute : colorcmd;
-                            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
-                        }
-                    }
-                }
-            }
+                	if ( foo ) {
+                   		VscrnSetPageBegin( vmode, VscrnGetPageEnd(vmode, FALSE, p) + 1,p);
+					}
+
+                	for ( y = sz ;
+                      	  y < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ;
+                      	  y++ ) {
+                    	line = VscrnGetPageLineFromTop(vmode,y,p) ;
+                    	if ( line ) {
+                        	line->width = VscrnGetWidth(vmode)  ;
+                        	line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
+                        	for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
+                            	line->cells[x].c = ' ' ;
+                            	line->cells[x].video_attr = vmode == VTERM ? attribute : colorcmd;
+                            	line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                        	}
+                    	}
+                	}
+            	}
+			}
+		}
         ReleaseVscrnMutex(vmode) ;
         tt_szchng[vmode] = 0 ;
     }
 
     if ( clrscr ) {
+		int i;
+
         scrollflag[vmode] = FALSE ;
         scrollstatus[vmode] = FALSE ;
-        cleartermscreen(vmode);
+
+		/* Clear all pages */
+		for (i = 0; i < vscrn[vmode].page_count; i++) {
+        	cleartermpage(vmode, i);
+		}
     }
     scrninitialized[vmode] = TRUE ;
+
+    /* Restore DECSASD status */
+    decsasd = decsasd_backup;
+
     return 0;
 }
 
+/*---------------------------------------------------------------------------*/
+/* VscrnIsClear                                            | Page: Specified */
+/*---------------------------------------------------------------------------*/
 BOOL
-VscrnIsClear( BYTE vmode )
+VscrnIsClear( BYTE vmode, int page )
 {
     int             x,y ;
     videoline *     line ;
-    unsigned char cellcolor = geterasecolor(vmode);
+    cell_video_attr_t cellcolor = geterasecolor(vmode);
 
     for ( y = 0 ; y < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ; y++ ) {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetPageLineFromTop(vmode,y,page) ;
 		if (line == NULL)
 			return 0;
         for ( x = 0 ; x < line->width ; x++ ) {
@@ -4936,9 +5706,9 @@ VscrnIsClear( BYTE vmode )
                 debug(F100,"VscrnIsClear c!=' '","",0);
                 return 0;
             }
-            if ( line->cells[x].a != cellcolor )
+            if ( !cell_video_attr_equal(line->cells[x].video_attr, cellcolor) )
             {
-                debug(F100,"VscrnIsClear a != cellcolor","",0);
+                debug(F100,"VscrnIsClear video_attr != cellcolor","",0);
                 return 0;
             }
         }
@@ -4964,12 +5734,11 @@ static char myprtfstr2[2*CMDBL];
 int
 Vscrnprintf (const char *format, ...) {
 #ifndef NOLOCAL
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
-    int i, len, rc=0;
-    char *cp;
+    int rc=0;
     va_list ap;
     static int printf_inprogress=0;
 
@@ -5044,12 +5813,11 @@ Vscrnprintf (const char *format, ...) {
 int
 Vscrnfprintf (FILE * file, const char *format, ...) {
 #ifndef NOLOCAL
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
-    int i, len, rc=0;
-    char *cp;
+    int rc=0;
     va_list ap;
     static int fprintf_inprogress = 0;
 
@@ -5135,12 +5903,11 @@ Vscrnperror( const char *str )
 int
 Vscrnprintw (const char *format, ...) {
 #ifndef NOLOCAL
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
-    int i, len, rc=0;
-    char *cp;
+    int rc=0;
     va_list ap;
     static int printf_inprogress=0;
 
@@ -5252,7 +6019,7 @@ Win32ConsoleInit( void )
         return;
 
     AllocConsole();
-    hCrt = _open_osfhandle((long) GetStdHandle(STD_OUTPUT_HANDLE),
+    hCrt = _open_osfhandle((intptr_t) GetStdHandle(STD_OUTPUT_HANDLE),
                                 _O_BINARY);
     hf = _fdopen( hCrt, "wb" );
     *stdout = *hf;
@@ -5266,12 +6033,12 @@ Win32ConsoleInit( void )
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL ) ;
         SetStdHandle( STD_INPUT_HANDLE, handle ) ;
     }
-    hCrt = _open_osfhandle((long) handle, _O_BINARY);
+    hCrt = _open_osfhandle((intptr_t ) handle, _O_BINARY);
     hf = _fdopen( hCrt, "rb" );
     *stdin = *hf;
     i = setvbuf( stdin, NULL, _IONBF, 0 );
 
-    hCrt = _open_osfhandle((long) GetStdHandle(STD_ERROR_HANDLE), _O_BINARY);
+    hCrt = _open_osfhandle((intptr_t ) GetStdHandle(STD_ERROR_HANDLE), _O_BINARY);
     hf = _fdopen( hCrt, "wb" );
     *stderr = *hf;
     i = setvbuf( stderr, NULL, _IONBF, 0 );
@@ -5325,7 +6092,7 @@ EnumFontFamProc( ENUMLOGFONT *lpelfe,    // logical-font data
     return(font_list->count);
 }
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
 static int CALLBACK
 EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
                    NEWTEXTMETRICEX *lpntme,  // physical-font data
@@ -5364,7 +6131,7 @@ EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
     font_list->name[font_list->count++] = strdup(name);
     return(font_list->count);
 }
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 
 static int
 EnumerateFonts()
@@ -5396,7 +6163,7 @@ EnumerateFonts()
         lf.lfFaceName[0] = '\0';
         lf.lfPitchAndFamily = 0;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         if ( nt351 )
             rc = EnumFontFamilies( (HDC) hdc, NULL,
                                      (FONTENUMPROC) EnumFontFamProc,
@@ -5409,7 +6176,7 @@ EnumerateFonts()
         rc = EnumFontFamilies( (HDC) hdc, NULL,
                                      (FONTENUMPROC) EnumFontFamProc,
                                      0);
-#endif
+#endif /* CKT_NT35_OR_31 */
 
         debug(F111,"EnumerateFonts()","EnumFontFamiliesEx()",rc);
         DeleteDC(hdc);

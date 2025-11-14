@@ -12,6 +12,9 @@ extern "C" {
 #include "ikui.h"
 }
 
+
+
+
 // there is only one K_GLOBAL shared by all objects.
 // this is used so that C functions (mostly wndprocs) have access to
 // the KWin class pointers
@@ -21,6 +24,11 @@ Kui* kui = 0;
 KRegistryEdit* kreg = 0;
 
 static HANDLE hevKuiInitialized = NULL;
+
+const char KWinClassName[] = "KERMIT95:UI";
+const char CmdTitle[] = "K95 Command Window";
+const char TermTitle[] = "K95 Terminal Window";
+const char CServerTitle[] = "K95 Client Server Window";
 
 void KuiWindowThread( void* param );
 
@@ -48,6 +56,8 @@ int KuiInit( void* hInstance, struct _kui_init * kui_init )
     //int numadded = AddFontResource( outfile );
 
     //DeleteFile( filename );
+
+
 
     // intialize K_GLOBAL
     //
@@ -124,7 +134,7 @@ int KuiThreadCleanup( void* hInstance )
 
     if ( IsZoomed(kui->getTerminal()->hwnd()) || 
          IsIconic(kui->getTerminal()->hwnd())) {
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         ShowWindowAsync(kui->getTerminal()->hwnd(), SW_RESTORE);
 #else
         ShowWindow(kui->getTerminal()->hwnd(), SW_RESTORE);
@@ -152,15 +162,9 @@ void KuiSetTerminalStatusText(int item, char * buf)
 
 void KuiSetTerminalConnectButton(int on) 
 {
-#ifndef NOTOOLBAR
     if (kui) {
-        KToolBar * toolbar = kui->getTerminal()->getToolbar();
-        if ( toolbar )
-            SendMessage(toolbar->hwnd(),
-                     TB_CHECKBUTTON, ID_ACTION_EXIT, 
-                     MAKELONG(on,0));
+        kui->getTerminal()->setConnectMode(on);
     }
-#endif
 }
 
 void 
@@ -168,7 +172,7 @@ KuiSetTerminalPosition( int x, int y)
 {
     if ( kui )
         SetWindowPos(kui->getTerminal()->hwnd(), 0, x, y, 0, 0,
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
                       SWP_ASYNCWINDOWPOS |
 #endif
                       SWP_NOZORDER | SWP_NOSIZE );
@@ -185,7 +189,7 @@ KuiSetTerminalSize( int x, int y)
         if ( y == 0 )
             y = rect.bottom - rect.top;
         SetWindowPos(kui->getTerminal()->hwnd(), 0, 0, 0, x, y,
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
                       SWP_ASYNCWINDOWPOS |
 #endif
                       SWP_NOZORDER | SWP_NOMOVE );
@@ -230,6 +234,35 @@ KuiSetTerminalRunMode(int x)
     }
 }
 
+int KuiGetTerminalRunMode() {
+    long ret = GetWindowLong(kui->getTerminal()->hwnd(), GWL_STYLE);
+
+    if (ret & WS_MINIMIZE) return 2;
+    return 1;
+}
+
+int widthToChars(int width) {
+    return width / kui->getTerminal()->getKFont()->getFontW();
+}
+
+int heightToChars(int height) {
+    return height / kui->getTerminal()->getKFont()->getFontSpacedH();
+}
+
+void KuiGetTerminalMaximisedSize(BOOL inChars, int* width, int* height) {
+    RECT rec;
+    BOOL r = SystemParametersInfo(
+            SPI_GETWORKAREA,0, &rec, 0);
+
+    *width = rec.right - rec.left;
+    *height = rec.bottom - rec.top;
+
+    if (inChars) {
+        *width = widthToChars(*width);
+        *height = heightToChars(*height);
+    }
+}
+
 int
 KuiFileDialog(char * title, char * def, char * result, int rlen,
                   BOOL downloadButton, BOOL openFile)
@@ -265,7 +298,7 @@ void KuiWindowThread( void* hInstance )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KuiSetProperty( int propid, long param1, long param2 )
+void KuiSetProperty( int propid, intptr_t param1, intptr_t param2 )
 {
     if( kui )
         kui->setProperty( propid, param1, param2 );
@@ -273,8 +306,38 @@ void KuiSetProperty( int propid, long param1, long param2 )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KuiGetProperty( int propid, long param1, long param2 )
+int KuiGetProperty( int propid, void* out )
 {
     if( kui )
-        kui->getProperty( propid, param1, param2 );
+        return kui->getProperty( propid, out );
+    return 0;
 }
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+#ifdef CK_SHELL_NOTIFY
+void KuiShowNotification(int icon, char* title, char * message) {
+    kui->getTerminal()->showNotification(icon, title, message);
+}
+#endif /* CK_SHELL_NOTIFY */
+
+void KuiRefreshTerminal() {
+    kui->getTerminal()->getClient()->getDrawInfo();
+}
+
+BOOL KuiRenderToEmfFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToEmfFile(vmode, filename);
+}
+
+BOOL KuiRenderToBmpFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToBmpFile(vmode, filename);
+}
+
+#ifdef CK_HAVE_GDIPLUS
+BOOL KuiRenderToPngFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToPngFile(vmode, filename);
+}
+BOOL KuiRenderToGifFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToGifFile(vmode, filename);
+}
+#endif /* CK_HAVE_GDIPLUS */

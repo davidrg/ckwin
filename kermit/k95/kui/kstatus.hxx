@@ -28,13 +28,16 @@ enum eAction { NOACTION, REMOVEPANE, ADDPANE };
     void createWin( KWin* par );
     void size( int width, int height );
 
+    void setVisible(Bool visible);
+    BOOL isVisible() { return visible; }
+
     void setParts( int numParts, int* partWidths );
     void setText( int part, char* text );
     void customize();
     void endCustomize();
     Bool endPaneMove( eAction, long xpos );
 
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
     WNDPROC getdefproc() { return defproc; }
     HWND getCustomHwnd() { return customHwnd; }
 
@@ -64,6 +67,7 @@ private:
     int partDrag;
     Bool mouseOverPart;
 
+    int visible;
 };
 
 #endif

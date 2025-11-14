@@ -14,10 +14,20 @@
 
 ========================================================================*/
 
+extern "C" {
+#include "ckcdeb.h"
+#include "ckocon.h"
+}
+
 #include "kwin.hxx"
 #include "kscroll.hxx"
 
+/* MAXNUMCOL is also defined in ckocon.h */
+#if (defined(_MSC_VER) && _MSC_VER > 1400) || defined(__GNUC__)
+const int MAXNUMCOL = 512;
+#else
 const int MAXNUMCOL = 256;
+#endif
 struct _K_CLIENT_PAINT;
 struct _K_WORK_STORE;
 
@@ -32,7 +42,7 @@ public:
     void getCreateInfo( K_CREATEINFO* info );
     void createWin( KWin* par );
     void size( int width, int height );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
     void setDimensions( Bool sizeparent );
     void setFont( KFont* );
@@ -71,17 +81,24 @@ public:
     void stopTimer();
     void startTimer();
 
+    BOOL renderToEmfFile(int vnum, char* filename);
+    BOOL renderToBmpFile(int vnum, char* filename);
+#ifdef CK_HAVE_GDIPLUS
+    BOOL renderToPngFile(int vnum, char* filename);
+    BOOL renderToGifFile(int vnum, char* filename);
+#endif /* CK_HAVE_GDIPLUS */
+
 private:    // this section is for performance
     uchar* workTemp;
     size_t workTempSize;
 
     ushort* textBuffer;
-    uchar* attrBuffer;
+    cell_video_attr_t* attrBuffer;
     ushort* effectBuffer;
     ushort* lineAttr;
     _K_WORK_STORE* kws;
 
-    uchar prevAttr;
+    cell_video_attr_t prevAttr;
     ushort prevEffect;
 
     int wc;
@@ -89,6 +106,17 @@ private:    // this section is for performance
     int hscrollpos;
 
     void ToggleCursor(HDC, LPRECT);
+
+    static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0);
+    HBITMAP renderToBitmap(int vnum, DWORD **outPixels);
+#ifdef CK_HAVE_GDIPLUS
+    BOOL renderToImageFile(int vnum, char* filename, const wchar_t* format);
+#endif /* CK_HAVE_GDIPLUS */
+
+    static size_t allocateClientPaintBuffers(
+        struct _K_CLIENT_PAINT* clientPaint,
+        long maxcells,
+        uchar** workTempOut);
 
     IKTerm* ikterm;
     BYTE clientID;
@@ -114,7 +142,11 @@ private:    // this section is for performance
     int maxCursorCount;
     int blinkInterval;
 
+#if defined(_MSC_VER) && _MSC_VER < 1300
     UINT timerID;
+#else
+    UINT_PTR timerID;
+#endif
     KFont* font;
 
     KScroll* vert;

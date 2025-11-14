@@ -11,11 +11,17 @@
 extern int StartedFromDialer ;
 extern HWND hwndDialer ;
 extern LONG KermitDialerID ;
-#ifndef NT
+#ifdef NT
+extern BOOL dialerIsCKCM;
+#else
 extern HAB hab;
-#endif
+#endif /* NT */
 
+#ifdef NT
+_PROTOTYP( static void DialerSend, ( UINT, LPARAM ) ) ;
+#else
 _PROTOTYP( void DialerSend, ( UINT, LONG ) ) ;
+#endif
 
 #define OPT_KERMIT_SUCCESS          12001
 #define OPT_KERMIT_FAILURE          12002
@@ -37,8 +43,8 @@ _PROTOTYP( void DialerSend, ( UINT, LONG ) ) ;
 #define OPT_TAPI_SHUTDOWN           14004
 
 #ifdef NT
-__inline void
-DialerSend(UINT message, LONG lparam)
+static __inline void
+DialerSend(UINT message, LPARAM lparam)
 {
     if ( StartedFromDialer )
         SendMessage( hwndDialer, message, KermitDialerID, lparam ) ;

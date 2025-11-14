@@ -9,12 +9,12 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Fri Sep 23 16:29:47 2022
+    Tue May  2 19:09:58 2023
 */
 
 /*
@@ -60,18 +60,22 @@ _PROTOTYP(int vmsttyfd, (void) );
 #undef COMMENT
 #else
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif  /* NODIAL */
+#endif  /* CK_TAPI */
 #define APIRET ULONG
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h" /* [jt] 2013/11/21 - for MAXPATHLEN */
 #include "ckoetc.h"
 int StartedFromDialer = 0;
+extern unsigned long srandThreadId;
 HWND hwndDialer = 0;
 LONG KermitDialerID = 0;
+#ifdef NT
+BOOL dialerIsCKCM = 0;
+#endif /* NT */
 #ifdef putchar
 #undef putchar
 #endif /* putchar */
@@ -79,9 +83,26 @@ LONG KermitDialerID = 0;
 #ifdef CK_PID
 #include <process.h>
 #endif /* CK_PID */
+#include "ckoreg.h"
+#include "ckoetc.h"
+
+#ifdef NT
+DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
+#endif /* NT */
+
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
+
+#include "ckocon.h"
+extern int colorpalette;
+
 #endif /* OS2 */
 
 #ifdef KUI
+int get_gui_window_pos_y();
+int get_gui_window_pos_x();
+
 extern struct keytab * term_font;
 extern int ntermfont, tt_font, tt_font_size;
 #endif /* KUI */
@@ -144,6 +165,10 @@ extern int debtim;
 #endif /* DEBUG */
 
 extern int noinit;
+
+#ifdef OS2
+extern int usageparm;  /* Set if we're only going to show usage info and exit */
+#endif /* OS2 */
 
 static char ndatbuf[10];
 
@@ -220,6 +245,8 @@ extern char diafil[];
 #endif	/* XENIX */
 #endif	/* SCO32 */
 
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
+
 #ifdef STRATUS                          /* Stratus Computer, Inc.  VOS */
 #ifdef putchar
 #undef putchar
@@ -230,7 +257,6 @@ extern char diafil[];
 #endif /* getchar */
 #define getchar(x) coninc(0)
 #endif /* STRATUS */
-
 
 #ifdef ANYX25
 extern int revcall, closgr, cudata;
@@ -310,6 +336,18 @@ extern int tcp_keepalive;
 #endif /* TCPSOCKET */
 #endif /* NETCONN */
 
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static VOID evalerr( char * );
+static char * fneval( char *, char*[], int, char * );
+static char * dokwval( char *, char * );
+static char * findinpath( char * );
+static char * getip( char * );
+static char * jpgdate( FILE * );
+static char * pathval( int );
+static int ckcindex( char, char * );
+#endif /* CK_ANSI */
+
 extern char * floname[];
 
 #ifndef NOSPL
@@ -322,6 +360,7 @@ int isjoin = 0;
 #ifdef CK_APC
 extern int apcactive;                   /* Nonzero = APC command was rec'd */
 extern int apcstatus;                   /* Are APC commands being processed? */
+extern int apccmd;                      /* Stay on command screen after APC? */
 #ifdef DCMDBUF
 extern char *apcbuf;                    /* APC command buffer */
 #else
@@ -458,7 +497,7 @@ extern int frecl;
 #endif /* VMS */
 
 extern CK_OFF_T ffc, tfc, tlci, tlco;
-extern long filcnt, rptn, speed,  ccu, ccp, vernum;
+extern long filcnt, rptn, speed,  ccu, ccp, vernum, xvernum;
 
 #ifndef NOSPL
 extern char fspec[], myhost[];
@@ -518,10 +557,6 @@ extern char flfnam[];
 extern char lock2[];
 #endif /* USETTYLOCK */
 #endif /* UNIX */
-
-#ifdef OS2ORUNIX
-extern int maxnam, maxpath;             /* Longest name, path length */
-#endif /* OS2ORUNIX */
 
 extern int mdmtyp, mdmsav;
 
@@ -611,6 +646,9 @@ struct keytab vartab[] = {
     { "cmdfile",   VN_CMDF,  0},
     { "cmdlevel",  VN_CMDL,  0},
     { "cmdsource", VN_CMDS,  0},
+#ifdef OS2
+    { "color_palette", VN_PALETTE, 0},  /* K95 3.0 beta.8 */
+#endif /* OS2 */
     { "cols",      VN_COLS,  0},        /* 190 */
 #ifdef NT
     { "common",    VN_COMMON, 0},       /* 201 */
@@ -677,9 +715,9 @@ struct keytab vartab[] = {
     { "errstring", VN_ERSTR, 0},        /* 192 */
     { "escape",    VN_ESC,   0},        /* 193 */
     { "evaluate",  VN_EVAL,  0},        /* 190 */
-#ifdef OS2ORUNIX
+#ifdef HAVE_VN_EXEDIR
     { "exedir",    VN_EXEDIR,0},        /* 192 */
-#endif /* OS2ORUNIX */
+#endif /* def HAVE_VN_EXEDIR */
     { "exitstatus",VN_EXIT,  0},
 #ifdef CKCHANNELIO
     { "f_count",   VN_FCOU,  0},        /* 195 */
@@ -1193,6 +1231,9 @@ struct keytab fnctab[] = {              /* Function names */
     { "substitute", FN_SUBST,0},        /* Substitute chars */
     { "substring",  FN_SUB,  0},        /* Extract substring from argument */
     { "tablelook",  FN_TLOOK,0},        /* Table lookup */
+#ifdef OS2
+    { "terminalchecksum", FN_TERMCKS,0},/* Terminal screen checksum */
+#endif /* OS2 */
     { "time",       FN_TIME, 0},        /* Free-format time to hh:mm:ss */
     { "tod2secs",   FN_NTIM, CM_INV},   /* Time-of-day-to-secs-since-midnite */
     { "todtosecs",  FN_NTIM, CM_INV},   /* Time-of-day-to-secs-since-midnite */
@@ -1295,7 +1336,12 @@ unsigned long startflags = 0L;
 #endif /* OS2 */
 
 static char *
-findinpath(arg) char * arg; {
+#ifdef CK_ANSIC
+findinpath( char * arg )
+#else
+findinpath(arg) char * arg;
+#endif /* CK_ANSIC */
+{
 #ifdef OS2
     char * scriptenv, * keymapenv;
     int len;
@@ -1307,7 +1353,12 @@ findinpath(arg) char * arg; {
 #endif /* DCMDBUF */
     char takepath[4096];
     char * s;
-    int x, z;
+    int x;
+#ifndef OS2
+#ifndef NOSPL
+    int z;
+#endif /* NOSPL */
+#endif /* !OS2 */
 
     /* Set up search path... */
 #ifdef OS2
@@ -1315,8 +1366,8 @@ findinpath(arg) char * arg; {
 #ifdef NT
     scriptenv = getenv("K95SCRIPTS");
     keymapenv = getenv("K95KEYMAPS");
-    makestr(&appdata0,(char *)GetAppData(0));
-    makestr(&appdata1,(char *)GetAppData(1));
+    makestr(&appdata0,GetAppData(0));
+    makestr(&appdata1,GetAppData(1));
 #else /* NT */
     scriptenv = getenv("K2SCRIPTS");
     keymapenv = getenv("K2KEYMAPS");
@@ -1528,7 +1579,12 @@ static int x_prescan = 0;
   need to be revisited.)
 */
 VOID
-prescan(dummy) int dummy; {             /* Arg is ignored. */
+#ifdef CK_ANSIC
+prescan( int dummy )                    /* Arg is ignored. */
+#else
+prescan(dummy) int dummy;
+#endif /* CK_ANSIC */
+{
     extern int howcalled;
     int yargc; char **yargv;
     char x;
@@ -1536,7 +1592,6 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
 #ifdef DEBUG
     int debcount = 0;
 #endif /* DEBUG */
-    int z;
 
     if (x_prescan)                      /* Only run once */
       return;
@@ -1640,6 +1695,7 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                                   startflags |= 16;   /* No Zmodem DLLs */
                                   startflags |= 32;   /* Stdin */
                                   startflags |= 64;   /* Stdout */
+                                  usageparm = 1; /* Showing usage and exiting */
 #endif /* OS2 */
                                   break;
                               case 'd': /* = SET DEBUG ON */
@@ -1657,7 +1713,11 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                                 yargv++, yargc--;
                                 if (yargc < 1)
                                   fatal("Window handle missing");
+#ifdef _WIN64
+                                hwndDialer = (HWND) _atoi64(*yargv);
+#else /* _WIN64 */
                                 hwndDialer = (HWND) atol(*yargv);
+#endif /* _WIN64 */
                                 StartedFromDialer = 1;
                                 yargv++, yargc--;
                                 KermitDialerID = atol(*yargv) ;
@@ -1744,6 +1804,7 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                         startflags |= 16;   /* No Zmodem DLLs */
                         startflags |= 32;   /* Stdin */
                         startflags |= 64;   /* Stdout */
+                        usageparm = 1;      /* Showing usage and exiting */
 #endif /* OS2 */
                         break;
                       case 'd':             /* = SET DEBUG ON */
@@ -1761,7 +1822,11 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                         yargv++, yargc--;
                         if (yargc < 1)
                           fatal("Window handle missing");
+#ifdef _WIN64
+                        hwndDialer = (HWND) _atoi64(*yargv);
+#else /* _WIN64 */
                         hwndDialer = (HWND) atol(*yargv);
+#endif /* _WIN64 */
                         StartedFromDialer = 1;
                         yargv++, yargc--;
                         KermitDialerID = atol(*yargv) ;
@@ -1887,7 +1952,11 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                         break;
                     } else {
 #endif /* COMMENT */
+#ifdef _WIN64
+                        hwndDialer = (HWND) _atoi64(*yargv);
+#else /* _WIN64 */
                         hwndDialer = (HWND) atol(*yargv);
+#endif /* _WIN64 */
                         StartedFromDialer = 1;
                         yargv++, yargc--;
                         KermitDialerID = atol(*yargv) ;
@@ -1948,6 +2017,7 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                     startflags |= 16;   /* No Zmodem DLLs */
                     startflags |= 32;   /* Stdin */
                     startflags |= 64;   /* Stdout */
+                    usageparm = 1;      /* Showing usage and exiting */
 #endif /* OS2 */
                     break;
 #ifndef NOICP
@@ -2051,7 +2121,12 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
   Translation between different Kanji character sets is not yet supported.
 */
 int
-gettcs(cs1,cs2) int cs1, cs2; {
+#ifdef CK_ANSIC
+gettcs( int cs1, int cs2 )
+#else
+gettcs(cs1,cs2) int cs1, cs2;
+#endif /* CK_ANSIC */
+{
 #ifdef NOCSETS                          /* No character-set support */
     return(0);                          /* so no translation */
 #else
@@ -2113,7 +2188,12 @@ gettcs(cs1,cs2) int cs1, cs2; {
 */
 
 int
-doconect(q,async) int q, async; {
+#ifdef CK_ANSIC
+doconect( int q, int async )
+#else
+doconect(q,async) int q, async;
+#endif /* CK_ANSIC */
+{
     int x;                              /* Return code */
 #ifdef CK_AUTODL
     extern CHAR ksbuf[];
@@ -2285,6 +2365,7 @@ doconect(q,async) int q, async; {
                          (apcactive == APC_REMOTE && apcstatus != APC_OFF))) {
             debug(F101,"doconect justone 3","",justone);
             if (mlook(mactab,"_apc_commands",nmac) == -1) {
+                apccmd = 0; /* So we can catch any CLEAR APC */
                 debug(F110,"doconect about to execute APC",apcbuf,0);
                 domac("_apc_commands",apcbuf,cmdstk[cmdlvl].ccflgs|CF_APC);
                 delmac("_apc_commands",1);
@@ -2294,7 +2375,8 @@ doconect(q,async) int q, async; {
 #endif /* DEBUG */
             }
             debug(F101,"doconect apcactive after domac","",apcactive);
-            if (!apcactive) {               /* In case CLEAR APC was in APC */
+            if (!apcactive || apccmd) {     /* In case CLEAR APC was in APC */
+                apcactive = APC_INACTIVE;
                 debug(F101,"doconect quit APC loop: apcactive","",apcactive);
                 break;
             }
@@ -2410,7 +2492,11 @@ doconect(q,async) int q, async; {
 }
 #endif /* NOLOCAL */
 
-#ifndef NOICP
+#ifdef NOICP
+char *
+homepath() { return(zhome()); }
+
+#else
 #ifdef COMMENT
 /*
   It seemed that this was needed for OS/2, in which \v(cmdfile) and other
@@ -3218,13 +3304,17 @@ _PROTOTYP( CHAR xl1as, (CHAR) );        /* ditto */
 */
 
 int
-xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout; {
-
+#ifdef CK_ANSIC
+xlate( char *fin, char *fout, int csin, int csout )
+#else
+xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout;
+#endif /* CK_ANSIC */
+{
 #ifndef MAC
 #ifdef OS2
     extern int k95stdout;
     extern int wherex[], wherey[];
-    extern unsigned char colorcmd;
+    extern cell_video_attr_t colorcmd;
 #ifdef NT
     SIGTYP (* oldsig)(int);             /* For saving old interrupt trap. */
 #else /* NT */
@@ -3244,9 +3334,13 @@ xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout; {
     int scrnflg = 0;
 
     int z = 1;                          /* Return code. */
-    int x, c, c2;                       /* Workers */
+    int x, c;                           /* Workers */
 #ifndef UNICODE
     int tcs;
+#else
+#ifdef COMMENT
+    int c2;
+#endif /* COMMENT */
 #endif /* UNICODE */
 
     ffc = 0L;
@@ -3644,7 +3738,9 @@ static char hompthbuf[CKMAXPATH+1] = { NUL, NUL }; /* Home directory path */
 
 char *
 homepath() {
+#ifdef UNIXOROSK
     int x;
+#endif /* UNIXOROSK */
     extern char hompthbuf[];
     extern char * myhome;
     char * h;
@@ -3679,7 +3775,12 @@ homepath() {
 /*  D O L O G  --  Do the log command  */
 
 int
-dolog(x) int x; {
+#ifdef CK_ANSIC
+dolog( int x )
+#else
+dolog(x) int x;
+#endif /* CK_ANSIC */
+{
     int y, disp; char *s = NULL, * p = NULL, * q = NULL;
     extern int isguest;
 #ifdef ZFNQFP
@@ -3815,7 +3916,12 @@ dolog(x) int x; {
 
 #ifndef NOXFER
 int
-pktopn(s,disp) char *s; int disp; {
+#ifdef CK_ANSIC
+pktopn( char *s, int disp )
+#else
+pktopn(s,disp) char *s; int disp;
+#endif /* CK_ANSIC */
+{
     static struct filinfo xx;
 
     if (!s)
@@ -3862,7 +3968,12 @@ pktopn(s,disp) char *s; int disp; {
 #endif /* NOXFER */
 
 int
-traopn(s,disp) char *s; int disp; {
+#ifdef CK_ANSIC
+traopn( char *s, int disp )
+#else
+traopn(s,disp) char *s; int disp;
+#endif /* CK_ANSIC */
+{
 #ifdef TLOG
     static struct filinfo xx;
 
@@ -3931,7 +4042,12 @@ traopn(s,disp) char *s; int disp; {
 
 #ifndef NOLOCAL
 int
-sesopn(s,disp) char * s; int disp; {
+#ifdef CK_ANSIC
+sesopn( char * s, int disp )
+#else
+sesopn(s,disp) char * s; int disp;
+#endif /* CK_ANSIC */
+{
     static struct filinfo xx;
     extern int tsstate;
 
@@ -3983,7 +4099,12 @@ sesopn(s,disp) char * s; int disp; {
 #endif /* NOICP */
 
 int
-debopn(s,disp) char *s; int disp; {
+#ifdef CK_ANSIC
+debopn( char *s, int disp )
+#else
+debopn(s,disp) char *s; int disp;
+#endif /* CK_ANSIC */
+{
 #ifdef DEBUG
 #ifdef CK_UTSNAME
     extern char unm_mch[], unm_nam[], unm_rel[], unm_ver[], unm_mod[];
@@ -4038,6 +4159,7 @@ debopn(s,disp) char *s; int disp; {
         debug(F100,ckxsys,"",0);
 #endif /* OS2 */
 #endif /* MAC */
+
 #ifdef CK_UTSNAME
         if (unm_mch[0]) {
             debug(F110,"uname machine",unm_mch,0);
@@ -4089,6 +4211,8 @@ debopn(s,disp) char *s; int disp; {
 }
 
 
+#ifndef NOICP
+
 /*  C K D A T E  --  Returns current date/time in standard format  */
 
 static char nowbuf[18];
@@ -4134,8 +4258,6 @@ ckdate() {
 
     return((char *)nowbuf);
 }
-
-#ifndef NOICP
 #ifdef CKLOGDIAL
 
 /*
@@ -4143,7 +4265,12 @@ ckdate() {
   fc > 0 for subsequent opens, meaning open for use, leave open.
 */
 int
-diaopn(s,disp,fc) char *s; int disp, fc; {
+#ifdef CK_ANSIC
+diaopn( char *s, int disp, int fc )
+#else
+diaopn(s,disp,fc) char *s; int disp, fc;
+#endif /* CK_ANSIC */
+{
     static struct filinfo xx;
 
     if (!s)
@@ -4200,7 +4327,12 @@ diaopn(s,disp,fc) char *s; int disp, fc; {
 /*  SHOW command routines */
 
 char *
-shoxm() {
+#ifdef CK_ANSIC
+shoxm( void )
+#else
+shoxm()
+#endif /* CK_ANSIC */
+{
     char * s;
     switch (binary) {
       case XYFT_T: s = "text";         break;
@@ -4397,7 +4529,7 @@ shopad(n) int n; {
 VOID
 shoparc() {
     extern int reliable, stopbits, clsondisc;
-    int i; char *s;
+    char *s;
     long zz;
 
 #ifdef NEWFTP
@@ -4748,7 +4880,12 @@ shoparc() {
 }
 
 int
-shotcp(n) int n; {
+#ifdef CK_ANSIC
+shotcp( int n )
+#else
+shotcp(n) int n; 
+#endif /* CK_ANSIC */
+{
 #ifdef TCPSOCKET
     if (nettype == NET_TCPA || nettype == NET_TCPB) {
         printf("SET TCP parameters:\n");
@@ -4829,7 +4966,12 @@ shotcp(n) int n; {
 
 #ifdef TNCODE
 int
-shotopt(n) int n; {
+#ifdef CK_ANSIC
+shotopt( int n )
+#else
+shotopt(n) int n;
+#endif /* CK_ANSIC */
+{
     int opt;
 
     printf("%-21s %12s %12s %12s %12s\n\n",
@@ -4893,7 +5035,12 @@ shotopt(n) int n; {
 }
 
 int
-shotel(n) int n; {
+#ifdef CK_ANSIC
+shotel( int n )
+#else
+shotel(n) int n;
+#endif /* CK_ANSIC */
+{
     extern int tn_duplex;
 #ifdef CK_ENVIRONMENT
     extern int tn_env_flg;
@@ -5156,7 +5303,7 @@ shonet() {
 
 #else /* rest of this routine */
 
-    int i, n = 4;
+    int n = 4;
 
 #ifndef NODIAL
     if (nnetdir <= 1) {
@@ -5266,10 +5413,8 @@ shonet() {
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
-    if (ck_ssleay_is_installed())
-        printf(" SSH V1 and V2 protocols\n");
-    else
-        printf(" SSH V1 and V2 protocols - not available\n");
+    if (ck_ssh_is_installed())
+        printf(" SSH V2 protocol\n");
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET
@@ -5499,7 +5644,12 @@ shodial() {
 }
 
 VOID
-shods(s) char *s; {                     /* Show a dial-related string */
+#ifdef CK_ANSIC
+shods( char *s )                      /* Show a dial-related string */
+#else
+shods(s) char *s;
+#endif /* CK_ANSIC */
+{
     char c;
     if (s == NULL || !(*s)) {           /* Empty? */
         printf("(none)\n");
@@ -5688,7 +5838,12 @@ doshodial() {
 /*  Show File Parameters */
 
 static char *
-pathval(x) int x; {
+#ifdef CK_ANSIC
+pathval( int x )
+#else
+pathval(x) int x;
+#endif /* CK_ANSIC */
+{
     switch (x) {
       case PATH_OFF:  return("off");
       case PATH_ABS:  return("absolute");
@@ -5893,12 +6048,14 @@ shofil() {
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* DYNAMIC */
 #endif /* UNIX */
-#ifdef OS2ORUNIX
-    printf(" Longest filename:        %d\n", maxnam);
+#ifdef CKMAXNAM
+    printf(" Longest filename:        %d\n", CKMAXNAM);
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
-    printf(" Longest pathname:        %d\n", maxpath);
+#endif /* def CKMAXNAM */
+#ifdef CKMAXPATH
+    printf(" Longest pathname:        %d\n", CKMAXPATH);
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
-#endif /* OS2ORUNIX */
+#endif /* def CKMAXPATH */
 
     printf(" Last file sent:          %s\n", sfspec ? sfspec : "(none)");
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
@@ -6281,7 +6438,12 @@ shopar() {
 /*  D O S T A T  --  Display file transfer statistics.  */
 
 int
-dostat(brief) int brief; {
+#ifdef CK_ANSIC
+dostat( int brief )
+#else
+dostat(brief) int brief;
+#endif /* CK_ANSIC */
+{
     extern long filrej, peakcps;
     extern int lastspmax, streamed, cleared, streamok;
     extern char whoareu[];
@@ -6553,8 +6715,13 @@ static int burst = 0;                      /* Chars remaining in input burst */
 extern int inesc[], oldesc[];
 
 int
+#ifdef CK_ANSIC
+doinput(int timo, char *ms[], int mp[], int flags, int count )
+#else
 doinput(timo,ms,mp,flags,count)
-    int timo; char *ms[]; int mp[]; int flags; int count; {
+    int timo; char *ms[]; int mp[]; int flags; int count; 
+#endif /* CK_ANSIC */
+{
     extern int inintr;
 #ifdef CK_AUTODL
     extern int inautodl;
@@ -6569,7 +6736,7 @@ doinput(timo,ms,mp,flags,count)
     int lastchar = 0;
     int waiting = 0;
     int imask = 0;
-    char ch, *xp, *s;
+    char *xp, *s;
     CHAR c;
 #ifndef NOLOCAL
 #ifdef OS2
@@ -6581,11 +6748,10 @@ doinput(timo,ms,mp,flags,count)
     static int cr = 0;
 #endif /* TNCODE */
     int is_tn = 0;
-#ifdef SSHBUILTIN
-    extern int ssh_cas;
-    extern char * ssh_cmd;
-#endif /* SSHBUILTIN */
     int noescseq = 0;			/* Filter escape sequences */
+#ifdef SSHBUILTIN
+    const char* ssh_cmd;
+#endif
 
     debug(F101,"input count","",count);
     debug(F101,"input flags","",flags);
@@ -6686,8 +6852,9 @@ doinput(timo,ms,mp,flags,count)
 #endif /* NOLOCAL */
 
 #ifdef SSHBUILTIN
-    if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
-         !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+    ssh_cmd = ssh_get_sparam(SSH_SPARAM_CMD);
+    if ( network && nettype == NET_SSH && ssh_get_iparam(SSH_IPARAM_CAS) &&
+        ssh_cmd && !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
         if (!quiet)
 	  printf("?SSH Subsystem active: %s\n", ssh_cmd);
         instatus = INP_IKS;
@@ -7276,7 +7443,12 @@ doinput(timo,ms,mp,flags,count)
   characters from the connection.
 */
 int
-doreinp(timo,s,pat) int timo; char *s; int pat; {
+#ifdef CK_ANSIC
+doreinp( int timo, char *s, int pat )
+#else
+doreinp(timo,s,pat) int timo; char *s; int pat;
+#endif /* CK_ANSIC */
+{
     int x, y, i;
     char *xx, *xp, *xq = (char *)0;
     CHAR c;
@@ -7394,7 +7566,12 @@ doreinp(timo,s,pat) int timo; char *s; int pat; {
 
 #ifndef NOFRILLS
 int
-yystring(s,s2) char *s; char **s2; {    /* Reverse a string */
+#ifdef CK_ANSIC
+yystring( char *s, char **s2 )
+#else
+yystring(s,s2) char *s; char **s2;
+#endif /* CK_ANSIC */
+{
     int x;
     static char *new;
     new = *s2;
@@ -7413,7 +7590,12 @@ yystring(s,s2) char *s; char **s2; {    /* Reverse a string */
 static char ipabuf[16] = { NUL };       /* IP address buffer */
 
 static char *
-getip(s) char *s; {
+#ifdef CK_ANSIC
+getip( char *s )
+#else
+getip(s) char *s;
+#endif /* CK_ANSIC */
+{
     char c=NUL;                         /* Workers... */
     int i=0, p=0, d=0;
     int state = 0;                      /* State of 2-state FSA */
@@ -7480,7 +7662,12 @@ static char zjdbuf[12] = { NUL, NUL };
   conservetur.  - Gregorius XIII, Anno Domini MDLXXXII.
 */
 char *
-zjdate(date) char * date; {             /* date = yyyymmdd */
+#ifdef CK_ANSIC
+zjdate( char * date )                   /* date = yyyymmdd */
+#else
+zjdate(date) char * date;
+#endif /* CK_ANSIC */
+{
     char year[5];
     char month[3];
     char day[3];
@@ -7539,7 +7726,12 @@ static char jzdbuf[32];
 /* J Z D A T E  --  Convert Day of Year to yyyyddmm date */
 
 char *
-jzdate(date) char * date; {             /* date = yyyyddd */
+#ifdef CK_ANSIC
+jzdate( char * date )                   /* date = yyyyddd */
+#else
+jzdate(date) char * date;
+#endif /* CK_ANSIC */
+{
     char year[5];                       /* with optional time */
     char day[4];
     char * time = NULL, * p;
@@ -7634,7 +7826,12 @@ jzdate(date) char * date; {             /* date = yyyyddd */
   is MJD mod 7: 0=We, 1=Th, 2=Fr, 3=Sa, 4=Su, 5=Mo, 6=Tu.
 */
 long
-mjd(date) char * date; {
+#ifdef CK_ANSIC
+mjd( char * date )
+#else
+mjd(date) char * date;
+#endif /* CK_ANSIC */
+{
     char year[5];
     char month[3];
     char day[3];
@@ -7704,8 +7901,10 @@ mjd2date(mjd) long mjd;
 }
 
 #ifndef NOSPL
+#ifndef OS2
 static char ** flist = (char **) NULL;  /* File list for \fnextfile() */
 static int flistn = 0;                  /* Number of items in file list */
+#endif /* OS2 */
 
 /*
   The function return-value buffer must be global, since fneval() returns a
@@ -7736,7 +7935,12 @@ static char fpfmtbuf[FPFMTSIZ] = { NUL, NUL };
 static int fpfbufpos = 0;               /* (why was this char before?) */
 
 char *
-fpformat(fpresult,places,round) CKFLOAT fpresult; int places, round; {
+#ifdef CK_ANSIC
+fpformat( CKFLOAT fpresult, int places, int round )
+#else
+fpformat(fpresult,places,round) CKFLOAT fpresult; int places, round;
+#endif /* CK_ANSIC */
+{
     char fbuf[16];                      /* For creating printf format */
     int nines = 0, sign = 0, x, y, i, j, size = 0;
     char * buf;
@@ -7840,7 +8044,12 @@ fpformat(fpresult,places,round) CKFLOAT fpresult; int places, round; {
 #endif /* CKFLOAT */
 
 static VOID
-evalerr(fn) char * fn; {
+#ifdef CK_ANSIC
+evalerr( char * fn )
+#else
+evalerr(fn) char * fn;
+#endif /* CK_ANSIC */
+{
     if (fndiags) {
         if (divbyzero)
           ckmakmsg(fnval,FNVALL,"<ERROR:DIVIDE_BY_ZERO:\\f",fn,"()>",NULL);
@@ -7849,9 +8058,13 @@ evalerr(fn) char * fn; {
     }
 }
 
-
 static int
-ckcindex(c,s) char c, *s; {
+#ifdef CK_ANSIC
+ckcindex(char c, char *s)
+#else
+ckcindex(c,s) char c, *s;
+#endif /* CK_ANSIC */
+{
     int rc;
     if (!c || !s) return(0);
     for (rc = 0; s[rc]; rc++) {
@@ -7861,7 +8074,12 @@ ckcindex(c,s) char c, *s; {
 }
 
 static char *
-dokwval(s,sep) char * s, * sep; {
+#ifdef CK_ANSIC
+dokwval( char * s, char * sep )
+#else
+dokwval(s,sep) char * s, * sep;
+#endif /* CK_ANSIC */
+{
     char c = '\0', * p, * kw = NULL, * vp = NULL;
     char * rc = "0";			/* Return code */
     int x = 0;
@@ -7918,7 +8136,12 @@ dokwval(s,sep) char * s, * sep; {
 }
 
 static int
-isaarray(s) char * s; {			/* Is s an associative array element */
+#ifdef CK_ANSIC
+isaarray( char * s )           /* Is s an associative array element */
+#else
+isaarray(s) char * s;
+#endif /* CK_ANSIC */
+{
     int state = 0;
     CHAR c;
     if (!s) return(0);
@@ -7954,7 +8177,12 @@ isaarray(s) char * s; {			/* Is s an associative array element */
 #define JPGDATEBUF 8192	   /* Should be more than enough bytes to find date */
 
 static char *
-jpgdate(fp) FILE * fp; {
+#ifdef CK_ANSIC
+jpgdate( FILE * fp )
+#else
+jpgdate(fp) FILE * fp;
+#endif /* CK_ANSIC */
+{
     static char datebuf[20];
     char tmpbuf[20];
     CHAR buf[JPGDATEBUF+1];
@@ -8078,9 +8306,13 @@ jpgdate(fp) FILE * fp; {
     }
     return((char *) datebuf);
 }
-
-int                                     /* Is character alphnumeric? */
-cisalphanum(ch) CHAR ch; {              /* i.e. a letter, digit, @, $, or _ */
+int                                    /* Is character alphnumeric? */
+#ifdef CK_ANSIC
+cisalphanum(CHAR ch)                   /* i.e. a letter, digit, @, $, or _ */
+#else 
+cisalphanum(ch) CHAR ch;               /* i.e. a letter, digit, @, $, or _ */
+#endif /* CK_ANSIC */
+{
     /* All 8-bit characters are counted as alphanumeric */
     int c;
     c = (int)ch;                        /* Avoid C-language character syntax */
@@ -8094,7 +8326,12 @@ cisalphanum(ch) CHAR ch; {              /* i.e. a letter, digit, @, $, or _ */
 }
 
 int                                     /* Is character non-alphanumeric */
-cnonalphanum(ch) CHAR ch; {             /* i.e. not letter, digit, [$@_] */
+#ifdef CK_ANSIC
+cnonalphanum( CHAR ch )                 /* i.e. not letter, digit, [$@_] */
+#else
+cnonalphanum(ch) CHAR ch;
+#endif /* CK_ANSIC */
+{
     int c;
     c = (int)ch;                        /* Avoid C-language character syntax */
     if (c == 36) return(0);             /* '$' is alphanumeric */
@@ -8108,7 +8345,12 @@ cnonalphanum(ch) CHAR ch; {             /* i.e. not letter, digit, [$@_] */
 
 /* Tell if a string contains only alphanumeric characters */
 int
-isalphanum(s) char *s; {
+#ifdef CK_ANSIC
+isalphanum( char *s )
+#else
+isalphanum(s) char *s;
+#endif /* CK_ANSIC */
+{
     CHAR c;
     while ((c = (int)(*s++))) {
         if (!cisalphanum(c)) return(0);
@@ -8117,7 +8359,12 @@ isalphanum(s) char *s; {
 }
 /* Tell if a string contains only non-alphanumeric characters */
 int
-nonalphanum(s) char *s; {
+#ifdef CK_ANSIC
+nonalphanum( char *s )
+#else
+nonalphanum(s) char *s;
+#endif /* CK_ANSIC */
+{
     CHAR c;
     while ((c = (int)(*s++))) {
         if (!cnonalphanum(c)) return(0);
@@ -8126,7 +8373,12 @@ nonalphanum(s) char *s; {
 }
 
 static char *                           /* Evaluate builtin functions */
-fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
+#ifdef CK_ANSIC
+fneval( char *fn, char *argp[], int argn, char * xp )
+#else
+fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
+#endif /* CK_ANSIC */
+{
     int i=0, j=0, k=0, len1=0, len2=0, len3=0, n=0, t=0, x=0, y=0;
     int cx, failed = 0;                 /* Return code, 0 = ok */
     long z = 0L;
@@ -9440,7 +9692,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
       case FN_OOX:
         p = "";
         if (argn > 0)
-          p = (char *) ck_oox(bp[0], (argn > 1) ? bp[1] : "");
+          p = ck_oox(bp[0], (argn > 1) ? bp[1] : "");
         goto fnend;
 #endif /* OS2 */
 
@@ -9763,7 +10015,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
                   goto fnend;
               }
           }
-          line = VscrnGetLineFromTop( VTERM, (USHORT) row );
+          line = VscrnGetLineFromTop( VTERM, (USHORT) row, TRUE );
           if (line != NULL) {
               if (bp[1] == NULL || bp[1][0] == '\0')
                 col = 0;
@@ -10046,7 +10298,26 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 #ifdef CK_SSL
         if (RAND_bytes((unsigned char *)&k,sizeof(k)) < 0)
 #endif /* CK_SSL */
+        {
+#ifdef NT
+            if (srandThreadId != GetCurrentThreadId()) {
+                /* The RNG was last seeded on a different thread, so may not
+                 * have been seeded on *this* thread. Better do it now to be
+                 * sure! The logic here is a copy of what ckcmai.c does. */
+                char stackdata[256];
+                unsigned int c = 1234, n;
+                /* try to make a random unsigned int to feed srand() */
+                c = time(NULL);                 /* Get current time */
+                c *= getpid();                  /* multiply it by our PID */
+                /* Referenced before set... DELIBERATELY */
+                for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
+                    c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
+                srand((unsigned int)c);
+                srandThreadId = GetCurrentThreadId();
+            }
+#endif /* NT */
           k = rand();
+        }
         x = 0;
         if (argn > 0) {
             if (!chknum(bp[0])) {
@@ -10423,8 +10694,6 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  extern int zgfs_dir, zgfs_link;
           extern char linkname[];
 	  char * tx;			/* For tilde expansion */
-#else
-	  int zgfs_dir = 0, zgfs_link = 0;
 #endif /* UNIX */
           char abuf[16], *s;
           char ** ap = NULL;
@@ -10434,7 +10703,10 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	  int i,j,n;
           int m;			/* For scanfile() */
 	  int dir = -1;			/* 1 = arg is a directory file */
-	  CK_OFF_T z, z2;		/* For file size */
+	  CK_OFF_T z;                   /* For file size */
+#ifdef UNIX
+          CK_OFF_T z2;                  /* Also for file size */
+#endif /* UNIX */
 
           workbuf[0] = NUL;
           workbuf[1] = NUL;
@@ -10637,7 +10909,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
       case FN_FILECMP: {		/* File comparison */
 	FILE *fp1 = NULL;
 	FILE *fp2 = NULL;
-        char * s, * s1 = NULL, * s2 = NULL;
+        char * s1 = NULL, * s2 = NULL;
 #ifdef UNIX
 	char * tx;			/* For tilde expansion */
 #endif /* UNIX */
@@ -10843,7 +11115,6 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 #ifndef NODIAL
       case FN_PNCVT: {                  /* Convert phone number */
-          extern char * pncvt();
           failed = 0;
           p = pncvt(bp[0]);
           if (!p) p = "";
@@ -11083,7 +11354,6 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
           char abuf[16], *s = NULL, **ap = NULL, **vp = NULL;
           char pattern[VNAML];
           int slen, i, j, k, first = -1;
-          extern int xdelmac();
           p = fnval;
           if (argn < 2) {
               if (fndiags)
@@ -11216,8 +11486,11 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         char fpbuf[64], * bp0;
         double dummy;
         /* int sign = 0; */
-        int i, j, places = 0;
+        int i, places = 0;
         int argcount = 1;
+#ifdef COMMENT
+        int j;
+#endif
 
         failed = 1;
         p = fnval;
@@ -12189,7 +12462,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
         goto fnend;
     }
     if (cx == FN_TOGMT) {               /* \futcdate(d1) */
-        char * d1, * dp;
+        char * dp;
         char datebuf[32];
         char d2[32];
         p = fnval;
@@ -12293,7 +12566,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 #ifdef NT
     if (cx == FN_SNAME) {
-        GetShortPathName(bp[0],fnval,FNVALL);
+        ckGetShortPathName(bp[0],fnval,FNVALL);
         goto fnend;
     }
     if (cx == FN_LNAME) {
@@ -12311,9 +12584,12 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
   Works with or without the "From: " or "Sender: " tag.
 */
     if (cx == FN_EMAIL) {
-        char c, * s = bp[0], * s2, * s3, * ap = "";
-	int k, state = 0, quote = 0, infield = 0;
-	int pc = 0;			/* For nested comments */
+        char * s = bp[0], * s2, * s3, * ap = "";
+	int k;
+#ifdef COMMENT
+    char c;
+	int quote = 0, state = 0, infield = 0 , pc = 0;	/* For nested comments */
+#endif /* COMMENT */
         if (!s) s = "";
 	if (!*s) goto xemail;
 
@@ -12461,7 +12737,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
     if (cx == FN_PICTURE) {
 	FILE *fp = NULL;
 	int c, x, w = 0, h = 0, eof = 0;
-	unsigned int i, j, k;
+	unsigned int j, k;
 	unsigned char buf[1024];
 	char abuf[16], * p, * s;
 	char ** ap = NULL;
@@ -12666,7 +12942,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 	goto fnend;
     }
     if (cx == FN_RECURSE) {
-	int t, n;
+	int n;
 	char * s;
 	fnval[0] = NUL;			/* Default result is empty string */
 	s = bp[0];			/* Check for null argument */
@@ -12726,7 +13002,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 /* Decode strings containing hex escapes */
 
     if (cx == FN_UNPCT) {		/* \fdecodehex() */
-        char *s1, *s2;
+        char *s1;
 	char *prefix;			/* Can be 1 or 2 chars */
 	char buf[3];
 	int n = 0, k;
@@ -12952,6 +13228,27 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
     }
 #endif /* HAVE_LOCALE */
 
+#ifdef OS2
+    if (cx == FN_TERMCKS) {
+        int calculate_decrqcra_checksum(int, int, int, int, int, BOOL);
+
+        int top = -1, left = -1, bot = -1, right = -1, page = -1, checksum = 0;
+        if (argn > 0 && bp[0] && *bp[0] && chknum(bp[0])) top = atoi(bp[0]);
+        if (argn > 1 && bp[1] && *bp[1] && chknum(bp[1])) left = atoi(bp[1]);
+        if (argn > 2 && bp[2] && *bp[2] && chknum(bp[2])) bot = atoi(bp[2]);
+        if (argn > 3 && bp[3] && *bp[3] && chknum(bp[3])) right = atoi(bp[3]);
+        if (argn > 4 && bp[4] && *bp[4] && chknum(bp[4])) page = atoi(bp[4]);
+
+        checksum = calculate_decrqcra_checksum(
+            top, left, bot, right, page-1, FALSE);
+
+        _snprintf(fnval, FNVALL, "%d", checksum);
+        failed = 0;
+
+        goto fnend;
+    }
+#endif /* OS2 */
+
 /* Note: when adding new functions remember to update dohfunc in ckuus2.c. */
 
     failed = 1;
@@ -13021,7 +13318,12 @@ ckgetpid() {                            /* Return pid as string */
 static char embuf[EMBUFLEN+1];
 
 char *                                  /* Evaluate builtin variable */
-nvlook(s) char *s; {
+#ifdef CK_ANSIC
+    nvlook( char *s )
+#else
+    nvlook(s) char *s;
+#endif /* CK_ANSIC */
+{
     int x, y, cx;
     long z;
     char *p;
@@ -13030,7 +13332,7 @@ nvlook(s) char *s; {
 #endif /* NODIAL */
 #ifndef NOKVERBS                        /* Keyboard macro material */
     extern int keymac, keymacx;
-#endif /* NOKVERBS */
+#endif  /* NOKVERBS */
 #ifdef CK_LOGIN
     extern int isguest;
 #endif /* CK_LOGIN */
@@ -13219,9 +13521,8 @@ nvlook(s) char *s; {
         sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
-      /* C-Kermit 10.0... no more product-specific version numbers */
       case VN_XVNUM:                    /* Product-specific version number */
-        sprintf(vvbuf,"%ld",vernum);    /* SAFE */
+        sprintf(vvbuf,"%ld",xvernum);    /* SAFE */
         return(vvbuf);
 
       case VN_FULLVER:                  /* Full version number (edit 400) */
@@ -13960,23 +14261,25 @@ nvlook(s) char *s; {
                 p++;
             }
             p = vvbuf;
+
 #ifndef VMS
-            if (p > vvbuf) {          /* Directory termination character */
-                  c =
+            c =
 #ifdef MAC
-                      ':'
+                    ':'
 #else
 #ifdef datageneral
-                      ':'
+                    ':'
 #else
 #ifdef STRATUS
-                      '>'
+                    '>'
 #else
-                      '/'
+                    '/'
 #endif /* STRATUS */
 #endif /* datageneral */
 #endif /* MAC */
-                      ;
+            ;
+
+            if (p > vvbuf) {          /* Directory termination character */
                   if (*(p-1) != c) {    /* Add it to the end of the */
                       *p++ = c;         /* string if it was not already */
                       *p = NUL;         /* there */
@@ -14167,10 +14470,6 @@ nvlook(s) char *s; {
 
     switch(y) {
       case VN_XPROG:
-#ifndef COMMENT
-/* C-Kermit 9.0 and later for Windows and OS/2 is just C-Kermit */
-        return("C-Kermit");
-#else
 #ifdef OS2
 #ifdef NT
 #ifdef KUI
@@ -14184,7 +14483,6 @@ nvlook(s) char *s; {
 #else
         return("C-Kermit");
 #endif /* OS2 */
-#endif /* COMMENT */
 
       case VN_EDITOR:
 #ifdef NOFRILLS
@@ -14574,8 +14872,10 @@ nvlook(s) char *s; {
       case VN_MODL: {
 #ifdef CK_UTSNAME
           extern char unm_mod[], unm_mch[];
+#ifdef OSF32
           int y = VVBUFL - 1;
           char * s = unm_mod;
+#endif /* OSF32 */
 #endif /* CK_UTSNAME */
 #ifdef IKSD
 #ifdef CK_LOGIN
@@ -14741,7 +15041,6 @@ nvlook(s) char *s; {
       case VN_DM_HF:
       case VN_DM_WB:
       case VN_DM_RC: {
-          extern char * getdm();
           ckstrncpy(vvbuf,getdm(y),VVBUFL);
           return((char *)vvbuf);
       }
@@ -15116,32 +15415,32 @@ nvlook(s) char *s; {
 #ifdef NT
     switch (y) {
       case VN_PERSONAL:
-        p = (char *)GetPersonal();
+        p = GetPersonal();
         if (p) {
-            GetShortPathName(p,vvbuf,VVBUFL);
+            ckGetShortPathName(p,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
       case VN_DESKTOP:
-          p = (char *)GetDesktop();
+          p = GetDesktop();
           if (p) {
-              GetShortPathName(p,vvbuf,VVBUFL);
+              ckGetShortPathName(p,vvbuf,VVBUFL);
               return(vvbuf);
           }
           return("");
       case VN_COMMON:
-        p = (char *)GetAppData(1);
+        p = GetAppData(1);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
-            GetShortPathName(vvbuf,vvbuf,VVBUFL);
+            ckGetShortPathName(vvbuf,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
       case VN_APPDATA:
-        p = (char *)GetAppData(0);
+        p = GetAppData(0);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
-            GetShortPathName(vvbuf,vvbuf,VVBUFL);
+            ckGetShortPathName(vvbuf,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
@@ -15199,6 +15498,41 @@ nvlook(s) char *s; {
     }
 #endif /* KUI */
 
+#ifdef OS2
+    switch(y) {
+        case VN_PALETTE:
+            switch(colorpalette) {
+                case CK_PALETTE_XTRGB:
+                    sprintf(vvbuf,"xterm-rgb");
+                    break;
+                case CK_PALETTE_XT256:
+                    sprintf(vvbuf,"xterm-256");
+                    break;
+                case CK_PALETTE_XT88:
+                    sprintf(vvbuf,"xterm-88");
+                    break;
+#ifdef CK_PALETTE_WY370
+                case CK_PALETTE_WY370:
+                    sprintf(vvbuf,"wy-370");
+                    break;
+#endif /* CK_PALETTE_WY370 */
+                case CK_PALETTE_16:
+                    sprintf(vvbuf,"aixterm-16");
+                    break;
+                case CK_PALETTE_8:
+                    sprintf(vvbuf,"ansi");
+                    break;
+                case CK_PALETTE_XTRGB88:
+                    sprintf(vvbuf,"xterm-88rgb");
+                    break;
+                default:
+                    sprintf(vvbuf,"unknown");
+                    break;
+            }
+            return(vvbuf);
+    }
+#endif /* OS2 */
+
     fnsuccess = 0;
     if (fnerror) {
         fnsuccess = 0;
@@ -15215,7 +15549,12 @@ nvlook(s) char *s; {
 
 /* warning, this won't work for VMS */
 char *
-getbasename(s) char *s; {
+#ifdef CK_ANSIC
+getbasename( char *s )
+#else
+getbasename(s) char *s;
+#endif /* CK_ANSIC */
+{
     int n, i;
     if (!s) s = "";
     if (!*s) return("");
@@ -15260,7 +15599,12 @@ getbasename(s) char *s; {
 #endif /* NOSPL */
 
 int
-zzstring(s,s2,n) char *s; char **s2; int *n; {
+#ifdef CK_ANSIC
+zzstring( char *s, char **s2, int *n )
+#else
+zzstring(s,s2,n) char *s; char **s2; int *n;
+#endif /* CK_ANSIC */
+{
     int x,                              /* Current character */
         xx,                             /* Worker */
         y,                              /* Worker */
@@ -15827,6 +16171,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             break;
 #endif /* NOSPL */                      /* Handle \nnn even if NOSPL. */
 
+#ifndef NOICP
 #ifndef NOKVERBS
         case 'K':
         case 'k': {
@@ -15892,6 +16237,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             break;
         }
 #endif /* NOKVERBS */
+#endif /* NOICP */
 
         default:                        /* Maybe it's a backslash code */
           y = xxesc(&s);                /* Go interpret it */

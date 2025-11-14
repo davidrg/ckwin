@@ -1,7 +1,15 @@
-#include "ckcsym.h"
-char *wartv = "Wart Version 2.15, 18 September 2020 ";
-
 #define CKWART_C
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "ckcdeb.h"
+#include "ckcsym.h"
+#include "ckcasc.h"
+#include "ckcker.h"
+#include "ckclib.h"
+
+char *wartv = "Wart Version 2.17, 04 February 2024 ";
 
 #ifdef MDEBUG
 /* Use the real ones in this module only */
@@ -31,7 +39,7 @@ char *wartv = "Wart Version 2.15, 18 September 2020 ";
   Authors: Jeff Damens, Frank da Cruz
   Columbia University Center for Computing Activites.
   First released November 1984.
-  Copyright (C) 1984, 2009,
+  Copyright (C) 1984, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -128,7 +136,14 @@ typedef struct transx *trans;
 
 /* Function prototypes */
 
-_PROTOTYP( VOID setwstate, (int, trans) );
+#ifdef OS2
+typedef VOID WMAINTYPE;
+#else
+typedef int WMAINTYPE;
+#endif  /* OS2 */
+_PROTOTYP( WMAINTYPE main, (int argc, char **argv) );
+_PROTOTYP( VOID fatal, (char *msg) );
+_PROTOTYP( VOID setwstate, (int state, trans t) );
 _PROTOTYP( int teststate, (int, trans) );
 _PROTOTYP( trans rdinput, (FILE *, FILE *) );
 _PROTOTYP( VOID initial, (FILE *, FILE *) );
@@ -207,10 +222,14 @@ char *txt3 = "\n	    }\n    }\n}\n\n";
 
 /*
  * turn on the bit associated with the given state
- *
  */
 VOID
-setwstate(state,t) int state; trans t; {
+#ifdef CK_ANSIC
+setwstate(int state, trans t)
+#else
+setwstate(state,t) int state; trans t;
+#endif /* CK_ANSIC */
+/* setwstate */ {
     int idx,msk;
     idx = state/8;			/* byte associated with state */
     msk = 0x80 >> (state % 8);		/* bit mask for state */
@@ -219,10 +238,14 @@ setwstate(state,t) int state; trans t; {
 
 /*
  * see if the state is involved in the transition
- *
  */
 int
-teststate(state,t) int state; trans t; {
+#ifdef CK_ANSIC
+teststate(int state, trans t)
+#else
+teststate(state,t) int state; trans t;
+#endif /* CK_ANSIC */
+/* teststate */ {
     int idx,msk;
     idx = state/8;
     msk = 0x80 >> (state % 8);
@@ -232,11 +255,14 @@ teststate(state,t) int state; trans t; {
 
 /*
  * read input from here...
- *
  */
-
 trans
-rdinput(infp,outfp) FILE *infp,*outfp; {
+#ifdef CK_ANSIC
+rdinput(FILE *infp, FILE *outfp)
+#else
+rdinput(infp,outfp) FILE *infp,*outfp;
+#endif  /* CK_ANSIC */
+/* rdinput */ {
     trans x;
     lines = 1;				/* line counter */
     nstates = 0;			/* no states */
@@ -257,14 +283,17 @@ rdinput(infp,outfp) FILE *infp,*outfp; {
     return(x);
 }
 
-
 /*
  * initial - read initial definitions and state names.  Returns
  * on EOF or %%.
- *
  */
 VOID
-initial(infp,outfp) FILE *infp, *outfp; {
+#ifdef CK_ANSIC
+initial(FILE *infp, FILE *outfp)
+#else 
+initial(infp,outfp) FILE *infp, *outfp;
+#endif  /* CK_ANSIC */
+/* initial */ {
     int c;
     char wordbuf[MAXWORD];
     while ((c = getc(infp)) != EOF) {
@@ -281,28 +310,40 @@ initial(infp,outfp) FILE *infp, *outfp; {
 }
 
 /*
- * boolean function to tell if the given character can be part of
- * a word.
- *
+ * boolean function to tell if the given character can be part of a word.
  */
 int
-isin(s,c) char *s; int c; {
+#ifdef CK_ANSIC
+isin(char *s, int c)
+#else
+isin(s,c) char *s; int c;
+#endif /* CK_ANSIC */
+/* isin */ {
     for (; *s != '\0'; s++)
       if (*s == (char) c) return(1);
     return(0);
 }
 int
-isword(c) int c; {
+#ifdef CK_ANSIC
+isword(int c)
+#else
+isword(c) int c;
+#endif /* CK_ANSIC */
+/* isword */ {
     static char special[] = ".%_-$@";	/* these are allowable */
     return(isalnum(c) || isin(special,c));
 }
 
 /*
  * read the next word into the given buffer.
- *
  */
 VOID
-rdword(fp,buf) FILE *fp; char *buf; {
+#ifdef CK_ANSIC
+rdword(FILE *fp, char *buf)
+#else
+rdword(fp,buf) FILE *fp; char *buf;
+#endif /* CK_ANSIC */
+/* rdword */ {
     int len = 0,c;
     while (isword(c = getc(fp)) && ++len < MAXWORD) *buf++ = (char) c;
     *buf++ = '\0';			/* tie off word */
@@ -311,10 +352,14 @@ rdword(fp,buf) FILE *fp; char *buf; {
 
 /*
  * read state names, up to a newline.
- *
  */
 VOID
-rdstates(fp,ofp) FILE *fp,*ofp; {
+#ifdef CK_ANSIC
+rdstates(FILE *fp, FILE *ofp)
+#else
+rdstates(fp,ofp) FILE *fp,*ofp;
+#endif /* CK_ANSIC */
+/* rdstates */ {
     int c;
     char wordbuf[MAXWORD];
     while ((c = getc(fp)) != EOF && c != '\n') {
@@ -328,11 +373,15 @@ rdstates(fp,ofp) FILE *fp,*ofp; {
 }
 
 /*
- * allocate a new, empty transition node
- *
+ * Allocate a new, empty transition node
  */
 trans
-newtrans() {
+#ifdef CK_ANSIC
+newtrans(void)
+#else
+newtrans()
+#endif /* CK_ANSIC */
+/* newtrans */  {
     trans new;
     int i;
     new = (trans) malloc(sizeof (struct transx));
@@ -342,14 +391,16 @@ newtrans() {
     return(new);
 }
 
-
 /*
  * read all the rules.
- *
  */
-
 trans
-rdrules(fp,out) FILE *fp,*out; {
+#ifdef CK_ANSIC
+rdrules(FILE *fp, FILE *out)
+#else
+rdrules(fp,out) FILE *fp,*out;
+#endif /* CK_ANSIC */
+/* rdrules */ {
     trans head,cur,prev;
     int curtok;
     head = cur = prev = NULL;
@@ -389,10 +440,14 @@ rdrules(fp,out) FILE *fp,*out; {
 /*
  * read a list of (comma-separated) states, set them in the
  * given transition.
- *
  */
 VOID
-statelist(fp,t) FILE *fp; trans t; {
+#ifdef CK_ANSIC
+statelist(FILE *fp, trans t)
+#else
+statelist(fp,t) FILE *fp; trans t;
+#endif /* CK_ANSIC */
+/* statelist */ {
     int curtok,sval;
     curtok = COMMA;
     while (curtok != RBRACK) {
@@ -412,7 +467,12 @@ statelist(fp,t) FILE *fp; trans t; {
  *
  */
 VOID
-copyact(inp,outp,actno) FILE *inp,*outp; int actno; {
+#ifdef CK_ANSIC
+copyact(FILE *inp, FILE *outp, int actno)
+#else
+copyact(inp,outp,actno) FILE *inp,*outp; int actno;
+#endif /* CK_ANSIC */
+/* copyact */ {
     int c,bcnt;
     fprintf(outp,"case %d:\n",actno);
     while (c = getc(inp), (isspace(c) || c == C_L))
@@ -443,7 +503,12 @@ copyact(inp,outp,actno) FILE *inp,*outp; int actno; {
  *
  */
 int
-faction(hd,state,chr) trans hd; int state,chr; {
+#ifdef CK_ANSIC
+faction(trans hd, int state, int chr)
+#else
+faction(hd,state,chr) trans hd; int state,chr;
+#endif /* CK_ANSIC */
+/* faction */ {
     while (hd != NULL) {
 	if (hd->anyst || teststate(state,hd))
 	  if (hd->inchr == ('.' - 32) || hd->inchr == (char) chr)
@@ -458,7 +523,12 @@ faction(hd,state,chr) trans hd; int state,chr; {
  *
  */
 VOID
-emptytbl() {
+#ifdef CK_ANSIC
+emptytbl(void)
+#else
+emptytbl()
+#endif  /* CK_ANSIC */
+{
     int i;
     for (i=0; i<nstates*96; i++) tbl[i] = -1;
 }
@@ -468,22 +538,35 @@ emptytbl() {
  *
  */
 VOID
-addaction(act,state,chr) int act,state,chr; {
+#ifdef CK_ANSIC
+addaction(int act, int state, int chr)
+#else
+addaction(act,state,chr) int act,state,chr;
+#endif /* CK_ANSIC */
+/* addaction */ {
     tbl[state*96 + chr] = act;
 }
 
 VOID
-writetbl(fp) FILE *fp; {
+#ifdef CK_ANSIC
+writetbl(FILE *fp)
+#else
+writetbl(fp) FILE *fp;
+#endif /* CK_ANSIC */
+/* writetbl */ {
     warray(fp,"tbl",tbl,96*(nstates+1),TBL_TYPE);
 }
 
-
 /*
  * write an array to the output file, given its name and size.
- *
  */
 VOID
-warray(fp,nam,cont,siz,typ) FILE *fp; char *nam; int cont[],siz; char *typ; {
+#ifdef CK_ANSIC
+warray(FILE *fp, char *nam, int cont[], int siz, char *typ)
+#else
+warray(fp,nam,cont,siz,typ) FILE *fp; char *nam; int cont[],siz; char *typ;
+#endif /* CK_ANSIC */
+/* warray */ {
     int i;
     fprintf(fp,"%s %s[] = {\n",typ,nam);
     for (i = 0; i < siz - 1; ) {
@@ -493,17 +576,18 @@ warray(fp,nam,cont,siz,typ) FILE *fp; char *nam; int cont[],siz; char *typ; {
     fprintf(fp,"%2d\n};\n",cont[siz-1]);
 }
 /*
-  There was an #ifdef rat's next here here regarding main's return type.
-  The following should be equivalnt and is much simpler.  OS2 actually
-  means IBM OS/2 or MS Windows, but OS/2 itself is long gone.
+  There was an #ifdef rat's nest here regarding main's return type.
+  The following should be equivalent and is much simpler.  OS2 actually
+  means IBM OS/2 or MS Windows even though OS/2 itself is long gone.
   -fdc, Fri Sep 18 19:42:48 2020
 */
-#ifdef OS2
-void
+WMAINTYPE
+#ifdef CK_ANSIC
+main(int argc, char **argv)
 #else
-int
-#endif  /* OS2 */
-main(argc,argv) int argc; char **argv; {
+main(argc,argv) int argc; char **argv;
+#endif  /* CK_ANSIC */
+{
     trans head;
     int state,c;
     FILE *infile,*outfile;
@@ -534,21 +618,27 @@ main(argc,argv) int argc; char **argv; {
     exit(GOOD_EXIT);
 }
 
-
 /*
  * fatal error handler
- *
  */
-
 VOID
-fatal(msg) char *msg; {
+#ifdef CK_ANSIC
+fatal(char *msg)
+#else
+fatal(msg) char *msg;
+#endif  /* CK_ANSIC */
+{
     fprintf(stderr,"error in line %d: %s\n",lines,msg);
     exit(BAD_EXIT);
 }
 
 VOID
-prolog(outfp) FILE *outfp; {
-    int c;
+#ifdef CK_ANSIC
+prolog(FILE *outfp)
+#else
+prolog(outfp) FILE *outfp;
+#endif  /* CK_ANSIC */
+{   int c;
     while ((c = *txt1++)     != '\0') putc(c,outfp);
     while ((c = *fname++)    != '\0') putc(c,outfp);
     while ((c = *txt2++)     != '\0') putc(c,outfp);
@@ -558,13 +648,23 @@ prolog(outfp) FILE *outfp; {
 }
 
 VOID
-epilogue(outfp) FILE *outfp; {
+#ifdef CK_ANSIC
+epilogue(FILE *outfp)
+#else
+epilogue(outfp) FILE *outfp;
+#endif  /* CK_ANSIC */
+{
     int c;
     while ((c = *txt3++) != '\0') putc(c,outfp);
 }
 
 VOID
-copyrest(in,out) FILE *in,*out; {
+#ifdef CK_ANSIC
+copyrest(FILE *in, FILE *out)
+#else
+copyrest(in,out) FILE *in,*out;
+#endif  /* CK_ANSIC */
+{
     int c;
     while ((c = getc(in)) != EOF) putc(c,out);
 }
@@ -572,11 +672,14 @@ copyrest(in,out) FILE *in,*out; {
 /*
  * gettoken - returns token type of next token, sets tokval
  * to the string value of the token if appropriate.
- *
  */
-
 int
-gettoken(fp) FILE *fp; {
+#ifdef CK_ANSIC
+gettoken(FILE *fp)
+#else
+gettoken(fp) FILE *fp;
+#endif  /* CK_ANSIC */
+{
     int c;
     while (1) {				/* loop if reading comments... */
 	do {
@@ -619,11 +722,15 @@ gettoken(fp) FILE *fp; {
 
 /*
  * skip over a comment
- *
  */
 
 VOID
-rdcmnt(fp) FILE *fp; {
+#ifdef CK_ANSIC
+rdcmnt(FILE *fp)
+#else
+rdcmnt(fp) FILE *fp;
+#endif  /* CK_ANSIC */
+ {
     int c,star,prcnt;
     prcnt = star = 0;			/* no star seen yet */
     while (!((c = getc(fp)) == '/' && star)) {
@@ -667,7 +774,12 @@ clrhash() {
  *
  */
 int
-hash(name) char *name; {
+#ifdef CK_ANSIC
+hash(char *name)
+#else
+hash(name) char *name;
+#endif  /* CK_ANSIC */
+{
     int sum;
     for (sum = 0; *name != '\0'; name++) sum += (sum + *name);
     sum %= HASHSIZE;			/* take sum mod hashsize */
@@ -680,7 +792,12 @@ hash(name) char *name; {
  *
  */
 static char*
-copy(s) char *s; {
+#ifdef CK_ANSIC
+copy(char *s)
+#else
+copy(s) char *s;
+#endif  /* CK_ANSIC */
+{
     char *new;
     new = (char *) malloc((int)strlen(s) + 1);
     strcpy(new,s);
@@ -692,7 +809,12 @@ copy(s) char *s; {
  *
  */
 VOID
-enter(name,svalue) char *name; int svalue; {
+#ifdef CK_ANSIC
+enter(char *name, int svalue)
+#else
+enter(name,svalue) char *name; int svalue;
+#endif  /* CK_ANSIC */
+{
     int h;
     struct sym *cur;
     if (lkup(name) != -1) {
@@ -710,10 +832,14 @@ enter(name,svalue) char *name; int svalue; {
 /*
  * find name in the symbol table, return its value.  Returns -1
  * if not found.
- *
  */
 int
-lkup(name) char *name; {
+#ifdef CK_ANSIC
+lkup(char *name)
+#else
+lkup(name) char *name;
+#endif  /* CK_ANSIC */
+{
     struct sym *cur;
     for (cur = htab[hash(name)]; cur != NULL; cur = cur->hnxt)
       if (strcmp(cur->name,name) == 0) return(cur->val);

@@ -1,7 +1,9 @@
 /*  C K C D E B . H  */
 
 /*
-  For recent additions search below for "2021" and "2022".
+  For recent additions search below for "2021" and "2022" and "2023".
+  Most recent updates: Sat Jul  1 10:27:16 2023 (David Goodwin, fdc)
+  More recent: Sun Feb  4 20:17:33 2024 (removed prototypes for malloc())
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -28,11 +30,10 @@
     The Kermit Project, Bronx NY (2011-present)
     Changes from David Goodwin for Windows and OS/2 (2022)
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Tue Sep 27 11:09:55 2022
 */
 
 /*
@@ -46,12 +47,42 @@
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
-/* Moved here from ckcmai.c... REMOVE THIS AFTER BETA TEST! */
+
+/* Some ancient MIPS compilers for Windows NT define "MIPS" which causes
+ * problems here and elsewhere. None of the windows headers depend on MIPS being
+ * defined (they all check for _MIPS_), so it's safe to just undefine it.
+ */
+#ifdef MIPS
+#ifdef OS2
+#undef MIPS     /* MIPS should never be defined when targeting OS/2 */
+#endif /* OS2 */
+#ifdef CKT_NT31
+#undef MIPS     /* MIPS should never be defined when targeting NT 3.1 */
+#endif /* CKT_NT31 */
+#endif /* MIPS */
+
+
+/* Moved here from ckcmai.c October 2022... REMOVE THIS AFTER BETA TEST! */
 #ifndef BETATEST
+#ifndef OS2
 #define BETATEST
+#endif /* OS2 */
 #endif  /* BETATEST */
+
+/* Now that WTMP and Syslog are "deprecated" don't include them by default */
+
+#ifndef DOWTMP                          /* Unless explicitly requested */
+#ifndef NOWTMP                          /* No more WTMP logging */
+#define NOWTMP
+#endif  /* NOWTMP */
+#endif  /* DOWTMP */
+#ifndef DOSYSLOG                        /* Unless explicitly requested */
+#ifndef NOSYSLOG                        /* No more syslog */
+#define NOSYSLOG
+#endif  /* NOSYSLOG */
+#endif  /* DOSYSLOG */
 /* 
-   14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default
+   14 Sep 2022 - TYPE command's new /INTERPRET switch enabled by default
    except in Windows where it doesn't work because of character-set issues.
 */
 #ifdef NT
@@ -60,15 +91,33 @@
 #endif  /* NOTYPEINTERPRET */
 #endif  /* NT */
 
-#ifndef NOSPL
-#ifndef NOTYPEINTERPRET                 /* 23 August - TYPE /INTERPRET */
+#ifdef NOICP                            /* 2 Nov 2022 */
+#ifndef NOIKSD
+#define NOIKSD
+#endif /* NOIKSD */
+#endif /* NOICP */
+
+#ifdef NOSPL                            /* 30 Oct 2022 */
+#ifndef NOIKSD                          /* 30 Oct 2022 */
+#define NOIKSD
+#endif /* NOIKSD */
+#ifndef NOLEARN                         /* 30 Oct 2022 */
+#define NOLEARN
+#endif /* NOLEARN */
+#else                                   /* 12 December 2022 */
+
+#ifndef NOTYPEINTERPRET                 /* 23 August 2022 - TYPE /INTERPRET */
+#ifndef TYPEINTERPRET
 #define TYPEINTERPRET
+#endif  /* TYPEINTERPRET */
 #endif  /* NOTYPEINTERPRET */
+
 #ifndef NOCOPYINTERPRET                 /* 20 Sep 2022 - COPY /INTERPRET */
 #ifndef COPYINTERPRET
 #define COPYINTERPRET
 #endif  /* COPYINTERPRET */
 #endif  /* NOCOPYINTERPRET */
+
 #endif /* NOSPL */
 /*
   Disinclude features that are "deprecated" in 2022;
@@ -88,13 +137,6 @@
 #ifndef NORLOGIN                        /* No more RLOGIN client */
 #define NORLOGIN
 #endif  /* NORLOGIN */
-#ifndef NOWTMP                          /* No more WTMP logging */
-#define NOWTMP
-#endif  /* NOWTMP */
-#ifndef NOSYSLOG                        /* No more syslog */
-#define NOSYSLOG
-#endif  /* NOSYSLOG */
-
 #endif  /* NODEPRECATED */
 /*
   As of 26 September 2022, the Arrow-key feature is included only if 
@@ -108,7 +150,9 @@
 #endif /* DOARROWKEYS */
 
 #ifdef OS2
+#ifndef CKODIALER
 #include "ckoker.h"
+#endif /* CKODIALER */
 #else /* OS2 */
 /* Unsigned numbers */
 
@@ -209,6 +253,42 @@
 #define PWID_T int
 #endif /* PWID_T */
 #endif /* CK_SCO32V4 */
+
+/*
+  The UNIX Seventh Edition (1979) compiler doesn't allow a lot of -D's on
+  the make command line and big modules can result in nonsensical fatal
+  compilation errors so I have to remove a lot of features to make it
+  compile at all without putting more -D's on the make-command line.
+
+  KFLAGS=-DV7MIN can also be used on other platforms, e.g. Linux, to build
+  the smallest possible C-Kermit program, about 400kb: command-line only, no
+  script programming, no making network connections, no character-set
+  support, dialing of only the most common modem types, no use of external
+  processes, and no logging or debugging.  On Ubuntu this results in an
+  executable of about 402KB, compared to the normal one of 2.8MB.
+
+  -fdc, 3 November 2022
+*/
+#ifdef V7MIN                            /* UNIX V7 MINIMUM-SIZE BUILD */
+#ifndef NOICP                           /* No interactive commands */
+#define NOICP
+#endif /* NOICP */
+#ifndef NONET                           /* No networking of any kind */
+#define NONET
+#endif /* NONET */
+#ifndef NOCSETS                         /* No character-set conversion */
+#define NOCSETS
+#endif /* NOCSETS */
+#ifndef MINIDIAL                        /* Minimum modem support */
+#define MINIDIAL
+#endif /* MINIDIAL */
+#ifndef NOPTY                           /* No spawning */
+#define NOPTY
+#endif /* NOPTY */
+#ifndef NODEBUG                         /* No debugging */
+#define NODEBUG
+#endif  /* NODEBUG */
+#endif /* V7MIN */
 
 #ifdef NOICP				/* If no command parser */
 #ifndef NOSPL				/* Then no script language either */
@@ -337,6 +417,9 @@
 #ifndef BSD4
 #define BSD4
 #endif /* BSD4 */
+#ifndef BIGBUFOK
+#define BIGBUFOK
+#endif /* BIGBUFOK */
 #ifndef NOSETBUF
 #define NOSETBUF
 #endif /* NOSETBUF */
@@ -628,7 +711,7 @@
 /* Commented out fdc May 2020 to allow external SSH command */
 /* #ifdef NETPTY */
 /* #undef NETPTY */
-/* #endif /* NETPTY */
+/* #endif NETPTY */
 #ifdef RLOGCODE
 #undef RLOGCODE
 #endif /* RLOGCODE */
@@ -655,6 +738,9 @@
 #ifndef NOFORWARDX
 #define NOFORWARDX
 #endif /* NOFORWARDX */
+#ifndef NOURL             /* 1 July 2023 for -DV7MIN, -DNOTCP, -DNONET, etc */
+#define NOURL
+#endif /* NOURL */
 #endif /* NONET */
 
 #ifdef IKSDONLY
@@ -725,6 +811,9 @@
 #ifndef OS2ORWIN32
 #define OS2ORWIN32
 #endif /* OS2ORWIN32 */
+#ifndef WIN32ORUNIX
+#define WIN32ORUNIX
+#endif /* WIN32ORUNIX */
 #ifndef OS2
 #define WIN32ONLY
 #endif /* OS2 */
@@ -749,6 +838,37 @@
 #define OS2ORVMS
 #endif /* OS2ORVMS */
 #endif /* OS2 */
+
+/* Kermit 95 can now be 64-bit so OS2ORWIN32 is a misnomer */
+#ifdef OS2ORWIN32
+#ifndef OS2ORWINDOWS
+#define OS2ORWINDOWS
+#endif /* OS2ORWINDOWS */
+#endif /* OS2ORWIN32 */
+
+/* Moved here from ckcfnp.h 3 May 2023 */
+/* NEW PROTOTYPE FOR MAIN() ADDED 02 MAY 2023 */
+
+#ifndef MAINNAME
+#ifdef OS2ORWINDOWS
+#define MAINISVOID
+#ifdef KUI
+#define MAINNAME Main
+#else /* not KUI */
+#define MAINNAME main
+#endif /* KUI */
+#else /* not OS/2 or Windows */
+#define MAINNAME main
+#endif /* OS2ORWINDOWS */
+#endif /* MAINNAME */
+
+#ifdef MAINISVOID
+/* This is a leftover from original Macintosh */
+typedef VOID MAINTYPE;
+#else
+typedef int MAINTYPE;
+/* if any other types are needed add them here */
+#endif /* MAINISVOID */
 
 #include <stdio.h>			/* Begin by including this. */
 #include <ctype.h>			/* and this. */
@@ -1130,6 +1250,7 @@
 #ifdef V7
 #ifndef UNIX
 #define UNIX
+extern int errno;                       /* fdc 1 November 2022 */
 #endif /* UNIX */
 #endif /* V7 */
 
@@ -1206,6 +1327,12 @@
 #endif /* OS2ORUNIX */
 #endif /* UNIX */
 
+#ifdef UNIX                           /* For items common to Win32 and UNIX */
+#ifndef WIN32ORUNIX
+#define WIN32ORUNIX
+#endif /* WIN32ORUNIX */
+#endif /* UNIX */
+
 #ifdef UNIX				/* For items common to VMS and UNIX */
 #define VMSORUNIX
 #else
@@ -1234,7 +1361,9 @@
 #endif /* OSKORUNIX */
 
 #ifdef OS2
+#ifndef CK_ANSIC
 #define CK_ANSIC		 /* OS/2 supports ANSIC and more extensions */
+#endif /* CK_ANSIC */
 #endif /* OS2 */
 
 #ifdef OSF50			   /* Newer OSF/1 versions imply older ones */
@@ -1283,21 +1412,37 @@
 #endif	/* __DECC */
 
 #ifdef VMS
-#ifdef __ia64				/* VMS on Itanium */
-#ifndef VMSI64
-#define VMSI64
-#endif	/* VMSI64 */
-#endif	/* __ia64 */
-#ifndef VMS64BIT			/* 64-bit VMS on Itanium or Alpha */
-#ifdef __ia64
-#define VMS64BIT
-#else
+/* 2022-12-05  SMS.  All hardware architectures after VAX are 64-bit. 
+ * Testing for (32-bit) VAX is safer in the long term than testing for
+ * __ALPHA, __ia64, __x86_64, et al.
+ */
+#ifndef VMS64                           /* Belt. */
 #ifdef __ALPHA
-#define VMS64BIT
-#endif	/* __ia64 */
-#endif	/* __ALPHA */
-#endif	/* VMS64BIT */
-#endif	/* VMS */
+#define VMS64
+#else /* def __ALPHA */
+#ifdef __ia64
+#define VMS64
+#else /* def __ia64 */
+#ifdef __x86_64
+#define VMS64
+#endif /* def __x86_64 */
+#endif /* def __ia64 [else] */
+#endif /* def __ALPHA [else] */
+#endif /* ndef VMS64 */
+
+#ifndef VMS64                           /* Suspenders. */
+#ifndef __VAX
+#ifndef vax
+#ifndef __vax
+#ifndef __vax__
+#define VMS64
+#endif /* ndef __vax__ */
+#endif /* ndef __vax */
+#endif /* ndef vax */
+#endif /* ndef __VAX */
+#endif /* ndef VMS64 */
+
+#endif /* def VMS */
 
 #ifdef apollo				/* May be ANSI-C, check further */
 #ifdef __STDCPP__
@@ -1379,7 +1524,7 @@
 #ifndef NOSYSLOG
 #define NOSYSLOG
 #endif /* NOSYSLOG */
-#ifndef NOWTMP
+#ifndef NOWTMP                          /* Redundant but does no harm */
 #define NOWTMP
 #endif /* NOWTMP */
 #else
@@ -1447,6 +1592,7 @@ extern int mac_getchar (void);
 #endif /* MAC */
 
 #ifdef OS2
+#ifndef CKODIALER
 #define printf Vscrnprintf
 #define fprintf Vscrnfprintf
 extern int Vscrnprintf(const char *, ...);
@@ -1457,6 +1603,8 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #endif /* putchar */
 #define putchar(x) Vscrnprintf("%c",x)
 #define perror(x)  Vscrnperror(x)
+void Vscrnperror( const char *str );
+#endif /* CKODIALER */
 #endif /* OS2 */
 
 #ifndef CKWART_C
@@ -1780,7 +1928,9 @@ int mac_fclose();
 #ifndef NODIAL
 #ifndef CK_TAPI
 #ifdef NT
+#ifndef NOTAPI
 #define CK_TAPI
+#endif /* NOTAPI */
 #endif /* NT */
 #endif /* CK_TAPI */
 #endif /* NODIAL */
@@ -2257,8 +2407,13 @@ _PROTOTYP( void bleep, (short) );
 #endif /* AIXRS */
 #endif /* USETTYLOCK */
 #endif /* NOTTYLOCK */
-
-/* This could become more inclusive.. Solaris 10, HP-UX 11, AIX 5.3... */
+/* 
+  This could be more inclusive...  But better not to use snprintf() at all,
+  it's hard to find a way to test for its availability without using
+  nonportable preprocessor constructions.  Use ckclib.c: ckmakmsg() or
+  ckmakxmsg() instead of both sprintf() and snprintf() to squelch compiler
+  warnings and ensure no memory leaks.
+*/  
 #ifndef HAVE_SNPRINTF                   /* Safe to use snprintf() */
 #ifdef HAVE_OPENPTY
 #define HAVE_SNPRINTF
@@ -2566,15 +2721,24 @@ _PROTOTYP( void bleep, (short) );
 
 #ifndef NOFLOAT
 
+#ifdef __alpha          /* Why only __alpha?  Other 64-bit systems? */
+#define FLT_NOT_DBL     /* (See also ckclib.c:ckround()). */
+#else /* def __alpha */
+#ifdef VMS64
+#define FLT_NOT_DBL     /* Was testing only __alpha below. */
+#endif /* def VMS64 */
+#endif /* def __alpha [else] */
+
 #ifndef CKFLOAT
-#ifdef __alpha
+#ifdef FLT_NOT_DBL      /* 2024-05-16 SMS.  Use instead of __alpha. */
 /* Don't use double on 64-bit platforms -- bad things happen */
+/* "double" on 64-bit platforms typically means 128-bit?  Do we care?*/
 #define CKFLOAT float
 #define CKFLOAT_S "float"
-#else
+#else /* def FLT_NOT_DBL */
 #define CKFLOAT double
 #define CKFLOAT_S "double"
-#endif /* __alpha */
+#endif /* def FLT_NOT_DBL [else] */
 #endif /* CKFLOAT */
 
 #ifndef NOGFTIMER			/* Floating-point timers */
@@ -2945,6 +3109,9 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* NO_SSL */
 #endif /* _M_PPC */
 #ifndef NO_KERBEROS
+#ifndef CK_KERBEROS
+/* If neither CK_KERBEROS nor NO_KERBEROS were defined on the command line
+ * then just enable everything */
 #define CK_KERBEROS
 #define KRB4
 #define KRB5
@@ -2959,6 +3126,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* _M_ALPHA */
 #endif /* _M_PPC */
 #endif /* NT */
+#endif /* CK_KERBEROS */
 #endif /* NO_KERBEROS */
 #ifndef NO_SRP
 #define CK_SRP
@@ -3011,7 +3179,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 #ifdef COMMENT
@@ -3570,9 +3738,6 @@ _PROTOTYP( int ttruncmd, (char *) );
 #ifdef OS2PM				/* Presentation Manager */
 #undef OS2PM
 #endif /* OS2PM */
-#ifdef CK_REXX				/* Rexx */
-#undef CK_REXX
-#endif /* CK_REXX */
 #endif /* NT */
 #endif /* OS2 */
 
@@ -4708,11 +4873,11 @@ extern int errno;
 #endif /* STRATUS */
 #endif /* _CRAY */
 
-#ifdef UNIX				/* Catch-all so we can have */
+#ifdef VMSORUNIX			/* Catch-all so we can have */
 #ifndef ESRCH				/* access to error mnemonics */
 #include <errno.h>			/* in all modules - 2007/08/25 */
-#endif	/* ESRCH */
-#endif	/* UNIX */
+#endif	/* ESRCH */			/* 2024-06-07 SMS.  Added VMSOR. */
+#endif	/* VMSORUNIX */
 
 #ifdef pdp11				/* Try to make some space on PDP-11 */
 #ifndef NODIAL
@@ -4745,6 +4910,10 @@ extern int errno;
 
 #ifdef sparc				/* SPARC processors */
 #define BIGBUFOK
+#else
+#ifdef SUNOS                            /* fdc 23 September 2023 */
+#define BIGBUFOK
+#endif /* SUNOS41 */
 #endif /* sparc */
 
 #ifdef mips				/* MIPS processors */
@@ -5052,6 +5221,22 @@ struct zfnfp {
 #endif /* OS2 */
 #endif /* VMS */
 
+/* Systems that support builtin variable "exedir", use getexedir() function */
+
+#ifdef OS2
+#define HAVE_VN_EXEDIR
+#else /* def OS2 */
+#ifdef UNIX
+#define GETEXEDIR
+#define HAVE_VN_EXEDIR
+#else /* def UNIX */
+#ifdef VMS
+#define GETEXEDIR
+#define HAVE_VN_EXEDIR
+#endif /* def VMS */
+#endif /* def UNIX [else] */
+#endif /* def OS2 [else] */
+
 /* LABELED FILE options bitmask */
 
 #ifdef VMS				/* For VMS */
@@ -5177,8 +5362,20 @@ typedef unsigned int u_int;
 #ifndef CK_OFF_T
 #ifdef OS2
 #ifdef NT
+#ifdef CKT_NT31
+#ifdef CKT_NT35
+/* Any compiler capable of targeting NT 3.50 should support __int64
+ * (Visual C++ 2.0, Open Watcom) */
 #define CK_OFF_T __int64
-#else
+#else /* CKT_NT35 */
+/* Compilers capable of targeting only Windows NT 3.1
+ * (Visual C++ 1.0 32-bit edition) may not support __int64 */
+#define CK_OFF_T long
+#endif /* CKT_NT35 */
+#else /* CKT_NT31 */
+#define CK_OFF_T __int64
+#endif /* CKT_NT31 */
+#else /* NT */
 #define CK_OFF_T long
 #endif  /* NT */
 #endif	/* OS2 */
@@ -5229,6 +5426,7 @@ typedef unsigned int u_int;
 /* CK_64BIT is a compile-time symbol indicating a true 64-bit build */
 /* meaning that longs and pointers are 64 bits */
 
+#ifndef NT
 #ifndef VMS				/* VMS Alpha and IA64 are 32-bit! */
 #ifndef CK_64BIT
 #ifdef _LP64				/* Solaris */
@@ -5262,6 +5460,11 @@ typedef unsigned int u_int;
 #endif	/* _LP64 */
 #endif	/* CK_64BIT */
 #endif	/* VMS */
+#else   /* NT */
+#ifdef _WIN64               /* NT can be 32bit or 64bit */
+#define CK_64BIT
+#endif /* _WIN64 */
+#endif /* NT */
 
 #ifndef CK_OFF_T
 #ifdef CK_64BIT
@@ -5505,8 +5708,10 @@ _PROTOTYP( int zsyscmd, (char *) );
 _PROTOTYP( int zshcmd, (char *) );
 #ifdef UNIX
 _PROTOTYP( int zsetfil, (int, int) );
-_PROTOTYP( int zchkpid, (unsigned long) );
 #endif	/* UNIX */
+#ifdef OS2ORUNIX
+_PROTOTYP( int zchkpid, (unsigned long) );
+#endif /* OS2ORUNIX */
 #ifdef CKEXEC
 _PROTOTYP( VOID z_exec, (char *, char **, int) );
 #endif /* CKEXEC */
@@ -5563,6 +5768,11 @@ _PROTOTYP( int zstime, (char *, struct zattr *, int) );
 #ifdef CK_PERMS
 _PROTOTYP( char * zgperm, (char *) );
 _PROTOTYP( char * ziperm, (char *) );
+#else /* CK_PERMS */
+#ifdef OS2
+/* zgperm exists on OS/2 and NT regardless of CK_PERMS */
+_PROTOTYP( char * zgperm, (char *) );
+#endif /* OS2 */
 #endif /* CK_PERMS */
 _PROTOTYP( int zmail, (char *, char *) );
 _PROTOTYP( int zprint, (char *, char *) );
@@ -5676,7 +5886,9 @@ _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR) );
 #define CK_XYZ
 #ifndef NOXYZDLL
 #define XYZ_INTERNAL			/* Internal and DLL */
+#ifndef XYZ_DLL
 #define XYZ_DLL
+#endif /* XYZ_DLL */
 #endif /* NOXYZDLL */
 #endif /* OS2 */
 #endif /* UNIX */
@@ -5854,7 +6066,9 @@ typedef CHAR * MACRO;
 #ifndef __32BIT__
 #define __32BIT__
 #endif /* __32BIT__ */
+#ifndef NOSYSTIMEBH
 #include <sys/timeb.h>
+#endif /* NOSYSTIMEBH */
 #else /* __EMX__ */
 #ifndef __WATCOMC__
 /* Watcom direct.h definition incompatible with the
@@ -6141,6 +6355,8 @@ extern int _flsbuf(char c,FILE *stream);
 /*
   It is essential that these are declared correctly!
   Which is not always easy.  Take malloc() for instance ...
+  NOTE: there were a bunch of protypes here for malloc() here
+  before but why???  The specs come from the header files.
 */
 #ifdef PYRAMID
 #ifdef SVR4
@@ -6149,22 +6365,9 @@ extern int _flsbuf(char c,FILE *stream);
 #endif /* __STDC__ */
 #endif /* SVR4 */
 #endif /* PYRAMID */
-/*
-  Maybe some other environments need the same treatment for malloc.
-  If so, define SIZE_T_MALLOC for them here or in compiler CFLAGS.
-*/
-#ifdef SIZE_T_MALLOC
-_PROTOTYP( void * malloc, (size_t) );
-#else
-_PROTOTYP( char * malloc, (unsigned int) );
-#endif /* SIZE_T_MALLOC */
-
-_PROTOTYP( char * getenv, (char *) );
-_PROTOTYP( long atol, (char *) );
 #endif /* !MAC */
 #endif /* SUNOS41 */
 #endif /* CK_ANSILIBS */
-
 /*
   <sys/param.h> generally picks up NULL, MAXPATHLEN, and MAXNAMLEN
   and seems to present on all Unixes going back at least to SCO Xenix
@@ -6256,6 +6459,72 @@ _PROTOTYP( long atol, (char *) );
  * On VMS, PATH_MAX is defined as 256 in <limits.h>, but that is an
  * obsolete value, which is why NAMX_C_MAXRSS is used instead.
  */
+
+/* Maximum length for a simple filename, not counting \0 at end. */
+/*
+  Define maximum length for a file name if not already defined.
+  NOTE: This applies to a path segment (directory or file name),
+  not the entire path string, which can be CKMAXPATH bytes long.
+*/
+
+/* On VMS, this is ill-defined, and depends on the file system:
+ * ODS2: 39.39 + version (;32767), so 84.
+ * ODS5: 238 + version (;32767), so 233.
+ */
+#ifndef CKMAXNAM
+#ifdef VMS
+#ifdef NAML$C_BID
+#define CKMAXNAM 233                    /* ODS5 possible. */
+#else
+#define CKMAXNAM 84                     /* ODS5 unknown. */
+#endif /* def NAML$C_BID */
+#else /* def VMS */
+/* Non-VMS definitions moved here from ckufio.c. with MAXNAMLEN -> CKMAXNAM. */
+
+#ifndef CKMAXNAM                /* If MAXNAMLEN is defined, then use that. */
+#ifdef MAXNAMLEN
+#define CKMAXNAM MAXNAMLEN
+#endif /* def MAXNAMLEN */
+#endif /* ndef CKMAXNAM */
+
+#ifdef QNX
+#ifdef _MAX_FNAME
+#define CKMAXNAM _MAX_FNAME
+#else
+#define CKMAXNAM 48
+#endif /* _MAX_FNAME */
+#else
+#ifndef CKMAXNAM
+#ifdef sun
+#define CKMAXNAM 255
+#else
+#ifdef FILENAME_MAX
+#define CKMAXNAM FILENAME_MAX
+#else
+#ifdef NAME_MAX
+#define CKMAXNAM NAME_MAX
+#else
+#ifdef _POSIX_NAME_MAX
+#define CKMAXNAM _POSIX_NAME_MAX
+#else
+#ifdef _D_NAME_MAX
+#define CKMAXNAM _D_NAME_MAX
+#else
+#ifdef DIRSIZ
+#define CKMAXNAM DIRSIZ
+#else
+#define CKMAXNAM 14
+#endif /* DIRSIZ */
+#endif /* _D_NAME_MAX */
+#endif /* _POSIX_NAME_MAX */
+#endif /* _POSIX_NAME_MAX */
+#endif /* NAME_MAX */
+#endif /* FILENAME_MAX */
+#endif /* sun */
+#endif /* CKMAXNAM */
+#endif /* QNX */
+
+#endif /* def VMS [else] */
 
 /* Maximum length for the name of a tty device */
 #ifndef DEVNAMLEN
@@ -6915,10 +7184,71 @@ _PROTOTYP(int ck_auth_unloaddll, (VOID));
 #ifdef NT
 _PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
                                    LPSTR lpBuffer, DWORD cchBuffer));
+_PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
+                                    LPSTR lpszShortPath, DWORD cchBuffer));
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
+typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
+typedef unsigned long DWORD_PTR;
+#define CK_HAVE_INTPTR_T
+#endif /* CK_HAVE_INTPTR_T */
 #endif /* NT */
+
+/*
+ * On Windows, ttyfd is frequently used to hold HANDLEs which are a kind of pointer.
+ * So on ttyfd must be of a sufficient size to hold a pointer.
+ */
+#ifdef OS2
+#ifdef CK_HAVE_INTPTR_T
+#ifdef NT
+#define CK_TTYFD_T intptr_t
+#else /* NT */
+#define CK_TTYFD_T int
+#endif /* NT */
+#else /* CK_HAVE_INTPTR_T */
+#define CK_TTYFD_T int
+#endif /* CK_HAVE_INTPTR_T */
+#else /* OS2 */
+/* Not on Windows or OS/2? its just an int */
+#define CK_TTYFD_T int
+#endif /* OS2 */
 
 
 #include "ckclib.h"
+
+#ifdef COMMENT
+/*
+  This was a first attempt to prototypes for over 400 functions that never had
+  them before, which are needed now since compilers like Clang complains about
+  every single function that does not have prototype, and claims this will be
+  a fatal error in a forthcoming release.  The new prototypes are in the new
+  header file ckcfnp.h: 436 of them to start.  But the prototypes need to know
+  about typedefs that haven't been made yet, since ckcdeb.h is #included
+  before the other headers where that happened.  I thought maybe I could
+  include them here, but it was a rabbit hole.  The only way to insure the
+  prototypes work without messing everything else up is to put "#include
+  ckcfnp.h" in every single Kermit module AFTER what was the last #include.
+  - fdc, 23 March 2023
+*/
+#ifndef NOANSI
+#ifdef __STDC__
+#ifdef CK_ANSIC                     /* New C-Kermit 10.0 Beta.09 */
+#include "ckucmd.h"                 /* For typedefs */
+#include "ckcnet.h"                 /* For typedefs */
+#include "ckuath.h"                 /* For typedefs */
+#include "ckucmd.h"                 /* For typedefs */
+#include "ckcker.h"                 /* For typedefs */
+#include "ckuusr.h"                 /* For typedefs */
+#include "ckctel.h"                 /* For typedefs */
+#include "ckcfnp.h"                 /* Prototypes for all functions */
+/* ckcsig.h */
+/* ckusig.h */
+#endif /* CK_ANSIC */
+#endif /* __STDC__ */
+#endif /* NOANSI */
+#endif /* COMMENT */
 
 /* End of ckcdeb.h */
 #endif /* CKCDEB_H */

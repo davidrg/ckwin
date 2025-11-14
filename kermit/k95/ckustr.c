@@ -6,7 +6,7 @@
 #include <sysexits.h>
 #include <varargs.h>
 #include <paths.h>
-
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 /*
   STR_FILE must be defined as a quoted string on the cc command line,
   for example:

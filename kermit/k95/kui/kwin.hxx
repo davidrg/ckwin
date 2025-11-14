@@ -27,7 +27,7 @@ public:
     virtual void getCreateInfo( K_CREATEINFO* info );
     virtual void createWin( KWin* par );
     virtual void size( int width, int height );
-    virtual Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    virtual Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
     virtual void show( Bool bVisible = TRUE );
     virtual void takeFocus();

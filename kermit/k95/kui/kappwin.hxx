@@ -19,6 +19,52 @@
 #include "kstatus.hxx"
 #include "ktoolbar.hxx"
 
+#define WM_USER_SIZING WM_USER+12
+#define WM_USER_EXITSIZEMOVE WM_USER+13
+
+#ifndef WM_SIZING
+#define WM_SIZING 0x0214
+#endif
+
+#ifndef WM_EXITSIZEMOVE
+#define WM_EXITSIZEMOVE 0x0232
+#endif
+
+#ifndef WMSZ_LEFT
+#define WMSZ_LEFT           1
+#endif
+#ifndef WMSZ_RIGHT
+#define WMSZ_RIGHT          2
+#endif
+#ifndef WMSZ_TOP
+#define WMSZ_TOP            3
+#endif
+#ifndef WMSZ_TOPLEFT
+#define WMSZ_TOPLEFT        4
+#endif
+#ifndef WMSZ_TOPRIGHT
+#define WMSZ_TOPRIGHT       5
+#endif
+#ifndef WMSZ_BOTTOM
+#define WMSZ_BOTTOM         6
+#endif
+#ifndef WMSZ_BOTTOMLEFT
+#define WMSZ_BOTTOMLEFT     7
+#endif
+#ifndef WMSZ_BOTTOMRIGHT
+#define WMSZ_BOTTOMRIGHT    8
+#endif
+
+#define KUI_NOTIF_I_NONE   0
+#define KUI_NOTIF_I_INFO   1
+#define KUI_NOTIF_I_WARN   2
+#define KUI_NOTIF_I_ERR    3
+#define KUI_NOTIF_I_USER   4
+
+#ifdef CK_SHELL_NOTIFY
+#define WMAPP_NOTIFYCALLBACK (WM_APP + 1)
+#endif /* CK_SHELL_NOTIFY */
+
 class KSizePopup;
 class KMenu;
 class KToolBar;
@@ -30,7 +76,7 @@ public:
     KAppWin( K_GLOBAL*, int menuid, int toolbarid );
     ~KAppWin();
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
     void size( int width, int height );
     void getClientCoord( int& x, int& y, int& w, int& h );
@@ -51,6 +97,10 @@ public:
     virtual void sizeFontSetDim( UINT fwSide, LPRECT lpr );
     void    createMenu(void);
     void    destroyMenu(void);
+#ifdef CK_SHELL_NOTIFY
+    void    showNotification(int icon, char* title, char * message);
+    void    destroyNotificationIcon();
+#endif /* CK_SHELL_NOTIFY */
 
   protected:
     int Win32ShellExecute( char * );
@@ -60,6 +110,9 @@ public:
     KMenu* menu;
     KToolBar* toolbar;
     KStatus* status;
+#ifdef CK_SHELL_NOTIFY
+    BOOL     iconCreated;
+#endif /* CK_SHELL_NOTIFY */
 
   private:
     KClient* client;

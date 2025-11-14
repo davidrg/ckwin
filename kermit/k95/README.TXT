@@ -1,9 +1,9 @@
 C-KERMIT 10.0 DEVELOPMENT
 
-C-Kermit 10.0 Beta.06 14 October 2022
+C-Kermit 10.0 pre-Beta.11 16 September 2023...
 
-Beta.06 fixes a couple problems in Beta.05 and adds numerous
-improvements for (Open)VMS from SMS.  For details see:
+From David Goodwin: several hundred compiler warnings when 
+building for Windows with Open Watcom 1.9 fixed; for details see:
 
   https://www.kermitproject.org/ckupdates.html 
 

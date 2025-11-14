@@ -1,7 +1,7 @@
 /*
   C K _ D E S . C  -  libDES interface for Kermit 95"
 
-  Copyright (C) 1998, 2001, Trustees of Columbia University in the City of New
+  Copyright (C) 1998, 2023, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -11,6 +11,7 @@
 
   Author:
   Jeffrey E Altman (jaltman@secure-endpoints.com)
+  Last update: 13 December 2022 David Goodwin.
 */
 
 /*
@@ -28,15 +29,21 @@
 #include "ckuath.h"
 #define CK_DES_C
 #include "ckuat2.h"
-#ifdef NT
-#ifdef _M_ALPHA
-#include <c:\srp\des\des.h>
+
+#ifdef LIBDES_USE_OPENSSL
 #else
-#include <c:\src\srp\des\des.h>
+#include <des/des.h>
 #endif
+
+#include "ckucmd.h"                     /* xx_strp */
+#include "ckcfnp.h"                     /* Prototypes */
+
+/* This is required by ckclib.c and normally defined in ckuus4.c */
+#ifdef CRYPT_DLL
+int fp_digits = 0;		      /* Digits of floating point precision */
 #else
-#include <c:\srp\des\des.h>
-#endif
+extern int fp_digits;
+#endif /* CRYPT_DLL */
 
 int
 libdes_random_key(des_cblock B)
@@ -83,16 +90,18 @@ libdes_pcbc_encrypt(des_cblock *input, des_cblock *output, long length,
     des_pcbc_encrypt(input,output,length,schedule,ivec,enc);
 }
 
+#ifdef CRYPT_DLL
 void
-libdes_dll_init(struct _crypt_dll_init * init)
+libdes_dll_init(crypt_dll_init_data * init)
 {
-    init->p_install_funcs("libdes_random_key",libdes_random_key);
-    init->p_install_funcs("libdes_random_seed",libdes_random_seed);
-    init->p_install_funcs("libdes_key_sched",libdes_key_sched);
-    init->p_install_funcs("libdes_ecb_encrypt",libdes_ecb_encrypt);
-    init->p_install_funcs("libdes_string_to_key",libdes_string_to_key);
-    init->p_install_funcs("libdes_fixup_key_parity",libdes_fixup_key_parity);
-    init->p_install_funcs("libdes_pcbc_encrypt",libdes_pcbc_encrypt);
+    init->callbackp_install_dllfunc("libdes_random_key",libdes_random_key);
+    init->callbackp_install_dllfunc("libdes_random_seed",libdes_random_seed);
+    init->callbackp_install_dllfunc("libdes_key_sched",libdes_key_sched);
+    init->callbackp_install_dllfunc("libdes_ecb_encrypt",libdes_ecb_encrypt);
+    init->callbackp_install_dllfunc("libdes_string_to_key",libdes_string_to_key);
+    init->callbackp_install_dllfunc("libdes_fixup_key_parity",libdes_fixup_key_parity);
+    init->callbackp_install_dllfunc("libdes_pcbc_encrypt",libdes_pcbc_encrypt);
 
 }
+#endif /* CRYPT_DLL */
 #endif /* LIBDES */

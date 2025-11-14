@@ -1,0 +1,636 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 Tutorial</title>
+</head><body bgcolor="#ffffff" text="#000000">
+
+<h2>Kermit 95 Tutorial</h2>
+
+<i>Most recent update:</i>
+<!--$last-update-short$-->4 June 2002<!--/$last-update-short$-->
+<p>
+
+This document describes <b>Kermit 95 version <!--$ver$-->3.0 DEV<!--/$ver$--></b>,
+32-bit and 64-bit communications software for Microsoft Windows and IBM OS/2.
+
+<p>
+
+<b>CONTENTS</b>
+<ul>
+<li><a href="#overview"><b>OVERVIEW</b></a>
+<li><a href="#dialer"><b>THE DIALER</b></a>
+<li><a href="#command"><b>THE COMMAND INTERFACE</b></a>
+<li><a href="#terminal"><b>TERMINAL SESSIONS</b></a>
+<li><a href="#transfer"><b>FILE TRANSFER</b></a>
+<li><a href="#security"><b>SECURITY</b></a>
+<li><a href="#hostmode"><b>HOST MODE</b></a>
+<li><a href="#documentation"><b>DOCUMENTATION</b></a>
+<li><a href="#links"><b>LINKS</b></a>
+</ul>
+
+<h3><a name="overview"><hr>Overview</h3>
+
+Kermit 95 (K95) is a multipurpose communication software package for Windows
+and OS/2.  The current version can make serial-port connections, modem
+connections, and Internet and other types of network connections, all in a
+uniform manner.  K95's Internet protocols include Telnet, Rlogin, SSH (Windows
+only), FTP, and HTTP.  K95 comes in two versions: Graphical
+User Interface (GUI) and Console.  The GUI version, called K95G, has
+several features lacking in the Console version, such as menu, toolbar,
+scroll bar, and font selection.  The features of the GUI version are
+described <a href="k95gui.html">HERE</a>.
+
+<p>
+
+Kermit 95 offers:
+
+<p>
+<ul>
+
+<li><b>Terminal emulation</b>
+(serial-port, modem, LAT, Telnet, Rlogin, and SSH connections only):
+Faithful emulation of <a
+href="termtype.html">40 different kinds of terminals</a>, including the
+ever-popular DEC VT100 series (up to and including the VT320), the Linux
+console, ANSI, SCOANSI, various Wyse models, and so on, including scrollback,
+colors, key mapping, key macros, and character-set translation.
+
+<p>
+
+<li><b>File Transfer.</b> Files can be transferred over a serial-port, modem,
+SSH, Telnet, or Rlogin connection with the fastest and most advanced version
+of the Kermit protocol available, as well as with Zmodem, Ymodem, Ymodem-G, or
+Xmodem protocols.  Text files can also be captured or sent "raw" (without
+protocol).  K95 can also use FTP and HTTP protocol to transfer files with
+Internet FTP and Websites.
+
+<p>
+
+<li><b>File Management.</b> Kermit 95 includes most of the same capabilities
+as the Windows Command prompt, but with more options and choices for managing
+local PC files.  And client / server Kermit connections allow the Kermit client
+(such as K95) to manage files on the Kermit server (e.g. on UNIX, VMS, or
+Windows itself).
+
+<p>
+
+<li><b>Character-Set Conversion.</b>  Different kinds of computers use
+different encodings for the same characters (accented letters, non-Roman
+letters, Cyrillic, Greek, Hebrew, etc.).  Kermit 95 knows how to convert them.
+<a href="http://kermitproject.org/case14.html">CLICK HERE</a>
+for an overview.
+<a href="http://kermitproject.org/case08.html">AND HERE</a>
+
+<p>
+
+<li><b>Automation.</b> Kermit 95 includes its own built-in cross-platform
+transport-independent scripting language to let you automate anything you
+could do in K95 by hand, on any kind of connection.
+<a href="http://kermitproject.org/k95scripts.html">CLICK HERE</a> to
+visit the Kermit script library, where you can find a script-writing tutorial
+and lots of sample scripts.
+
+<p>
+
+<li><b>Security</b> (network connections only).  Kermit 95 supports <a
+href="sshclien.html">SSH v2</a>, Secure
+Telnet, Secure Login (Kerberos Rlogin), and SSL/TLS connection methods, as
+well as <a href="security.html">four IETF
+standard authentication methods</a>: Kerberos IV, Kerberos V, X.509
+certificates, and SRP.
+
+<p>
+
+<li><b>Remote Access</b>.  In Windows NT, 2000, XP and newer, Kermit 95 can be
+installed as a service that accepts incoming Internet connections, performs
+secure authentication, and offers a secure file-transfer and management
+shell and/or server.  Also included is a "host mode" script that works in
+all versions of Windows and supports both dialin and Internet connections.
+
+</ul>
+<p>
+
+See the <a href="http://kermitproject.org/k95.html">K95 home page</a>
+for a more complete list of features.
+
+<p>
+
+<b>Kermit 95 comes in two pieces</b>: a graphical <i>Dialer</i>, which sets up
+and launches connections, and K95 itself, the communications and scripting
+engine that actually makes and uses them.
+
+<h3><a name="dialer"><hr>The Dialer</h3>
+
+<blockquote>
+<i>
+
+The Dialer lets you make connections without having to
+type any commands.  You don't have to use the Dialer at all if you don't want
+to, as explained in the <a href="#command">next section</a>.  But if you would
+rather not learn or deal with commands, you should use the Dialer.
+</i>
+</blockquote>
+
+<p>
+
+You can invoke the Dialer in two ways: from the desktop and from the Dial
+button (or, equivalently, File&rarr;Connections on the menu) on the K95G
+Toolbar.
+
+<p>
+
+The K95 Dialer is not just for dialing.  It is a graphical user interface
+(GUI) for setting up and launching connections of all kinds: direct serial,
+dialed, Telnet, Rlogin, SSH, or FTP, simply by checking boxes, pushing
+buttons, selecting from lists, and filling out forms.  You can launch one,
+two, three, four, or more simultaneous connections from a single copy of the
+Dialer.
+
+<p>
+
+The easiest way to <b>define a new connection</b> is to Right-Click one of the
+Templates (such as "Linux-SSH", "AIX-Telnet", or "Dialup-VT100"), choose
+<b>Clone</b>, give the connection a name, and then fill in the connection
+details -- usually just host name or address, or telephone number.
+
+<p>
+
+If you want more control over the many possible settings and customizations,
+choose <b>Connections</b> on the menu bar, and then <b>Add</b>.  This results
+in a series of Settings pages -- forms for you to fill out, similar to a
+Windows "wizard".  On the first page, give a name to the connection, choose
+the connection type, and give the details (phone number or network address).
+Then fill out, check, or change the information on each of the subsequent
+pages.  When you click [Save/Next] on the bottom of the first page, the new
+entry is added to the database and the Dialer moves to the next page.  When
+you click [Cancel] on the first page, the entry is not added.  For subsequent
+pages, [Save/Next] saves the current page and goes to the next; [Cancel]
+cancels the current page, but the entry remains.  (If this seems a bit
+awkward, it's due to <a href="newdial.html">resources limitations in Windows
+9x</a>.)
+
+<p>
+
+The Connections menu and the Right-Click popup menu
+also let you <b>remove</b> entries, <b>edit</b> them, generate desktop
+<b>shortcuts</b> for them, and so on.
+
+<p>
+
+The other Toolbar buttons do the expected things: CONNECT makes a connection
+to the highlighted entry; Hangup closes the connection (if any) associated
+with the highlighted entry; Quick lets you make a connection for which there
+is no entry; and Shortcut creates a desktop shortcut for the highlighted
+entry.
+
+<p>
+
+<b>Make a connection</b> by highlighting the desired entry and then clicking
+the CONNECT button.  Or double-click on the desired entry.  You can use
+the Dialer to start and control as many simultaneous connections as you wish.
+
+
+<h3><a name="gui"><hr>The Graphical User Interface</h3>
+
+As of version 2.0, the graphical version of Kermit 95, K95G, has a menu bar,
+toolbar, operational title-bar controls, a scrollbar, font selections, and can
+be resized with the mouse.  The features of the new graphical user interface
+are described in detail <a href="k95gui.html">HERE</a>.  The K95G menu,
+toolbar, and other graphical screen elements, give you point-and-click access
+to many of K95's important settings and functions.
+
+<h3><a name="command"><hr>The Command Interface</h3>
+
+<blockquote>
+<i>
+
+The purpose of the command interface is to give you fine-grained, precise,
+realtime control over every aspect of Kermit 95's operation and, perhaps more
+importantly, to allow you to automate complex or repetitive tasks by writing
+programs consisting of Kermit commands.  If this does not interest you, you
+can stick with the Dialer.
+
+</i>
+</blockquote>
+
+<p>
+
+The program that actually makes the connection and then lets you use it is
+<tt>K95G.EXE</tt> (or K95.EXE if you rather not use the graphical version).
+When you launch a connection with the Dialer, it starts
+<tt>K95G.EXE</tt> for you, feeding it the appropriate commands.  Each copy of
+<tt>K95G.EXE</tt> can have one connection open at a time.  To have multiple
+simultaneous connections, run multiple copies of <tt>K95G.EXE</tt>.
+
+<p>
+
+If you used the Kermit 95 installation process to put K95 on your computer, you
+can start <tt>K95G.EXE</tt> directly, without using the Dialer, by
+double-clicking on the "Kermit 95" desktop icon (if you chose to create it at
+install time).
+Another way is from the <i>Start</i> <tt>-&#62;</tt> <i> Programs</i> menu, if
+you elected to list Kermit 95 there when you installed it.  Another way is in
+the <i>Start</i> <tt>-&#62;</tt> <i>Run</i> dialog.  Another way is from a
+Command window.
+
+<p>
+
+When <tt>K95G.EXE</tt> starts, it automatically reads and executes commands
+from its standard initialization file, <tt>K95.INI</tt>, and also from your
+Kermit 95 customization file, <tt>K95CUSTOM.INI</tt>.  These are plain-text
+files that can be edited with Notepad or other plain-text editor.
+Add or change anything you like in <tt>K95CUSTOM.INI</tt>, but we recommend you
+leave <tt>K95.INI</tt> alone.  See the <a href="readme.html">README</a>
+for the locations of these and other files.
+
+<p>
+
+<tt>K95G.EXE</tt> has a prompt-and-command interface.  If you haven't
+used Kermit software before, this might seem old-fashioned to you, but in fact
+it's far more powerful, flexible, and easy to use than a GUI program of equal
+complexity once you learn it:
+
+<p>
+<ul>
+<li>It's less labor-intensive.
+<li>Its command language <i>is</i> its scripting language.
+</ul>
+<p>
+
+And perhaps contrary to first impressions, it <i>is</i> friendly.  It gives
+you a "menu" whenever you ask for one (by typing a question mark anywhere
+within a command) and it has loads of built-in help text.
+
+<p>
+
+When Kermit 95 is ready for a command, it prints its prompt on the screen.
+Kermit 95's prompt looks like this:
+
+<p>
+<pre>
+  [C:\Program Files\Kermit 95\] K-95&gt; _
+</pre>
+<p>
+
+The current directory is shown within brackets.  If you don't know what to
+do, type "help" (the letters h, e, l, p, and then press the Enter key).
+Type "intro" for a brief introduction to K95's commands.  To get help about
+a specific command, type "help" and then the command name, for example
+"help directory".
+
+<p>
+
+You can use the Up-Arrow and Down-Arrow keys in the Command screen only
+to scroll back and forth through the command history, e.g. to recall a
+previous command so you don't have to type it again.  (In the Terminal screen,
+arrow keys do whatever the emulated terminal's arrow keys do.)
+
+<p>
+
+<b>Let's look at the common ways to make a connection.</b>  Let's do
+<b>Telnet</b> first because it's so easy.  In our examples, what you type is
+underlined, and must be terminated by pressing the Enter key.
+
+<p>
+<pre>
+  K-95&gt; <u>telnet hq.xyzcorp.com</u>  
+</pre>
+<p>
+
+(Substitute the IP hostname or address of the
+host you actually want to Telnet to.)  That's all there is to it.  Up pops
+the "blue screen" and the host's login prompt.  (Note: we refer to the Terminal
+screen as the "blue screen" because it is blue by default, but you can
+choose any color scheme you want for any screen.)
+
+<p>
+
+<a href="sshclien.html">SSH</a> works approximately the same way as Telnet:
+
+<p>
+<pre>
+  K-95&gt; <u>ssh hq.xyzcorp.com</u>  
+</pre>
+<p>
+
+Except that if your username on the target computer is not the same as your
+Windows username, you have to include it as part of the SSH command:
+
+<p>
+<pre>
+  K-95&gt; <u>ssh hq.xyzcorp.com /user:olga</u>
+</pre>
+<p>
+
+Now let's do a <b>dialed connection</b>.  In this case, you have to give some
+additional details (as you would to any other modem program):
+
+<p>
+<pre>
+  K-95&gt; <u>set port tapi</u>
+  K-95&gt; <u>set speed 57600</u>
+  K-95&gt; <u>dial 7654321</u>
+</pre>
+<p>
+
+The "set port tapi" command tells K95 to access the modem through Microsoft's
+Telephony Application Program Interface (TAPI).  This way, any modem that is
+listed in the Windows Control Panel Modems folder can be dialed by K95.
+Substitute the actual phone number for 7654321.  If the connection is made
+successfully, the "blue screen" pops up, and you can log in or whatever else is
+expected by the computer or service on the other end of the call.  If the call
+failed, you get an informative error message such as NO ANSWER or BUSY.
+
+<p>
+
+Instead of "set port tapi", of course you can also try the traditional
+DOS-like method, but whether it works depends on your PC hardware
+and Windows configurations:
+
+<p>
+<pre>
+  K-95&gt; <u>set modem type usrobotics</u>
+  K-95&gt; <u>set port com1</u>
+  K-95&gt; <u>set speed 57600</u>
+  K-95&gt; <u>dial 7654321</u>
+</pre>
+<p>
+
+Of course there many more options and a great many troubleshooting techniques,
+but this is only a tutorial.  For a summary of Kermit commands, see the <a
+href="http://kermitproject.org/ckututor.html">C-Kermit Manual Page and
+Tutorial</a>. If you have questions, you can ask them on Github:
+  <a href="https://github.com/davidrg/ckwin/discussions">
+    https://github.com/davidrg/ckwin/discussions</a>.
+
+<h3><a name="terminal"><hr>Terminal Sessions</h3>
+
+When the Terminal screen is showing,
+your keyboard and screen are connected to the
+remote computer.  K95G users should read the <a href="k95gui.html">GUI Features
+Document</a> to find out how to use GUI controls to customize the size, shape,
+and colors of the Terminal screen.
+
+<p>
+
+You can get back to the
+command prompt with <i>Alt-X</i> (hold down the Alt and Shift keys and press
+the X key).  You can get back to the Terminal screen (as long there is a
+connection) by using <i>Alt-X</i> again.  In other words, <i>Alt-X</i> goes
+back and forth between the terminal screen and the command screen.
+In K95G, you can also use the second Toolbar button (the one with two arrows)
+for this.
+
+<p>
+<blockquote>
+<i>
+
+Kermit's Alt-Shift-key combinations are available in all emulations (except in
+PCTERM keyboard mode).  In most emulations (including VTxxx), you don't have
+to use the Shift key, but in others (QNX, SCOANSI, HFT, etc) you must use the
+Shift key because unshifted Alt-key combinations are used in those emulations.
+In short: If <i>Alt-X</i> and <i>Alt-H</i> don't work, try again with the
+Shift key held down.
+
+<p>
+
+An alternative method of getting back to the prompt is to type Ctrl-<tt>]</tt>
+(hold down the Ctrl key and press the right-bracket key), and then press the
+C key.  This should work no matter what terminal is being emulated.
+
+</i>
+</blockquote>
+<p>
+
+<i>Alt-H</i> in the terminal screen (or any other screen) pops up a
+context-sensitive menu of some of the many "hot keys" that are available, and
+what they do.  Press the Space bar to make the menu go away.  The <i>Alt-H</i>
+screen reveals several other important keys:
+
+<p>
+<dl>
+<dt><i>Page Up</i></dt>
+<dd>Scrolls the current screen (Terminal or Command) back one screen.
+<p>
+
+<dt><i>Page Down</i></dt>
+<dd>Scrolls the current screen down one screen (if not already at the bottom).
+<p>
+
+<dt><i>Home</i></dt>
+<dd>Scrolls the current screen to the top of the scrollback buffer.
+<p>
+
+<dt><i>End</i></dt>
+<dd>Scrolls the current screen to the bottom of the scrollback buffer.
+<p>
+
+<dt><i>Ctrl-Page Up</i></dt>
+<dd>(Hold down the Ctrl key and press the Page Up key) Scrolls the current
+screen (Terminal or Command) back one line.
+<p>
+
+<dt><i>Ctrl-Page Down</i></dt>
+<dd>Scrolls the current screen down one line (if not already at the bottom).
+<p>
+
+<dt><i>Alt-P</i></dt>
+<dd>Sends the contents of the current screen to the printer.
+</dl>
+
+<p>
+
+You can <b>copy and paste with the mouse</b>, but Kermit 95 uses its own
+built-in mouse handling for this.  To copy, simply sweep the mouse across the
+desired text with the left button held down.  The text to be copied is
+highlighted.  When you let go of the mouse, the text is copied to the
+clipboard.
+
+<p>
+
+You can <b>paste</b> into the Terminal screen with <i>Shift-Insert</i>.  This
+sends the text from the clipboard to the host.  You can also copy and paste
+simultaneously within the Terminal screen, thus transmitting some existing
+text on the Terminal screen back to the host; to do this, hold down the Ctrl
+key and drag the desired text with left mouse button depressed.  When you let
+go of the button, the text is transmitted.  Of course there are many other
+mouse options; see the third <i>Alt-h</i> screen for a list.
+
+<p>
+
+You can change key mappings with SET KEY or SET TERMINAL KEY, and display
+with SHOW KEY.
+
+
+<h3><a name="transfer"><hr>File Transfer</h3>
+
+This is another big topic, so we'll just look at the easiest way.  Let's
+assume you are connected to a UNIX host (UNIX includes Linux, Solaris, AIX,
+HP-UX, FreeBSD, etc etc) which has <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> or <a
+href="http://kermitproject.org/gkermit.html">G-Kermit</a> installed.
+Kermit 95 is in its Terminal screen and the host's shell prompt indicates it is
+ready for you to type a shell command.  Then:
+
+<p>
+
+<b>To download a file</b> (send it from the host to your PC), type the
+following command at the host's shell prompt:
+<p>
+<pre>
+  kermit -s <i>filename</i>
+</pre>
+<p>
+
+where <i>filename</i> is the name of the file or files you want to download
+and "<tt>-s</tt>" means "send".  Kermit 95 takes care of the rest
+automatically.
+
+<p>
+
+<b>To upload a file</b> (get it from your PC to the host computer), type the
+following command at the host's shell prompt:
+
+<p>
+<pre>
+  kermit -g <i>filename</i>
+</pre>
+<p>
+
+where <i>filename</i> is the name of the file or files you want to upload.  If
+the <i>filename</i> contains wildcards (like "<tt>*</tt>") you'll have to
+enclose the filename in double-quotes.  "<tt>-g</tt>" means "get".  Kermit 95
+sends the desired files automatically.
+
+<p>
+
+If C-Kermit is not installed on the host, try G-Kermit (substitute "gkermit"
+for "kermit" in the commands).  If neither is installed, you can install them
+yourself (see links below).  Or else try Zmodem ("sz <i>filename</i>" to
+download but for uploading it's a bit more complicated).
+
+<h3><a name="security"><hr>Security</h3>
+
+Kermit 95 includes optional secure authentication and strong encryption
+features for use in organizations with centrally managed security.  Secure
+connections in Kermit 95 require
+<i>(a)</i> a secure version of Kermit 95;
+<!--<i>(b)</i> access to a host that supports Kerberos IV, Kerberos V, SSL/TSL, or-->
+<!--SRP security; and-->
+<i>(b)</i> access to a host that supports Kerberos V or SSL/TSL security; and
+<i>(c)</i> configuration of Kermit 95 to use the appropriate security method
+on the host and to provide the host with any required information.  This is
+not generally something that an end user would do; rather, it would be done
+centrally, e.g. at a university or company.  Setup and use of K95's security options are
+thoroughly documented <a href="security.html">HERE</a>; this document is
+intended mainly for system and/or network administrators.
+
+<p>
+
+As of version 1.1.21 (April 2002) Kermit 95 includes full SSH
+capability.  <a href="sshclien.html">CLICK HERE</a> for complete details.
+
+<h3><a name="hostmode"><hr>Remote Access</h3>
+
+Kermit 95 comes with a "host mode" script that allows you to set up
+text-mode menu-driven access for others to access your Windows PC, either
+by dialing it up or by making a Telnet connection to it.  
+<a href="http://kermitproject.org/k95host.html">CLICK HERE</a> for an
+overview.  Plain-text documentation is available as follows:
+
+<p>
+<dl>
+<dt><a href="http://kermitproject.org/hostmode.txt">http://kermitproject.org/hostmode.txt</a>
+<dd>The K95 host-mode administrator manual.
+<p>
+<dt><a href="http://kermitproject.org/hostuser.txt">http://kermitproject.org/hostuser.txt</a>
+<dd>Host-mode user manual.
+</dl>
+<p>
+
+Now there is also a new remote access server, the Windows Kermit Internet
+Service Daemon (WIKSD), available only for Windows NT, 2000, and XP, and
+usable only from the Internet (not direct dialup).  Here's the information:
+
+<p>
+
+<ul>
+<li><a href="wiksduse.html">WIKSD User Guide</a>
+<li><a href="wiksdadm.html">WIKSD Administrator Guide</a>
+</ul>
+
+<h3><a name="documentation"><hr>Documentation</h3>
+
+Kermit 95 documentation consists of:
+<p>
+<dl>
+<dt><b>The Kermit 95 Manual</b>
+
+<dd>In your K95 <tt>DOCS\MANUAL</tt> directory in HTML format, included with
+all copies of Kermit 95.  When you install Kermit 95, desktop shortcuts and/or
+Start Menu items are created (if you wish), and you can also access it from
+the Dialer's Help menu or K95G's Help menu.  This manual concentrates on the
+Windows-specific aspects of Kermit 95: the Dialer, terminal emulation, key
+mapping, mouse usage, printing, and so on.
+
+<p>
+<dt><cite><b>Using C-Kermit</b></cite>
+
+<dd>The <a href="http://kermitproject.org/ckmanual.html">C-Kermit
+manual</a> explains the command language, the scripting language, making and
+using connections, file transfer, character sets, and troubleshooting: areas
+that are common to C-Kermit and Kermit 95.  This manual is available in
+printed book and PDF form.  It is current as of C-Kermit 6.0,
+which is concurrent with Kermit 95 1.1.8.
+
+<p>
+
+<dt><b>The C-Kermit 7.0 Supplement</b>
+<dd>Thorough documentation of the new features of C-Kermit 7.0, which is
+approximately concurrent with K95 1.1.20.
+Online at the Kermit Website as:
+<a href="http://kermitproject.org/ckermit70.html">http://kermitproject.org/ckermit70.html</a>
+
+<p>
+
+<dt><b>The C-Kermit 8.0 Supplement</b>
+<dd>Thorough documentation of the new features of C-Kermit 8.0, concurrent
+with K95 2.0.  Online at the Kermit Website as:
+<a href="http://kermitproject.org/ckermit80.html">http://kermitproject.org/ckermit80.html</a>
+
+<dt><b>The C-Kermit 9.0 Supplement</b>
+<dd>Thorough documentation of the new features of C-Kermit 9.0.
+  Online at the Kermit Website as:
+  <a href="http://kermitproject.org/ckermit90.html">http://kermitproject.org/ckermit90.html</a>
+
+<!-- TODO: A supplement for C-Kermit 10 ?-->
+
+</dl>
+
+
+<h3><a name="links"><hr>Web Links</h3>
+
+<ul>
+<li><a href="http://kermitproject.org/index.html">The Kermit Project</a>.
+<li><a href="http://kermitproject.org/k95.html">Kermit 95</a>.
+<!--<li><a href="http://kermitproject.org/k95pricing.html">K95 Pricing and Licensing Options</a>.-->
+<li><a href="http://kermitproject.org/k95faq.html">K95 Frequently Asked Questions</a>.
+<li><a href="http://kermitproject.org/scriptlib.html">Kermit Script Library</a>.
+<li><a href="http://kermitproject.org/ckermit.html">C-Kermit</a>.
+<li><a href="http://kermitproject.org/gkermit.html">G-Kermit</a>.
+<li><a href="http://kermitproject.org/ck60manual.html"><cite>Using
+C-Kermit</cite></a> (C-Kermit 6.0 manual).
+<li><a href="http://kermitproject.org/ckermit70.html">C-Kermit 7.0
+supplement</a> to the C-Kermit 6.0 manual.
+<li><a href="http://kermitproject.org/ckermit80.html">C-Kermit 8.0
+supplement</a> to the C-Kermit 6.0 manual.
+<li><a href="http://kermitproject.org/ckermit90.html">C-Kermit 9.0
+  supplement</a> to the C-Kermit 6.0 manual.
+</ul>
+
+<p>
+
+<hr><address>
+Kermit 95 / The Kermit Project /
+<!--$last-update-short$-->4 June 2002<!--/$last-update-short$-->
+</address>
+</body>
+</html>

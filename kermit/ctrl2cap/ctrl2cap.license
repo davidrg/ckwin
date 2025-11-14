@@ -1,0 +1,25 @@
+CTRL2CAP.VXD was originally made available in both source and binary form by
+Mark Russinovich in 1995 with the license text:
+
+; CTRL2CAP
+;
+; Copyright (c) 1995 Mark Russinovich
+;
+; You can modify and use this code in whatever manner you wish.
+
+The source for this original version may be found here:
+  https://groups.google.com/g/comp.os.ms-windows.programmer.vxd/c/r92gxKFFSRs/m/VVmTmgxqEx0J
+
+The version provided with Kermit 95 is a later release from sysinternals
+enhanced for Kermit 95. Both source and binaries were made available with the
+following license text in the source code:
+
+; CTRL2CAP
+;
+; Copyright (c) 1995,1996 Mark Russinovich
+;
+; You can modify and use this code in whatever manner you wish as long as   *
+; its not for commercial purposes.
+
+The website for this version was:
+  https://web.archive.org/web/19991128202312fw_/http://www.sysinternals.com/c2cap95.htm

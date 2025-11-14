@@ -29,7 +29,7 @@ BOOL APIENTRY KSaveAsDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     if( download ) {
         ret = download->saveAsMsg( hwnd, msg, wParam, lParam );
         if( !ret ) {
-            return CallWindowProc( download->getOldProc()
+            return (BOOL)CallWindowProc( download->getOldProc()
                     , hwnd, msg, wParam, lParam );
         }
     }
@@ -46,7 +46,9 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton, BOOL openExisting )
     , downloadButton(dlButton)
     , openFile(openExisting)
 {
+#ifndef CKT_NT35_OR_31
     OSVERSIONINFO osverinfo ;
+#endif /* CKT_NT35_OR_31 */
 
     oldSaveAsProc = (WNDPROC)0;
     download = this;
@@ -58,7 +60,7 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton, BOOL openExisting )
     success = FALSE;
     errorCode = 0;
 
-
+#ifndef CKT_NT35_OR_31
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
     GetVersionEx( &osverinfo ) ;
 
@@ -72,6 +74,7 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton, BOOL openExisting )
          * custominsing it) */
         downloadButton = FALSE;
     }
+#endif /* CKT_NT35_OR_31 */
 
     if (openExisting) {
         downloadButton = FALSE;
@@ -97,6 +100,15 @@ void KDownLoad::createWin( KWin* par )
 void KDownLoad::setInitialDirectory( char * dir )
 {
     ckstrncpy(szDir,dir,MAX_PATH);
+
+    /* Make sure we're using DOS/Windows path separators for the initial
+     * directory */
+    char* p;
+    p = szDir;
+    while (*p) {
+        if (*p == '/') {*p = '\\'; }
+        p++;
+    }
 }
 
 /*------------------------------------------------------------------------
@@ -111,6 +123,15 @@ void KDownLoad::setTitle( char * title )
 void KDownLoad::setInitialFileName( char * file )
 {
     ckstrncpy(szFile,file,MAX_PATH);
+
+    /* Make sure we're using DOS/Windows path separators for the initial
+     * filename */
+    char* p;
+    p = szFile;
+    while (*p) {
+        if (*p == '/') {*p = '\\'; }
+        p++;
+    }
 }
 
 /*------------------------------------------------------------------------
@@ -150,7 +171,7 @@ void KDownLoad::show( Bool bVisible )
     if (!nt351 && downloadButton) {
         /* NT 3.51 and earlier don't support OFNHOOKPROC */
         OpenFileName.Flags = OpenFileName.Flags | OFN_ENABLEHOOK
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
             | OFN_EXPLORER
 #endif
             ;
@@ -227,12 +248,17 @@ void KDownLoad::initDialog( HWND hwnd )
     // subclass the 'save as' dialog proc
     // WNDPROC ???? it doesn't work with DLGPROC !!!! don't know why
     //
+#ifdef _WIN64
+    oldSaveAsProc = (WNDPROC) SetWindowLongPtr(
+            hwndpar, DWLP_DLGPROC, (LONG_PTR) KSaveAsDlgProc );
+#else /* _WIN64 */
     oldSaveAsProc = (WNDPROC) SetWindowLong( hwndpar, DWL_DLGPROC, (LONG) KSaveAsDlgProc );
+#endif /* _WIN64 */
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KDownLoad::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )
@@ -271,7 +297,7 @@ Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     if( msg == WM_COMMAND )
@@ -287,7 +313,7 @@ Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             //
 
             done = TRUE;
-            return CallWindowProc( getOldProc()
+            return (Bool)CallWindowProc( getOldProc()
                     , hwnd, msg, MAKEWPARAM(IDOK,0), lParam );
         }
     }

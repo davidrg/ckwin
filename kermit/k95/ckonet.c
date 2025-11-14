@@ -1,5 +1,5 @@
 #ifdef NT
-char *ckonetv = "Win32 Network support, 8.0.071, 21 Apr 2004";
+char *ckonetv = "Win32 Network support, 10.0, 4 May 2023";
 #else /* NT */
 char *ckonetv = "OS/2 Network support, 8.0.071, 21 Apr 2004";
 #endif /* NT */
@@ -92,6 +92,7 @@ os2_netxout(char *s, int n) {
 extern char pipename[PIPENAML+1];
 #endif /* NPIPE */
 
+#include <process.h>
 #ifdef NT
 #include <windows.h>
 #define itoa _itoa
@@ -138,6 +139,13 @@ BOOL conpty_open = FALSE;
 #endif /* NT */
 #endif /* CK_CONPTY */
 
+#ifdef SSH_DLL
+#include "ckossh.h"
+#endif /* SSH_DLL */
+
+void update_setssh_options();   /* This lives in ckuus3.c */
+void update_ssh_options();      /* This lives in ckuusr.c */
+
 extern int ttnproto, tn_deb;
 #ifndef NOTERM
 extern int tt_type;
@@ -182,23 +190,34 @@ static struct lat_info latinfo;
 ;                                                                             *
 ******************************************************************************/
 
-static int (* InstalledAccess)( BYTE bType ) = NULL;
-static int (* InquireServices)( BYTE bType ) = NULL;
-static int (* GetNextService)( LPSTR lpServiceName,
-                               BYTE bType )=NULL;
-static int (* OpenSession)( LPDWORD SessionID,
+typedef int (* InstalledAccess_t)( BYTE bType );
+typedef int (* InquireServices_t)( BYTE bType );
+typedef int (* GetNextService_t)( LPSTR lpServiceName,
+                               BYTE bType );
+typedef int (* OpenSession_t)( LPDWORD SessionID,
                             LPSTR lpServiceName,
                             LPVOID ConnectData,
-                            BYTE bType)=NULL;
-static int (* CloseSession)( DWORD SessionID )=NULL;
-static int (* ReadData)( DWORD SessionID, LPSTR lpString,
-                         DWORD dwLength )=NULL;
-static int (* WriteData)( DWORD SessionID, LPSTR lpString,
-                          DWORD dwLength )=NULL;
-static int (* SendBreak)( DWORD SessionID )=NULL;
-static int (* GetDetailError)( DWORD, DWORD)=NULL;
-static int (* DataNotify)( DWORD SessionID, HWND hWnd,
-                                          UINT wMsg, DWORD dwEventMask)=NULL;
+                            BYTE bType);
+typedef int (* CloseSession_t)( DWORD SessionID );
+typedef int (* ReadData_t)( DWORD SessionID, LPSTR lpString,
+                         DWORD dwLength );
+typedef int (* WriteData_t)( DWORD SessionID, LPSTR lpString,
+                          DWORD dwLength );
+typedef int (* SendBreak_t)( DWORD SessionID );
+typedef int (* GetDetailError_t)( DWORD, DWORD);
+typedef int (* DataNotify_t)( DWORD SessionID, HWND hWnd,
+                             UINT wMsg, DWORD dwEventMask);
+
+static InstalledAccess_t InstalledAccess = NULL;
+static InquireServices_t InquireServices = NULL;
+static GetNextService_t GetNextService=NULL;
+static OpenSession_t OpenSession=NULL;
+static CloseSession_t CloseSession=NULL;
+static ReadData_t ReadData=NULL;
+static WriteData_t WriteData=NULL;
+static SendBreak_t SendBreak=NULL;
+static GetDetailError_t GetDetailError=NULL;
+static DataNotify_t DataNotify=NULL;
 #endif /* NT */
 #endif /* DECNET */
 
@@ -245,7 +264,8 @@ extern char namecopy[] ;
 extern char ipaddr[20] ;                /* Global copy of IP address */
 extern int ttnet  ;             /* Network type */
 
-extern int duplex, debses, seslog, ttyfd, quiet, doconx; /* Extern vars */
+extern int duplex, debses, seslog, quiet, doconx; /* Extern vars */
+extern CK_TTYFD_T ttyfd;
 extern int nettype;
 extern int exithangup;
 extern char ttname[] ;
@@ -311,8 +331,8 @@ void NetbiosListenThread(void * pArgList);
 #ifdef NT
 static HANDLE hSaveStdIn=NULL, hSaveStdOut=NULL, hSaveStdErr=NULL;
 static HANDLE hChildStdinRd=NULL, hChildStdinWr=NULL, hChildStdinWrDup=NULL,
-              hChildStdoutRd=NULL, hChildStdoutRdDup=NULL, hChildStdoutWr=NULL,
-              hInputFile=NULL, hSaveStdin=NULL, hSaveStdout=NULL;
+              hChildStdoutRd=NULL, hChildStdoutRdDup=NULL, hChildStdoutWr=NULL;
+              /*hInputFile=NULL, hSaveStdin=NULL, hSaveStdout=NULL;*/
 static SECURITY_ATTRIBUTES saAttr;
 static BOOL fSuccess;
 static PROCESS_INFORMATION procinfo ;
@@ -321,7 +341,7 @@ static STARTUPINFO         startinfo ;
 static HFILE hSaveStdIn=-1, hSaveStdOut=-1, hSaveStdErr=-1;
 static HFILE hChildStdinRd=-1, hChildStdinWr=-1, hChildStdinWrDup=-1,
              hChildStdoutRd=-1, hChildStdoutRdDup=-1, hChildStdoutWr=-1,
-             hInputFile=-1, hSaveStdin=-1, hSaveStdout=-1;
+             /*hInputFile=-1,*/ hSaveStdin=-1, hSaveStdout=-1;
 static BOOL fSuccess;
 static PID  pid=0;
 #define STILL_ACTIVE -1L
@@ -449,14 +469,14 @@ NetCmdGetChar( char * pch )
 
 #ifdef NT
 void
-NetCmdReadThread( HANDLE pipe )
+NetCmdReadThread( void *pipe )
 {
     int success = 1;
     CHAR c;
     DWORD io;
 
     while ( success && ttyfd != -1 ) {
-        if ( success = ReadFile(pipe, &c, 1, &io, NULL ) )
+        if ( success = ReadFile((HANDLE)pipe, &c, 1, &io, NULL ) )
         {
             NetCmdPutChar(c);
         }
@@ -464,14 +484,14 @@ NetCmdReadThread( HANDLE pipe )
 }
 #else /* NT */
 void
-NetCmdReadThread( HFILE pipe )
+NetCmdReadThread( void *pipe )
 {
     int success = 1;
     CHAR c;
     ULONG io;
 
     while ( success && ttyfd != -1 ) {
-        if ( success = !DosRead(pipe, &c, 1, &io) )
+        if ( success = !DosRead((HFILE)pipe, &c, 1, &io) )
         {
             NetCmdPutChar(c);
         }
@@ -483,22 +503,38 @@ NetCmdReadThread( HFILE pipe )
 #ifdef NETDLL
 HINSTANCE hNetDll=NULL;
 
-int    (*net_dll_netopen)(char *,char *,int,int,
-                         int(*)(char*,char*,int))=NULL;
-int    (*net_dll_netclos)(void)=NULL;
-int    (*net_dll_nettchk)(void)=NULL;
-int    (*net_dll_netflui)(void)=NULL;
-int    (*net_dll_netbreak)(void)=NULL;
-int    (*net_dll_netinc)(int)=NULL;
-int    (*net_dll_netxin)(int,char*)=NULL;
-int    (*net_dll_nettoc)(int)=NULL;
-int    (*net_dll_nettol)(char *,int)=NULL;
-int    (*net_dll_ttpkt)(void)=NULL;
-int    (*net_dll_ttvt)(void)=NULL;
-int    (*net_dll_ttres)(void)=NULL;
-void   (*net_dll_terminfo)(char *,int,int)=NULL;
-char * (*net_dll_version)(void)=NULL;
-char * (*net_dll_errorstr)(int)=NULL;
+typedef int    (*net_dll_netopen_t)(char *,char *,int,int,
+                         int(*)(char*,char*,int));
+typedef int    (*net_dll_netclos_t)(void);
+typedef int    (*net_dll_nettchk_t)(void);
+typedef int    (*net_dll_netflui_t)(void);
+typedef int    (*net_dll_netbreak_t)(void);
+typedef int    (*net_dll_netinc_t)(int);
+typedef int    (*net_dll_netxin_t)(int,char*);
+typedef int    (*net_dll_nettoc_t)(int);
+typedef int    (*net_dll_nettol_t)(char *,int);
+typedef int    (*net_dll_ttpkt_t)(void);
+typedef int    (*net_dll_ttvt_t)(void);
+typedef int    (*net_dll_ttres_t)(void);
+typedef void   (*net_dll_terminfo_t)(char *,int,int);
+typedef char * (*net_dll_version_t)(void);
+typedef char * (*net_dll_errorstr_t)(int);
+
+net_dll_netopen_t net_dll_netopen=NULL;
+net_dll_netclos_t net_dll_netclos=NULL;
+net_dll_nettchk_t net_dll_nettchk=NULL;
+net_dll_netflui_t net_dll_netflui=NULL;
+net_dll_netbreak_t net_dll_netbreak=NULL;
+net_dll_netinc_t net_dll_netinc=NULL;
+net_dll_netxin_t net_dll_netxin=NULL;
+net_dll_nettoc_t net_dll_nettoc=NULL;
+net_dll_nettol_t net_dll_nettol=NULL;
+net_dll_ttpkt_t net_dll_ttpkt=NULL;
+net_dll_ttvt_t net_dll_ttvt=NULL;
+net_dll_ttres_t net_dll_ttres=NULL;
+net_dll_terminfo_t net_dll_terminfo=NULL;
+net_dll_version_t net_dll_version=NULL;
+net_dll_errorstr_t net_dll_errorstr=NULL;
 
 int
 netdll_unload(void)
@@ -542,120 +578,120 @@ netdll_load( char * dllname )
         return (-1);
     }
 
-    if (((FARPROC) net_dll_netopen =
-          GetProcAddress( hNetDll, "netopen" )) == NULL )
+    if ((net_dll_netopen =
+          (net_dll_netopen_t)GetProcAddress( hNetDll, "netopen" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netopen",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netclos =
-          GetProcAddress( hNetDll, "netclos" )) == NULL )
+    if ((net_dll_netclos =
+          (net_dll_netclos_t)GetProcAddress( hNetDll, "netclos" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netclos",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_nettchk =
-          GetProcAddress( hNetDll, "nettchk" )) == NULL )
+    if ((net_dll_nettchk =
+          (net_dll_nettchk_t)GetProcAddress( hNetDll, "nettchk" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","nettchk",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netflui =
-          GetProcAddress( hNetDll, "netflui" )) == NULL )
+    if ((net_dll_netflui =
+          (net_dll_netflui_t)GetProcAddress( hNetDll, "netflui" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netflui",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netbreak =
-          GetProcAddress( hNetDll, "netbreak" )) == NULL )
+    if ((net_dll_netbreak =
+          (net_dll_netbreak_t)GetProcAddress( hNetDll, "netbreak" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netbreak",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netinc =
-          GetProcAddress( hNetDll, "netinc" )) == NULL )
+    if ((net_dll_netinc =
+          (net_dll_netinc_t)GetProcAddress( hNetDll, "netinc" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netinc",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netxin =
-          GetProcAddress( hNetDll, "netxin" )) == NULL )
+    if ((net_dll_netxin =
+          (net_dll_netxin_t)GetProcAddress( hNetDll, "netxin" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netxin",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_nettoc =
-          GetProcAddress( hNetDll, "nettoc" )) == NULL )
+    if ((net_dll_nettoc =
+          (net_dll_nettoc_t)GetProcAddress( hNetDll, "nettoc" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","nettoc",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_nettol =
-          GetProcAddress( hNetDll, "nettol" )) == NULL )
+    if ((net_dll_nettol =
+          (net_dll_nettol_t)GetProcAddress( hNetDll, "nettol" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","nettol",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_terminfo =
-          GetProcAddress( hNetDll, "terminfo" )) == NULL )
+    if ((net_dll_terminfo =
+          (net_dll_terminfo_t)GetProcAddress( hNetDll, "terminfo" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","terminfo",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_version =
-          GetProcAddress( hNetDll, "version" )) == NULL )
+    if ((net_dll_version =
+          (net_dll_version_t)GetProcAddress( hNetDll, "version" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","version",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_errorstr =
-          GetProcAddress( hNetDll, "errorstr" )) == NULL )
+    if ((net_dll_errorstr =
+          (net_dll_errorstr_t)GetProcAddress( hNetDll, "errorstr" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","errorstr",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_ttpkt =
-          GetProcAddress( hNetDll, "ttpkt" )) == NULL )
+    if ((net_dll_ttpkt =
+          (net_dll_ttpkt_t)GetProcAddress( hNetDll, "ttpkt" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","ttpkt",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_ttres =
-          GetProcAddress( hNetDll, "ttres" )) == NULL )
+    if ((net_dll_ttres =
+          (net_dll_ttres_t)GetProcAddress( hNetDll, "ttres" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","ttres",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_ttvt =
-          GetProcAddress( hNetDll, "ttvt" )) == NULL )
+    if ((net_dll_ttvt =
+          (net_dll_ttvt_t)GetProcAddress( hNetDll, "ttvt" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","ttvt",rc) ;
@@ -738,7 +774,14 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         if ( !netbiosAvail )
           return -1 ;
 
-        ckstrncpy( RemoteName, name, NETBIOS_NAME_LEN+1 ) ;
+        /*
+         * RemoteName must be padded with spaces to NETBIOS_NAME_LEN characters.
+         */
+        if (strlen(name) < NETBIOS_NAME_LEN) {
+            strncpy( RemoteName, name, strlen(name) ) ;
+        } else {
+            ckstrncpy( RemoteName, name, NETBIOS_NAME_LEN+1 ) ;
+        }
 
         if ( NetBiosLSN > 0             /* Make sure a handle doesn't exist */
              || ttyfd > -1 )
@@ -746,7 +789,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
         DosResetEventSem( hevNetBiosLSN, &PostCount ) ;
 
-        if ( !strcmp( "*               ", RemoteName ) ) { /* Server Mode */
+        if ( !strcmp( "*", RemoteName ) ) { /* Server Mode */
             if ( pListenNCB->basic_ncb.bncb.ncb_retcode == NB_COMMAND_IN_PROCESS)
               return 0 ;
 
@@ -759,7 +802,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
             ttyfd = NetBiosLSN = 0 ;
 
-            ListenThreadID = _beginthread( &NetbiosListenThread, 0, 16384, 0 );
+            ListenThreadID = _beginthread( &NetbiosListenThread, 0, 16384, NULL );
             if ( ListenThreadID == -1 ) {
                 Dos16SemWait( pListenNCB->basic_ncb.ncb_semaphore,
                               SEM_INDEFINITE_WAIT ) ;
@@ -780,8 +823,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             printf("Calling \"%s\" via NetBios\n", RemoteName ) ;
             rc = NCBCall( NetbeuiAPI, pWorkNCB, NetBiosAdapter, NetBiosName,
                           RemoteName, NB_RECV_TIMEOUT, NB_SEND_TIMEOUT, FALSE ) ;
+            debug(F100,"Dos16Semwait...",NULL,0);
             rc = Dos16SemWait( pWorkNCB->basic_ncb.ncb_semaphore,
                                SEM_INDEFINITE_WAIT ) ;
+            debug(F101,"Dos16Semwait...done: ncb_retcode","",pWorkNCB->basic_ncb.bncb.ncb_retcode);
+
             if (rc)
               return -1 ;
 
@@ -810,8 +856,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
 #ifdef NPIPE
    if ( nettype == NET_PIPE ) {
-       if ( hPipe ) {                   /* Make sure a pipe isn't open */
-           char buffer[64];
+       if ( hPipe ) {                   /* Make sure a pipe isn't open */;
 #ifdef NT
            if (PeekNamedPipe(hPipe, NULL, 0, NULL, &AvailData, NULL))
                return 0;
@@ -820,6 +865,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
            if ( rc == ERROR_BAD_PIPE || rc == ERROR_PIPE_NOT_CONNECTED )
                ttclos(0);
 #else
+           char buffer[64];
            rc = DosPeekNPipe(hPipe, buffer, sizeof(buffer),
                              &BytesRead, &AvailData, &PipeState);
            switch ( rc ) {
@@ -857,7 +903,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                printf( "\nCreateFile error: return code = %ld\n",rc ) ;
            } else {
                DWORD Mode = PIPE_NOWAIT | PIPE_READMODE_BYTE;
-               ttyfd = (int) hPipe ;
+               ttyfd = (CK_TTYFD_T) hPipe ;
                SetNamedPipeHandleState( hPipe, &Mode, NULL, NULL) ;
                printf("\nNamed Pipe %s open.\nConnection to server complete.\n",
                       PipeName);
@@ -895,7 +941,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                debug( F101,"CreateNamedPipe error: return code","",rc) ;
                printf("\nCreateNamedPipe error: return code = %ld\n", rc);
            } else {
-               ttyfd = (int) hPipe;
+               ttyfd = (CK_TTYFD_T) hPipe;
                printf("\nNamed Pipe %s created.\nWaiting for client connection ...\n\n",
                        PipeName ) ;
                if (!ConnectNamedPipe( hPipe, NULL )) {
@@ -906,7 +952,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                    }
                } else {
                    DWORD Mode = PIPE_NOWAIT | PIPE_READMODE_BYTE;
-                   ttyfd = (int) hPipe ;
+                   ttyfd = (CK_TTYFD_T) hPipe ;
                    SetNamedPipeHandleState( hPipe, &Mode, NULL, NULL) ;
                }
            }
@@ -1215,10 +1261,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
    if ( nettype == NET_FILE )
    {
 #ifdef NT
-      OVERLAPPED OverLapped ;
 
       /* Create a file handle */
-      ttyfd = (int) CreateFile (name,
+      ttyfd = (CK_TTYFD_T) CreateFile (name,
                         GENERIC_READ   ,
                         FILE_SHARE_READ,
                         NULL,
@@ -1247,16 +1292,15 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
 #ifdef NETCMD
     if ( nettype == NET_CMD  || nettype == NET_PTY ) {
-        char cmd_line[256], *cmd_exe, *args, *p;
+        char cmd_line[256];
+        char *cmd_exe, *args;
+        char *p;
         int argslen;
 
 #ifdef NT
-        HRESULT result;
-
         cmd_line[0] = '\0' ;
         /* Now create the child process. */
 
-#ifdef COMMENT
         cmd_exe = getenv("SHELL");
         if ( !cmd_exe )
             cmd_exe = getenv("COMSPEC");
@@ -1282,12 +1326,6 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             ckstrncat(args, name,argslen);
         }
         debug(F110,"os2_netopen NET_CMD args",args,0);
-#else
-        /* Just run the command directly rather than via the shell otherwise
-         * things can act up.
-         **/
-        ckstrncat(cmd_line, name, 256);
-#endif
 
 #ifdef NETPTY
         if (nettype == NET_PTY) {
@@ -1315,6 +1353,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                     size, cmd_line, &procinfo, &hChildStdinWrDup, &hChildStdoutRdDup)) {
                 conpty_open = TRUE;
                 fSuccess = TRUE;
+            } else {
+                conpty_open = FALSE;
+                fSuccess = FALSE;
             }
         } else {
             conpty_open = FALSE;
@@ -1343,12 +1384,10 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                 debug(F101,"Stdout pipe creation failed\n","",0);
 
             /* Set a write handle to the pipe to be STDOUT. */
-            /* 20220706 DavidG - This only kind of works for the console version
-             * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
+
             if (! SetStdHandle(STD_OUTPUT_HANDLE, hChildStdoutWr) ||
                  ! SetStdHandle(STD_ERROR_HANDLE, hChildStdoutWr) )
                 debug(F100,"Redirecting STDOUT/STDERR failed","",0);
-            */
 
             /*
             * The steps for redirecting child's STDIN:
@@ -1366,15 +1405,10 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                 debug(F100,"Stdin pipe creation failed\n","",0);
 
             /* Set a read handle to the pipe to be STDIN. */
-            /* 20220706 DavidG - This only kind of works for the console version
-             * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
             if (! SetStdHandle(STD_INPUT_HANDLE, hChildStdinRd))
                 debug(F100,"Redirecting Stdin failed","",0);
-            */
 
             /* Duplicate the write handle to the pipe so it is not inherited. */
-            /* 20220706 DavidG - This should probably be done with something like:
-             *      SetHandleInformation(hChildStdinWr, HANDLE_FLAG_INHERIT, 0) */
             fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStdinWr,
                                       GetCurrentProcess(), &hChildStdinWrDup, 0,
                                       FALSE,       /* not inherited */
@@ -1569,7 +1603,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #ifndef NT
                      0,
 #endif /* NT */
-                     65536, hChildStdoutRdDup );
+                     65536, (void *)hChildStdoutRdDup );
         rc = 0;
     }
 #endif /* NETCMD */
@@ -1913,7 +1947,9 @@ os2_nettchk() {                         /* for reading from network */
 
 #ifdef NPIPE
     if ( nettype == NET_PIPE ) {
+#ifndef NT
         char buffer[64];
+#endif
 
         if ( pos < size )
             return size - pos ;
@@ -2095,7 +2131,8 @@ os2_nettchk() {                         /* for reading from network */
 #ifdef NETCMD
     if ( nettype == NET_CMD || nettype == NET_PTY ) {
 #ifdef NT
-        if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
+        if (procinfo.hProcess == NULL ||
+                WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
             ttclos(0);
             return(-1);
         }
@@ -2165,7 +2202,7 @@ ckotngc(int timo) {
 }
 
 int
-os2_netxin(int n, CHAR * buf) {
+os2_netxin(int n, char * buf) {
     int len;
     int rc ;
 
@@ -3506,9 +3543,9 @@ os2_nettol(s,n) char *s; int n; {
 
 #ifdef DECNET
     if ( nettype == NET_DEC ) {
-        int i ;
         if ( ttnproto == NP_LAT ) {
 #ifdef OS2ONLY
+            int i ;
             for ( rc = 0; rc < n; rc++, s++ )
                 if ( i = os2_nettoc(*s) ) {
                     return i ;
@@ -3905,6 +3942,8 @@ os2_tcpipinit() {
     if ( CKTCPIPDLL ) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, CKTCPIPDLL, _MAX_PATH );
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if (!rc) {
             if (deblog)
@@ -3914,6 +3953,7 @@ os2_tcpipinit() {
         } else {
             debug(F110,"CKTCPIPDLL",CKTCPIPDLL,0);
             debug(F111,"CKTCPIPDLL DosLoadModule failed",fail,rc);
+            debug(F110, "Object contributing to load failure", fail, 0);
         }
     } else
         debug(F100,"CKTCPIPDLL not defined","",0);
@@ -3922,13 +3962,35 @@ os2_tcpipinit() {
 /*
   Attempt to load in the following order:
   1. CKTCPIPDLL environment variable
-  2. IBM 2.0
-  3. FTP 1.3
-  4. IBM 1.2
+  2. IBM 4.1+ (the new 32bit TCP/IP stack in Warp Server for eBusiness)
+  3. IBM 2.0-4.0
+  4. FTP 1.3
+  5. IBM 1.2
 */
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
+        ckstrncat(dll, "CKO32I41.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
+        rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
+        if ( rc ) {
+            ckstrncpy(dll,"CKO32I41", _MAX_PATH);
+            rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
+        }
+        if (!rc) {
+            if (deblog) printf( "32bit IBM TCP/IP 4.1 or higher loaded...") ;
+            sprintf(tcpname,"%s = 32-bit IBM TCP/IP 4.1 or higher", dll);
+            debug(F111,"32bit IBM TCP/IP 4.1 or higher loaded",dll,rc);
+        } else {
+          debug(F111,"32bit IBM TCP/IP 4.1 or higher load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
+    }
+    if (rc != 0) {
+        ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32I20.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll,"CKO32I20", _MAX_PATH);
@@ -3938,12 +4000,16 @@ os2_tcpipinit() {
             if (deblog) printf( "32bit IBM TCP/IP 2.0 or higher loaded...") ;
             sprintf(tcpname,"%s = 32-bit IBM TCP/IP 2.0 or higher", dll);
             debug(F111,"32bit IBM TCP/IP 2.0 or higher loaded",dll,rc);
-        } else
+        } else {
           debug(F111,"32bit IBM TCP/IP 2.0 or higher load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32F13.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll, "CKO32F13", _MAX_PATH);
@@ -3953,12 +4019,16 @@ os2_tcpipinit() {
             if (deblog) printf( "32bit FTP PC/TCP 1.3 loaded...") ;
             sprintf(tcpname,"%s = 32-bit FTP PC/TCP 1.3", dll);
             debug(F111,"32bit FTP PC/TCP 1.3 loaded",dll,rc);
-        } else
+        } else {
           debug(F111,"32bit FTP PC/TCP 1.3 load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32I12.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll, "CKO32I12", _MAX_PATH);
@@ -3976,9 +4046,11 @@ os2_tcpipinit() {
                 printf( "32bit IBM TCP/IP 1.2 (or compatible) loaded...") ;
             sprintf(tcpname,"%s = 32-bit IBM TCP/IP 1.2 (or compatible)", dll);
             debug(F111,"32bit IBM TCP/IP 1.2 (or compatible) loaded",dll,rc);
-        } else
+        } else {
             debug(F111,
                    "32bit IBM TCP/IP 1.2 (or compatible) load failed",dll,rc);
+            debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
 #else
 /*
@@ -4159,61 +4231,61 @@ LoadDECTAL( void )
         debug(F111, "LoadDECTAL LoadLibrary failed","dectal",rc) ;
         return FALSE;
     }
-    if (((FARPROC) InstalledAccess = GetProcAddress( hDECTAL, "InstalledAccess" )) == NULL )
+    if ((InstalledAccess = (InstalledAccess_t)GetProcAddress( hDECTAL, "InstalledAccess" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","InstalledAccess",rc) ;
         return FALSE;
     }
-    if (((FARPROC) InquireServices = GetProcAddress( hDECTAL, "InquireServices" )) == NULL )
+    if ((InquireServices = (InquireServices_t)GetProcAddress( hDECTAL, "InquireServices" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","InquireServices",rc) ;
         return FALSE;
     }
-    if (((FARPROC) GetNextService = GetProcAddress( hDECTAL, "GetNextService" )) == NULL )
+    if ((GetNextService = (GetNextService_t)GetProcAddress( hDECTAL, "GetNextService" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","GetNextService",rc) ;
         return FALSE;
     }
-    if (((FARPROC) OpenSession = GetProcAddress( hDECTAL, "OpenSession" )) == NULL )
+    if ((OpenSession = (OpenSession_t)GetProcAddress( hDECTAL, "OpenSession" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","OpenSession",rc) ;
         return FALSE;
     }
-    if (((FARPROC) CloseSession = GetProcAddress( hDECTAL, "CloseSession" )) == NULL )
+    if ((CloseSession = (CloseSession_t)GetProcAddress( hDECTAL, "CloseSession" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","CloseSession",rc) ;
         return FALSE;
     }
-    if (((FARPROC) ReadData = GetProcAddress( hDECTAL, "ReadData" )) == NULL )
+    if ((ReadData = (ReadData_t)GetProcAddress( hDECTAL, "ReadData" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","ReadData",rc) ;
         return FALSE;
     }
-    if (((FARPROC) WriteData = GetProcAddress( hDECTAL, "WriteData" )) == NULL )
+    if ((WriteData = (WriteData_t)GetProcAddress( hDECTAL, "WriteData" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","WriteData",rc) ;
         return FALSE;
     }
-    if (((FARPROC) SendBreak = GetProcAddress( hDECTAL, "SendBreak" )) == NULL )
+    if ((SendBreak = (SendBreak_t)GetProcAddress( hDECTAL, "SendBreak" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","SendBreak",rc) ;
         return FALSE;
     }
-    if (((FARPROC) GetDetailError = GetProcAddress( hDECTAL, "GetDetailError" )) == NULL )
+    if ((GetDetailError = (GetDetailError_t)GetProcAddress( hDECTAL, "GetDetailError" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","GetDetailError",rc) ;
         return FALSE;
     }
-    if (((FARPROC) DataNotify = GetProcAddress( hDECTAL, "DataNotify" )) == NULL )
+    if ((DataNotify = (DataNotify_t)GetProcAddress( hDECTAL, "DataNotify" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","DataNotify",rc) ;
@@ -4227,8 +4299,12 @@ LoadDECTAL( void )
 void
 netinit() {
     extern int nettype;
+#ifdef DECNET
+#ifdef OS2ONLY
     char fail[256];
     HMODULE library;
+#endif /* OS2ONLY */
+#endif /* DECNET */
     extern unsigned long startflags;
 
    if (deblog) {
@@ -4364,6 +4440,35 @@ netinit() {
             ttyfd = -1 ;
         }
 #endif /* SUPERLAT */
+
+#ifdef SSH_DLL
+        if (deblog) {
+            printf("  SSH support..." ) ;
+            debug(F100,"SSH support...","",0);
+        }
+        if (ssh_dll_load(SSH_AUTO_DLLS, FALSE) >= 0) {
+            if (deblog) {
+                printf("OK\n") ;
+                debug(F100,"SSH OK","",0);
+            }
+        } else {
+            if (deblog) {
+                printf("Not installed\n" ) ;
+                debug(F100,"SSH not installed","",0) ;
+            }
+        }
+#else
+#ifdef SSHBUILTIN
+        ssh_initialise();
+        update_setssh_options();
+        update_ssh_options();
+#endif /* SSHBUILTIN */
+#endif /* SSH_DLL */
+#ifdef SSHBUILTIN
+#ifdef CK_COLORS_24BIT
+        ssh_set_environment_variable("COLORTERM", "truecolor");
+#endif /* CK_COLORS_24BIT */
+#endif /* SSHBUILTIN */
     }
 
 #ifdef TCPSOCKET
@@ -4508,17 +4613,12 @@ int
 tcpsocket_open( char * name, int * lcl, int nett, int timo )
 {
     int on = 1;
-    static struct servent *service, servrec;
     static struct hostent *host;
     static struct sockaddr_in saddr;
     static int saddrlen ;
     extern char myipaddr[];
     struct sockaddr_in l_addr;
     int l_slen;
-#ifdef BSDSELECT
-    fd_set rfds;
-    struct timeval tv;
-#endif
     extern int tcp_rdns;
 #ifdef CK_SSL
     int ssl_failed = 0;
@@ -5225,12 +5325,13 @@ os2_gethostname( void )
 /* SOCKS 4.2 code derived from CSTC_RELEASE 4.2 on ftp.nec.com /pub/security */
 
 static int usesocks = FALSE ;
-static int usesocksns = FALSE ;
-static int socks_usens = FALSE ;
-static struct in_addr socks_server, socks_ns, default_server ;
+static struct in_addr socks_server, socks_ns;
 static unsigned short socks_port;
+#ifdef CK_SOCKS_NS
+static int usesocksns = FALSE ;
+static struct in_addr default_server ;
 static int server_count ;
-static char * username ;
+#endif /* CK_SOCKS_NS */
 enum socks_action { deny, direct, sockd } ;
 
 char *tcp_socks_svr = NULL;             /* SOCKS Server location */
@@ -5348,7 +5449,9 @@ int SOCKS_getaddr(name, addr)
     struct in_addr  *addr;
 {
     struct hostent  *hp;
+#ifdef COMMENT
     struct netent   *np;
+#endif
 
     if (SOCKS_getquad(name, addr) != -1)
         return 0;
@@ -5403,7 +5506,6 @@ SOCKS_read_config( void )
     long    p;
     unsigned short dport;
     char    *cmdp = NULL;
-    struct  in_addr self;
     Portcmp tst;
 
     if ( confNtries ) {
@@ -5775,7 +5877,6 @@ Rconnect(int socket, struct sockaddr * name, int namelen)
     char request[100];
     char *next ;
     int packetsize ;
-    int sockret ;
     extern int ck_lcname;
 
     if (usesocks) {

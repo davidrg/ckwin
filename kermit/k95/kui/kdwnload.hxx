@@ -23,8 +23,8 @@ public:
 
     void createWin( KWin* par );
     void show( Bool bVisible = TRUE );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
-    Bool saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+    Bool saveAsMsg( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
     WNDPROC getOldProc() { return oldSaveAsProc; }
 
@@ -50,7 +50,7 @@ private:
     BOOL downloadButton;
     BOOL openFile;
 
-    int downloadID;
+    intptr_t downloadID;
     int optionID;
 
     OPENFILENAME OpenFileName;

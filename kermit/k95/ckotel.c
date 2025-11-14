@@ -49,6 +49,7 @@ According to <sad@utl.edu> IBM changed -c to -cp and added -N to ignore 8th bit
 #ifndef NT
 #define INCL_DOSPROCESS
 #include <os2.h>
+#undef COMMENT
 #endif
 
 char* codepage = NULL,

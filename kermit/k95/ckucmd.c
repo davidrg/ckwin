@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 10.0.179, 12 Oct 2022";
+char *cmdv = "Command package 10.0.184, 19 Sept 2023";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -10,9 +10,9 @@ char *cmdv = "Command package 10.0.179, 12 Oct 2022";
   Author: Frank da Cruz (fdc@columbia.edu),
   Formerly of Columbia University Academic Information Systems, New York City.
   Since 1 July 2011, Open Source Kermit Project.
-  Most recent update: Fri Oct 14 13:44:53 2022
+  Most recent update: Tue May  2 19:18:22 2023
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -272,6 +272,13 @@ extern int timelimit, nzxopts, nopush, nolocal, xcmdsrc, keepallchars;
 #endif /* UNIX */
 #endif /* CKSYSLOG */
 
+/* This block moved here from further down 24 March 2023 */
+
+#include "ckcdeb.h"
+#include "ckucmd.h"
+#include "ckcasc.h"
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
+
 /* Local variables */
 
 static
@@ -415,7 +422,12 @@ static char dirsep = '/';		/* UNIX, OS/2, OS-9, Amiga, etc. */
 /*  Returns 0 if filespec s includes any path segments; 1 if it doesn't. */
 
 int
-hasnopath(s) char * s; {
+#ifdef CK_ANSIC
+hasnopath(char * s) 
+#else
+hasnopath(s) char * s; 
+#endif /* CK_ANSIC */
+{
     char * p = NULL;
     if (!s) return(0);
     if (!*s) return(0);
@@ -425,10 +437,20 @@ hasnopath(s) char * s; {
 
 /*  C K S P R E A D  --  Print string double-spaced  */
 
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static char * ckspread( char * );
+#endif /* CK_ANSIC */
+
 static char * sprptr = NULL;
 
 static char *
-ckspread(s) char * s; {
+#ifdef CK_ANSIC
+ckspread( char * s )
+#else
+ckspread(s) char * s;
+#endif /* CK_ANSIC */
+{
     int n = 0;
     char * p;
     n = strlen(s);
@@ -448,8 +470,18 @@ ckspread(s) char * s; {
 
 /*  T E S T  --  Bit test  */
 
+#ifdef CK_ANSIC
+static int test( int, int );
+#endif /* CK_ANSIC */
+
 static int
-test(x,m) int x, m; { /*  Returns 1 if any bits from m are on in x, else 0  */
+#ifdef CK_ANSIC
+test( int x, int m )
+#else
+test(x,m) int x, m;
+#endif /* CK_ANSIC */
+{
+/*  Returns 1 if any bits from m are on in x, else 0  */
     return((x & m) ? 1 : 0);
 }
 
@@ -472,8 +504,13 @@ test(x,m) int x, m; { /*  Returns 1 if any bits from m are on in x, else 0  */
   Uses global cmd_rows and cmd_cols for screen size.
 */
 VOID
-kwdhelp(s,n,pat,pre,post,off,xhlp)
+#ifdef CK_ANSIC
+kwdhelp( struct keytab s[], int n, char *pat, char *pre, char *post,
+         int off, int xhlp )
+#else
+kwdhelp( s, n, pat, pre, post, off, xhlp )
     struct keytab s[]; int n, off, xhlp; char *pat, *pre, *post;
+#endif /* CK_ANSIC */
 /* kwdhelp */ {
 
     int width = 0;
@@ -797,7 +834,13 @@ xfilhelp:
   file selection is needed.
 */
 int
-filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg; {
+#ifdef CK_ANSIC
+filhelp( int n, char * pre, char * post, int off, int cmdirflg )
+#else
+filhelp(n,pre,post,off,cmdirflg) int n, off; char *pre, *post; int cmdirflg;
+#endif /* CK_ANSIC */
+{
+/* filhelp */
     return(xfilhelp(n,pre,post,off,cmdirflg,
 		    0,NULL,NULL,NULL,NULL,
 		    (CK_OFF_T)0,(CK_OFF_T)0,0,0,(char **)NULL));
@@ -829,7 +872,12 @@ cmsetup() {
 /*  C M S E T P  --  Set the program prompt.  */
 
 VOID
-cmsetp(s) char *s; {
+#ifdef CK_ANSIC
+cmsetp( char * s )
+#else
+cmsetp(s) char *s; 
+#endif /* CK_ANSIC */
+{
     if (!s) s = "";
     ckstrncpy(cmprxx,s,PROMPTL);
     psetf = 1;                          /* Flag that prompt has been set. */
@@ -866,7 +914,12 @@ cmgkwflgs() {
 /*  P R O M P T  --  Issue the program prompt.  */
 
 VOID
-prompt(f) xx_strp f; {
+#ifdef CK_ANSIC
+    prompt( xx_strp f )
+#else
+prompt(f) xx_strp f;
+#endif /* CK_ANSIC */
+{
     char *sx, *sy; int n;
 #ifdef CK_SSL
     extern int ssl_active_flag, tls_active_flag;
@@ -919,7 +972,12 @@ prompt(f) xx_strp f; {
 
 #ifndef NOSPL
 VOID
-pushcmd(s) char * s; {			/* For use with IF command. */
+#ifdef CK_ANSIC
+pushcmd( char * s)                      /* For use with IF command. */
+#else
+pushcmd( s ) char * s;
+#endif /* CK_ANSIC */
+{
     if (!s) s = np;
     ckstrncpy(savbuf,s,CMDBL);		/* Save the dependent clause,  */
     cmres();				/* and clear the command buffer. */
@@ -927,7 +985,12 @@ pushcmd(s) char * s; {			/* For use with IF command. */
 }
 
 VOID
-pushqcmd(s) char * s; {			/* For use with ELSE command. */
+#ifdef CK_ANSIC
+pushqcmd( char * s )			/* For use with ELSE command. */
+#else
+pushqcmd(s) char * s;
+#endif /* CK_ANSIC */
+{
     char c, * p = savbuf;		/* Dest */
     if (!s) s = np;			/* Source */
     while (*s) {			/* Get first nonwhitespace char */
@@ -986,7 +1049,13 @@ The argument specifies who is to echo the user's typein --
   0 somebody else (system, front end, terminal) echoes
 */
 VOID
-cmini(d) int d; {
+#ifdef CK_ANSIC
+cmini( int d )
+#else
+cmini(d) int d;
+#endif /* CK_ANSIC */
+{
+/* cmini */
 #ifdef DCMDBUF
     if (!atmbuf)
       if (cmsetup()<0)
@@ -1255,7 +1324,13 @@ stripq(s) char *s; {                    /* Function to strip '\' quotes */
 
 /* Convert tabs to spaces, one for one */
 VOID
-untab(s) char *s; {
+#ifdef CK_ANSIC
+untab( char * s )
+#else
+untab(s) char *s;
+#endif /* CK_ANSIC */
+{
+/* untab */
     while (*s) {
 	if (*s == HT) *s = SP;
 	s++;
@@ -1282,7 +1357,12 @@ untab(s) char *s; {
 */
 /* This is the traditional cmnum() that gets an int */
 int
-cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
+#ifdef CK_ANSIC
+cmnum( char * xhlp, char * xdef, int radix, int * n, xx_strp f )
+#else
+cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f;
+#endif /* CK_ANSIC */
+{
     CK_OFF_T z = (CK_OFF_T)0, check;
     int x;
     x = cmnumw(xhlp,xdef,radix,&z,f);
@@ -1301,8 +1381,14 @@ cmnum(xhlp,xdef,radix,n,f) char *xhlp, *xdef; int radix, *n; xx_strp f; {
   fdc, 24 Dec 2005.
 */
 int
+#ifdef CK_ANSIC
+cmnumw( char * xhlp, char * xdef, int radix, CK_OFF_T * n, xx_strp f )
+#else
 cmnumw(xhlp,xdef,radix,n,f)
-    char *xhlp, *xdef; int radix; CK_OFF_T *n; xx_strp f; {
+    char *xhlp, *xdef; int radix; CK_OFF_T *n; xx_strp f;
+#endif /* CK_ANSIC */
+{
+/* cmnumw */
     int x; char *s, *zp, *zq;
 #ifdef COMMENT
     char lbrace, rbrace;
@@ -1444,7 +1530,12 @@ extern int z_error;
     2 if given the name of an existing directory.
 */
 int
-cmofi(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
+#ifdef CK_ANSIC
+cmofi( char * xhlp, char * xdef, char ** xp, xx_strp f )
+#else
+cmofi(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f;
+#endif /* CK_ANSIC */
+{
     int x; char *s, *zq;
 #ifdef DOCHKVAR
     int tries;
@@ -1557,7 +1648,9 @@ cmofi(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 #endif /* COMMENT */
     }
 #ifdef OS2
+#ifdef COMMENT
 o_again:
+#endif /* COMMENT */
 #endif /* OS2 */
     if (tries == 1)
 #endif /* DOCHKVAR */
@@ -1598,8 +1691,9 @@ o_again:
 	return(2);
     }
 #endif /* CK_TMPDIR */
-
-    if (strcmp(s,CTTNAM) && (zchko(s) < 0)) { /* OK to write to console */
+    /* Fixed 19 September 2023 by Piotr Kolasinski */
+    /* Previously: if (strcmp(s,CTTNAM) && (zchko(s) < 0)) */
+    if ((strcmp(s,CTTNAM) == 0) && (zchko(s) < 0)) { /* write to console OK */
 #ifdef COMMENT
 #ifdef OS2
 /*
@@ -1679,7 +1773,12 @@ cmiofi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f; {
 #endif	/* COMMENT */
 
 int
-cmifi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f; {
+#ifdef CK_ANSIC
+cmifi ( char * xhlp, char * xdef, char ** xp, int * wild, xx_strp f )
+#else
+cmifi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f;
+#endif /* CK_ANSIC */
+{
     return(cmifi2(xhlp,xdef,xp,wild,0,NULL,f,0));
 }
 /*
@@ -1690,8 +1789,14 @@ cmifi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f; {
   ckucmd.h.  Look in ckuusr.c and ckuus3.c for examples of usage.
 */
 int
+#ifdef CK_ANSIC
+cmifip( char * xhlp, char * xdef, char ** xp, int * wild, int d, 
+        char * path, xx_strp f)
+#else
 cmifip(xhlp,xdef,xp,wild,d,path,f)
-    char *xhlp,*xdef,**xp; int *wild, d; char * path; xx_strp f; {
+    char *xhlp,*xdef,**xp; int *wild, d; char * path; xx_strp f; 
+#endif /* CK_ANSIC */
+{
     return(cmifi2(xhlp,xdef,xp,wild,0,path,f,0));
 }
 
@@ -1712,7 +1817,12 @@ cmifip(xhlp,xdef,xp,wild,d,path,f)
     0 or 1, with xp pointing to name, if directory specified,
 */
 int
-cmdir(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
+#ifdef CK_ANSIC
+cmdir( char * xhlp, char * xdef, char ** xp, xx_strp f )
+#else
+cmdir(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f;
+#endif /* CK_ANSIC */
+{
     int wild;
     return(cmifi2(xhlp,xdef,xp,&wild,0,NULL,f,1));
 }
@@ -1720,7 +1830,12 @@ cmdir(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
 /* Like CMDIR but includes PATH search */
 
 int
-cmdirp(xhlp,xdef,xp,path,f) char *xhlp, *xdef, **xp; char * path; xx_strp f; {
+#ifdef CK_ANSIC
+cmdirp(char * xhlp, char * xdef, char ** xp, char * path, xx_strp f)
+#else
+cmdirp(xhlp,xdef,xp,path,f) char *xhlp, *xdef, **xp; char * path; xx_strp f;
+#endif /* CK_ANSIC */
+{
     int wild;
     return(cmifi2(xhlp,xdef,xp,&wild,0,path,f,1));
 }
@@ -1740,15 +1855,22 @@ cmdirp(xhlp,xdef,xp,path,f) char *xhlp, *xdef, **xp; char * path; xx_strp f; {
     dirflg -- 1 to parse *only* directories, 0 otherwise
 */
 int
+#ifdef CK_ANSIC
+cmifi2( char * xhlp, char * xdef, char ** xp, int * wild, int d,
+        char * path, xx_strp f, int dirflg )
+#else
 cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
-    char *xhlp,*xdef,**xp; int *wild, d; char * path; xx_strp f; int dirflg; {
+    char *xhlp,*xdef,**xp; int *wild, d; char * path; xx_strp f; int dirflg;
+#endif /* CK_ANSIC */
+/* cmifi2 */
+{
     extern int recursive, diractive, cdactive, dblquo;
     int i, x, itsadir, xc, expanded = 0, nfiles = 0, children = -1;
     int qflag = 0;
     long y;
     CK_OFF_T filesize;
     char *sp = NULL, *zq, *np = NULL;
-    char *sv = NULL, *p = NULL;
+    char *sv = NULL;
 #ifdef DTILDE
     char *dirp;
 #endif /* DTILDE */
@@ -2540,7 +2662,10 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		       ) {
 #ifndef NOPARTIAL
 /* Partial filename completion */
-		int j, k; char c;
+		int j, k;
+#ifndef OS2
+        char c;
+#endif /* OS2 */
 		k = 0;
 		debug(F111,"cmifi partial",filbuf,cc);
 #ifdef OS2
@@ -2890,7 +3015,12 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
   have been better to change the calling sequence but that was not practical.
 */
 int
-cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
+#ifdef CK_ANSIC
+cmfld(char * xhlp, char * xdef, char ** xp, xx_strp f )
+#else
+cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; 
+#endif /* CK_ANSIC */
+{
     int x, xc, isavar = 0;
     char *zq;
 
@@ -3019,8 +3149,12 @@ cmfld(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f; {
   with cmflgs set to return code, and xp pointing to result string.
 */
 int
-cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
-
+#ifdef CK_ANSIC
+cmtxt( char * xhlp, char * xdef, char ** xp, xx_strp f)
+#else
+cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f;
+#endif /* CK_ANSIC */
+{                                                         
     int x, i;
     char *xx, *zq;
     static int xc;
@@ -3226,22 +3360,44 @@ cmtxt(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f; {
   cmswi()  - Switch parser
 */
 int
-cmkey(table,n,xhlp,xdef,f)
-/* cmkey */  struct keytab table[]; int n; char *xhlp, *xdef; xx_strp f; {
+#ifdef CK_ANSIC
+cmkey(  struct keytab table[], int n, char *xhlp, char * xdef, xx_strp f )
+#else
+cmkey(table,n,xhlp,xdef,f) 
+ struct keytab table[]; int n; char *xhlp, *xdef; xx_strp f;
+#endif /* CK_ANSIC */
+{
+/* cmkey */  
     return(cmkey2(table,n,xhlp,xdef,"",f,1));
 }
 int
+#ifdef CK_ANSIC
+cmkeyx(struct keytab table[], int n, char * xhlp, char * xdef, xx_strp f )
+#else
 cmkeyx(table,n,xhlp,xdef,f)
-/* cmkeyx */  struct keytab table[]; int n; char *xhlp, *xdef; xx_strp f; {
+struct keytab table[]; int n; char *xhlp, *xdef; xx_strp f; 
+#endif /* CK_ANSIC */
+/* cmkeyx */  
+{
     return(cmkey2(table,n,xhlp,xdef,"",f,0));
 }
 int
+#ifdef CK_ANSIC
+cmswi(struct keytab table[], int n, char * xhlp, char * xdef, xx_strp f)
+#else
 cmswi(table,n,xhlp,xdef,f)
-/* cmswi */  struct keytab table[]; int n; char *xhlp, *xdef; xx_strp f; {
+  struct keytab table[]; int n; char *xhlp, *xdef; xx_strp f;
+#endif /* CK_ANSIC */
+{
+/* cmswi */  
     return(cmkey2(table,n,xhlp,xdef,"",f,4));
 }
 /* c m k e y 2 -- The normal keyword parsing function */
 int
+#ifdef CK_ANSIC
+cmkey2( struct keytab table[], int n, char * xhlp, char * xdef,
+        char * tok, xx_strp f, int pmsg )
+#else
 cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
     struct keytab table[];
     int n;
@@ -3249,7 +3405,9 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
     char *tok;
     xx_strp f;
     int pmsg;
-{ /* cmkey2 */
+#endif /* CK_ANSIC */
+/* cmkey2 */
+{ 
     extern int havetoken;
     int i, tl, y, z = 0, zz, xc, wordlen = 0, cmswitch;
     int numeric = 0;
@@ -3736,7 +3894,12 @@ cmkey2(table,n,xhlp,xdef,tok,f,pmsg)
 }
 
 int
-chktok(tlist) char *tlist; {
+#ifdef CK_ANSIC
+chktok( char * tlist )
+#else
+chktok(tlist) char *tlist; 
+#endif /* CK_ANSIC */
+{
     char *p;
     p = tlist;
     while (*p != NUL && *p != *atmbuf) p++;
@@ -3844,12 +4007,17 @@ static char deltabuf[DELTABUF];
 static char * deltabp = deltabuf;
 
 char *
+#ifdef CK_ANSIC
+cmdelta( int yy, int mo, int dd, int hh, int mm, int ss, 
+    int sign, int dyy, int dmo, int ddd, int dhh, int dmm, int dss) 
+#else 
 cmdelta(yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss)
     int yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss;
-/* cmdelta */ {
-    int zyy, zmo, zdd, zhh, zmm, zss;
+#endif /* CK_ANSIC */
+{
+/* cmdelta */
     long t1, t2, t3, t4;
-    long d1 = 0, d2, d3;
+    long d1 = 0, d2;
     char datebuf[DATEBUFLEN+1];
 
 #ifdef DEBUG
@@ -3975,7 +4143,12 @@ cmdelta(yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss)
 /* Convert Delta Time to Seconds */
 
 int
-delta2sec(s,result) char * s; long * result; {
+#ifdef CK_ANSIC
+delta2sec( char * s, long * result)
+#else
+delta2sec(s,result) char * s; long * result; 
+#endif /* CK_ANSIC */
+{
     long ddays = 0L, zz;
     int dsign = 1, dhours = 0, dmins = 0, dsecs = 0, units;
     int state = NEED_DAYS;
@@ -4133,7 +4306,12 @@ delta2sec(s,result) char * s; long * result; {
   If t is negative (-1 through -6) result is date only.
 */
 char *
-cmcvtdate(s,t) char * s; int t; {
+#ifdef CK_ANSIC
+cmcvtdate(char * s, int t ) 
+#else
+cmcvtdate(s,t) char * s; int t;
+#endif /* CK_ANSIC */
+{
     int x, i, j, k, hh, mm, ss, ff, pmflag = 0, nodate = 0, len, dow;
     int units, isgmt = 0, gmtsign = 0, d = 0, state = 0, nday;
     int kn = 0, ft[8], isletter = 0, f2len = 0;
@@ -4154,7 +4332,6 @@ cmcvtdate(s,t) char * s; int t; {
     char * fld[8], * p = "", * p2, * p3; /* Assorted buffers and pointers  */
     char * s2, * s3;
     char * year = NULL, * month = NULL, * day = NULL;
-    char * hour = "00", * min = "00", * sec = "00";
     char datesep = 0;
     char tmpbuf[16];
     char xbuf[DATEBUFLEN+1];
@@ -4165,7 +4342,7 @@ cmcvtdate(s,t) char * s; int t; {
     char daybuf[3];
     char monbuf[3];
     char yearbuf[5];
-    char timbuf[16], *tb, cc;
+    char cc;
     char * dp = NULL;			/* Result pointer */
     char * newdate = NULL;
     char * datepat = "[12][0-9][0-9][0-9]:[0-9][0-9]:[0-9][0-9]";
@@ -4397,7 +4574,7 @@ cmcvtdate(s,t) char * s; int t; {
     /* Handle "today", "yesterday", "tomorrow", and +/- n units */
 
     if (ckstrchr("TtYyNn",s[0])) {
-	int i, k, n, minus = 0;
+	int i, k;
 	char c;
 	long jd;
 	jd = mjd(ckdate());
@@ -4797,7 +4974,7 @@ cmcvtdate(s,t) char * s; int t; {
 	debug(F111,"cmcvtdate",cmdatemsg,-1);
 	return(NULL);
     }
-    sprintf(yyyymmdd,"%s%s%02d",year,month,nday); /* for tz calculations... */
+    sprintf(yyyymmdd,"%s%s%02d",year,month,(char)nday); /* for tz calculations... */
 
     state = 1;				/* Initialize time-parsing FSA */
     hh = 0;				/* hours */
@@ -5383,7 +5560,12 @@ cmcvtdate(s,t) char * s; int t; {
 }
 
 int
-cmvdate(d) char * d; {			/* Verify date-time */
+#ifdef CK_ANSIC
+cmvdate( char * d )                     /* Verify date-time */
+#else
+cmvdate(d) char * d;
+#endif /* CK_ANSIC */
+{
     int i;
     if (!d) return(0);
     if ((int)strlen(d) != 17) return(0);
@@ -5400,7 +5582,12 @@ cmvdate(d) char * d; {			/* Verify date-time */
 /* c m d i f f d a t e  --  Get difference between two date-times */
 
 char *
-cmdiffdate(d1,d2) char * d1, * d2; {
+#ifdef CK_ANSIC
+cmdiffdate(char * d1, char * d2 ) 
+#else
+cmdiffdate(d1,d2) char * d1, * d2; 
+#endif /* CK_ANSIC */
+{
     char d1buf[9], d2buf[9];
     char x1buf[18], x2buf[18];
     char * p;
@@ -5506,17 +5693,22 @@ cmdiffdate(d1,d2) char * d1, * d2; {
       if called with a negative opt (-1 through -6) result is date only.
 */
 char *
-shuffledate(p,opt) char * p; int opt; {
+#ifdef CK_ANSIC
+shuffledate(char * p, int opt )
+#else
+shuffledate(p,opt) char * p; int opt; 
+#endif /* CK_ANSIC */
+{
     extern char * wkdays[];
     int len;
     char ibuf[32];
     static char obuf[128];
     char c;
     int yy, dd, mm;
-#define MONTHBUFLEN 32
-    char monthbuf[MONTHBUFLEN];
     char * monthstring = NULL;
 #ifdef HAVE_LOCALE
+#define MONTHBUFLEN 32
+    char monthbuf[MONTHBUFLEN];
     _PROTOTYP( char * locale_monthname, (int, int) );
     extern int nolocale;
 #endif /* HAVE_LOCALE */
@@ -5720,7 +5912,12 @@ shuffledate(p,opt) char * p; int opt; {
 /*  See calling conventions for cmcvtdate() above. */
 
 char *
-ckcvtdate(p,t) char * p; int t; {
+#ifdef CK_ANSIC
+ckcvtdate(char * p, int t ) 
+#else
+ckcvtdate(p,t) char * p; int t; 
+#endif /* CK_ANSIC */
+{
     char * s;
     if (!(s = cmcvtdate(p,t)))
       return("<BAD_DATE_OR_TIME>");	/* \fblah() error message */
@@ -5737,7 +5934,12 @@ ckcvtdate(p,t) char * p; int t; {
   pointing to a buffer containing the date as "yyyymmdd hh:mm:ss".
 */
 int
-cmdate(xhlp,xdef,xp,quiet,f) char *xhlp, *xdef, **xp; int quiet; xx_strp f; {
+#ifdef CK_ANSIC
+cmdate( char * xhlp, char * xdef, char ** xp, int quiet, xx_strp f )
+#else
+cmdate(xhlp,xdef,xp,quiet,f) char *xhlp, *xdef, **xp; int quiet; xx_strp f; 
+#endif /* CK_ANSIC */
+{
     int x, rc;
     char *o, *s, *zq, *dp;
 
@@ -5785,7 +5987,12 @@ cmdate(xhlp,xdef,xp,quiet,f) char *xhlp, *xdef, **xp; int quiet; xx_strp f; {
 /*  C M R I N I  --  Initialize or change size of command recall buffer */
 
 int
-cmrini(n) int n; {
+#ifdef CK_ANSIC
+cmrini( int n )
+#else
+cmrini(n) int n; 
+#endif /* CK_ANSIC */
+{
     int i;
     if (recall && in_recall) {		/* Free old storage, if any */
 	for (i = 0; i < cm_recall; i++) {
@@ -5825,7 +6032,12 @@ cmaddnext() {
 /*  C M G E T C M D  --  Find most recent matching command  */
 
 char *
-cmgetcmd(s) char * s; {
+#ifdef CK_ANSIC
+cmgetcmd( char * s )
+#else
+cmgetcmd(s) char * s;
+#endif /* CK_ANSIC */
+{
     int i;
     for (i = current; i >= 0; i--) {	/* Search backward thru history list */
 	if (!recall[i]) continue;	/* This one's null, skip it */
@@ -5839,7 +6051,12 @@ cmgetcmd(s) char * s; {
 /*  A D D C M D  --  Add a command to the recall buffer  */
 
 VOID
-addcmd(s) char * s; {
+#ifdef CK_ANSIC
+addcmd( char * s ) 
+#else
+addcmd(s) char * s; 
+#endif /* CK_ANSIC */
+{
     int len = 0, nq = 0;
     char * p;
 #ifdef CKLEARN
@@ -5948,7 +6165,12 @@ cmhistory() {
 }
 
 int
-savhistory(s,disp) char *s; int disp; {
+#ifdef CK_ANSIC
+savhistory( char * s, int disp )
+#else
+savhistory(s,disp) char *s; int disp;
+#endif /* CK_ANSIC */
+{
     FILE * fp;
     int i;
 
@@ -6059,15 +6281,26 @@ struct OFDB cmresult = {		/* Universal cmfdb result holder */
 };
 
 VOID
-cmfdbi(p,fc,s1,s2,s3,n1,n2,f,k,nxt)	/* Initialize an FDB */
+#ifdef CK_ANSIC
+cmfdbi( struct FDB * p,                 /* Initialize an FDB */
+    int fc,
+    char * s1, char * s2, char * s3,
+    int n1, int n2,
+    xx_strp f,
+    struct keytab * k,
+    struct FDB * nxt
+)
+#else /* CK_ANSIC */
+cmfdbi(p,fc,s1,s2,s3,n1,n2,f,k,nxt)
     struct FDB * p;
     int fc;
     char * s1, * s2, * s3;
     int n1, n2;
     xx_strp f;
     struct keytab * k;
-    struct FDB * nxt; {
-
+    struct FDB * nxt ;
+#endif /* CK_ANSIC */
+{
     p->fcode = fc;
     p->hlpmsg = s1;
     p->dflt = s2;
@@ -6082,7 +6315,12 @@ cmfdbi(p,fc,s1,s2,s3,n1,n2,f,k,nxt)	/* Initialize an FDB */
 /*  C M F D B  --  Parse a field with several possible functions  */
 
 int
-cmfdb(fdbin) struct FDB * fdbin; {
+#ifdef CK_ANSIC
+cmfdb( struct FDB * fdbin )
+#else
+cmfdb(fdbin) struct FDB * fdbin; 
+#endif /* CK_ANSIC */
+{
 #ifndef NOSPL
     extern int x_ifnum;                 /* IF NUMERIC - disables warnings */
 #endif /* NOSPL */
@@ -6265,7 +6503,12 @@ cmfdb(fdbin) struct FDB * fdbin; {
    has the expected straightforward interface.
 */
 int
-cmiofi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f; {
+#ifdef CK_ANSIC
+cmiofi( char *xhlp, char *xdef, char **xp, int *wild, xx_strp f )
+#else
+cmiofi(xhlp,xdef,xp,wild,f) char *xhlp, *xdef, **xp; int *wild; xx_strp f;
+#endif /* CK_ANSIC */
+{
     int x;
     struct FDB f1, f2;
     cmfdbi(&f1,_CMIFI,xhlp,xdef,"",0,0,f,NULL,&f2);
@@ -6335,7 +6578,12 @@ unungw() {
 }
 
 static int
-gtword(brk) int brk; {
+#ifdef CK_ANSIC
+gtword( int brk ) 
+#else
+gtword(brk) int brk; 
+#endif /* CK_ANSIC */
+{
     int c;                              /* Current char */
     int cq = 0;                         /* Next char */
     int quote = 0;                      /* Flag for quote character */
@@ -7215,7 +7463,12 @@ CMDIRPARSE:
 /* A D D B U F  -- Add the string pointed to by cp to the command buffer  */
 
 static int
-addbuf(cp) char *cp; {
+#ifdef CK_ANSIC
+addbuf( char * cp )  
+#else
+addbuf(cp) char *cp; 
+#endif /* CK_ANSIC */
+{
     int len = 0;
     while ((*cp != NUL) && (bp < cmdbuf+CMDBL)) {
         *bp++ = *cp++;                  /* Copy and */
@@ -7242,7 +7495,12 @@ addbuf(cp) char *cp; {
   Return -1 if token was too long.
 */
 static int
-setatm(cp,fcode) char *cp; int fcode; {
+#ifdef CK_ANSIC
+setatm( char *cp, int fcode )
+#else
+setatm(cp,fcode) char *cp; int fcode; 
+#endif /* CK_ANSIC */
+{
     char *ap, *xp, *dqp = NULL, lbrace, rbrace;
     int bracelvl = 0, dq = 0;
     int c;                              /* current char */
@@ -7383,10 +7641,15 @@ setatm(cp,fcode) char *cp; int fcode; {
 
   No longer static.  Used by askmore().  Fri Aug 20 15:03:34 1999.
 */
-#define CMD_CONINC			/* How we get keyboard chars */
+#define CMD_CONINC                     /* How we get keyboard chars */
 
 int
-cmdgetc(timelimit) int timelimit; {	/* Get a character from the tty. */
+#ifdef CK_ANSIC
+cmdgetc( int timelimit )           /* Get a character from the tty. */
+#else
+cmdgetc(timelimit) int timelimit;
+#endif /* CK_ANSIC */
+{
     int c;
 #ifdef IKSD
     extern int inserver;
@@ -7846,14 +8109,14 @@ char *
 cmpeek() {
     return(np);
 }
-#endif /* NOICP */
 
-
-#ifdef NOICP
-#include "ckcdeb.h"
-#include "ckucmd.h"
-#include "ckcasc.h"
-#endif /* NOICP */
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static int addbuf( char * );
+static int gtword( int );
+static int setatm( char *, int );
+static int test( int, int );
+#endif /* CK_ANSIC */
 
 /*  X X E S C  --  Interprets backslash codes  */
 /*  Returns the int value of the backslash code if it is > -1 and < 256 */
@@ -7861,7 +8124,12 @@ cmpeek() {
 /*  If the argument is invalid, leaves pointer unchanged and returns -1. */
 
 int
-xxesc(s) char **s; {			/* Expand backslash escapes */
+#ifdef CK_ANSIC
+xxesc( char ** s )			/* Expand backslash escapes */
+#else
+xxesc(s) char **s;
+#endif /* CK_ANSIC */
+{
     int x, y, brace, radix;		/* Returns the int value */
     char hd = '9';			/* Highest digit in radix */
     char *p;
@@ -8025,8 +8293,12 @@ long luloop = 0L;
 #endif /* USE_LUCACHE */
 
 int
-lookup(table,cmd,n,x) char *cmd; struct keytab table[]; int n, *x; {
-
+#ifdef CK_ANSIC
+lookup( struct keytab table[], char *cmd,  int n, int *x )
+#else
+lookup(table,cmd,n,x) char *cmd; struct keytab table[]; int n, *x; 
+#endif /* CK_ANSIC */
+{
     register int i, m;
     int v, len, cmdlen = 0;
     char c = NUL, c1, *s;
@@ -8151,13 +8423,16 @@ lookup(table,cmd,n,x) char *cmd; struct keytab table[]; int n, *x; {
   be numeric strings (integer or floating point) -- not numbers. 
 */
 int
-nlookup(table,word,n,x) char *word; struct keytab table[]; int n, *x; {
-
-    register int i, m;
-    int v, kwdlen, wordlen = 0, matches = 0, maxlen = 0;
+#ifdef CK_ANSIC
+nlookup( struct keytab table[], char *word, int n, int * x )
+#else
+nlookup(table,word,n,x) char *word; struct keytab table[]; int n, *x; 
+#endif /* CK_ANSIC */
+{
+    register int i;
+    int kwdlen, wordlen = 0, matches = 0, maxlen = 0;
     char * s  = word;
     int tmp = 0;
-    int tmp2 = 0;
     int firstmatch = -1;
     int lastmatch = -1;
     int lastlen = 0;
@@ -8233,7 +8508,12 @@ nlookup(table,word,n,x) char *word; struct keytab table[]; int n, *x; {
   and does NOT require the table to be in order.
 */
 int
-xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; {
+#ifdef CK_ANSIC
+xlookup( struct keytab table[], char *cmd, int n, int * x )
+#else
+xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; 
+#endif /* CK_ANSIC */
+{
     register int i;
     int len, cmdlen, one = 0;
     register char c, c2, * s, * s2;
@@ -8287,7 +8567,12 @@ xlookup(table,cmd,n,x) struct keytab table[]; char *cmd; int n, *x; {
 /* Reverse lookup */
 
 char *
-rlookup(table,n,x) struct keytab table[]; int n, x; {
+#ifdef CK_ANSIC
+rlookup( struct keytab table[], int n, int x )
+#else
+rlookup(table,n,x) struct keytab table[]; int n, x; 
+#endif /* CK_ANSIC */
+{
     int i;
     for (i = 0; i < n; i++) {
         if (table[i].kwval == x)
@@ -8296,9 +8581,13 @@ rlookup(table,n,x) struct keytab table[]; int n, x; {
     return(NULL);
 }
 
-#ifndef NOICP
 int
-cmdsquo(x) int x; {
+#ifdef CK_ANSIC
+cmdsquo( int x )
+#else
+cmdsquo(x) int x;
+#endif /* CK_ANSIC */
+{
     quoting = x;
     return(1);
 }

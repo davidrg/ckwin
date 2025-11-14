@@ -1,10 +1,10 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 10.0.162, 23 Sep 2022";
+char *dialv = "Dial Command, 10.0.165, 15 Apr 2023";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -36,9 +36,10 @@ char *dialv = "Dial Command, 10.0.162, 23 Sep 2022";
 
 /*
   This module calls externally defined system-dependent functions for
-  communications i/o, as described in CKCPLM.DOC, the C-Kermit Program Logic
-  Manual, and thus should be portable to all systems that implement those
-  functions, and where alarm() and signal() work.
+  communications i/o, as described in the C-Kermit Program Logic Manual:
+   https://kermitproject.org/ckcplm.html
+  and thus should be portable to all systems that implement those functions,
+  and where alarm() and signal() work.
 
   HOW TO ADD SUPPORT FOR ANOTHER MODEM:
 
@@ -117,12 +118,25 @@ The remaining steps are in this module:
 
 #ifdef NT
 #include <windows.h>
+#ifdef CK_TAPI
 #include <tapi.h>
+#endif /* CK_TAPI */
+#include <time.h>
 #include "cknwin.h"
+#ifdef CK_TAPI
 #include "ckntap.h"
+#endif /* CK_TAPI */
+#include "ckothr.h"
+#include "ckosyn.h"
+#ifdef CK_LOGIN
+void setntcreds();  /* ckofio.c */
+#endif /* CK_LOGIN */
 #endif /* NT */
+
 #ifdef OS2
 #include "ckowin.h"
+
+_PROTOTYP( int scriptwrtbuf, (unsigned short));
 #endif /* OS2 */
 
 #ifndef ZILOG
@@ -136,6 +150,17 @@ The remaining steps are in this module:
 #endif /* ZILOG */
 
 #include "ckcsig.h"        /* C-Kermit signal processing */
+
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static VOID dologdial( char * );
+static VOID ttslow( char *, int );
+static VOID waitfor( char * );
+static int ddinc( int );
+static int dialfail( int );
+#endif /* CK_ANSIC */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef MAC
 #define signal msignal
@@ -4441,7 +4466,12 @@ static SIGTYP (*savint)();	/* For saving interrupt handler */
 
 #ifdef CKLOGDIAL
 static VOID
-dologdial(s) char *s; {
+#ifdef CK_ANSIC
+dologdial( char *s )
+#else
+dologdial(s) char *s;
+#endif /* CK_ANSIC */
+{
     char buf2[16];
     char * r = NULL;
     int x, m, n;
@@ -4593,7 +4623,12 @@ dialint(foo) int foo;
   TCP/IP TELNET modem server.
 */
 static int
-ddinc(n) int n; {
+#ifdef CK_ANSIC
+ddinc( int n )
+#else
+ddinc(n) int n;
+#endif /* CK_ANSIC */
+{
 #ifdef TNCODE
     int c = 0;
     int done = 0;
@@ -4622,7 +4657,12 @@ ddinc(n) int n; {
 }
 
 static VOID
-ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
+#ifdef CK_ANSIC
+ttslow( char *s, int millisec )         /* Output s-l-o-w-l-y */
+#else
+ttslow(s,millisec) char *s; int millisec;
+#endif /* CK_ANSIC */
+{
 #ifdef TCPSOCKET
     extern int tn_nlm, tn_b_nlm;
 #endif /* TCPSOCKET */
@@ -4664,7 +4704,12 @@ ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
  * ARE received, and in the order specified.
  */
 static VOID
-waitfor(s) char *s; {
+#ifdef CK_ANSIC
+waitfor( char *s )
+#else
+waitfor(s) char *s;
+#endif /* CK_ANSIC */
+{
     CHAR c, x;
     while ((c = *s++)) {		/* while more characters remain... */
 	do {				/* wait for the character */
@@ -4679,7 +4724,12 @@ waitfor(s) char *s; {
 }
 
 static int
-didweget(s,r) char *s, *r; {	/* Looks in string s for response r */
+#ifdef CK_ANSIC
+didweget( char *s, char *r )	/* Looks in string s for response r */
+#else
+didweget(s,r) char *s, *r;
+#endif /* CK_ANSIC */
+{
     int lr = (int)strlen(r);	/*  0 means not found, 1 means found it */
     int i;
     debug(F110,"didweget",r,0);
@@ -4748,7 +4798,12 @@ dialoc(c) char c;
 
 #ifndef NOSPL
 char *
-getdm(x) int x; {			/* Return dial modifier */
+#ifdef CK_ANSIC
+getdm( int x )                          /* Return dial modifier */
+#else
+getdm(x) int x;
+#endif /* CK_ANSIC */
+{
     MDMINF * mp;
     int m;
     int ishayes = 0;
@@ -4949,7 +5004,12 @@ getdialenv() {
 }
 
 static int
-dialfail(x) int x; {
+#ifdef CK_ANSIC
+dialfail( int x )
+#else
+dialfail(x) int x;
+#endif /* CK_ANSIC */
+{
     char * s;
 
     fail_code = x;
@@ -5249,7 +5309,11 @@ _dodial(threadinfo) VOID * threadinfo;
 	      }
 	      break;
 	    case 1: {			/* Answer */
-		long strttime = time((long *)NULL);
+#ifdef __WATCOMC__
+		long strttime = time((unsigned long *)NULL);
+#else
+        long strttime = time((long *)NULL);
+#endif /* __WATCOMC__ */
 		long diff = 0;
 		do {
 		    if (dialatmo > 0) {
@@ -5271,7 +5335,11 @@ _dodial(threadinfo) VOID * threadinfo;
 			}
 		    }
 		    if (dialatmo > 0) {
+#ifdef __WATCOMC__
+            diff = time((unsigned long *)NULL) - strttime;
+#else
 			diff = time((long *)NULL) - strttime;
+#endif /* __WATCOMC__ */
 		    }
 		} while ((dialatmo > 0) ? (diff < waitct) : 1);
 		break;
@@ -6425,14 +6493,21 @@ faildial(threadinfo) VOID * threadinfo;
 
 int
 #ifdef OLD_DIAL
+#ifdef CK_ANSIC
+ckdial( char *nbr )
+#else
 ckdial(nbr) char *nbr;
+#endif /* CK_ANSIC */
+#else
+#ifdef CK_ANSIC
+ckdial( char *nbr, int x1, int x2, int fc, int redial )
 #else
 ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
+#endif /* CK_ANSIC */
 #endif /* OLD_DIAL */
 /* ckdial */ {
-#define ERMSGL 50
+#define ERMSGL 100                      /* fdc 13 November 2022 (was 50) */
     char errmsg[ERMSGL], *erp;		/* For error messages */
-    int n = F_TIME;
     char *s;
     long spdmax;
 #ifdef OS2
@@ -6572,10 +6647,18 @@ ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
 
     if (ttopen(ttname,&local,mdmtyp,0) < 0) { /* Open, no carrier wait */
 	erp = errmsg;
+
+#ifdef COMMENT
+        /* This gets compiler warnings */
 	if ((int)strlen(ttname) < (ERMSGL - 18)) /* safe, checked */
 	  sprintf(erp,"Sorry, can't open %s",ttname);
 	else
 	  sprintf(erp,"Sorry, can't open device");
+#else  /* fdc 13 November 2022 */
+        /* Safe and portable replacement for snprinf() AND sprintf() */
+        ckmakmsg(erp,ERMSGL,"Sorry, can't open ",ttname,NULL,NULL);
+#endif  /* COMMENT */
+
 	perror(errmsg);
 	dialsta = DIA_OPEN;
 #ifdef DYNAMIC
@@ -6928,9 +7011,6 @@ dook(threadinfo) VOID * threadinfo ;
 #endif /* CK_ANSIC */
 /* dook */ {
     CHAR c;
-#ifdef DEBUG
-    char * mdmmsg = "";
-#endif /* DEBUG */
 
     int i, x;
 #ifdef IKSD
@@ -7089,7 +7169,12 @@ failok(threadinfo) VOID * threadinfo;
 }
 
 int
-getok(n, strict) int n, strict; {
+#ifdef CK_ANSIC
+getok( int n, int strict )
+#else
+getok(n, strict) int n, strict;
+#endif /* CK_ANSIC */
+{
     debug(F101,"getok entry n","",n);
     okstatus = 0;
     okn = n;
@@ -8066,7 +8151,7 @@ mdmhup() {
     int xparity;
     int savcarr;
     extern int ttcarr;
-    char *s, *p, c;
+    char *s, c;
     MDMINF * mp = NULL;
 
     debug(F101,"mdmhup dialmhu","",dialmhu); /* MODEM-HANGUP METHOD */

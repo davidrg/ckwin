@@ -14,6 +14,7 @@
 
 #include "ckcdeb.h"             /* Typedefs, debug formats, etc */
 #include "ckcker.h"             /* Kermit definitions */
+#include "ckosyn.h"
 #include <string.h>
 #include <process.h>
 #ifdef NT
@@ -28,8 +29,10 @@
 #define ISDIRSEP(c)  ((c)=='/'||(c)=='\\')
 
 #ifdef NT
+typedef LONG (WINAPI * p_RegOpenCurrentUser_t)(REGSAM samDesired, PHKEY phkResult);
+
 static HINSTANCE hAdvApi32 = NULL;
-static LONG (WINAPI * p_RegOpenCurrentUser)(REGSAM samDesired, PHKEY phkResult)=NULL;
+static p_RegOpenCurrentUser_t p_RegOpenCurrentUser=NULL;
 #endif /* NT */
 
 char *
@@ -38,11 +41,10 @@ GetAppData( int common )
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
-    CHAR *lpszValueName=NULL, *env;
+    CHAR *lpszValueName=NULL;
     int i;
 
 #ifdef COMMENT
@@ -60,8 +62,8 @@ GetAppData( int common )
                 if ( !hAdvApi32 )
                     hAdvApi32 = LoadLibrary("advapi32.dll");
                 if (hAdvApi32)
-                    (FARPROC) p_RegOpenCurrentUser =
-                        GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                    p_RegOpenCurrentUser =
+                        (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
             }
             if (p_RegOpenCurrentUser)
                 p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -154,7 +156,6 @@ GetHomeDrive(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -170,8 +171,8 @@ GetHomeDrive(void)
                 if ( !hAdvApi32 )
                     hAdvApi32 = LoadLibrary("advapi32.dll");
                 if (hAdvApi32)
-                    (FARPROC) p_RegOpenCurrentUser =
-                        GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                    p_RegOpenCurrentUser =
+                        (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
             }
             if (p_RegOpenCurrentUser)
                 p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -222,7 +223,6 @@ GetHomePath(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -239,8 +239,8 @@ GetHomePath(void)
                 if ( !hAdvApi32 )
                     hAdvApi32 = LoadLibrary("advapi32.dll");
                 if (hAdvApi32)
-                    (FARPROC) p_RegOpenCurrentUser =
-                        GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                    p_RegOpenCurrentUser =
+                        (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
             }
             if (p_RegOpenCurrentUser)
                 p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -301,11 +301,10 @@ GetPersonal(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
-    CHAR *lpszValueName=NULL, *env;
+    CHAR *lpszValueName=NULL;
     int   i;
 
     if ( !isWin95() ) {
@@ -313,8 +312,8 @@ GetPersonal(void)
             if ( !hAdvApi32 )
                 hAdvApi32 = LoadLibrary("advapi32.dll");
             if (hAdvApi32)
-                (FARPROC) p_RegOpenCurrentUser =
-                    GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                p_RegOpenCurrentUser =
+                    (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
         }
         if (p_RegOpenCurrentUser)
             p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -374,11 +373,10 @@ GetDesktop(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
-    CHAR *lpszValueName=NULL, *env;
+    CHAR *lpszValueName=NULL;
     int   i;
 
     if ( !isWin95() ) {
@@ -386,8 +384,8 @@ GetDesktop(void)
             if ( !hAdvApi32 )
                 hAdvApi32 = LoadLibrary("advapi32.dll");
             if (hAdvApi32)
-                (FARPROC) p_RegOpenCurrentUser =
-                    GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                p_RegOpenCurrentUser =
+                    (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
         }
         if (p_RegOpenCurrentUser)
             p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -517,7 +515,6 @@ GetEditorCommand( void )
 {
 #ifdef NT
     HKEY  hkCommandKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1];
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -569,7 +566,6 @@ GetBrowserCommand( void )
 {
 #ifdef NT
     HKEY  hkCommandKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1];
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -626,7 +622,6 @@ GetFtpCommand( void )
 {
 #ifdef NT
     HKEY  hkCommandKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1];
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -708,10 +703,10 @@ Real_Win32ShellExecute( void* param )
     CloseHandle(info.hProcess);
 #endif /* COMMENT */
 
-    if (((DWORD)error) <= 32)
+    if ((intptr_t)error <= 32)
     {
         debug(F111,"Win32 ShellExecute failure",object,error);
-        switch ( (DWORD)error ) {
+        switch ( (intptr_t)error ) {
         case 0:
             debug(F110,"Win32 ShellExecute","The operating system is out of memory or resources.",0);
             break;
@@ -778,16 +773,7 @@ Real_Win32ShellExecute( void* param )
 int
 Win32ShellExecute( char * object )
 {
-    int rc = 0;
-    DWORD tid = _beginthread( Real_Win32ShellExecute,
-#ifndef NT
-                            0,
-#endif /* NT */
-                            65535,
-                            (void *)object
-                            ) ;
-    rc = (DWORD)tid != 0xffffffff;
-    return (rc);
+    return (_beginthread(Real_Win32ShellExecute, 65535, (void *)object) != -1);
 }
 #endif /* NT */
 #endif /* BROWSER */

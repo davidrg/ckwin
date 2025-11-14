@@ -1,4 +1,5 @@
 #include "ckcsym.h"
+#include "ckcdeb.h"
 #ifndef NOICP
 
 /*
@@ -8,22 +9,27 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last updates:
+    Tue Mar 26 15:00:12 2024 (fix debug(F110,"GREP tmpstr","",tmpstr);)
+    Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
     Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
     Fri Sep 23 16:40:42 2022 (corrections from David Goodwin)
     Wed Oct  5 14:44:10 2022 (fixed "dir filespec1 filespec2 filespec3.." -fdc)
+    Mon Dec 12 05:41:18 2022 (new GREP options)
+    Sat Mar 18 20:47:32 2023 (fix new GREP options, notably GREP /ARRAY)
+    Wed Apr 12 19:48:13 2023 (function prototypes and declarations)
+    Mon Jul  3 07:10:28 2023 (isatty definition for very old Windows versions)
 */
 
 /* Includes */
 
-#include "ckcdeb.h"
 #include "ckcasc.h"
 #include "ckcker.h"
 #include "ckuusr.h"
@@ -85,14 +91,32 @@ extern int k95stdout;
 #else
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif  /* NODIAL */
+#endif  /* CK_TAPI */
+#ifndef isatty
+/* This usually isn't required as oldnames.lib handles it - except in some
+ * very old Windows SDKs where it doesn't - David Goodwin 2 July 2023 */
+#define isatty _isatty
+#endif /* isaatty */
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
+
+int zlink(char *,char *);               /* ckofio.c */
+int ttgcwsz();                          /* ckocon.c */
+
+int popup_readpass(int,char*,char*,char*,int,int);       /* ckocon.c */
+int popup_readtext(int,char*,char*,char*,int,int);       /* ckocon.c */
+
+#ifdef KUI
+int gui_txt_dialog(char*,char*,int,char*,int,char*,int); /* cknwin.c */
+#endif /* KUI */
+
 #endif /* OS2 */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 extern long vernum, speed;
 extern char *versio, *protv, *ckxv, *ckzv, *fnsv, *connv, *dftty, *cmdv;
@@ -124,6 +148,19 @@ extern int stdinf, sndsrc, size, rpsiz, urpsiz, fncnv, fnrpath, displa,
   g_fnspath, g_fnrpath, xfrxla, g_xfrxla;
 
 extern char *cmarg, *cmarg2;
+
+#ifdef CK_ANSIC
+/* prototypes for static functions - fdc 30 November 2022 */
+static char * xdial( char * );
+static int typegetline( int, int, char *, int );
+static int callisld( char *, char * );
+static int ddcvt( char *, FILE *, int );
+static int dncvt(int, int, int, int );
+static int renameone(char *,
+  char *,int,int,int,int,int,int,int,int,int,int,int);
+static int typeline( char *, int, int, FILE * );
+static int xxundef( char *, int, int );
+#endif  /* CK_ANSIC */
 
 #ifndef NOMSEND                         /* Multiple SEND */
 extern char *msfiles[];
@@ -553,6 +590,7 @@ int nopn = (sizeof(opntab) / sizeof(struct keytab));
 #define  XXIFLGE 62	/* IF LLE (lexically less than or equal) */
 #define  XXIFTXT 63	/* IF TEXT (file) */
 #define  XXIFBIN 64	/* IF BINARY (file) */
+#define  XXIFREX 65 /* IF REXX */
 
 struct keytab iftab[] = {               /* IF commands */
     { "!",          XXIFNO, 0 },
@@ -638,6 +676,11 @@ struct keytab iftab[] = {               /* IF commands */
     { "quiet",      XXIFQU, 0 },
     { "readable",   XXIFRD, 0 },
     { "remote-only",XXIFRO, 0 },
+#ifdef OS2
+    { "rexx",       XXIFREX, 0},
+#else /* OS2 */
+    { "rexx",       XXIFREX, CM_INV},
+#endif /* OS2 */
     { "started-from-dialer",XXIFSD, CM_INV },
     { "success",    XXIFSU, 0 },
     { "tapi",       XXIFTA, 0 },
@@ -732,7 +775,9 @@ int availtabn = sizeof(availtab)/sizeof(struct keytab)-1;
 
 #ifndef NODIAL
 _PROTOTYP(static int ddcvt, (char *, FILE *, int) );
+#ifdef COMMENT                          /* New prototype above */
 _PROTOTYP(static int dncvt, (int, int, int, int) );
+#endif  /* COMMENT */
 _PROTOTYP(char * getdname, (void) );
 
 static int partial  = 0;                /* For partial dial */
@@ -931,7 +976,12 @@ static struct keytab getctab[] = {
 static int ngetctab = sizeof(getctab)/sizeof(struct keytab)-1;
 
 int
-doask(cx) int cx; {
+#ifdef CK_ANSIC
+doask( int cx )
+#else
+doask(cx) int cx;
+#endif /* CK_ANSIC */
+{
     extern int asktimer, timelimit;
 #ifdef CK_RECALL
     extern int on_recall;
@@ -1501,7 +1551,12 @@ reparse:
 
 #ifndef NOSPL
 int
-doincr(cx) int cx; {                    /* INCREMENT, DECREMENT */
+#ifdef CK_ANSIC
+doincr( int cx )                        /* INCREMENT, DECREMENT */
+#else
+doincr(cx) int cx; 
+#endif /* CK_ANSIC */
+{
     char vnambuf[VNAML+1];              /* Buffer for variable names */
     int eval = 0;
     CK_OFF_T x;
@@ -1530,7 +1585,12 @@ doincr(cx) int cx; {                    /* INCREMENT, DECREMENT */
 
 /* Used by doundef() */
 static int
-xxundef(s,verbose,simulate) char * s; int verbose, simulate; {
+#ifdef CK_ANSIC
+xxundef( char * s, int verbose, int simulate )
+#else
+xxundef(s,verbose,simulate) char * s; int verbose, simulate;
+#endif /* CK_ANSIC */
+{
     int rc = 0;
     if (!s) return(0);
     if (*s == CMDQ && *(s+1) == '%') {
@@ -1580,7 +1640,12 @@ static int nundefswi = sizeof(undefswi) / sizeof(struct keytab);
 #define UNDEFMAX 64
 static char ** undeflist = NULL;
 int
-doundef(cx) int cx; {                   /* UNDEF, _UNDEF */
+#ifdef CK_ANSIC
+doundef( int cx )                       /* UNDEF, _UNDEF */
+#else
+doundef(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int i, j, n, rc = 0, arraymsg = 0;
     int domatch = 0, verbose = 0, errors = 0, simulate = 0, flag = 0;
     char *vnp, vnbuf[4];
@@ -1748,7 +1813,12 @@ doundef(cx) int cx; {                   /* UNDEF, _UNDEF */
 }
 
 int
-dodef(cx) int cx; {
+#ifdef CK_ANSIC
+dodef( int cx )
+#else
+dodef(cx) int cx;
+#endif /* CK_ANSIC */
+{
     extern int xxdot;
     extern char ppvnambuf[];
     int doeval = 0;
@@ -1897,12 +1967,22 @@ static int dncount = 0;
 char * d_name = NULL;                   /* Dial name pointer */
 
 char *                                  /* Get dial directory entry name */
-getdname() {
+#ifdef CK_ANSIC
+getdname( void )
+#else
+getdname()
+#endif /* CK_ANSIC */
+{
     return(d_name ? d_name : "");
 }
 
 char *
-getdnum(n) int n; {                     /* Get dial number n from directory */
+#ifdef CK_ANSIC
+getdnum( int n )                /* Get dial number n from directory */
+#else
+getdnum(n) int n;
+#endif /* CK_ANSIC */
+{
     if (n < 0 || n > dncount || n > MAXDNUMS)
       return("");
     else
@@ -1910,7 +1990,12 @@ getdnum(n) int n; {                     /* Get dial number n from directory */
 }
 
 char *                  /* Check area code for spurious leading digit */
-chk_ac(i,buf) int i; char buf[]; {
+#ifdef CK_ANSIC
+chk_ac( int i, char buf[] )
+#else
+chk_ac(i,buf) int i; char buf[];
+#endif /* CK_ANSIC */
+{
     char *p;
     if (!buf)
       return("");
@@ -1949,7 +2034,12 @@ chk_ac(i,buf) int i; char buf[]; {
      2 if call is local but area code must be dialed anyway
 */
 static int
-callisld(src, dest) char * src, * dest; {
+#ifdef CK_ANSIC
+callisld( char * src, char * dest )
+#else
+callisld(src, dest) char * src, * dest;
+#endif /* CK_ANSIC */
+{
     int i;
     if (dialfld)                        /* Force long distance? */
       return(1);
@@ -1969,7 +2059,12 @@ char pdsfx[64] = { NUL, NUL };
 
 #ifndef NOSPL
 static char *
-xdial(s) char *s; {                     /* Run dial string thru macro */
+#ifdef CK_ANSIC
+xdial( char *s )                      /* Run dial string thru macro */
+#else
+xdial(s) char *s;
+#endif /* CK_ANSIC */
+{
     int x, m;
     char * s2;
     s2 = NULL;
@@ -1991,8 +2086,12 @@ xdial(s) char *s; {                     /* Run dial string thru macro */
 #endif /* NOSPL */
 
 static int
-dncvt(k,cx, prefix, suffix)
-    int k, cx, prefix, suffix; {        /* Dial Number Convert */
+#ifdef CK_ANSIC
+dncvt(int k, int cx, int prefix, int suffix) /* Dial Number Convert */
+#else
+dncvt(k,cx, prefix, suffix) int k, cx, prefix, suffix;
+#endif /* CK_ANSIC */
+{ 
     int i, j, n, what;                  /* cx is top-level command index */
     char *ss;                           /* prefix - add prefixes? */
     char *p, *p2, *pxo;                 /* suffix - add suffixes? */
@@ -2453,7 +2552,12 @@ dncvt(k,cx, prefix, suffix)
 }
 
 static int
-ddcvt(s, f, n) char * s; FILE * f; int n; { /* Dial Directory Convert */
+#ifdef CK_ANSIC
+ddcvt( char * s, FILE * f, int n )      /* Dial Directory Convert */
+#else
+ddcvt(s, f, n) char * s; FILE * f; int n;
+#endif /* CK_ANSIC */
+{
     char linebuf[1024], *s2;            /* Buffers and pointers */
 #ifdef VMS
     char * temp = NULL;
@@ -2554,7 +2658,7 @@ ludial(s, cx) char *s; int cx;
 #endif /* CK_ANSIC */
 /* ludial */ {
 
-    int dd, n1, n2, n3, i, j, t;        /* Workers */
+    int dd, n1, n2, n3, j, t;        /* Workers */
     int olddir, newdir, oldentry, newentry;
     int pass = 0;
     int oldflg = 0;
@@ -2846,7 +2950,12 @@ if (zz) printf("MATCH OK: [%s] [%s], n1=%d\n",s,info[1],n1);
 }
 
 char *
-pncvt(s) char *s; {                     /* Phone number conversion */
+#ifdef CK_ANSIC
+pncvt( char *s )                        /* Phone number conversion */
+#else
+pncvt(s) char *s;
+#endif /* CK_ANSIC */
+{
     char *p = NULL;                     /* (just a wrapper for dncvt() */
     char *q = NULL;
     static char pnbuf[128];
@@ -2866,7 +2975,12 @@ pncvt(s) char *s; {                     /* Phone number conversion */
 }
 
 int
-dodial(cx) int cx; {                    /* DIAL or REDIAL */
+#ifdef CK_ANSIC
+dodial( int cx )                        /* DIAL or REDIAL */
+#else
+dodial(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int i = 0, x = 0;                   /* Workers */
     int sparity = -1;                   /* For saving global parity value */
     int previous = 0;
@@ -3149,9 +3263,6 @@ dodial(cx) int cx; {                    /* DIAL or REDIAL */
             if ((cx == XXLOOK) ||
                 ((n > 1) && !quiet && !backgrd /* && dialdpy */ )) {
                 int nn = n;
-#ifndef NOSPL
-                char * p;
-#endif /* NOSPL */
                 if (cx != XXLOOK)
                   if (n > 12) nn = 12;
                 for (i = 0; i < nn; i++) {
@@ -3381,10 +3492,12 @@ Disabling flow control temporarily %s...\n",
             if (dialtest) {             /* Just testing */
                 if (i + j == 0)
                   printf("\nTESTING...\n");
+#ifndef NOSPL
                 if (dialmac)
                   printf(" Number: \"%s\" => \"%s\"\n",sav,s);
                 else
                   printf(" Number: \"%s\"\n",s);
+#endif /* NOSPL */
                 dialsta = DIA_BUSY;
                 success = 0;
             } else {
@@ -3632,7 +3745,12 @@ storechar(c) char c;
 static FILE * ofp = NULL;               /* For /OUTPUT: file */
 
 static int
-typeline(buf,len,outcs,ofp) char * buf; int len, outcs; FILE * ofp; {
+#ifdef CK_ANSIC
+typeline( char * buf, int len, int outcs, FILE * ofp )
+#else
+typeline(buf,len,outcs,ofp) char * buf; int len, outcs; FILE * ofp;
+#endif /* CK_ANSIC */
+{
     register int i;
 
     debug(F011,"typeline buf",buf,len);
@@ -3647,7 +3765,7 @@ typeline(buf,len,outcs,ofp) char * buf; int len, outcs; FILE * ofp; {
     /* that was requested by the user. */
     if (!inserver && !k95stdout) {
         extern int wherex[], wherey[];
-        extern unsigned char colorcmd;
+        extern cell_video_attr_t colorcmd;
 
         VscrnWrtUCS2StrAtt( VCMD, (unsigned short *)buf, len/2,
                            wherey[VCMD], wherex[VCMD], &colorcmd);
@@ -3713,7 +3831,12 @@ typeline(buf,len,outcs,ofp) char * buf; int len, outcs; FILE * ofp; {
 }
 
 static int                              /* Get translated line */
-typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf; {
+#ifdef CK_ANSIC
+typegetline(int incs, int outcs, char * buf, int n )
+#else
+typegetline(incs, outcs, buf, n) int incs, outcs, n; char * buf;
+#endif /* CK_ANSIC */
+{
     int x = 0, c0, c1, len = 0, count = 0, eof = 0, xlate = 0;
 #ifdef UNICODE
     int xxn = -1;
@@ -3921,11 +4044,15 @@ tytrap(foo) int foo;
 _PROTOTYP(char * cvtstring,(char*,int,int));
 
 int
+#ifdef CK_ANSIC
+dotype( char * file, int paging, int first, int head, char * pat,
+        int width, char * prefix, int incs, int outcs, char * outfile, int z )
+#else
 dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     char * file, * pat, * prefix; int paging, first, head, width, incs, outcs;
     char * outfile; int z;
-/* dotype */ {
-
+#endif /* CK_ANSIC */
+{
     extern CK_OFF_T ffc;
     char buf[TYPBUFL+2];
     char * s = NULL;
@@ -3933,14 +4060,16 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     char ** tail = NULL;
     int * tlen = NULL;
     int tailing = 0, counting = 0;
-    int x, c, n, i, j, k = 0;
+    int x, n, i, j, k = 0;
     int number = 0, save, len, pfxlen = 0, evalpfx = 1;
 #ifdef UNICODE
     int ucsbom_sav;
     extern int ucsbom;
 #endif /* UNICODE */
 #ifdef NT
+#ifdef KUI
     int gui = 0;
+#endif /* KUI */
 #endif /* NT */
 
 #ifndef MAC
@@ -4421,13 +4550,23 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #define GREP_OUTP 13                    /* /OUTPUTFILE: */
 #define GREP_EXCP 14			/* /EXCEPT: */
 #define GREP_ARRA 15			/* /ARRAY: */
+#define GREP_DISP 16			/* /DISPLAY: */
+#define GREP_VERB 17			/* /VERBATIM */
+#define GREP_MACR 18			/* /DEFINE */
 
 static struct keytab greptab[] = {
     { "/array",        GREP_ARRA, CM_ARG },
     { "/count",        GREP_COUN, CM_ARG },
+#ifndef NOSPL
+    { "/define",       GREP_MACR, CM_ARG|CM_INV },
+#endif /* NOSPL */
+    { "/display",      GREP_DISP, CM_ARG },
     { "/dotfiles",     GREP_DOTF, 0 },
     { "/except",       GREP_EXCP, CM_ARG },
     { "/linenumbers",  GREP_NUMS, 0 },
+#ifndef NOSPL
+    { "/macro",        GREP_MACR, CM_ARG },
+#endif /* NOSPL */
     { "/nameonly",     GREP_NAME, 0 },
     { "/nobackupfiles",GREP_NOBK, 0 },
     { "/nocase",       GREP_CASE, 0 },
@@ -4441,38 +4580,63 @@ static struct keytab greptab[] = {
 #ifdef RECURSIVE
     { "/recursive",    GREP_RECU, 0 },
 #endif /* RECURSIVE */
+    { "/show",         GREP_DISP, CM_ARG|CM_INV },
     { "/type",         GREP_TYPE, CM_ARG },
+    { "/verbatim",     GREP_VERB, 0 },
     { "", 0, 0 }
 };
 static int ngreptab =  sizeof(greptab)/sizeof(struct keytab)-1;
 
-static char * grep_except = NULL;
+#ifndef GREPARRAYSIZE
+#define GREPARRAYSIZE 1000
+#endif /* GREPARRAYSIZE */
 
+static char * grep_except = NULL;
 int
 dogrep() {
     int match, x, y, fc, getval, mc = 0, count = 0, bigcount = 0;
     int fline = 0, sline = 0, wild = 0, len = 0;
-    int xmode = -1, scan = 0;
+    int xmode = -1, scan = 0, dispmode = 0, verbatim = 0;
     char c, name[CKMAXPATH+1], outfile[CKMAXPATH+1], *p, *s, *cv = NULL;
-    FILE * fp = NULL;
+    FILE * fp = NULL;                /* File pointer for result file */
+
 #ifndef NOSPL
     char array = NUL;
     char ** ap = NULL;
-    int arrayindex = 0;
+    char * arrayname = "";              /* Name of array */
+    int arraynum = -1;                  /* Numeric identifier of array */
+    int arrayslot = 1;                  /* Array element number */
+    char macroname[CKMAXPATH+1];        /* Macro name buffer */
+    char macrodef[CKMAXPATH+1];         /* Macro definition buffer */
 #endif /* NOSPL */
 
+    char *rp1 = "";                     /* Result Part 1 (filename) */
+    char *rp2 = "";                     /* Result Part 2 (line number) */
+    char *rp3 = "";                     /* Result Part 3 (a matching line */
+/*
+  gr_noli produces no result listings, arrays, or macros;
+  if simply sets the SUCCESS or FAILURE code of the GREP command.
+*/
     int                                 /* Switch values and defaults */
-      gr_coun = 0,
-      gr_name = 0,
-      gr_nobk = 0,
-      gr_case = 1,
-      gr_noli = 0,
-      gr_noma = 0,
-      gr_nums = 0,
-      gr_excp = 0,
-      gr_page = xaskmore;
+      gr_coun = 0,                      /* Just count the matches */
+      gr_name = 0,                      /* Show filename only */
+      gr_nobk = 0,                      /* Skip backup files (*.~n~) */
+      gr_case = 1,                      /* Honor or ignore alphabetic case */
+      gr_noma = 0,                      /* Only show lines that DON'T match */
+      gr_nums = 0,                      /* Show line numbers */
+      gr_excp = 0,                      /* Files to skip */
+      gr_noli = 0,                      /* Don't list results */
+      gr_page = xaskmore;               /* Pause for each screenful */
+#ifndef NOSPL
+    int gr_macr = 0;                    /* Initialize GREP macro flag */
+#endif /* NOSPL */
 
     struct FDB sw, fl;
+
+#ifndef NOSPL
+    macroname[0] = NUL;                 /* Initialize macro name buffer */
+    macrodef[0] = NUL;                  /* Initialize macro def buffer */
+#endif /* NOSPL */
 
     g_matchdot = matchdot;              /* Save global matchdot setting */
     outfile[0] = NUL;
@@ -4500,7 +4664,7 @@ dogrep() {
            "",                          /* addtl string data */
            0,                           /* addtl numeric data 1 */
            0,                           /* addtl numeric data 2 */
-           xxstring,			/* xxstring */
+           xxstring,                    /* processing function */
            NULL,
            NULL
            );
@@ -4508,8 +4672,9 @@ dogrep() {
         x = cmfdb(&sw);                 /* Parse something */
         if (x < 0)
           return(x);
-        if (cmresult.fcode != _CMKEY)   /* Break out if not a switch */
-          break;
+        if (cmresult.fcode != _CMKEY) {   /* Break out if not a switch */
+            break;
+        }
         c = cmgbrk();
         if ((getval = (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
             printf("?This switch does not take an argument\n");
@@ -4544,6 +4709,8 @@ dogrep() {
           case GREP_DOTF:
             matchdot = 1;
             break;
+
+#ifndef NOSPL
           case GREP_ARRA: {
 	      char * s2;
             if (c != ':' && c != '=') {
@@ -4573,19 +4740,32 @@ dogrep() {
                 return(-9);
             }
             array = *s++;
+
             if (isupper(array)) array = tolower(array);
             if (*s && (*s != '[' || *(s+1) != ']')) {
                 printf("?Bad array name - \"%s\"\n",s2);
                 return(-9);
             }
-	    gr_name = 1;
+            arrayname = s2;
+            debug(F110,"GREP arrayname",arrayname,0);
             break;
 	  }
+#endif  /* NOSPL */
+
 #ifdef RECURSIVE
           case GREP_RECU:
             recursive = 1;
             break;
 #endif /* RECURSIVE */
+#ifndef NOSPL
+          case GREP_MACR: {             /* Results become macro definition */
+              gr_macr = 1;
+              if ((x = cmfld("macro name","",&s,xxstring)) < 0) 
+                return(x);
+              ckstrncpy(macroname,s,CKMAXPATH); /* Macro name */
+              break;
+          }
+#endif /* NOSPL */
           case GREP_TYPE: {
               extern struct keytab txtbin[];
               if ((x = cmkey(txtbin,3,"","",xxstring)) < 0)
@@ -4614,6 +4794,28 @@ dogrep() {
 		gr_excp++;
 		makestr(&grep_except,s);
 	    }
+	  case GREP_DISP:		/* Display options */
+	    if (getval) {
+                if ((y = cmnum("number: max lines to show",
+                               "0",10,&x,xxstring)) < 0)
+                  return(y);
+                dispmode = x;           /* Number of lines to display */
+                break;
+	    }
+	  case GREP_VERB:               /* VERBATIM */
+            cmfdbi(&fl,                 /* Don't call zzstring */
+                   _CMFLD,              /* fcode */
+                   "",                  /* hlpmsg */
+                   "",                  /* default */
+                   "",                  /* addtl string data */
+                   0,                   /* addtl numeric data 1 */
+                   0,                   /* addtl numeric data 2 */
+                   NULL,                /* processing function */
+                   NULL,
+                   NULL
+                   );
+            verbatim = 1;
+            break;
         }
     }
     if (outfile[0]) {
@@ -4668,36 +4870,42 @@ dogrep() {
         }
     }
 #endif /* COMMENT */
-    debug(F111,"grep pat",p,x);
+    debug(F111,"GREP pat",p,x);
 
 #ifdef ZXREWIND
     fc = zxrewind();                    /* Rewind the file list */
+    debug(F101,"GREP ZXREWIND fc (number of files to grep)",NULL,fc);
 #else
     {
         int flags = ZX_FILONLY;         /* Expand file list */
         if (matchdot)  flags |= ZX_MATCHDOT;
         if (recursive) flags |= ZX_RECURSE;
-        fc = nzxpand(line,flags);
+        fc = nzxpand(line,flags);       /* Number of files that match */
+        debug(F110,"GREP fc (number of files to grep)",fc,0);
     }
 #endif /* ZXREWIND */
 
 #ifndef NOSPL
     if (array) {
-        int n, xx;
-        n = (fc < 0) ? 0 : fc;
-        if ((xx = dclarray(array,n)) < 0) {
+        int n = GREPARRAYSIZE;          /* Size for "grep /array" array */
+        if ((arraynum = dclarray(array,n)) < 0) {
             printf("?Array declaration failure\n");
-            mc = 0;
+            mc = 0;                     /* Number of lines that match target */
             goto xgrep;
         }
-	arrayindex = 0;
-        ap = a_ptr[xx];			/* Pointer to list of elements */
-        if (ap)				/* Set element 0 to dimension */
-          makestr(&(ap[0]),"0");	/* which so far is zero */
-        if (n < 1) {			/* No files matched, done. */
-            mc = 0;
+        ap = a_ptr[arraynum];           /* Pointer to list of elements */
+        if (ap) {                       /* Set element 0 to dimension */
+            makestr(&(ap[0]),"0");	/* which so far is zero */
+        } else {
+            printf("?Array initialization failure\n");
             goto xgrep;
         }
+        if (fc < 1) {			/* No files matched, done. */
+            mc = 0;                     /* Match count */
+            debug(F110,"GREP /array no files match",p,0);
+            goto xgrep;
+        }
+        debug(F101,"GREP /array setup ok size","",n);
     }
 #endif /* NOSPL */
 
@@ -4705,8 +4913,18 @@ dogrep() {
     sh_sort(mtchs,NULL,fc,0,0,filecase);
 #endif /* UNIX */
 
-    debug(F101,"grep cmd_rows","",cmd_rows);
-    debug(F101,"grep cmd_cols","",cmd_cols);
+    debug(F101,"GREP cmd_rows","",cmd_rows);
+    debug(F101,"GREP cmd_cols","",cmd_cols);
+    debug(F101,"GREP gr_nums","",gr_nums);
+    debug(F101,"GREP gr_nobk","",gr_nobk);
+    debug(F101,"GREP gr_noma","",gr_noma);
+#ifndef NOSPL
+    debug(F101,"GREP gr_macr","",gr_macr);
+#endif /* NOSPL */
+    debug(F101,"GREP gr_name","",gr_name);
+    debug(F101,"GREP gr_coun","",gr_coun);
+    debug(F101,"GREP gr_noli","",gr_noli);
+    debug(F101,"GREP wild","",wild);
 
     while (1) {                         /* Loop for each file */
         znext(name);                    /* Get next file */
@@ -4735,6 +4953,7 @@ dogrep() {
         fp = fopen(name,"r");           /* Open */
         if (!fp)                        /* Can't */
           continue;                     /* Skip */
+        debug(F110,"GREP file open ok",name,0);
         count = 0;                      /* Match count, this file */
         fline = 0;                      /* Line count, this file */
         while (1) {                     /* Loop for each line */
@@ -4744,72 +4963,158 @@ dogrep() {
 		debug(F100,"GREP EOF","",0);
                 break;
             }
-            fline++;                    /* Count this line */
+            fline++;                    /* Count this line (line # in file) */
             line[LINBUFSIZ] = NUL;      /* Make sure it's terminated */
-	    debug(F111,"GREP",line,fline);
+	    debug(F111,"GREP line and number",line,fline);
             len = (int)strlen(line);    /* Get length */
+	    debug(F111,"GREP line length","",len);
             while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'))
               line[--len] = NUL;        /* Chop off terminators */
-            match = ckmatch(p,line,gr_case,1+4); /* Match against pattern */
-	    if (match && gr_excp) {
-		if (ckmatch(grep_except,line,gr_case,1+4))
-		    match = 0;
-	    }
+            if (verbatim) {             /* Match literally */
+                match = ckindex(p,line,0,0,gr_case);
+            } else {
+                match = ckmatch(p,line,gr_case,1+4); /* Match pattern */
+                if (match && gr_excp) {
+                    if (ckmatch(grep_except,line,gr_case,1+4))
+                      match = 0;
+                }
+            }
             if (gr_noma)                /* Invert match sense if requested */
               match = !match;
             if (match) {                /* Have a matching line */
                 mc++;                   /* Total match count */
                 count++;                /* Match count this file */
-                if (gr_name) {          /* Don't care how many lines match */
-                    fclose(fp);         /* Close the file */
-                    fp = NULL;          /* and quit the line-reading loop. */
-                    break;
+                debug(F101,"GREP match count this file","",count);
+#ifndef NOSPL
+                if (gr_macr) {          /* Adding grep lines to macro def */
+                    int len = 0;        /* WHAT IS LEN FOR? */
+                    debug(F100,"GREP adding line to macro","",0);
+                    len = ckstrncat(macrodef,line,CKMAXPATH);
+                    (VOID)ckstrncat(macrodef,"\n",CKMAXPATH);
+                    continue;
+                }
+#endif /* NOSPL */
+                /*
+                  gr_name means just print the name of each file
+                  that contains at least one match.
+                */
+                if (gr_name && count > 0) { /* Show name only */
+#ifndef NOSPL
+                    if (array) {
+                        makestr(&(ap[arrayslot++]),name);
+                    } else {
+#endif  /* NOSPL */
+                        fprintf(ofp,"%s\n",name);
+                        x++;
+#ifndef NOSPL
+                    }
+#endif  /* NOSPL */
+                    break;              /* Only need one per file */
                 }
                 if (gr_coun || gr_noli) /* Not listing each line */
                   continue;             /* so don't print anything now. */
+
                 if (wild) {		/* If searching multiple files */
-                    fprintf(ofp,"%s:",name); /* print filename. */
+                    rp1 = name;         /* set pointer to filename */
                     len += (int)strlen(name) + 1;
                 }
                 if (gr_nums) {          /* If line numbers wanted */
-                    char nbuf[32];
-                    len += ckmakmsg(nbuf,32,ckitoa(fline),":",NULL,NULL);
-                    fprintf(ofp,"%s",nbuf);
+                    rp2 = ckitoa(fline); /* set pointer to line number */
                 }
+                rp3 = line;
                 if (cmd_rows > 0 && cmd_cols > 0)
                   sline += (len / cmd_cols) + 1;
-                fprintf(ofp,"%s\n",line); /* Print the line. */
-                if (sline > cmd_rows - 3) {
-                    if (!askmore()) { goto xgrep; } else { sline = 0; }
+#ifndef NOSPL
+                if (array) {
+                    char tmpstr[10000];
+                    int tmplen;
+                    tmplen = (int)strlen(rp1)
+                        + (int)strlen(rp2)  + (int)strlen(rp3) + 2;
+                    debug(F100,"GREP adding line to array","",0);
+                    debug(F101,"GREP tmplen","",tmplen);
+                    if (!rp1) rp1 = "";
+                    if (!rp2) rp2 = "";
+                    debug(F110,"GREP rp1",rp1,""); /* filename */
+                    debug(F110,"GREP rp2",rp2,""); /* line number in file */
+                    debug(F110,"GREP rp3",rp3,""); /* the matching line */
+                    if (!(int)strlen(rp3))         /* (shouldn't happen) */
+                      printf("*** EMPTY MATCH STRING ***\n");
+                    /* name:lineno:line */
+                    if ((int)strlen(rp1) && (int)strlen(rp2)) {
+                        ckmakxmsg(tmpstr,tmplen,rp1,":",rp2,":",rp3,
+                                 NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+                    /* name:line */
+                    } else if ((int)strlen(rp1)) {
+                        ckmakmsg(tmpstr,tmplen,rp1,":",rp3,NULL);
+                    /* name:lineno */
+                    } else if ((int)strlen(rp2)) {
+                        ckmakmsg(tmpstr,tmplen,rp2,":",rp3,NULL);
+                    /* line only */
+                    } else {
+                        ckmakmsg(tmpstr,tmplen,rp3,NULL,NULL,NULL);
+                    }
+                    debug(F110,"GREP tmpstr",tmpstr,"");
+                    makestr(&(ap[arrayslot++]),tmpstr);
+                } else {
+#endif  /* NOSPL */
+                    debug(F100,"GREP printing line","",0);
+                    if (wild) {
+                        if ((int)strlen(rp2))
+                          fprintf(ofp,"%s%s%s%s%s\n", rp1,":",rp2,":",rp3); 
+                        else
+                          fprintf(ofp,"%s%s%s\n", rp1,":",rp3); 
+                    } else {
+                        if ((int)strlen(rp2))
+                          fprintf(ofp,"%s%s%s\n", rp2,":",rp3); 
+                        else
+                          fprintf(ofp,"%s\n",rp3); 
+                    }
+                    if (sline > cmd_rows - 3) {
+                        if (!askmore()) { goto xgrep; } else { sline = 0; }
+                    }
+#ifndef NOSPL
+                }
+#endif  /* NOSPL */
+                debug(F100,"GREP X5","",0);
+                debug(F101,"GREP X5 mc","",mc);
+                debug(F101,"GREP X5 dispmode","",dispmode);
+                if ((dispmode > 0) && (mc >= dispmode)) {
+                    goto xgrep;
                 }
             }
         }
-        if (!gr_noli) {			/* If not not listing... */
-            x = 0;
-            if (gr_coun) {              /* Show match count only */
-                fprintf(ofp,"%s:%d\n",name,count);
-                x++;
-            } else if (gr_name && count > 0) { /* Show name only */
-		if (array) {
-		    if (ap) {
-			makestr(&(ap[arrayindex++]),name);
-		    }
-		} else {
-		    fprintf(ofp,"%s\n",name);
-		    x++;
-		}
-            }
-            if (x > 0) {
-                if (++sline > cmd_rows - 3) {
-                    if (!askmore()) { goto xgrep; } else { sline = 0; }
-                }
+        x = 0;
+        if (gr_coun) {                  /* Show match count only */
+            fprintf(ofp,"%s:%d\n",name,count);
+            x++;
+        }
+        if (x > 0) {
+            if (++sline > cmd_rows - 3) {
+                if (!askmore()) { goto xgrep; } else { sline = 0; }
             }
         }
         bigcount += count;              /* Overall count */
     }
   xgrep:
 #ifndef NOSPL
-    if (array) if (ap) makestr(&(ap[0]),ckitoa(arrayindex));
+    if (gr_macr) {                      /* If /macro assign matches to macro */
+        if (*macrodef) addmac(macroname,macrodef);
+    }
+/*
+  ...resize array resize...
+  The array was declared has having GREPARRAYSIZE elements.  This code
+  resizes it to the actual number of matches found.
+  - fdc, 19 March 2023
+*/
+    if (array) {
+        int i;                          /* For loop variable */
+        int high = arrayslot - 1;       /* To... */
+        a_dim[arraynum] = high;         /* Adjust dimension */
+        makestr(&(ap[0]),ckitoa(arrayslot));
+        /* deallocate leftover elements */
+	for (i = arrayslot + 1; i <= GREPARRAYSIZE; i++ )
+	  makestr(&(a_ptr[x][i]),NULL);	/* from original array. */
+    }
     if (gr_coun && cv) {                /* /COUNT:blah */
         addmac(cv,ckitoa(bigcount));    /* set the variable */
         makestr(&cv,NULL);              /* free this */
@@ -4823,11 +5128,12 @@ dogrep() {
     return(success = mc ? 1 : 0);
 }
 
-/* System-independent directory */
+/* Platform-independent DIRECTORY command */
 
 static char ** dirlist = NULL;
 static int ndirlist = 0;
 
+/* This is part of a hack to allow multiple file specifications */
 static VOID
 freedirlist() {
     if (dirlist) {
@@ -5221,7 +5527,12 @@ setdiropts() {                          /* Set DIRECTORY option defaults */
 }
 
 int
-domydir(cx) int cx; {			/* Internal DIRECTORY command */
+#ifdef CK_ANSIC
+domydir( int cx )                     /* Internal DIRECTORY command */
+#else
+domydir(cx) int cx;
+#endif /* CK_ANSIC */
+{
     extern char *months[], *tempdir;
 #ifdef VMS
     _PROTOTYP( char * zrelname, (char *,char *) );
@@ -5251,8 +5562,10 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
     int multiple = 0;
     int cmifn1 = 1, cmifn2 = 0;
     int dir_top = 0, dir_cou = 0;
+#ifdef CKSYMLINK
     int dontshowlinks = 0;
     int dontfollowlinks = 0;
+#endif /* CKSYMLINK */
     int arrayindex = -1;
     int simulate = 0;
     struct FDB sw, fi, fl;
@@ -5578,6 +5891,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             }
             break;
 #endif /* NOSPL */
+
           case DIR_AFT:
           case DIR_BEF:
           case DIR_NAF:
@@ -6115,16 +6429,14 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             FILE * bfp = NULL;          /* Backup file pointer */
             char backupfile[CKMAXPATH+1]; /* Backup file */
 	    char tmpfile[CKMAXPATH];	/* Buffer for filename */
-	    char * tdp = tmpfile;	/* Temporary directory path */
 	    int linebufsiz = 24575;	/* Buf size for reading file lines */
 	    char * linebuf = NULL;	/* Input file buffer */
 	    char * lbp = NULL;		/* and pointer to it */
 	    char * newbuf = NULL;	/* Output file buffer */
 	    char * nbp = NULL;		/* and pointer */
 	    int bufleft = 0;		/* Space left in newbuf */
-	    int i, j, k, x, y;		/* Workers */
+	    int j, k, x;		/* Workers */
 	    int failed = 0;		/* Search string not found */
-	    char c1, c2;		/* Char for quick compare */
 
             changes = 0;                /* Change counter */
             k = 0;
@@ -6549,7 +6861,7 @@ preserving original modtime: %s %s\n",
 #endif /* CKSYMLINK */
 #endif /* UNIX */
         if (xfermod) {                  /* Show transfer mode */
-            int i, x, y;
+            int x, y;
             char * s = "";
             y = -1;
             x = scanfile(name,&y,nscanfile);
@@ -6745,12 +7057,17 @@ preserving original modtime: %s %s\n",
 }
 
 int
-dodir(cx) int cx; {                     /* Do the DIRECTORY command */
-    char *dc , *msg;
-
+#ifdef CK_ANSIC
+dodir( int cx )                         /* Do the DIRECTORY command */
+#else
+dodir(cx) int cx;
+#endif /* CK_ANSIC */
+{
 #ifdef OS2
     return(domydir(cx));
 #else /* OS2 */
+    char *dc , *msg;
+
     if (nopush
 #ifdef DOMYDIR                          /* Builds that domydir() by default */
         || (cx == XXDIR  || cx == XXLDIR || cx == XXWDIR ||
@@ -6793,7 +7110,12 @@ dodir(cx) int cx; {                     /* Do the DIRECTORY command */
 /* Do the ENABLE and DISABLE commands */
 
 int
-doenable(y,x) int y, x; {
+#ifdef CK_ANSIC
+doenable( int y, int x )
+#else
+doenable(y,x) int y, x;
+#endif /* CK_ANSIC */
+{
 #ifdef CK_LOGIN
     if (isguest)                        /* IKSD: Don't let guests */
       return(0);                        /* enable anything that's disabled */
@@ -7053,7 +7375,10 @@ static int xmtchn = 0;
 
 int
 dodel() {                               /* DELETE */
-    int i, j, k, x;
+    int i, k, x;
+#ifdef VMS
+    int j;
+#endif /* VMS */
     int fs = 0;                         /* Need to call fileselect() */
     int len = 0;
     int bad = 0;
@@ -7542,7 +7867,6 @@ dodel() {                               /* DELETE */
 #endif /* OS2 */
 
         if (z > 0) {
-            int i;
 #ifdef OS2
             int ix = 0;
 #endif /* OS2 */
@@ -7921,7 +8245,6 @@ dofor() {                               /* The FOR command. */
     char *ap, *di;                      /* macro argument pointer */
     int pp = 0;                         /* Paren level */
     int mustquote = 0;
-    char loopvar[8], loopvar2[8];       /* \%x-style loop variable */
 
     debug(F100,"dofor entry","",0);
     for (i = 0; i < 2; i++) {
@@ -8130,7 +8453,12 @@ badfor:
   Returns a 0 to 86400 on success, or a negative number on failure.
 */
 long
-tod2sec(t) char * t; {
+#ifdef CK_ANSIC
+tod2sec( char * t )
+#else
+tod2sec(t) char * t;
+#endif /* CK_ANSIC */
+{
     long t2;
     long hh = 0L, mm = 0L, ss = 0L;
 
@@ -8200,7 +8528,12 @@ int waitinterval = 1;
 int kbchar = NUL;
 
 int
-dopaus(cx) int cx; {
+#ifdef CK_ANSIC
+dopaus( int cx )
+#else
+dopaus(cx) int cx;
+#endif /* CK_ANSIC */
+{
     long zz;
     extern int sleepcan;
 
@@ -8557,7 +8890,7 @@ _PROTOTYP(int zcmpfn,(char *, char *));
 int 
 dolink() {
     /* Parse a file or a directory name */
-    int i, x, z, listing = 0, havename = 0, wild = 0, rc = 1;
+    int x, z, listing = 0, havename = 0, wild = 0, rc = 1;
     struct FDB sw, fi;
 
     cmfdbi(&sw,                         /* 2nd FDB - optional /PAGE switch */
@@ -8691,7 +9024,7 @@ dolink() {
 #ifdef ZCOPY
 int
 docopy() {
-    int i, x, listing = 0, nolist = 0, havename = 0, getval;
+    int x, listing = 0, nolist = 0, havename = 0, getval;
     char c;
     struct FDB sw, fi;
     int overwrite = OVW_ALWAYS;
@@ -8944,7 +9277,7 @@ docopy() {
 
 		char d1[20], * d2;
 		char * n1, * n2;
-		int i, skip = 0;
+		int i;
 
 		i = strlen(line);	/* Isolate source filename */
 		for (; i >= 0; i--) {
@@ -9274,7 +9607,7 @@ docopy() {
                     }
                 }
             } else if (toscreen || interpret) { /* fdc - 20220920 */
-                int i,x;
+                int i;
                 int p = 0;
                 int n = 0;
                 int linebufsize = 2000;
@@ -9363,16 +9696,20 @@ static char * pcvtbufin = NULL;
 static char * pcvtbufout = NULL;
 
 static int				/* Input function xgnbyte() */
-cvtfnin() {
+#ifdef CK_ANSIC
+cvtfnin(void)
+#else
+cvtfnin()
+#endif	/* CK_ANSIC */
+{
     CHAR c;
     c = *pcvtbufin++;
     return(c ? c : -1);
 }
 
-_PROTOTYP(int cvtfnout,(char));		/* Output function for xpnbyte() */
-int
+static int
 #ifdef CK_ANSIC
-cvtfnout(char c)
+cvtfnout(char c)			/* Output function for xpnbyte() */
 #else
 cvtfnout(c) char c;
 #endif	/* CK_ANSIC */
@@ -9466,7 +9803,12 @@ setrename() {				/* Parse SET RENAME options */
 /* Reverse a string - Assumes a single-byte character set */
 
 int
-gnirts(s1, s2, len) char * s1, * s2; int len; {
+#ifdef CK_ANSIC
+gnirts( char * s1, char * s2, int len )
+#else
+gnirts(s1, s2, len) char * s1, * s2; int len;
+#endif /* CK_ANSIC */
+{
     int n, m = 0;
     if (!s1)				/* Null source pointer, fail */
       return(0);
@@ -9514,12 +9856,18 @@ gnirts(s1, s2, len) char * s1, * s2; int len; {
 #define REN_OP_CHK 2			/* Check for collisions */
 
 static int
+#ifdef CK_ANSIC
+renameone(char * old, char * new,
+	  int replacing, int casing, int all, int converting, int cset1, 
+          int cset2, int listing, int nolist, int op, int size, int collision )
+#else
 renameone(old,new,
 	  replacing,casing,all,converting,cset1,cset2,
 	  listing,nolist,op,size,collision)
     char * old, * new;
     int replacing,casing,all,converting,cset1,cset2,
     listing,nolist,op,size,collision;
+#endif /* CK_ANSIC */
 {
     char buf[CKMAXPATH];		/* Temporary filename buffer */
     char out[CKMAXPATH];		/* Buffer for new name */
@@ -9691,7 +10039,6 @@ renameone(old,new,
 	    }
 	} else {			/* Replace all occurrences */
 	    int j, n = 0;		/* or a particular occurrence */
-	    char c;
 	    int x = 0;
 	    char * s0 = NULL, * s1 = NULL, * s2 = NULL;
 	    p = new;			/* Pointer to new name */
@@ -9862,7 +10209,7 @@ dorenam() {
 #endif	/* NOCSETS */
     int cset1 = 0, cset2 = 0;
 
-    int i, x, z, fn, listing = 0, havename = 0, wild = 0, rc = 1, noarg = 0;
+    int x, z, fn, listing = 0, havename = 0, wild = 0, rc = 1, noarg = 0;
     int nolist = 0, all = 0, casing = 0, replacing = 0, getval = 0, sim = 0;
     int converting = 0, collision = 0;
 
@@ -10233,7 +10580,12 @@ dorenam() {
 /* Do the RETURN command */
 
 int
-doreturn(s) char *s; {
+#ifdef CK_ANSIC
+doreturn( char *s )
+#else
+doreturn(s) char *s;
+#endif /* CK_ANSIC */
+{
     int x;
     extern int tra_asg;
     char * line, * lp;
@@ -10441,7 +10793,12 @@ extern int lf_opts;
 #endif /* CK_LABELED */
 
 int
-doxget(cx) int cx; {
+#ifdef CK_ANSIC
+doxget( int cx )
+#else
+doxget(cx) int cx;
+#endif /* CK_ANSIC */
+{
     extern int                          /* External variables we need */
 #ifdef RECURSIVE
       recursive,
@@ -11354,8 +11711,13 @@ doxget(cx) int cx; {
   on them, so the new values won't be lost as we pop up the stack.
 */
 int
-dogta(cx) int cx; {
-    int i, n;
+#ifdef CK_ANSIC
+dogta( int cx )
+#else
+dogta(cx) int cx;
+#endif /* CK_ANSIC */
+{
+    int i;
     char c, *p,  mbuf[4];
     extern int topargc, cmdint;
     extern char ** topxarg;
@@ -11452,10 +11814,14 @@ dogta(cx) int cx; {
   Do the GOTO and [_]FORWARD commands.
   s = Label to search for, cx = function code: XXGOTO, XXFWD, or XXXFWD.
 */
-
 int
-dogoto(s, cx) char *s; int cx; {
-    int i, j, x, y, z, bc;
+#ifdef CK_ANSIC
+dogoto( char *s, int cx )
+#else
+dogoto(s, cx) char *s; int cx;
+#endif /* CK_ANSIC */
+{
+    int j, x, y, z, bc;
     int empty = 0, stopflg = 0;
     char * cmd;                         /* Name of this command */
     char tmplbl[LBLSIZ+1], *lp;	        /* Current label from command stream */
@@ -11720,7 +12086,12 @@ dogoto(s, cx) char *s; int cx; {
   variable.  Returns 1 if it has the syntax of a variable, 0 if not.
 */
 int
-chkvar(s) char *s; {
+#ifdef CK_ANSIC
+chkvar( char *s )
+#else
+chkvar(s) char *s;
+#endif /* CK_ANSIC */
+{
     int z = 0;                          /* Return code - assume failure. */
     if (!s) s = "";                     /* Watch our for null pointers. */
     if (!*s) return(0);                 /* Empty arg so not a variable. */
@@ -11781,7 +12152,12 @@ chkvar(s) char *s; {
 static char boolval[BOOLLEN];
 
 int
-boolexp(cx) int cx; {
+#ifdef CK_ANSIC
+boolexp( int cx )
+#else
+boolexp(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int x, y, z; char *s, *p;
     int parens = 0, pcount = 0, ecount = 0;
     char *q, *bx;
@@ -12220,7 +12596,7 @@ boolexp(cx) int cx; {
 #else
 	tp = s;
 #endif /* COMMENT */
-      lexical:
+      /*lexical:*/
         x = ckstrcmp(lp,tp,-1,inpcas[cmdlvl]); /* Use longest length */
         switch (ifc) {
           case XXIFEQ:                  /* EQUAL (string comparison) */
@@ -12442,6 +12818,14 @@ boolexp(cx) int cx; {
 #endif /* NOLOCAL */
         break;
 #endif /* CK_IFRO */
+
+     case XXIFREX:
+#ifdef NOREXX
+        z = 0;
+#else /* NOREXX */
+        z = 1;
+#endif /* NOREXX */
+        break;
 
       case XXIFAL:                      /* ALARM */
         ifargs++;
@@ -12729,7 +13113,7 @@ boolexp(cx) int cx; {
       case XXIFFU: {			/* IF FUNCTION - 2013/04/15 */
 	  extern struct keytab fnctab[];
 	  extern int nfuncs;
-	  int x, y;
+	  int y;
 
 	  y = cmkeyx(fnctab,nfuncs,"Name of function","",NULL);
 	  if (y == -1)			/* Reparse needed */
@@ -12820,9 +13204,13 @@ boolexp(cx) int cx; {
 /*  D O I F  --  Do the IF command  */
 
 int
-doif(cx) int cx; {
+#ifdef CK_ANSIC
+doif( int cx )
+#else
+doif(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int x, y, z; char *s, *p;
-    char *q;
 #ifdef OS2
     extern int keymac;
 #endif /* OS2 */
@@ -13014,9 +13402,14 @@ doif(cx) int cx; {
 /* Set up a TAKE command file */
 
 int
-dotake(s) char *s; {
-#ifndef NOSPL
+#ifdef CK_ANSIC
+dotake( char *s )
+#else
+dotake(s) char *s;
+#endif /* CK_ANSIC */
+{
     extern char lasttakeline[];         /* Last TAKE-file line */
+#ifndef NOSPL
     extern int tra_cmd;
 #endif /* NOSPL */
 #ifndef NOLOCAL

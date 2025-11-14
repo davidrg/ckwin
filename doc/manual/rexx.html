@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+    <META name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kermit 95 - REXX Scripting</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>REXX support in Kermit 95</h2>
+
+
+Kermit 95 has provided an interface to the REXX scripting language on IBM OS/2
+since the release of OS/2 C-Kermit 5A(190) in October 1994. As of Kermit 95 v3.0,
+REXX is also now available on certain versions of Windows too.
+
+<p>
+Why would you want to use REXX from within Kermit 95? Reasons might include:
+<p><ul>
+    <li>Easier-to-use math functions
+    <li>Access to functionality provided by REXX extensions
+    <li>Add your own functions to Kermit 95's script language
+    <li>On OS/2, running a REXX program without the overhead of starting a
+        command shell
+    <li>Kermit/2 access to additional OS/2 specific functionality
+        (e.g. create WPS objects, perform directory searches, ...)
+</ul>
+
+<p>
+
+Kermit 95's REXX programming interface consists of the single command, REXX.
+<tt>REXX &lt;command&gt;</tt> executes the given REXX command, for example:
+<p><pre>
+  REXX SAY "Hello"
+</pre><p>
+or:
+<p><pre>
+  REXX RETURN "Goodbye"
+</pre><p>
+or:
+<p><pre>
+  REXX CALL filename [ text ]
+</pre><p>
+which executes a REXX program from the given file.  The text, if any, is
+passed to the REXX program, where it is available as ARG(1).
+<p>
+A REXX command or program invoked via Kermit 95's REXX command can also
+execute Kermit 95 commands from within REXX procedures that are invoked via
+Kermit 95's REXX CALL command, by enclosing them in single quotes, for
+example:
+<p><pre>
+  'set parity none'
+  'return \v(parity)'
+  say rc
+</pre><p>
+The RETURN value from the REXX command or program is available in the
+Kermit 95 variable \v(rexx).  Set this by including a
+<tt>RETURN &lt;value&gt;</tt> command in your REXX command or program.
+<p>
+There are three types of functionality provided in the Kermit 95/REXX
+interface:
+<p><ol>
+<li>Ability to execute a REXX command line.
+<li>Ability to execute a REXX command file.
+<li>Ability to call Kermit 95 commands from a REXX program that is
+executing under Kermit 95.
+</ol>
+<p>
+Let's say you want to execute a one-line REXX program from within
+Kermit 95. You would use the Kermit 95 "REXX" command.  The format of the
+command is:
+<p><pre>
+  rexx rexx-command
+</pre><p>
+where "rexx-command" is everything after the keyword REXX to the end of the
+line.  A simple example:
+<p><pre>
+  Kermit/2> <u>rexx say "hello"</u>
+</pre><p>
+executes the REXX command SAY with the parameter "hello", which prints the
+word "hello" on your screen.
+<p>
+Another example, returning a value from REXX:
+<p><pre>
+  Kermit/2> <u>rexx return 4 * 4</u>
+</pre><p>
+the REXX command "return 4 * 4" calculates the value "16" and returns it to
+Kermit 95.  Kermit 95 stores the return value from the last REXX command in
+\v(rexx):
+<p><pre>
+  Kermit/2> <u>echo \v(rexx)</u>
+  16
+  Kermit/2>
+</pre><p>
+Let's say you want to execute a series of REXX commands, but you don't want
+to create a REXX command file:
+<p><pre>
+  Kermit/2> <u>rexx say "hello"\13 return 0</u>
+</pre><p>
+This prints the string "hello" and then returns the value "0" to
+Kermit 95. Notice that \13 (Carriage Return, Ctrl-M) was placed between the
+commands. This is necessary because REXX expects to find each command
+separated by a return character just as if it was being read from a file.
+<p>
+To execute a REXX command file, use:
+<p><pre>
+  Kermit/2> <u>rexx call oofa.cmd</u>
+</pre><p>
+where "oofa.cmd" is the name of your REXX command file.
+<p>
+Now let's say you want to gain access to a Kermit 95 variable value from
+within a REXX program, change a Kermit 95 setting, or execute a Kermit 95
+command.  You could alter your program so it is called in separate parts
+from a Kermit 95 TAKE file or macro.  But there is a better way.  Just
+include the Kermit 95 command in your REXX program.  For example, you want to
+set Kermit's parity from within your REXX program:
+<p><pre>
+  /* Beginning of REXX program file */
+  set parity "none"
+</pre><p>
+Let's say you want to set a REXX variable to the value of a Kermit 95
+variable:
+<p><pre>
+  'return \v(parity)'
+  parity = rc
+</pre><p>
+Notice the single quotes around and the "return" command before the Kermit 95
+variable statement.  REXX passes the quoted statement to Kermit 95 for
+evaluation.  Kermit 95 interprets the command and returns to REXX the value
+of the parity variable.  This value is then stored in the REXX special
+variable RC.  RC stores the return value of all non-REXX commands.  The next
+statement assigns the value of REXX variable RC to the REXX variable parity.
+<p>
+
+<h3><a name="limitations">Limitations</a></h3>
+<p>At this time there are a number of limitations in Kermit 95s REXX support.
+    Some of these may be addressed in future releases:
+</p>
+<ul>
+    <li>The REXX interface is not available on Windows NT 3.50 or earlier,
+        or on 64bit Windows with an Alpha or Itanium processor.
+    </li>
+    <li>On Windows, only the Regina REXX implementation is supported.
+        Object REXX uses a different interface, making it difficult to support
+        both. On IBM OS/2, the system REXX interpreter is used.</li>
+    <li>The console I/O functions in regutil.dll (such as RxMessageBox,
+        SysGetKey, etc.) are not supported in K95G at this time.</li>
+    <li>The charin()/linein()/charout()/lineout() built-in functions do not
+        work in K95G at this time.</li>
+    <li>REXX scripts containing Kermit 95 commands cannot be run with a
+        normal REXX interpreter - they must be run from within Kermit 95.
+    </li>
+</ul>
+
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

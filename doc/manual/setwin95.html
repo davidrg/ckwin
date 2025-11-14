@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 SET WIN95 Commands</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Kermit 95 SET WIN95 Commands</h2>
+
+The SET WIN95 command is used mainly for allowing you to work around bugs
+or limitations in Windows 95 and 98.
+
+<p>
+<dl>
+
+<dt><b>SET WIN95 8.3-FILENAMES</b> <i>{</i> <b>ON, OFF</b> <i>}</i>
+
+<dd>Default is OFF.  When ON, instructs K-95 to report all filenames using 8.3
+notation instead of the normal long filenames; this applies also to built-in
+variables such as <tt>\v(dir)</tt>, <tt>\v(inidir)</tt>, <tt>\v(home)</tt>,
+etc.  8.3 (FAT) filenames do not contain spaces.  Thus WIN95 8.3-FILENAMES ON
+is useful for coping with files or directories whose names contain spaces.
+
+<p>
+
+<dt><b>SET WIN95 ALT-GR</b> <i>{</i> <b>ON, OFF</b> <i>}</i>
+
+<dd>Instructs K-95, when used on Windows 95 or 98, to interpret the Right Alt
+key as the Alt-Gr key (used on many non-USA keyboards for entering accented
+or non-Roman letters or other non-ASCII characters).  This is necessary to
+work around the failure of Windows 9x to properly translate non-US keyboards.
+Default is OFF.
+
+<p>
+
+<dt><b>SET WIN95 KEYBOARD-TRANSLATION</b> <i>character-set</i>
+
+<dd>Tells K95 the character-set that Windows 95/98 is using to send keystrokes
+to Kermit-95 via the keyboard input functions.  Default is Latin1-ISO.
+
+<p>
+
+<dt><b>SET WIN95 LUCIDA-SUBSTITUTIONS</b> <i>{</i> <b>ON, OFF</b> <i>}</i>
+
+<dd>Tells K95 whether or not to perform substitutions appropriate for
+characters known to be missing from the Lucida Console font.  Default is ON.
+
+<p>
+
+<dt><b>SET WIN95 OVERLAPPED-IO</b> <i>{</i> <b>ON</b> <i>requests</i>, <b>OFF</b> <i>}</i>
+
+<dd>Tells K95 whether to use Overlapped-I/O methods for reading
+from and writing to serial and TAPI communication devices.  <i>requests</i>
+specifies the number of simultaneous write requests that may be
+overlapped, from 1 to 5.  Default is ON 3.
+
+<p>
+
+<dt><b>SET WIN95 POPUPS</b> <i>{</i> <b>ON, OFF</b> <i>}</i>
+
+<dd>Tells K-95 whether to use Popups to query the user for
+necessary information such as user IDs or passwords.  Default is ON, in which
+case popups overlay the command screen, similar to Alt-H help popups in
+appearance, and with the same coloration.  When OFF, automatically generated
+prompts are done with ordinary lines of text.
+
+<p>
+
+<dt><b>SET WIN95 SELECT-BUG</b> <i>{</i> <b>ON, OFF</b> <i>}</i>
+
+<dd>Some TCP/IP (Winsock) implementations for Windows have a defective
+<tt>select()</tt> function.  Use this command to avoid the use of
+<tt>select()</tt> if K95 appears to be unable to send data over a TCP/IP
+connection.  Default is OFF.
+</dl>
+
+<p>
+
+<hr>
+[<i>Use your Browser's BACK button to return</i>]

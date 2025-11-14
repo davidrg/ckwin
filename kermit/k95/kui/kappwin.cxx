@@ -1,3 +1,15 @@
+#ifndef CKT_NT35
+#ifdef CK_SHELL_NOTIFY
+#ifdef __WATCOMC__
+/* The Watcom headers need this defined for shell notifications */
+#ifdef _WIN32_IE
+#undef _WIN32_IE
+#endif /* _WIN32_IE */
+#define _WIN32_IE 0x0500
+#endif /* __WATCOMC__ */
+#endif /* CK_SHELL_NOTIFY */
+#endif /* CKT_NT35 */
+
 #include "kappwin.hxx"
 #include "kmenu.hxx"
 #include "ktoolbar.hxx"
@@ -18,6 +30,7 @@ extern "C" {
     extern BYTE vmode;
     extern char exedir[];
     extern int  tt_status[];
+    extern int  nt5;
 };
 
 /*------------------------------------------------------------------------
@@ -85,9 +98,9 @@ void KAppWin::size( int width, int height )
     if( inCreate() )
         return;
 
-    if ( toolbar )
+    if ( toolbar && toolbar->isVisible() )
         toolbar->size( width, height );
-    if ( status )
+    if ( status && status->isVisible() )
         status->size( width, height );
 
     if( client ) {
@@ -103,11 +116,11 @@ void KAppWin::size( int width, int height )
 void KAppWin::getClientCoord( int& x, int& y, int& w, int& h )
 {
     int tbh = 0, tbw = 0;
-    if ( toolbar )
+    if ( toolbar && toolbar->isVisible() )
         toolbar->getSize( tbw, tbh );
 
     int sth = 0, stw = 0;
-    if ( status )
+    if ( status && status->isVisible() )
         status->getSize( stw, sth );
 
     RECT rect;
@@ -195,6 +208,24 @@ int KAppWin::sizeFont( LPRECT lpr, int force )
         return 0;
     }
 
+    if (kfont->getFontW() == wishFontW + 1 &&
+        kglob->mouseEffect == TERM_MOUSE_CHANGE_FONT) {
+        // For some reason I've not been able to identify so far, certain fonts
+        // get us stuck in a continuous resizing loop. If we ask for a font
+        // width of 5, we're given a font width of 6 causing the window to grow.
+        // Next time around, we ask for a font size of 6, and we're given 7
+        // causing the window to grow again. This only happens with
+        // reisze-changes-font, and only with certain fonts (Cascadia Light
+        // being one of them). For now this ugly workaround solves the immediate
+        // problem, but the font still appears stretched horizontally. At least
+        // K95 window doesn't keep growing wider which was really the main
+        // problem.
+        if( !kfont->tryFont( wishFontW - 1, wishFontH, client->hdc() ) ) {
+            memcpy( lpr, &rect, sizeof(RECT) );
+            return 0;
+        }
+    }
+
     client->setInterSpacing( kfont );
     setFont( kfont->getFaceName(), kfont->getFontPointsH() );
 
@@ -206,8 +237,6 @@ int KAppWin::sizeFont( LPRECT lpr, int force )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
 {
-    /* TODO: None of this works on NT 3.50 - needs to be redone some other way there */
-#ifndef CKT_NT31
     if (!sizeFont(lpr,0))
         return;
 
@@ -249,7 +278,6 @@ void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
                   lpr->right - lpr->left, lpr->bottom - lpr->top, 
                   SWP_NOZORDER );
     client->paint();
-#endif /* CKT_NT31 */
 }
 
 
@@ -259,8 +287,6 @@ void KAppWin::sizeFontSetDim( UINT fwSide, LPRECT lpr )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
 {
-    /* TODO: None of this works on NT 3.50 - needs to be done some other way there */
-#ifndef CKT_NT31
     int maxw = 0, maxh = 0;
     if( !client || !client->getMaxpDim( maxw, maxh ) )
         return;
@@ -325,7 +351,6 @@ void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
             }
             break;
     }
-#endif /* CKT_NT31 */
 }
 
 /*------------------------------------------------------------------------
@@ -333,8 +358,6 @@ void KAppWin::sizeFixed( UINT fwSide, LPRECT lpr )
 ------------------------------------------------------------------------*/
 void KAppWin::sizeLimit( UINT fwSide, LPRECT lpr )
 {
-    /* TODO: None of this works on NT 3.50 - needs to be done some other way there */
-#ifndef CKT_NT31
     int maxw = 0, maxh = 0;
     if( !client || !client->getMaxpDim( maxw, maxh ) )
         return;
@@ -399,7 +422,6 @@ void KAppWin::sizeLimit( UINT fwSide, LPRECT lpr )
             }
             break;
     }
-#endif /* CKT_NT31 */
 }
 
 /*------------------------------------------------------------------------
@@ -533,13 +555,13 @@ int KAppWin::readManual(void)
 {
     char manpath[512];
     struct stat buf;
-    int i;
+    size_t i;
 
     /* Need to change directory to the DOCS\\MANUAL directory */
     /* before starting the manual.  Otherwise, Netscape may   */
     /* be unable to find the referential links.               */
 
-    ckmakmsg(manpath,512, exedir, "DOCS\\MANUAL\\CKWIN.HTM", NULL, NULL);
+    ckmakmsg(manpath,512, exedir, "DOCS\\MANUAL\\INDEX.HTM", NULL, NULL);
     for ( i=strlen(manpath); i > 0 && manpath[i] != '\\'; i-- )
         if (manpath[i] == '/')
             manpath[i] = '\\';
@@ -574,7 +596,63 @@ int KAppWin::readManual(void)
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+#ifdef CK_SHELL_NOTIFY
+/* Shell Notifications require Visual C++ 2002 (7.0) and Windows 2000
+ * or newer */
+
+/* This is new in Windows XP SP2 (Visual C++ 2008) */
+#ifndef NIIF_USER
+#define NIIF_USER 0x00000004
+#endif
+
+void KAppWin::showNotification( int icon, char* title, char * message ) {
+    NOTIFYICONDATA nid = {sizeof(nid)};
+
+    if (!nt5) return;  /* Notifications require Windows 2000 or newer */
+
+    nid.hWnd = hWnd;
+    nid.uID = 1;
+    nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_INFO;
+    nid.uCallbackMessage = WMAPP_NOTIFYCALLBACK;
+    switch(icon) {
+        case KUI_NOTIF_I_INFO: nid.dwInfoFlags = NIIF_INFO; break;
+        case KUI_NOTIF_I_WARN: nid.dwInfoFlags = NIIF_WARNING; break;
+        case KUI_NOTIF_I_ERR: nid.dwInfoFlags = NIIF_ERROR; break;
+        case KUI_NOTIF_I_USER: nid.dwInfoFlags = NIIF_USER; break;
+        default: nid.dwInfoFlags = NIIF_NONE; break;
+    }
+    strncpy(nid.szInfoTitle, title, sizeof(nid.szInfoTitle) / sizeof(nid.szInfoTitle[0]));
+    strncpy(nid.szInfo, message, sizeof(nid.szInfo) / sizeof(nid.szInfo[0]));
+    nid.hIcon = LoadIcon(kglob->hInst, MAKEINTRESOURCE(IDI_ICONK95));
+
+    // If there is already a notification on screen, then a notificaiton icon
+    // will already be present. We can't (and shouldn't) add another (it will
+    // fail), so modify the existing one.
+    if (iconCreated) {
+        if (!Shell_NotifyIcon(NIM_MODIFY, &nid)) {
+            iconCreated = FALSE;
+        }
+    }
+
+    if (!iconCreated){
+        iconCreated = Shell_NotifyIcon(NIM_ADD, &nid);
+    }
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KAppWin::destroyNotificationIcon() {
+    NOTIFYICONDATA nid = {sizeof(nid)};
+    nid.hWnd = hWnd;
+    nid.uID = 1;
+    Shell_NotifyIcon(NIM_DELETE, &nid);
+}
+
+#endif /* CK_SHELL_NOTIFY */
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     //debug(F111,"KAppWin::message","msg",msg);
@@ -589,8 +667,11 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         }
         break;
 
-#ifndef CKT_NT31
-    case WM_SIZING:{
+    case WM_USER_SIZING:
+#ifdef WM_SIZING
+    case WM_SIZING:
+#endif
+    {
         LPRECT lpRect = (LPRECT)lParam;
         //printf("KAppWin WM_SIZING wParam=%d top=%d bottom=%d left=%d right=%d\n",
         //        wParam, lpRect->top, lpRect->bottom, lpRect->left, lpRect->right);
@@ -609,18 +690,16 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         //    else 
         //        kglob->mouseEffect = TERM_MOUSE_NO_EFFECT;
         }
-        done = sizing( wParam, lpRect );
+        done = sizing( (UINT)wParam, lpRect );
         kglob->mouseEffect = save;
         break;
     }
-#endif /* CKT_NT31 */
 
     case WM_SIZE:
         //printf("KAppWin WM_SIZE wParam=%d height=%d width=%d\n",
         //        wParam, HIWORD(lParam), LOWORD(lParam));
         //debug(F111,"KAppWin::message","WM_SIZE",msg);
         size( LOWORD(lParam), HIWORD(lParam) );
-#ifndef CKT_NT31
         switch ( wParam ) {
         case SIZE_RESTORED:
             if ( wmSize == SIZE_MAXIMIZED ) {
@@ -681,55 +760,15 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         default:
             break;
         }
-#else
-        /* Windows NT 3.1 and 3.50 don't support WM_SIZING and WM_EXITSIZEMOVE,
-         * so we've got to do the work they would have done here. */
-        switch ( wParam ) {
-            case SIZE_MINIMIZED:
-            case SIZE_MAXSHOW:
-            case SIZE_MAXHIDE:
-                break;
-            case SIZE_RESTORED:
-            case SIZE_MAXIMIZED:
-            default:
-                if (!inCreate()) {
-                    RECT rect;
-                    rect.top = 0;
-                    rect.left = 0;
-                    rect.bottom = HIWORD(lParam);
-                    rect.right = LOWORD(lParam);
-                    switch (kglob->mouseEffect) {
-                        case TERM_MOUSE_CHANGE_FONT:
-                            /* This doesn't work very well. Ideally we should
-                             * clip the window size to whatever is appropriate
-                             * for the selected font size like happens on
-                             * newer versions of windows. Currently if the
-                             * window size is too big for the current font you
-                             * end up with black bars to the right and/or
-                             * bottom. */
-                            sizeFont(&rect, 1);
-                            client->paint();
-                            break;
-                        case TERM_MOUSE_CHANGE_DIMENSION:
-                            if (sizepop)
-                                sizepop->show(FALSE);
-                            client->endSizing();
-                            break;
-                        case TERM_MOUSE_NO_EFFECT:
-                            client->endSizing();
-                            break;
-                    }
-                }
-                break;
-        }
-#endif /* CKT_NT31 */
-        wmSize = wParam;
+
+        wmSize = (UINT)wParam;
         break;
 
-#ifndef CKT_NT31
-        /* TODO - On Visual C++ 2.0 and older (NT 3.50 and older?) the work
-         *          this is doing probably needs to be done some other way */
-    case WM_EXITSIZEMOVE: {
+    case WM_USER_EXITSIZEMOVE:
+#ifdef WM_EXITSIZEMOVE
+    case WM_EXITSIZEMOVE:
+#endif
+    {
         //printf("KAppWin WM_EXITSIZEMOVE\n");
         //debug(F111,"KAppWin::message","WM_EXITSIZEMOVE",msg);
         BYTE keyState[256];
@@ -752,7 +791,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         kglob->mouseEffect = save;
         break;
     }
-#endif /* CKT_NT31 */
+
     case WM_GETMINMAXINFO:
         //printf("KAppWin WM_GETMINMAXINFO\n");
         //debug(F111,"KAppWin::message","WM_GETMINMAXINFO",msg);
@@ -782,6 +821,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         initMenu();
         break;
 
+    case WM_SYSCOMMAND:
     case WM_COMMAND:
         //debug(F111,"KAppWin::message","WM_COMMAND",msg);
         {
@@ -850,6 +890,13 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             break;
         }
     }
+
+    if (msg == WM_SYSCOMMAND) {
+        // For WM_SYSCOMMAND, a return value of 0 indicates the message was
+        // processed.
+        if (done) return 0;
+        return 1;
+    }
+
     return done;
 }
-

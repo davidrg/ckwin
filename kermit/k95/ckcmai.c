@@ -1,12 +1,16 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "14 Oct 2022"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20221014"          /* Keep them in sync */
-/* Fri Oct 14 15:56:49 2022 */
+#ifdef COMMENT
+#define EDITDATE  "22 Mar 2025"       /* Last edit date dd mmm yyyy */
+#else
+#define EDITDATE  "2025/03/22"       /* Last edit date ISO format */
+#endif  /* COMMENT */
 
+#define EDITNDATE "20250322"          /* Keep them in sync */
+/* Thu Aug  8 12:25:04 2024 */
 /*
-  IMPORTANT: as of 27 September 2022 BETATEST is defined in ckcdeb.h, 
-  not here, because it's also used in other modules.
+  As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
+  because it's also used in other modules.
 */
 
 /*
@@ -14,7 +18,7 @@ FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
   . Change the 3 dates just above;
   . Change ck_cryear = "xxxx"; (copyright year) just below, if necessary;
   . For test versions change ck_s_test and ck_s_tver (below) appropriately:
-     Dev, Alpha, Beta, or RC (Release Candidate);
+     Dev, Alpha, Pre-Beta, Beta, or RC (Release Candidate);
   . Change makefile CKVER and BUILDID definitions and timestamp at top.
 
 If the version number has changed, also:
@@ -41,11 +45,17 @@ If the version number has changed, also:
 */
 #include "ckcdeb.h"                     /* Debug & other symbols */
 
-char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2025"; 		/* C-Kermit copyright year */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
+
+#ifdef OS2
+/* Kermit 95 version numbers come from here as they're needed in a bunch of
+ * different places like resource scripts. */
+#include "ckover.h"
+#endif
 
 #ifdef BETATEST
 #ifdef OS2
@@ -53,22 +63,23 @@ char * ck_cryear = "2022"; 		/* C-Kermit copyright year */
 #define BETADATE
 #endif /* __DATE__ */
 /*
-   Temporary from July 2022...
-   the Windows version is currently seeing monthly beta releases.
-   As 27 September 2022 the Windows Beta is based on C-Kermit 10.0 Beta.05.
-   The Windows and non-Windows Betas happen at different times.
+   Kermit 95 releases on a different schedule from C-Kermit on other
+   platforms. As 3 March 2024 the Windows Beta is based on
+   C-Kermit 10.0 Beta.11.
 */
-char *ck_s_test = "Pre-Beta";
-char *ck_s_tver = "06/Windows-04";
+char *ck_s_test = K95_TEST;
+char *ck_s_tver = K95_TEST_VER_S;
 #else
-char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "06";			/* Test version number */
+/* Can also use "Pre-Beta" here for in between "daily" uploads */
+char *ck_s_test = "Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
+char *ck_s_tver = "12";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
 
+#ifndef OS2
 #ifdef BETADATE                         /* Date of this version or edit */
 char *ck_s_date = __DATE__;             /* Compilation date */
 #else
@@ -77,10 +88,18 @@ char *ck_s_date = EDITDATE;		/* See top */
 #endif /* BETADATE */
 char *buildid = EDITNDATE;		/* See top */
 
+#else /* OS2 */
+/* On OS/2 and Windows, these come from ckover.h which contains all
+ * of the version number bits */
+char *ck_s_date = K95_REL_DATE;
+char *buildid = K95_REL_DATE_N;
+#endif /* OS2 */
+
 #ifdef UNIX
 static char sccsid[] = "@(#)C-Kermit 10.0";
 #endif /* UNIX */
 
+int offtsize = 0;                       /* Size of OFF_T */
 /*
   As of C-Kermit 10.0, we no longer use major.minor.edit version number,
   just major.minor.
@@ -97,22 +116,39 @@ static char sccsid[] = "@(#)C-Kermit 10.0";
   and it should always be incremented, for the benefit of packagers like
   Debian who depend on it.
   
-  Also the custom-format version numbers for OS/2, Windows, and the
-  original 1980s Macintosh are gone.  There are no more Kermit-2,
-  Kermit 95, and Mac Kermit, just C-Kermit for each platform.
+  Also the custom-format version numbers for the original 1980s Macintosh is
+  gone as there is no more Mac Kermit (for the original Macintosh), just
+  C-Kermit for each platform (except the original Mac) and Kermit 95.
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "400";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.400";           /* eXtended version string */
-long  ck_l_ver = 1000400L;              /* C-Kermit version number */
+char *ck_s_edit = "416";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.416";           /* eXtended version string */
+long  ck_l_ver = 1000415L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
 
+long  ck_l_xver;
+
+#ifdef OS2
+/* Kermit 95 for Windows and OS/2 */
+char *ck_s_k95ver = K95_VERSION_MAJ_MIN_REV; /* Product-specific version string */
+long  ck_l_k95ver = K95_VERSION_L;           /* Product-specific version number */
+#ifdef IKSDONLY
+#ifdef NT
+char *ck_s_k95name = "IKS-NT";
+#else /* NT */
+char *ck_s_k95name = "IKS-OS/2";
+#endif /* NT */
+#else /* IKSDONLY */
+char *ck_s_k95name = "Kermit 95";          /* Program name */
+#endif /* IKSDONLY */
+#endif /* OS2 */
+
 #define CKVERLEN 128
 char versiox[CKVERLEN];                 /* Version string buffer  */
 char *versio = versiox;                 /* These are filled in at */
-long vernum;                            /* runtime from above.    */
+long vernum, xvernum;                   /* runtime from above.    */
 
 #define CKCMAI
 
@@ -208,6 +244,7 @@ char *copyright[] = {
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
+" ",
 "Portions Copyright (C) 1990, Massachusetts Institute of Technology.",
 #ifdef CK_ENCRYPTION
 "Portions Copyright (C) 1991, 1993 Regents of the University of California.",
@@ -276,7 +313,7 @@ ACKNOWLEDGMENTS:
    Ian Beckwith, Debian Project
    Nelson Beebe, U of Utah
    Gerry Belanger, Cognitronics
-   Edward Berner,
+   Edward Berner
    Karl Berry, UMB
    Mark Berryman, SAIC
    Dean W Bettinger, SUNY
@@ -320,7 +357,7 @@ ACKNOWLEDGMENTS:
    Nick Efthymiou
    Paul Eggert, Twin Sun, Inc., El Segundo, CA
    Bernie Eiben, DEC
-   Peter Eichhorn, Assyst International
+   Peter Eichhorn, Assyst International, Munich, Germany
    Kristoffer Eriksson, Peridot Konsult AB, Oerebro, Sweden
    John R. Evans, IRS, Kansas City
    Glenn Everhart, RCA Labs
@@ -335,7 +372,7 @@ ACKNOWLEDGMENTS:
    Chuck Fuller, Westinghouse Corporate Computer Services
    Andy Fyfe, Caltech
    Christine M. Gianone, Columbia U
-   David Goodwin, NZ,
+   David Goodwin, NZ
    John Gilmore, UC Berkeley
    Madhusudan Giyyarpuram, HP
    Rainer Glaschick, Siemens AG, Paderborn
@@ -366,7 +403,7 @@ ACKNOWLEDGMENTS:
    Ron Heiby, Technical Systems Division, Motorola Computer Group
    Steve Hemminger, Tektronix
    Christian Hemsing, RWTH Aachen, Germany (OS-9)
-   Randolph Herber, US DOE,
+   Randolph Herber, US DOE
    Andrew Herbert, Monash Univ, Australia
    Marcus Herbert, Germany
    Mike Hickey, ITI
@@ -385,6 +422,7 @@ ACKNOWLEDGMENTS:
    Eric F Jones, AT&T
    Luke Jones, AT&T
    Peter Jones, U of Quebec Montreal
+   Steven M Jones, the Living Computer Museum
    Phil Julian, SAS Institute
    Peter Kabal, U of Quebec
    Mic Kaczmarczik, U of Texas at Austin
@@ -422,6 +460,7 @@ ACKNOWLEDGMENTS:
    Tor Lillqvist, Helsinki U, Finland
    David-Michael Lincke, U of St Gallen, Switzerland
    Robert Lipe (for SCO makefile entries & advice)
+   Dr. Eberhard W Lisse, Namibia
    Dean Long
    Mike Long, Analog Devices, Norwood MA
    Kevin Lowey, U of Saskatchewan (OS/2)
@@ -486,7 +525,7 @@ ACKNOWLEDGMENTS:
    Stew Rubenstein, Harvard U (VMS)
    Gerhard Rueckle, FH Darmstadt, Fb. E/Automatisierungstechnik
    John Santos, EG&H
-   Mark Sapiro,
+   Mark Sapiro
    Bill Schilit, Columbia U
    Ulli Schlueter, RWTH Aachen, Germany (OS-9, etc)
    Michael Schmidt, U of Paderborn, Germany
@@ -511,7 +550,7 @@ ACKNOWLEDGMENTS:
    Fred Smith, Merk / Computrition
    Richard S Smith, Cal State
    Tim Sneddon
-   Bernard Spil,
+   Bernard Spil
    Ryan Stanisfer, UNT
    Bertil Stenstroem, Stockholm University Computer Centre (QZ), Sweden
    James Sturdevant, CAP GEMENI AMERICA, Minneapolis
@@ -575,22 +614,29 @@ ACKNOWLEDGMENTS:
 #include "ck_ssl.h"
 #endif /* CK_SSL */
 
-#ifndef NOSPL
 #include "ckuusr.h"
-#endif /* NOSPL */
 
 #ifdef OS2ONLY
 #define INCL_VIO                        /* Needed for ckocon.h */
 #include <os2.h>
+#include <process.h>                    /* for getpid() */
 #undef COMMENT
 #endif /* OS2ONLY */
 
 #ifdef NT
 #include <windows.h>
-#ifndef NODIAL
+#include <process.h>                    /* for getpid() */
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif /* NODIAL */
+#endif /* CK_TAPI */
+
+int setOSVer();                         /* ckotio.c */
+int ttgcwsz();                          /* ckocon.c */
+
+#ifdef CK_LOGIN
+VOID setntcreds();
+#endif /* CK_LOGIN */
 #endif /* NT */
 
 #ifndef NOSERVER
@@ -1207,6 +1253,11 @@ extern int mdmtyp;                      /* Modem (/network) type */
 
 #ifdef NT
 extern int StartedFromDialer;
+#ifndef NOSPL
+#ifndef NORANDOM
+unsigned long srandThreadId = 0;
+#endif /*NORANDOM*/
+#endif /*NOSPL*/
 #ifdef NTSIG
 extern int TlsIndex;
 #endif /* NTSIG */
@@ -1234,6 +1285,7 @@ int cmd_rows = -1, cmd_cols = -1;       /* Command/console screen dimensions */
 #endif /* KUI */
 int k95stdio = 0;                       /* Stdio threads */
 int tt_bell = XYB_AUD | XYB_SYS;        /* BELL AUDIBLE (system sounds) */
+int tt_scroll_usr = 1;                  /* Saved value for tt_scroll */
 #else /* OS2 */
 int tt_rows = -1;                       /* Rows (height) */
 int tt_cols = -1;                       /* Columns (width) */
@@ -1346,6 +1398,9 @@ int deblog = 0,                         /* Debug log is open */
     dest   = DEST_D,                    /* Destination for packet data */
     zchkod = 0,                         /* zchko() should work for dirs too? */
     zchkid = 0,                         /* zchki() should work for dirs too? */
+#ifdef VMS
+    vms_text = VMSTFS,                  /* VMS text file dflt fmt: Stream_LF */
+#endif /* VMS */
 
 /* If you change this, also see struct ptab above... */
 
@@ -1392,6 +1447,9 @@ int deblog = 0,                         /* Debug log is open */
     cnflg  = 0,                         /* Connect after transaction */
     cxseen = 0,                         /* Flag for cancelling a file */
     czseen = 0,                         /* Flag for cancelling file group */
+#ifdef OS2
+    ccseen = 0,                         /* Flag for canceling autodownload */
+#endif /* OS2 */
     fatalio = 0,                        /* Flag for fatal i/o error */
     discard = 0,                        /* Flag for file to be discarded */
     keep = SET_AUTO,                    /* Keep incomplete files = AUTO */
@@ -1453,6 +1511,8 @@ int ckxsyslog = SYSLG_DF;               /* Default logging level */
 _PROTOTYP( VOID iniopthlp, (void) );    /* Command-line help initializer */
 #endif /* NOCMDL */
 #endif /* NOHELP */
+
+_PROTOTYP( VOID initfloat, (void) );    /* Floating-point initializer */
 
 _PROTOTYP( VOID makever, (void) );
 _PROTOTYP( VOID getexedir, (void) );
@@ -1627,17 +1687,12 @@ cc_clean();                             /* This can't be right? */
 #endif /* NOCCTRAP */
 
 #ifdef TIMEH
-#ifdef MULTINET /*AGN 27-Oct-2021 time.h and Multinet clash*/
-/*    Under Multinet, the 5th parameter to select() */
-/*    is a "void" and not a "struct timeval", so */
-/*    use the Multinet include file instead */
-#include "multinet_root:[multinet.include.sys]time.h"
-#else
 /* This had to be added for NetBSD 6.1 - it might have "effects" elsewhere */
 /* Tue Sep  3 17:03:42 2013 */
 #include <time.h>
-#endif /* MULTINET */
 #endif /* TIMEH */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifndef NOXFER
 /* Info associated with a system ID */
@@ -1671,8 +1726,12 @@ static int nxxsysids = (sizeof(sysidlist) / sizeof(struct sysdata));
 /* and some properties of the filenames... */
 
 char *
-getsysid(s) char * s; {                 /* Get system-type name */
-    int i;
+#ifdef CK_ANSIC
+getsysid( char *s )                     /* Get system-type name */
+#else
+getsysid(s) char * s;
+#endif /* CK_ANSIC */
+{    int i;
     if (!s) return("");
     for (i = 0; i < nxxsysids; i++)
       if (!strcmp(sysidlist[i].sid_code,s))
@@ -1681,7 +1740,12 @@ getsysid(s) char * s; {                 /* Get system-type name */
 }
 
 int
-getsysix(s) char *s; {                  /* Get system-type index */
+#ifdef CK_ANSIC
+getsysix(char *s)
+#else
+getsysix(s) char *s;
+#endif /* CK_ANSIC */
+{                                       /* Get system-type index */
     int i;
     if (!s) return(-1);
     for (i = 0; i < nxxsysids; i++)
@@ -1696,7 +1760,12 @@ getsysix(s) char *s; {                  /* Get system-type index */
 /* VMS isabsolute() is now in ckvfio.c. */
 #ifndef VMS
 int
-isabsolute(path) char * path; {
+#ifdef CK_ANSIC
+isabsolute( char * path )
+#else
+isabsolute(path) char * path;
+#endif /* CK_ANSIC */
+{
     int rc = 0;
     int x;
     if (!path)
@@ -1768,7 +1837,12 @@ isabsolute(path) char * path; {
 /*  See if I have direct access to the keyboard  */
 
 int
-is_a_tty(n) int n; {
+#ifdef CK_ANSIC
+is_a_tty( int n )
+#else
+is_a_tty(n) int n;
+#endif /* CK_ANSIC */
+{
 #ifdef UNIX
     extern int ttfdflg;
     if (ttfdflg > 0)
@@ -1794,8 +1868,14 @@ is_a_tty(n) int n; {
 }
 
 #ifndef NOXFER
+#ifdef CK_ANSIC
+void
+initxlist( void )
+#else
 VOID
-initxlist() {
+initxlist()
+#endif /* CK_ANSIC */
+{
     extern char * sndexcept[], * rcvexcept[];
     int i;
     for (i = 0; i < NSNDEXCEPT; i++) {
@@ -1807,8 +1887,16 @@ initxlist() {
 
 /* Initialize flow control table */
 
+
+#ifdef CK_ANSIC
+void
+initflow( void )
+
+#else
 VOID
-initflow() {                            /* Default values for flow control */
+initflow()
+#endif /* CK_ANSIC */
+{                                       /* Default values for flow control */
 #ifdef VMS                              /* for each kind of connection. */
     /* The VMS telnet terminal driver treats "none" as request to lose chars */
     cxflow[CXT_REMOTE]  = FLO_XONX;     /* Remote mode... */
@@ -1861,10 +1949,14 @@ initflow() {                            /* Default values for flow control */
 /* Initialize file transfer protocols */
 
 VOID
+#ifdef CK_ANSIC
+initproto( int y, char * upbstr, char * uptstr, char * srvstr, char * sndbstr, char * sndtstr, char * rcvbstr, char * rcvtstr )
+#else
 initproto(y, upbstr, uptstr, srvstr, sndbstr, sndtstr, rcvbstr, rcvtstr)
     int y;
     char * upbstr, * uptstr, * srvstr, * sndbstr, * sndtstr, * rcvbstr,
     * rcvtstr;
+#endif /* CK_ANSIC */
 /* initproto */ {
 
     if (upbstr)                         /* Convert null strings */
@@ -1974,8 +2066,12 @@ docmdline(threadinfo) VOID * threadinfo;
    return;
 }
 
-void
-ikslogin() {
+#ifdef CK_ANSIC
+void ikslogin ( void )
+#else
+VOID ikslogin (  )
+#endif /* CK_ANSIC */
+{
     if (sstelnet
 #ifdef IKSD
         || inserver                     /* Internet server */
@@ -2559,8 +2655,16 @@ command-line processing.");
 #endif /* NOICP */
 
 #ifndef NOXFER
+
+
+#ifdef CK_ANSIC                         /* Initial control-char prefixing */
+void
+setprefix ( int z )
+#else
 VOID
-setprefix(z) int z; {                   /* Initial control-char prefixing */
+setprefix(z) int z;
+#endif /* CK_ANSIC */
+{
 #ifdef CK_SPEED
     int i, val;
 
@@ -2648,21 +2752,34 @@ setprefix(z) int z; {                   /* Initial control-char prefixing */
 char myherald[MAXHERALDLEN+2];          /* for \v(herald) */
 char myoptions[MAXHERALDLEN];           /* and extra bits like SSL etc */
 
+#ifdef CK_ANSIC                          /* Make version string from pieces */
+void
+makever ( void )
+#else
 VOID
-makever() {                             /* Make version string from pieces */
+makever ( )
+#endif /* CK_ANSIC */
+{
     extern int noherald, backgrd;
     extern char * ckxsys;
     int x, y;
-    char * s;
     char * ssl;                         /* These moved from herald() */
     char * krb4;
     char * krb5;
     char * b64;
 
+#ifdef OS2
+    ck_s_xver = ck_s_k95ver;
+    ck_l_xver = ck_l_k95ver;
+    ck_s_name = ck_s_k95name;
+#else /* OS2 */
+    ck_l_xver = ck_l_ver;
+#endif /* OS2 */
+
     x = strlen(ck_s_name);
     y = strlen(ck_s_ver);
     if (y + x + 1 < CKVERLEN) {
-        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_ver,NULL);
+        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_xver,NULL);
     } else {
         ckstrncpy(versio,"C-Kermit",CKVERLEN);
         return;
@@ -2695,6 +2812,7 @@ makever() {                             /* Make version string from pieces */
         ckstrncat(versio,ck_s_date,CKVERLEN);
     }
     vernum = ck_l_ver;
+    xvernum = ck_l_xver;
     debug(F110,"makever Kermit version",versio,0);
 
 #ifdef COMMENT
@@ -2762,15 +2880,21 @@ int bigendian = 1;
 #ifndef NOTCPIP
 #ifndef NOCMDL
 #ifndef NOURL
+#ifdef CK_ANSIC
 VOID
-dourl() {
+dourl( void )
+#else
+VOID
+dourl()
+#endif /* CK_ANSIC */
+{
     int rc = 0;
     char * port = NULL;
     extern int ttnproto;
     extern struct urldata g_url;
 
 #ifdef COMMENT
-    /* NOTE: debug() doesn't work yet - must use printf's */
+    /* NOTE: debug() doesn't work here - must use printf's */
     printf("URL:  %s\n",g_url.sav ? g_url.sav : "(none)");
     printf("Type: %s\n",g_url.svc ? g_url.svc : "(none)");
     printf("User: %s\n",g_url.usr ? g_url.usr : "(none)");
@@ -2921,76 +3045,26 @@ if not eq {\\v(authstate)} {valid} { remote login ",
 #endif /* NETCONN */
 
 /*
-  main()...
+  main()...    What is its name and what does it return?
 
-  If you get complaints about "main: return type is not blah",
-  define MAINTYPE on the CC command line, e.g. "CFLAGS=-DMAINTYPE=blah"
-  (where "blah" is int, long, or whatever).
+  03 May 2023: This is a major restructuring of the main routine declaration.
+  All the complicated multilevel #ifdefs that have been here for decades
+  were moved to the new C-Kermit 10.0 prototypes header, ckcfnp.h, which
+  #defines MAINNAME and typedefs MAINTYPE.
 
-  If the complaint is "Attempt to return a value from a function of type void"
-  then add -DMAINISVOID.
+  If when building C-Kermit you get a complaint about main()'s return type,
+  edit MAINTYPE section ckcfnp.h.
+
+  If you get "Attempt to return a value from a function of type void" then 
+  add -DMAINISVOID to the make command line.
 */
-#ifndef MAINTYPE
-#ifndef MAINISVOID
-#define MAINTYPE int
-#endif /* MAINISVOID */
-#endif /* MAINTYPE */
-
-#ifdef MAINISVOID
-#ifndef MAINTYPE
-#define MAINTYPE void
-#endif /* MAINTYPE */
-#endif /* MAINISVOID */
-
-#ifdef aegis
-/* On the Apollo, intercept main to insert a cleanup handler */
-int
-ckcmai(argc,argv) int argc; char **argv;
+MAINTYPE
+#ifdef CK_ANSIC
+MAINNAME( int argc, char ** argv )
 #else
-#ifdef MAC                              /* Macintosh */
-int
-main (void)
-#else
-#ifdef __GNUC__                         /* GCC compiler */
-int
-main(argc,argv) int argc; char **argv;
-#else
-#ifdef __DECC                           /* DEC Alpha with DEC C compiler */
-#ifdef __ALPHA
-int
-main(argc,argv) int argc; char **argv;
-#else                                   /* DEC C compiler, not Alpha */
-#define MAINISVOID
-VOID
-main(argc,argv) int argc; char **argv;
-#endif  /* __ALPHA */
-#else
-#ifdef STRATUS                          /* Stratus VOS */
-int
-main(argc,argv) int argc; char **argv;
-#else                                   /* K-95 */
-#ifdef OS2
-#ifdef KUI
-#define MAINISVOID
-void
-Main( int argc, char ** argv )
-#else /* KUI */
-#define MAINISVOID
-VOID
-main(argc,argv) int argc; char **argv;
-#endif /* KUI */
-#else  /* Not K95 */
-MAINTYPE                                /* All others... */
-main(argc,argv) int argc; char **argv;
-#endif /* OS2 */
-#endif /* STRATUS */
-#endif /* __DECC */
-#endif /* __GNUC__ */
-#endif /* MAC */
-#endif /* aegis */
-
-/* main */ {
-
+MAINNAME( argc, argv ) int argc; char **argv;
+#endif /* CK_ANSIC */
+{
     char *p;
 
 #ifndef NOSETKEY
@@ -3002,11 +3076,11 @@ main(argc,argv) int argc; char **argv;
     *pfha = (short) 0;                  /* No user protection fault handler */
 #endif /* datageneral */
 
+#ifdef UNIX
     int unbuf = 0;			/* nonzero for unbuffered stdout */
 
 /* setbuf has to be called on the file descriptor before it is used */
 
-#ifdef UNIX
 #ifdef NONOSETBUF			/* Unbuffered console i/o */
     unbuf++;				/* as a compile-time option */
 #endif	/* NONOSETBUF */
@@ -3027,6 +3101,20 @@ main(argc,argv) int argc; char **argv;
     if (unbuf)
       setbuf(stdout,NULL);
 #endif	/* UNIX */
+
+    {                      /* Get OFF_T size for printf - fdc 06 Jan 2024 */
+        extern int offtsize; /* MUST be executed, which is why it's here */
+        short x1 = 1;
+        int x2 = 2;
+        long x3 = 3;
+        CK_OFF_T x4 = 4;
+        debug(F101,"sizeof short","",sizeof(x1));
+        debug(F101,"sizeof int","",sizeof(x2));
+        debug(F101,"sizeof long","",sizeof(x3));
+        debug(F101,"sizeof CK_OFF_T","",sizeof(x4));
+        offtsize = x4;
+        debug(F101,"main offtsize","",offtsize);
+    }
 
 /* Do some initialization */
 
@@ -3138,9 +3226,9 @@ main(argc,argv) int argc; char **argv;
 	h = homepath();
 	if (h) ckstrncpy(homedirpath,h,CKMAXPATH);
     }
-#ifdef UNIX
+#ifdef GETEXEDIR
     getexedir();                        /* Compute exedir variable */
-#endif /* UNIX */
+#endif /* def GETEXEDIR */
 
 #ifdef CKSYSLOG
 #ifdef SYSLOGLEVEL
@@ -3190,11 +3278,11 @@ main(argc,argv) int argc; char **argv;
 
     initflow();                         /* Initialize flow-control table */
 
-#ifndef NOICP
+#ifndef NOSPL
 #ifdef CKFLOAT
     initfloat();                        /* Deduce floating-point precision */
 #endif /* CKFLOAT */
-#endif /* NOICP */
+#endif /* NOSPL */
 
 #ifndef NOXFER
     initxlist();			/* Init exception lists */
@@ -3280,6 +3368,13 @@ main(argc,argv) int argc; char **argv;
         for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
 	  c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
         srand((unsigned int)c);
+#ifdef NT
+        /* In Windows, the random number generator seed is per-thread. And the
+         * thread we're on right now probably isn't the thread that \frandom()
+         * will get executed on later. Store the thread ID so we know later if
+         * we need to do this again */
+        srandThreadId = GetCurrentThreadId();
+#endif /* NT */
     }
 #endif /* NORANDOM */
 #endif /* NOSPL */
@@ -3330,17 +3425,16 @@ main(argc,argv) int argc; char **argv;
         || inserver
 #endif /* IKSD */
         ) {
-        int on = 1, x = 0;
         extern int ckxech, ttnet, ttnproto, cmdmsk;
 #ifdef SO_SNDBUF
         extern int tcp_sendbuf;
-#endif
+#endif /* SO_SNDBUF */
 #ifdef SO_RCVBUF
         extern int tcp_recvbuf;
-#endif
+#endif /* SO_RCVBUF */
 #ifdef SO_KEEPALIVE
         extern int tcp_keepalive;
-#endif
+#endif /* SO_KEEPALIVE */
 #ifdef SO_LINGER
         extern int tcp_linger, tcp_linger_tmo;
 #endif /* SO_LINGER */
@@ -3415,14 +3509,20 @@ main(argc,argv) int argc; char **argv;
 #endif /* CK_AUTHENTICATION */
 
 #ifdef NON_BLOCK_IO
-        on = 1;
-        x = socket_ioctl(0,FIONBIO,&on);
-        debug(F101,"main FIONBIO","",x);
+        {
+            int on, x;
+            on = 1;
+            x = socket_ioctl(0,FIONBIO,&on);
+            debug(F101,"main FIONBIO","",x);
+        }
 #endif /* NON_BLOCK_IO */
 #ifdef SO_OOBINLINE
-        on = 1;
-        x = setsockopt(0, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on));
-        debug(F101,"main SO_OOBINLINE","",x);
+        {
+            int on, x;
+            on = 1;
+            x = setsockopt(0,SOL_SOCKET,SO_OOBINLINE,(char *)&on,sizeof(on));
+            debug(F101,"main SO_OOBINLINE","",x);
+        }
 #endif /* SO_OOBINLINE */
 
 #ifndef NOTCPOPTS
@@ -3539,6 +3639,7 @@ main(argc,argv) int argc; char **argv;
     }
     debug(F111,"howcalled",myname,howcalled);
 
+#ifndef NOICP
 #ifdef NOCCTRAP
     dotakeini(0);
 #else /* NOCCTRAP */
@@ -3546,15 +3647,18 @@ main(argc,argv) int argc; char **argv;
     setint();
     cc_execute( ckjaddr(cmjbuf), dotakeini, failtakeini );
 #endif /* NOCCTRAP */
+#endif /* NOICP */
 
     debug(F111,"main 2 cfilef",cmdfil,cfilef);
     if (cmdfil[0]) {                    /* If we got one (see prescan())... */
+#ifndef NOICP
 #ifdef NOCCTRAP
         docmdfile(0);                   /* execute it. */
 #else /* NOCCTRAP */
         setint();
         cc_execute( ckjaddr(cmjbuf), docmdfile, failcmdfile );
 #endif /* NOCCTRAP */
+#endif /* NOICP */
     }
 #ifndef OS2                             /* Preserve name so we can delete it */
     *cmdfil = '\0';                     /* Done, nullify the file name */
@@ -3701,12 +3805,16 @@ main(argc,argv) int argc; char **argv;
 #endif /* MAINISVOID */
 }
 
-
 #ifdef DYNAMIC
 /* Allocate file i/o buffers */
 
 int
-getiobs() {
+#ifdef CK_ANSIC
+getiobs ( void )
+#else
+getiobs ( )
+#endif /* CK_ANSIC */
+{
     zinbuffer = (char *)malloc(INBUFSIZE);
     if (!zinbuffer) return(-1);
     zoutbuffer = (char *)malloc(zobufsize);

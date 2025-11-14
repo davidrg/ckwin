@@ -85,7 +85,7 @@ void KProgress::paint( int p )
     FillRect( hMemDC, &rect1, backBrush );
 
     SetTextColor( hMemDC, back );
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     DrawTextEx( hMemDC, c, -1, &rect1
         , DT_VCENTER | DT_SINGLELINE | DT_CENTER, NULL );
 #else
@@ -101,7 +101,7 @@ void KProgress::paint( int p )
     FillRect( hMemDC, &rect2, fillBrush );
 
     SetTextColor( hMemDC, fore );
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     DrawTextEx( hMemDC, c, -1, &rect2
         , DT_VCENTER | DT_SINGLELINE | DT_CENTER, NULL );
 #else

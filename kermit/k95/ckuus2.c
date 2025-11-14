@@ -8,21 +8,26 @@
       Secure Endpoints Inc., New York City
     David Goodwin, New Zealand.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last updates: 22 Aug 2022 (HELP TYPE adds /INTERPRET switch).
                   20 Sep 2022 (HELP COPY adds /INTERPRET, /TOSCREEN switches).
+                  06 Nov 2022 (fixed formatting of HELP SET TELNET).
+                  12 Nov 2022 (converted four function help strings to arrays).
+                  02 Dec 2022 (changed ssh v2 macs list in windows "help ssh").
+                  03 Dec 2022 (fixed misplaced definition of cr_year).
+                  12 Apr 2023 (ANSI-ize function definitions)
+                  25 Jan 2024 (Added HELP REMOTE STATUS)
+                  03 Feb 2024 (Added HELP REMOTE CWD)
 
   This module contains HELP command and other long text strings.
 
-  IMPORTANT: Character string constants longer than about 250 are not portable.
-  Longer strings should be broken up into arrays of strings and accessed with
-  hmsga() rather than hmsg().  (This statement was true in the 1980s and
-  probably is not a big concern in the 21st Century, but you never know;
-  there still might exist some 16-bit platforms and C compilers that have
-  restrictions like this.
+  IMPORTANT: As of 2022, character string constants longer than about 509 are
+  not portable.  Longer strings should be broken up into arrays of strings and
+  accessed with hmsga() rather than hmsg().  The length limit might be lower
+  in older C compilers.
 */
 #include "ckcsym.h"
 #include "ckcdeb.h"
@@ -47,10 +52,21 @@
 #include "ckocon.h"
 #include "ckokvb.h"
 #include "ckokey.h"
+#include "ckover.h"             /* This really should be ckover.h */
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif
+#ifndef NOLOCAL
+int ttgcwsz();                  /* ckocon.c */
+#endif /* NOLOCAL */
 #endif /* OS2 */
 
-extern char * ck_cryear;		/* For copyright notice */
+#ifdef CK_ANSIC
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
+static int dohfile( int );              /* Prototype for static func */
+#endif /* CK_ANSIC */
 
+extern char * ck_cryear;		/* For copyright notice */
 extern xx_strp xxstring;
 extern char * ccntab[];
 /*
@@ -163,6 +179,7 @@ static char *tophlp[] = {
 };
 
 #ifndef NOIKSD
+#ifdef NOHELP
 static char *tophlpi[] = {              /* Top-level help for IKSD */
 
 "Trustees of Columbia University in the City of New York.\n",
@@ -184,38 +201,54 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 "Kermit Project website, http://www.kermitproject.org/.",
 ""
 };
+#endif /* NOHELP */
 #endif /* NOIKSD */
 
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, the Open-Source successor to",
-#else
-"Welcome to C-Kermit for OS/2, the Open-Source successor to",
-#endif
-"Columbia University's Kermit 95 package.",
+        "Welcome to Kermit 95 " K95_VERSION_MAJ_MIN_REV ", the Open-Source Successor",
+        "to Columbia Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
 " ",
-"THIS IS A PRERELEASE TEST VERSION NOT YES SUITABLE FOR PRODUCTION USE.",
+"THIS IS A PRERELEASE TEST VERSION NOT YET SUITABLE FOR PRODUCTION USE.",
 "FOR DETAILS, SEE http://www.kermitproject.org/ckw10beta.html",
 #endif /* BETATEST */
 
 " ",
-"Major new features since the final Kermit 95 release include:",
+"Major new features since the final commercial Kermit 95 release include:",
 " . Open Source Simplified 3-Clause BSD License",
 #else
 "Welcome to C-Kermit 10.0.",
 "New features since version 9.0 of 2011 include:",
 #endif /* OS2 */
 #ifdef OS2
-" . Source code!  The Windows edition of C-Kermit, formerly known",
-"   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
+" . Source code! Kermit 95 is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
-" . Up-to-date fully exportable SSH v2 client",
+" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0",
+#ifdef NT
+/* These features are currently Windows-only */
+" . Up-to-date fully exportable SSH v2 client (Windows XP or newer only)",
+" . Up-to-date TLS support for http, ftp and telnet (Windows XP or newer only)",
+" . PTY support on Windows 10 version 1809 and newer",
+" . Named Pipe connections",
+" . Now available as a 64bit application (x86-64, ARM64, Itanium)",
 " . Mouse wheel support, customizable with SET MOUSE WHEEL",
 "    (see HELP SET MOUSE for details)",
+" . X10, X11, URXVT and SGR mouse reporting",
+" . REXX script interface on Windows NT 3.51 and newer",
+" . 24-bit RGB color support and xterms 256-color mode",
+" . Screen update interval can be changed in K95G",
+" . The Toolbar, Statusbar and menubar can now be shown and hidden without ",
+"   restarting K95. When the menubar is off, a menu is available on the titlebar",
+#endif
+" . ADM5 and ADDS Regent 25 terminal emulations",
+" . Support for additional escape sequences from the VT420, VT520 and xterm",
+"   including OSC-52 clipboard integration, VT420 text macros and more",
+" . New K95 terminal type with its own terminfo entry",
+" . Half-screen scroll kverbs",
+" . Lots of bug fixes and other improvements",
 #endif /* OS2 */
 #ifndef OS2
 #ifdef COMMENT
@@ -261,8 +294,11 @@ char *newstxt[] = {
 " . https://www.kermitproject.org/ckbindex.html",
 "    Online index to C-Kermit documentation.",
 #ifdef OS2
+/* The manual has been updated for K95 v3.0, so we should link to that instead.
 " . https://kermitproject.org/k95manual/index.html",
-"    The Kermit 95 manual from 1995-2003.",
+"    The Kermit 95 manual from 1995-2003.",   */
+" . https://davidrg.github.io/ckwin/current/",
+"    The latest Kermit 95 manual.",
 #endif /* OS2 */
 " . https://www.kermitproject.org/ckututor.html",
 "    C-Kermit tutorial.",
@@ -273,7 +309,7 @@ char *newstxt[] = {
 "  https://www.kermitproject.org/ (Kermit Project home page)",
 "  https://www.kermitproject.org/ckermit.html (C-Kermit home page)",
 #ifdef BETATEST
-"  https://www.kermitproject.org/ckupdates.html (Beta test progress)",
+"  https://www.kermitproject.org/ckupdates.html (C-Kermit change log)",
 "  https://www.kermitproject.org/ck10devbuilds.html (Beta test builds table)",
 #endif /* BETATEST */
 " ",
@@ -290,11 +326,7 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, communication software for:",
-#else
-"Welcome to C-Kermit for OS/2, communication software for:",
-#endif
+"Welcome to Kermit 95, communication software for:",
 #else
 #ifdef UNIX
 "Welcome to UNIX C-Kermit communications software for:",
@@ -353,7 +385,7 @@ char *introtxt[] = {
 "   - Telnet sessions",
 #endif /* TNCODE */
 #ifdef SSHBUILTIN
-"   - SSH v1 and v2 connections",
+"   - SSH v2 connections",
 #else
 #ifdef ANYSSH
 "   - SSH connections via external agent",
@@ -554,11 +586,11 @@ char *introtxt[] = {
 
 #ifdef NT
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K-95> prompt:",
 #else
 #ifdef OS2
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K/2> prompt:",
 #else
 " ",
 "To return from a terminal connection to the C-Kermit prompt:",
@@ -587,6 +619,9 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 "about the manual, visit:",
 "  http://www.kermitproject.org/usingckermit.html",
 " ",
+"For an online Kermit 95 tutorial, vist:",
+"  http://www.kermitproject.org/k95tutor.html",
+" ",
 "For an online C-Kermit tutorial, visit:",
 "  http://www.kermitproject.org/ckututor.html",
 " ",
@@ -603,6 +638,66 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 "For information about technical support please visit this page:",
 " ",
 "  http://www.kermitproject.org/support.html",
+""
+};
+
+static char * hmfstrcmp[] = {
+"\\fstrcmp(s1,s2[,case[,start[,length]]])",
+"  s1, s2 = strings",
+"  case, start, length = numbers or arithmetic expressions.",
+"    case = 0 [default] means to do a case-independent comparison;",
+"    nonzero case requests a case-sensitive comparison.",
+"    The optional start and length arguments apply to both s1 and s2",
+"    and allow specification of substrings if it is not desired to compare",
+"    the whole strings.  Results for non-ASCII strings are implentation-",
+"    and locale-dependent.",
+"  Returns a number:",
+"    -1: s1 is lexically less than s2;",
+"     0: s1 and s2 are lexically equal;",
+"     2: s1 is lexically greater than s2.",
+""
+};
+
+static char * hmffileinfo[] = {
+"\\ffileinfo(s1,&a)",
+"  s1 = file specification string",
+"  &a = array designator for results (required)",
+"  Returns a number:",
+"     0: File not found or not accessible or bad arguments;",
+"    >0: The number of attributes returned in the array, normally 7, 8, or 9",
+" 1. The file's name",
+" 2. The full path of the directory where the file resides",
+" 3. The file's modification date-time yyyymmdd hh:mm:ss",
+" 4. Platform-specific permissions string, e.g. drwxrwxr-x or RWED,RWE,RE,E",
+" 5. Platform-specific permissions code, e.g. an octal number like 40775",
+" 6. The file's size in bytes",
+" 7. Type: regular file, executable, directory, link, or unknown",
+" 8. If link, the name of the file linked to",
+" 9. Transfer mode for file: text or binary.",
+""
+};
+
+static char * hmfdayname[] = {
+"\\fdayname(s1,n)",
+"  s1 = free-format date OR day-of-week number 1-7 OR leave blank.",
+"  n  = function code: 0 to return full name; nonzero to return abbreviation.",
+"  Returns a string: the name of the weekday for the given date or weekday",
+"    number or, if s1 was omitted, of the current date, in the language and",
+"    character-set specified by the locale.  If n is nonzero, the result",
+"    is abbreviated in the locale-appropriate way.  If given inappropriate",
+"    arguments, the result is empty and an error message is printed.",
+""
+};
+
+static char * hmfmonname[] = {
+"\\fmonthname(s1,n)",
+"  s1 = free-format date OR month-of-year number 1-12 OR leave blank.",
+"  n  = function code: 0 to return full name; nonzero to return abbreviation.",
+"  Returns a string: the name of the month for the given date or month",
+"    number or, if s1 was omitted, of the current date, in the language and",
+"    character-set specified by the locale.  If n is nonzero, the result",
+"    is abbreviated in the locale-appropriate way.  If given inappropriate",
+"    arguments, the result is empty and an error message is printed.",
 ""
 };
 
@@ -646,24 +741,48 @@ static char * hmxygui[] = {
 "  choices.  The size can be a whole number or can contain a decimal point",
 "  and a fraction (which is rounded to the nearest half point).",
 " ",
-"SET GUI MENUBAR OFF",
+"SET GUI MENUBAR DISABLED",
 "  Disables menubar functions which could be used to modify the Kermit",
 "  session configuration.  Once disabled the menubar functions cannot be",
-"  re-enabled.", 
+"  re-enabled.",
+" ",
+"SET GUI MENUBAR VISIBLE { ON, OFF }",
+"  Shows or hides the menubar. When the menu bar is turned off in this way,",
+"  some important items are moved from the menu bar to the window menu",
+"  accessible by right-clicking on the titlebar or window icon. If the ",
+"  menubar was disabled using either the --nomenubar or --nobars command ",
+"  line options, then the menu bar can not be turned back on with this",
+"  command and no additional items appear in the window menu.",
 " ",
 "SET GUI RGBCOLOR colorname redvalue greenvalue bluevalue",
 "  Specifies the red-green-blue mixture to be used to render the given",
 "  color name.  Type \"set gui rgbcolor\" to see a list of colornames.",
-"  the RGB values are whole numbers from 0 to 255.",
+"  The RGB values are whole numbers from 0 to 255.",
 " ",
-"SET GUI TOOLBAR OFF", 
+"SET GUI RGBCOLOR INDEX colornumber redvalue greenvalue bluevalue",
+"  Specifies the red-green-blue mixture to be used to render the given",
+"  color number. This is primarily for setting how colors from the xterm",
+"  extended color palettes are rendered. The range for colornumber depends",
+"  on the current palette set by SET TERM COLOR PALETTE. To view current",
+"  settings, you can use the SHOW GUI command. The RGB values are whole",
+"  numbers from 0 to 255.",
+" ",
+"SET GUI TOOLBAR DISABLED",
 "  Disables toolbar functions which could be used to modify the Kermit",
 "  session configuration.  Once disabled the toolbar functions cannot be",
-"  re-enabled.", 
+"  re-enabled.",
+" ",
+"SET GUI STATUSBAR { ON, OFF }",
+"  Shows or hides the statusbar. Only works if K95G was not started with",
+"  the --nostatusbar or --nobars command line options."
+" ",
+"SET GUI TOOLBAR VISIBLE { ON, OFF }",
+"  Shows or hides the toolbar. Only works if K95G was not started with ",
+"  the --notoolbar or --nobars command line options."
 " ",
 "SET GUI WINDOW POSITION x y",
 "  Moves the C-Kermit window to the given X,Y coordinates, pixels from top",
-"  left.  (Not yet implemented -- use command-line options to do this.)",
+"  left.",
 " ",
 "SET GUI WINDOW RESIZE-MODE { CHANGE-DIMENSIONS, SCALE-FONT }",
 "  Default is CHANGE-DIMENSIONS.",
@@ -703,126 +822,38 @@ static char * hmxxfunc[] = {
 ""
 };
 
+#ifdef SSHBUILTIN
+static const char * hmxxskrm[] = {
+"SKERMIT [ OPEN ] host [ port ] /PASSWORD:pwd /USER:username",
+"  This is an approximate synonym for: ",
+"    SSH OPEN host port /PASSWORD:pwd /USER:username /SUBSYSTEM:kermit",
+"  Which opens an SSH connection to the host using the kermit subsystem. This",
+"  requires kermit to be registered as a subsystem with the remote SSH server.",
+"  For more details on this, see: https://kermitproject.org/skermit.html",
+""
+};
+#endif /* SSHBUILTIN */
+
 #ifdef ANYSSH
 static char * hmxxssh[] = {
 #ifdef SSHBUILTIN
-"Syntax: SSH { ADD, AGENT, CLEAR, KEY, [ OPEN ], V2 } operands...",
-"  Performs an SSH-related action, depending on the keyword that follows:",
+/* In Kermit 95, help content is provided by the currently loaded SSH backend.
+ * This help text will only be output when no backend is loaded. If K95 was
+ * built with SSHBUILTIN and not SSH_DLL, then the SSH backend is compiled in
+ * so can never not be loaded.
+ */
+#ifdef SSH_DLL
+"SSH LOAD filename",
+"  This command is only available when no SSH backend DLL was loaded on ",
+"  startup, either due to there being no compatible DLL available or due to",
+"  the loading of optional network libraries being disabled via command line",
+"  parameter. ",
 " ",
-"SSH ADD LOCAL-PORT-FORWARD local-port host port",
-"  Adds a port forwarding triplet to the local port forwarding list.",
-"  The triplet specifies a local port to be forwarded and the hostname /",
-"  ip-address and port number to which the port should be forwarded from",
-"  the remote host.  Port forwarding is activated at connection",
-"  establishment and continues until the connection is terminated.",
+"  This command takes one or more DLL filenames separated by a semicolon (;)",
+"  which will attempted in order. The first DLL that loads successfully will",
+"  enable all SSH commands and be used for all SSH operations until Kermit is",
+"  restarted.",
 " ",
-"SSH ADD REMOTE-PORT-FORWARD remote-port host port",
-"  Adds a port forwarding triplet to the remote port forwarding list.",
-"  The triplet specifies a remote port to be forwarded and the",
-"  hostname/ip-address and port number to which the port should be",
-"  forwarded from the local machine.  Port forwarding is activated at",
-"  connection establishment and continues until the connection is",
-"  terminated.",
-" ",
-"SSH AGENT ADD [ identity-file ]",
-"  Adds the contents of the identity-file (if any) to the SSH AGENT",
-"  private key cache.  If no identity-file is specified, all files",
-"  specified with SET SSH IDENTITY-FILE are added to the cache.",
-" ",
-"SSH AGENT DELETE [ identity-file ]",
-"  Deletes the contents of the identity-file (if any) from the SSH AGENT",
-"  private key cache.  If no identity-file is specified, all files",
-"  specified with SET SSH IDENTITY-FILE are deleted from the cache.",
-" ",
-"SSH AGENT LIST [ /FINGERPRINT ]",
-"  Lists the contents of the SSH AGENT private key cache.  If /FINGERPRINT",
-"  is specified, the fingerprint of the private keys are displayed instead",
-"  of the keys.",
-" ",
-"SSH CLEAR LOCAL-PORT-FORWARD",
-"  Clears the local port forwarding list.",
-" ",
-"SSH CLEAR REMOTE-PORT-FORWARD",
-"  Clears the remote port forwarding list.",
-" ",
-"SSH KEY commands:",
-"  The SSH KEY commands create and manage public and private key pairs",
-"  (identities).  There are four forms of SSH keys.  Each key pair is",
-"  stored in its own set of files:",
-" ",
-"   Key Type      Private Key File           Public Key File",
-"    RSA keys      \\v(home).ssh/id_rsa       \\v(home).ssh/id_rsa.pub",
-"    DSA keys      \\v(home).ssh/id_dsa       \\v(home).ssh/id_dsa.pub",
-"    ECDSA keys    \\v(home).ssh/id_ecdsa     \\v(home).ssh/id_ecdsa.pub",
-"    ED25519 keys  \\v(home).ssh/id_ed25519   \\v(home).ssh/id_ed25519.pub",
-" ",
-"  Keys are stored using the OpenSSH keyfile format.  The private key",
-"  files can be (optionally) protected by specifying a passphrase.  A",
-"  passphrase is a longer version of a password.  English text provides",
-"  no more than 2 bits of key data per character.  56-bit keys can be",
-"  broken by a brute force attack in approximately 24 hours.  When used,",
-"  private key files should therefore be protected by a passphrase of at",
-"  least 40 characters (about 80 bits).",
-" ",
-"  To install a public key file on the host, you must transfer the file",
-"  to the host and append it to your \"authorized_keys\" file.  The file",
-"  permissions must be 600 (or equivalent).",
-" ",
-"SSH KEY CHANGE-PASSPHRASE [ /NEW-PASSPHRASE:passphrase",
-"      /OLD-PASSPHRASE:passphrase ] filename",
-"  This re-encrypts the specified private key file with a new passphrase.",
-"  The old passphrase is required.  If the passphrases (and filename) are",
-"  not provided Kermit prompts your for them.",
-" ",
-"SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase",
-"    /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename",
-"  This command creates a new private/public key pair.  The defaults is",
-"  TYPE:ED25519.  The filename is the name of the private key file.  The",
-"  The public key is created with the same name with .pub appended to it.",
-"  If a filename is not specified Kermit prompts you for it. Key length ",
-"  options (/BITS:) depends on the key type:",
-" ",
-"    ECDSA: 256 (default), 384, 521",
-"    RSA: 1024, 2048, 3072 (default), 4096, 8192",
-"    DSS: 1024 (default), 2048",
-" ",
-"  ED25519 does not support being given a key length and any value supplied",
-"  via /BITS: will be ignored.",
-" ",
-#ifdef COMMENT
-"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
-"  This command displays the contents of a public or private key file.",
-"  The default format is OPENSSH.",
-" ",
-#endif
-"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH,SSH.COM} ] filename",
-"  This command displays the fingerprint or public key for the specified key.",
-"  Default action is to show the fingerprint.",
-" ",
-#ifdef COMMENT
-"SSH KEY V1 SET-COMMENT filename comment",
-"  This command replaces the comment associated with a V1 RSA key file.",
-" ",
-#endif
-"SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
-"      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
-"  This command establishes a new connection using SSH version 1 or",
-"  version 2 protocol.  The connection is made to the specified host on",
-"  the SSH port (you can override the port by including a port name or",
-"  number after the host name).  Once the connection is established the",
-"  authentication negotiations begin.  If the authentication is accepted,",
-"  the local and remote port forwarding lists are used to establish the",
-"  desired connections.  If X11 Forwarding is active, this results in a",
-"  remote port forwarding between the X11 clients on the remote host and",
-"  X11 Server on the local machine.  If a /COMMAND is provided, the",
-"  command is executed on the remote host in place of your default shell.",
-" ",
-"  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
-"     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
-" ",
-#ifdef COMMENT
-"SSH V2 REKEY",
-"  Requests that an existing SSH V2 connection generate new session keys.",
 #endif
 #else  /* SSHBUILTIN */
 "Syntax: SSH [ options ] <hostname> [ command ]",
@@ -837,195 +868,15 @@ static char * hmxxssh[] = {
 
 static char *hmxyssh[] = {
 #ifdef SSHBUILTIN
-"SET SSH AGENT-FORWARDING { ON, OFF }",
-"  If an authentication agent is in use, setting this value to ON",
-"  results in the connection to the agent being forwarded to the remote",
-"  computer.  The default is OFF.",
-" ",
-"SET SSH CHECK-HOST-IP { ON, OFF }",
-"  Specifies whether the remote host's ip-address should be checked",
-"  against the matching host key in the known_hosts file.  This can be",
-"  used to determine if the host key changed as a result of DNS spoofing.",
-"  The default is ON.",
-" ",
-"SET SSH COMPRESSION { ON, OFF }",
-"  Specifies whether compression will be used.  The default is ON.",
-" ",
-"SET SSH DYNAMIC-FORWARDING { ON, OFF }",
-"  Specifies whether Kermit is to act as a SOCKS4 service on port 1080",
-"  when connected to a remote host via SSH.  When Kermit acts as a SOCKS4",
-"  service, it accepts connection requests and forwards the connections",
-"  through the remote host.  The default is OFF.",
-" ",
-"SET SSH GATEWAY-PORTS { ON, OFF }",
-"  Specifies whether Kermit should act as a gateway for forwarded",
-"  connections received from the remote host.  The default is OFF.",
-" ",
-"SET SSH GSSAPI DELEGATE-CREDENTIALS { ON, OFF }",
-"  Specifies whether Kermit should delegate GSSAPI credentials to ",
-"  the remote host after authentication.  Delegating credentials allows",
-"  the credentials to be used from the remote host.  The default is OFF.",
-" ",
-"SET SSH HEARTBEAT-INTERVAL <seconds>",
-"  Specifies a number of seconds of idle time after which an IGNORE",
-"  message will be sent to the server.  This pulse is useful for",
-"  maintaining connections through HTTP Proxy servers and Network",
-"  Address Translators.  The default is OFF (0 seconds).",
-" ",
-"SET SSH IDENTITY-FILE filename [ filename [ ... ] ]",
-"  Specifies one or more files from which the user's authorization",
-"  identities (private keys) are to be read when using public key",
-"  authorization.  These are files used in addition to the default files:",
-" ",
-"    \\v(appdata)ssh/identity      V1 RSA",
-"    \\v(appdata)ssh/id_rsa        V2 RSA",
-"    \\v(appdata)ssh/id_dsa        V2 DSA",
-" ",
-#ifdef COMMENT
-"SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
-"  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
-"  The default is OFF.",
-" ",
-"SET SSH KERBEROS5 TGT-PASSING { ON, OFF }",
-"  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
-"  host.  The default is OFF.",
-" ",
-#endif
-"SET SSH PRIVILEGED-PORT { ON, OFF }",
-"  Specifies whether a privileged port (less than 1024) should be used",
-"  when connecting to the host.  Privileged ports are not required except",
-"  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
-"  is OFF.",
-" ",
-#ifdef COMMENT
-"SET SSH PROXY-COMMAND [ command ]",
-"  Specifies the command to be executed in order to connect to the remote",
-"  host. ",
-" ",
-#endif
-"SET SSH QUIET { ON, OFF }",
-"  Specifies whether all messages generated in conjunction with SSH",
-"  protocols should be suppressed.  The default is OFF.",
-" ",
-"SET SSH STRICT-HOST-KEY-CHECK { ASK, ON, OFF }",
-"  Specifies how Kermit should behave if the the host key check fails.",
-"  When strict host key checking is OFF, the new host key is added to the",
-"  protocol-version-specific user-known-hosts-file.  When strict host key",
-"  checking is ON, the new host key is refused and the connection is",
-"  dropped.  When set to ASK, Kermit prompt you to say whether the new",
-"  host key should be accepted.  The default is ASK.",
-" ",
-"  Strict host key checking protects you against Trojan horse attacks.",
-"  It depends on you to maintain the contents of the known-hosts-file",
-"  with current and trusted host keys.",
-" ",
-"SET SSH USE-OPENSSH-CONFIG { ON, OFF }",
-"  Specifies whether Kermit should parse an OpenSSH configuration file",
-"  after applying Kermit's SET SSH commands.  The configuration file",
-"  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
-" ",
-#ifdef COMMENT
-"SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
-"  Specifies which cipher should be used to protect SSH version 1",
-"  connections.  The default is 3DES.",
-" ",
-"SET SSH V1 GLOBAL-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the system-wide known-hosts file.  The",
-"  default is:",
-" ",
-"    \v(common)ssh_known_hosts",
-" ",
-"SET SSH V1 USER-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the user-known-hosts-file.  The default",
-"  location is:",
-" ",
-"    \\v(appdata)ssh/known_hosts",
-" ",
-#endif
-"SET SSH V2 AUTHENTICATION { GSSAPI,  KEYBOARD-INTERACTIVE, PASSWORD, ",
-"    PUBKEY } [ ... ]",
-"  Specifies an unordered list of SSH version 2 authentication methods to",
-"  be used when connecting to the remote host.  The default list is:",
-" ",
-"    publickey keyboard-interactive password none",
-" ",
-"SET SSH V2 AUTO-REKEY { ON, OFF }",
-"  Specifies whether Kermit automatically issues rekeying requests",
-"  once an hour when SSH version 2 in in use.  The default is ON.",
-" ",
-"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ",
-"     AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM, ",
-"     AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 }",
-"  Specifies an ordered list of SSH version ciphers to be used to encrypt",
-"  the established connection.  The default list is:",
-" ",
-"    aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr",
-"    aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc",
-" ",
-"SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the system-wide known-hosts file.  The default",
-"  location is:",
-" ",
-"    \\v(common)ssh/known_hosts2",
-" ",
-"SET SSH V2 HOSTKEY-ALGORITHMS { ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384, ",
-"     ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519, ",
-"     SSH-RSA }",
-"  Specifies an ordered list of hostkey algorithms to be used to verify",
-"  the identity of the host.  The default list is",
-" ",
-"    ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256",
-"    rsa-sha2-512 rsa-sha2-256 ssh-rsa",
-" ",
-"SET SSH V2 KEY-EXCHANGE-METHODS { CURVE25519-SHA256, ",
-"     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1, ",
-"     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256, ",
-"     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512, ",
-"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1, ",
-"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256, ",
-"     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }",
-"  Specifies an ordered list of Key Exchange Methods to be used to generate ",
-"  per-connection keys. The default list is:",
-" ",
-"    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 ",
-"    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512",
-"    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256",
-"    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
-"    diffie-hellman-group1-sha1 ext-info-c",
-" ",
-"SET SSH V2 MACS { HMAC-MD5, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
-"     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
-"     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
-"  Specifies an ordered list of Message Authentication Code algorithms to",
-"  be used for integrity  protection of the established connection.  The",
-"  default list is:",
-" ",
-"    hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com ",
-"    hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1",
-" ",
-"SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the user-known-hosts file.  The default",
-"  location is:",
-" ",
-"    \\v(appdata)ssh/known_hosts2",
-" ",
-"SET SSH VERBOSE level",
-"  Specifies how many messages should be generated by the OpenSSH engine.",
-"  The level can range from 0 to 7.  The default value is 2.",
-" ",
-"SET SSH VERSION { 2, AUTOMATIC }",
-"  Obsolete: retained only for backwards compatibility. Only SSH Version 2",
-"  is supported now.",
-" ",
-"SET SSH X11-FORWARDING { ON, OFF }",
-"  Specifies whether X Windows System Data is to be forwarded across the",
-"  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
-"  value is either set using the SET TELNET ENV DISPLAY command or read",
-"  from the DISPLAY environment variable.",
-" ",
-"SET SSH XAUTH-LOCATION filename",
-"  Specifies the location of the xauth executable (if provided with the",
-"  X11 Server software.)",
+/* In Kermit 95, help content is provided by the currently loaded SSH backend.
+ * This help text will only be output when no backend is loaded. If K95 was
+ * built with SSHBUILTIN and not SSH_DLL, then the SSH backend is compiled in
+ * so can never not be loaded.
+ */
+#ifdef SSH_DLL
+"No SSH backend loaded. If you have a suitable backend DLL, you can load",
+"it with the SSH LOAD command.",
+#endif /* SSH_DLL */
 #else  /* SSHBUILTIN */
 "Syntax: SET SSH COMMAND command",
 "  Specifies the external command to be used to make an SSH connection.",
@@ -1202,7 +1053,7 @@ static char *hmxxfirew[] = {
 
 #ifdef OS2
 #ifdef NT
-"C-Kermit for Windows supports SOCKS 4.2. The SOCKS Server is specified with:",
+"Kermit 95 supports SOCKS 4.2. The SOCKS Server is specified with:",
 " ",
 "  SET TCP SOCKS-SERVER hostname/ip-address",
 " ",
@@ -1330,6 +1181,19 @@ static char *hmxxsave[] = {
 #ifdef OS2
 "    COMMAND SCROLLBACK   Saves the current command-screen scrollback buffer",
 "    TERMINAL SCROLLBACK  Saves the current terminal-screen scrollback buffer",
+"    TERMINAL SCREEN      Saves the current terminal-screen",
+#ifdef KUI
+" ",
+"  K95G has the additional ability to save the terminal screen as an image file",
+"  This can be done with the syntax: ",
+#ifdef CK_HAVE_GDIPLUS
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF, GIF, PNG } filename ",
+#else /* CK_HAVE_GDIPLUS */
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF } filename ",
+#endif  /* CK_HAVE_GDIPLUS */
+"  When saving as an image, a new file is always created. The EMF format does",
+"  not currently support saving double-height/double-wide lines",
+#endif /* KUI */
 #endif /* OS2 */
 ""
 };
@@ -1382,7 +1246,7 @@ static char *hmxxscrn[] = {
 " ",
 "Also see:",
 #ifdef OS2
-"  HELP FUNCTION SCRNCURX, HELP FUNCTION SCRNCURY, HELP FUNCTION SCRSTR,",
+"  HELP FUNCTION SCRNCURX, HELP FUNCTION SCRNCURY, HELP FUNCTION SCRNSTR,",
 #endif /* OS2 */
 "  SHOW VARIABLE TERMINAL, SHOW VARIABLE COLS, SHOW VAR ROWS, SHOW COMMAND.",
 ""
@@ -1471,7 +1335,7 @@ static char *hxxinp[] = {
 "  with IF FAILURE or IF SUCCESS, which tell whether the desired text arrived",
 "  within the given amount of time.",
 " ",
-"  The text, if given, can be a regular text or it can be a \\pattern()",
+"  The text, if given, can be a regular text or it can be a \\fpattern()",
 "  invocation, in which case it is treated as a pattern rather than a literal",
 "  string (HELP PATTERNS for details).",
 " ",
@@ -1852,16 +1716,17 @@ static char *hmxxgrep[] = {
 "  \"grep something *.txt\" lists all lines in all *.txt files that contain",
 "  the word \"something\", but \"grep ^something *.txt\" lists only the lines",
 "  that START with \"something\".  The command succeeds if any of the given",
-"  files contained any lines that match the pattern, otherwise it fails.",
+"  files contains any lines that match the pattern, otherwise it fails.",
 #ifdef UNIXOROSK
 "  Synonym: FIND.",
 #else
 "  Synonym: GREP.",
 #endif /* UNIXOROSK */
 " ",
+"Only one filespec can be given.  To search multiple files that can't",
+"be represented by a wildcard use {file1,file2,file3,...} (in braces).",
+" ",
 "File selection options:",
-"  /ARRAY:&x",
-"    Returns the results in the specified array.",
 "  /NOBACKUPFILES",
 "    Excludes backup files (like oofa.txt.~3~) from the search.",
 "  /DOTFILES",
@@ -1879,16 +1744,24 @@ static char *hmxxgrep[] = {
 " ",
 "Pattern-matching options:",
 "  /NOCASE",
-"    Ignores case of letters (ASCII only) when comparing.",
+"    Ignores case of letters when comparing.  Depends on the underlying",
+"    operating system APIs to work for non-ASCII character sets.",
 "  /NOMATCH",
 "    Searches for lines that do NOT match the pattern.",
 "  /EXCEPT:pattern",
 "    Exclude lines that match the main pattern that also match this pattern.",
+"  /VERBATIM",
+"    The search string is taken literally; variables are not evaluated.",
+"    This allows you to (for example) search Kermit scripts that contain",
+"    variable names, function names, etc (that begin with '\\').",
 " ",
 "Display options:",
 "  /COUNT:variable-name",
 "    For each file, prints only the filename and a count of matching lines",
 "    and assigns the total match count to the variable, if one is given.",
+"  /DISPLAY:number",
+"    How many matching lines to show.  The default is to show all matching",
+"    lines.  Synonym:/SHOW.",
 "  /NAMEONLY",
 "    Prints the name of each file that contains at least one matching line,",
 "    one name per line, rather than showing each matching line.",
@@ -1900,10 +1773,16 @@ static char *hmxxgrep[] = {
 "    Pauses after each screenful.",
 "  /NOPAGE",
 "    Doesn't pause after each screenful.",
+" ",
+"Result disposition options:",
 "  /OUTPUT:name",
-"    Sends results to the given file.  If this switch is omitted, the",
-"    results appear on your screen.  This switch overrides any express or",
-"    implied /PAGE switch.",
+"    Sends results to the given file.",
+"  /ARRAY:&x",
+"    Returns the results in the specified array; one line per array element.",
+"  /MACRO:name",
+"    Returns the results in the macro whose name is given.  If a macro",
+"    of the same name already exists, the grep results (if there are any)",
+"    replace its previous value.  Synonym: DEFINE.",
 ""};
 
 static char *hmxxdir[] = {
@@ -2092,7 +1971,7 @@ static char *hmxxkcd[] = {
 ,
 " ",
 #ifdef NT
-"    appdata       Your personal C-Kermit Windows application data directory",
+"    appdata       Your personal Kermit application data directory",
 "    common        C-Kermit's application data directory for all users",
 "    desktop       Your Windows desktop",
 #endif /* NT */
@@ -2225,7 +2104,7 @@ static char *hmxxdel[] = {
 " ",
 #endif /* UNIXOROSK */
 "/TYPE:TEXT",
-"  Delete only regular text files (requires FILE SCAN ON)",
+"  Delete only regular text files (requires FILE SCAN ON as it is by default)",
 " ",
 "/TYPE:BINARY",
 "  Delete only regular binary files (requires FILE SCAN ON)",
@@ -3090,7 +2969,7 @@ static char *hmxxget[] = {
 "  directed to a pipeline.",
 " ",
 "/QUIET",
-"  When sending in local mode, this suppresses the file-transfer display.",
+"  Suppresses the file-transfer display.",
 " ",
 "/RECOVER",
 "  Used to recover from a previously interrupted transfer; GET /RECOVER",
@@ -3102,8 +2981,8 @@ static char *hmxxget[] = {
 " ",
 "/RENAME-TO:string",
 "  Specifies that each file that arrives should be renamed as specified",
-"  after, and only if, it has been received successfully.  The string should",
-"  normally contain variables like \\v(filename) or \\v(filenum).",
+"  after, and only if, it has been received successfully.  The string can",
+"  be a filename, a directory name, an expression involving variables, etc.",
 " ",
 "/TEXT",
 "  Performs this transfer in text mode without affecting the global",
@@ -3265,7 +3144,7 @@ static char * hmxxcle[] = {
 " ",
 "  ALARM            Clears any pending alarm (see SET ALARM).",
 #ifdef CK_APC
-"  APC-STATUS       Clears Application Program Command status.",
+"  APC              Clears Application Program Command status.",
 #endif /* CK_APC */
 #ifdef PATTERNS
 "  BINARY-PATTERNS  Clears the file binary-patterns list.",
@@ -3617,7 +3496,7 @@ static char *hmxxrc[] = {
 "  Use the given protocol to receive the incoming file(s).",
 " ",
 "/QUIET",
-"  When sending in local mode, this suppresses the file-transfer display.",
+"  When receiving in local mode, this suppresses the file-transfer display.",
 " ",
 "/RECURSIVE",
 "  Equivalent to /PATHNAMES:RELATIVE.",
@@ -4563,7 +4442,7 @@ static char *hmhrmt[] = {
 static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "If the condition is (is not) true, do the commandlist.  The commandlist",
-"can be a single command, or a list of commands separated by commas and",
+"can be a single command, or a list of commands separated by commas or",
 "enclosed in braces.  The condition can be a single condition or a group of",
 "conditions separated by AND (&&) or OR (||) and enclosed in parentheses.",
 "If parentheses are used they must be surrounded by spaces.  Examples:",
@@ -4596,7 +4475,7 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "  MS-KERMIT   - Program is MS-DOS Kermit",
 "  C-KERMIT    - Program is C-Kermit",
-"  WINDOWS     - Program is C-Kermit for Windows",
+"  WINDOWS     - Program is Kermit 95",
 "  GUI         - Program runs in a GUI window",
 " ",
 "  AVAILABLE CRYPTO                  - Encryption is available",
@@ -4778,12 +4657,12 @@ static char *hxxask[] = {
 #ifdef OS2
 " /POPUP",
 "  The prompt and response dialog takes place in a text-mode popup.",
-"  C-Kermit for Windows only; in other C-Kermit versions /POPUP is ignored.",
+"  Kermit 95 only; in other C-Kermit versions /POPUP is ignored.",
 " ",
 #ifdef KUI
 " /GUI",
 "  The prompt and response dialog takes place in a GUI popup.",
-"  C-Kermit for Windows only; this switch is ignored elsewhere",
+"  Kermit 95 only; this switch is ignored elsewhere",
 " ",
 #endif /* KUI */
 #endif /* OS2 */
@@ -4845,6 +4724,8 @@ static char *hxxdef[] = {
 "  if the definition includes any variable or function references, their",
 "  names are included, rather than their values (compare with ASSIGN).  If",
 "  the definition is omitted, then the named variable or macro is undefined.",
+"  If a variable of the same name already exists, its value is replaced by",
+"  the new value.",
 " ",
 "A typical macro definition looks like this:",
 " ",
@@ -5195,18 +5076,18 @@ static char *hxxxmit[] = {
 
 #ifndef NOCSETS
 static char *hxxxla[] = {
-"Syntax: TRANSLATE file1 cs1 cs2 [ file2 ]",
-"  Translates file1 from the character set cs1 into the character set cs2",
+"Syntax: CONVERT file1 cs1 cs2 [ file2 ]",
+"Synonym: TRANSLATE",
+"  Converts file1 from the character set cs1 into the character set cs2",
 "  and stores the result in file2.  The character sets can be any of",
 "  C-Kermit's file character sets.  If file2 is omitted, the translation",
 "  is displayed on the screen.  An appropriate intermediate character-set",
 "  is chosen automatically, if necessary.  Synonym: XLATE.  Example:",
 " ",
-"    TRANSLATE lasagna.txt latin1 utf8 lasagna-utf8.txt",
+"    CONVERT lasagna.txt latin1 utf8 lasagna-utf8.txt",
 " ",
 "  Multiple files can be translated if file2 is a directory or device name,",
-"  rather than a filename, or if file2 is omitted.  Note: CONVERT would",
-"  would be a better name for this command but it's too late now.",
+"  rather than a filename, or if file2 is omitted.",
 "" };
 #endif /* NOCSETS */
 
@@ -5775,7 +5656,7 @@ static char * hmxxren[] = {
 "     -: (before a digit) Occurrences are counted from the right.",
 "     ~: (before occurrence) All occurences BUT the one given are changed.",
 " ",
-"  /CONVERT:cset1:cset1",
+"  /CONVERT:cset1:cset2",
 "    Converts each matching filename from character-set 1 to character-set 2.",
 "    Character sets are the same as for SET FILE CHARACTER-SET.",
 " ",
@@ -5929,7 +5810,7 @@ doxopts() {
 
 int
 dohopts() {
-    int i, n, x, y, z, all = 0, msg = 0;
+    int i, j, n, x, y, z, all = 0, msg = 0;
     char *s;
     extern char *opthlp[], *arghlp[];
     extern char * xopthlp[], * xarghlp[];
@@ -5992,6 +5873,14 @@ or the word ALL, or carriage return for an overview",
             printf("     %s\n",opthlp[i]);
             printf("     Argument: %s\n\n",arghlp[i]);
             x = 4;
+
+            /* Prevent argument help that contains line breaks (such K95s -#)
+             * from breaking paging */
+            for (j = 0; arghlp[i][j] != '\0'; j++) {
+                if (arghlp[i][j] == '\n') {
+                    n += 1;
+                }
+            }
         } else {                        /* Option without arg */
             printf(" -%c  %s%s\n",
                    (char)i, opthlp[i],
@@ -6298,7 +6187,12 @@ static char * hxxf_wr[] = {
 };
 
 static int
-dohfile(cx) int cx; {
+#ifdef CK_ANSIC
+dohfile( int cx )
+#else
+dohfile(cx) int cx;
+#endif /* CK_ANSIC */
+{
     extern struct keytab fctab[];
     extern int nfctab;
     int x;
@@ -6346,7 +6240,12 @@ dohfile(cx) int cx; {
 #endif /* CKCHANNELIO */
 
 int
-dohlp(xx) int xx; {
+#ifdef CK_ANSIC
+dohlp( int xx )
+#else
+dohlp(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x,y;
 
     debug(F101,"DOHELP xx","",xx);
@@ -7292,7 +7191,7 @@ Makes a connection through the program whose command line is given. Example:\n\
 #ifdef NETPTY
 #ifdef NT
 case XXPTY:
-    /* For windows ConPTY support - run any windows text mode app inside CKW */
+    /* For windows ConPTY support - run any windows text mode app inside K95 */
     return(hmsg("Syntax: PTY [ command ]\n\
 Runs the specified command in a pseudoterminal. Example:\n\
 \n pty cmd.exe"));
@@ -7423,6 +7322,8 @@ case XXPURGE:
     return(hmsg("  RTYPE is a short form of REMOTE TYPE."));
   case XXRWHO:
     return(hmsg("  RWHO is a short form of REMOTE WHO."));
+  case XXRCDUP:
+    return(hmsg("  RCDUP is a short forms of REMOTE CDUP."));
 #endif /* NOXFER */
 
   case XXSCRN:
@@ -7474,9 +7375,26 @@ case XXPURGE:
     return(hmsga(hmxxlearn));
 #endif /* CKLEARN */
 
+#ifdef SSHBUILTIN
+  case XXSKRM:
+      return(hmsga(hmxxskrm));
+#endif /* SSHBUILTIN */
+
 #ifdef ANYSSH
   case XXSSH:
+#ifdef SSHBUILTIN
+    {
+        const char **help_content;
+        if (ck_ssh_is_installed()) {
+            help_content = ssh_get_help();
+        } else {
+            help_content = (const char**)hmxxssh;
+        }
+        return(hmsga((char**)help_content));
+    }
+#else
     return(hmsga(hmxxssh));
+#endif /* SSHBUILTIN */
 #endif /* ANYSSH */
 
 #ifdef TCPSOCKET
@@ -7533,7 +7451,12 @@ default: {
 /*  H M S G  --  Get confirmation, then print the given message  */
 
 int
-hmsg(s) char *s; {
+#ifdef CK_ANSIC
+hmsg( char *s )
+#else
+hmsg(s) char *s;
+#endif /* CK_ANSIC */
+{
     int x;
     if ((x = cmcfm()) < 0) return(x);
     printf("\n%s\n\n",s);
@@ -7543,7 +7466,12 @@ hmsg(s) char *s; {
 #ifdef NOHELP
 
 int                                     /* Print an array of lines, */
-hmsga(s) char *s[]; {                   /* cheap version. */
+#ifdef CK_ANSIC
+hmsga( char *s[] )                      /* cheap version. */
+#else
+hmsga(s) char *s[];
+#endif /* CK_ANSIC */
+{
     int i;
     if ((i = cmcfm()) < 0) return(i);
     printf("\n");                       /* Start off with a blank line */
@@ -7557,7 +7485,12 @@ hmsga(s) char *s[]; {                   /* cheap version. */
 #else /* NOHELP not defined... */
 
 int                                     /* Print an array of lines, */
-hmsga(s) char *s[]; {                   /* pausing at end of each screen. */
+#ifdef CK_ANSIC
+hmsga( char *s[] )                      /* cheap version. */
+#else
+hmsga(s) char *s[];
+#endif /* CK_ANSIC */
+{
     extern int hmtopline;               /* (This should be a parameter...) */
     int x, y, i, j, k, n;
     if ((x = cmcfm()) < 0) return(x);
@@ -7725,8 +7658,17 @@ static char *hsetcmd[] = {
 #ifdef OS2
 "SET COMMAND COLOR <foreground-color> <background-color>",
 "  Lets you choose colors for Command screen.  Use ? in the color fields to",
-"  to get lists of available colors.",
+"  to get lists of available colors. If INDEX is specified, it must be",
+"  followed by the number of a color from the current color palette. For",
+"  example: ",
+"    SET COMMAND COLOR INDEX 85 INDEX 20",
+"  If RGB is specified for a color, it must be followed by three numbers -",
+"  a red value, a green value and a blue value. This allows setting the",
+"  command screen to any color by its RGB value. For example, the following",
+"  would set it to an amber color:",
+"    SET COMMAND COLOR RGB 255 110 0 black",
 " ",
+
 "SET COMMAND CURSOR-POSITION <row> <column>",
 "  Moves the command-screen cursor to the given position (1-based).  This",
 "  command should be used in scripts instead of relying on ANSI.SYS escape",
@@ -7935,12 +7877,12 @@ static char *hxymouse[] = {
 "   Disabled: Applications can not request mouse reports and reports will not",
 "             be sent.",
 "    Enabled: Applications can request mouse reports. Reports will only be ",
-"             sent for mouse events that have no action in C-Kermit. To ",
+"             sent for mouse events that have no action in Kermit 95. To ",
 "             allow an event (eg, Ctrl+Click) to be reported, map it to ",
 "             \\Kignore. For example: set mouse button 1 ctrl click \\Kignore",
 "   Override: Applications can request mouse reports. All mouse events will",
 "             be sent to the remote application regardless of what action it",
-"             is set to perform in C-Kermit. For example, if right mouse",
+"             is set to perform in Kermit 95. For example, if right mouse",
 "             click is set to \\Kpaste this won't occur when an application",
 "             requests mouse reporting - instead the right click will be sent",
 "             to the application.",
@@ -7975,6 +7917,11 @@ static char *hxyterm[] = {
 "  Selects type type of terminal to emulate.  Type SET TERMINAL TYPE ? to",
 "  see a complete list.",
 " ",
+"SET TERMINAL ALTERNATE-BUFFER { ENABLED, DISABLED }",
+"  Enables or disables the escape sequence for switching to the alternate",
+"  terminal screen buffer. This setting can also be changed via an escape",
+"  sequence so setting it to disabled may not prevent its use entirely.",
+" ",
 "SET TERMINAL ANSWERBACK { OFF, ON }",
 "  Disables/enables the ENQ/Answerback sequence (Kermit version term-type).",
 " ",
@@ -7993,7 +7940,7 @@ static char *hxyterm[] = {
 #endif /* OS2 */
 
 #ifdef CK_APC
-"SET TERMINAL APC { ON, OFF, NO-INPUT, NO-INPUT-UNCHECKED, UNCHECKED }",
+"SET TERMINAL APC { ON, OFF, NO-INPUT, UNCHECKED, UNCHECKED-NO-INPUT }",
 #ifdef OS2
 "  Controls execution of Application Program Commands sent by the host while",
 "  Kermit is either in CONNECT mode or processing INPUT commands.  ON allows",
@@ -8017,14 +7964,40 @@ static char *hxyterm[] = {
 "SET TERMINAL ATTRIBUTE { BLINK, DIM, PROTECTED, REVERSE, UNDERLINE }",
 "  Determines how attributes are displayed in the Terminal window.",
 " ",
-"SET TERMINAL ATTRIBUTE { BLINK, DIM, REVERSE, UNDERLINE } { ON, OFF }",
-"  Determines whether real Blinking, Dim, Reverse, and Underline are used in",
-"  the terminal display.  When BLINK is turned OFF, reverse background",
-"  intensity is used.  When DIM is turned OFF, dim characters appear BOLD.",
-"  When REVERSE and UNDERLINE are OFF, the colors selected with SET",
-"  TERMINAL COLOR { REVERSE,UNDERLINE } are used instead.  This command",
+"SET TERMINAL ATTRIBUTE { BLINK, BOLD, DIM, REVERSE, UNDERLINE, ITALIC, ",
+"        CROSSED-OUT } { ON, OFF }",
+"  Determines whether real Blinking, Bold, Dim, Reverse, Italic, Crossed-Out ",
+"  and Underline are used in the terminal display.  When BLINK is turned OFF, ",
+"  reverse background intensity is used.  When DIM is turned OFF, dim ",
+"  characters appear BOLD.  When REVERSE, ITALIC, CROSSED-OUT and UNDERLINE ",
+"  are OFF, the colors selected with SET TERMINAL COLOR { REVERSE, ITALIC, ",
+"  CROSSED-OUT, UNDERLINE } are used instead.  In K95G, when BOLD is off, a",
+"  bold font is not used (the foreground intensity is still set). This command",
 "  affects the entire current screen and terminal scrollback buffer.",
 " ",
+"SET TERMINAL ATTRIBUTE {BLINK, BOLD, DIM} OFF COLOR",
+"  Turns off real Blinking, Bold or Dim. Instead of simulating blinking with ",
+"  reverse background intensity or bold/dim with foreground foreground ",
+"  intensity, the colors selected with SET TERMINAL COLOR { BLINK, BOLD } are ",
+"  used. This command affects the entire current screen and terminal ",
+"  scrollback buffer.",
+" ",
+"SET TERMINAL ATTRIBUTE {BLINK, BOLD, DIM} OFF BRIGHT",
+"  Turns off real Blinking or Bold. Instead of simulating blinking, bold or ",
+"  dim with fixed colors, blink is simluated with reverse background intensity",
+"  while bold and dim are simulated with foreground intensity/brightness. This",
+"  command affects the entire current screen and terminal scrollback buffer.",
+" ",
+#ifdef KUI
+"SET TERMINAL ATTRIBUTE BOLD ON BRIGHT",
+"  Shows the bold attribute in both a bold font and with a brighter color (if ",
+"  the current color is one of the 8 standard ANSI colors).",
+" ",
+"SET TERMINAL ATTRIBUTE BOLD ON FONT-ONLY",
+"  Shows the bold attribute in a bold font only without changing the texts",
+"  color. This may cause compatibility issues with some applications.",
+" ",
+#endif /* KUI */
 "SET TERMINAL ATTRIBUTE PROTECTED [ -",
 "   { BOLD, DIM, INVISIBLE, NORMAL, REVERSE, UNDERLINED } ]",
 "  Sets the attributes used to represent Protected text in Wyse and Televideo",
@@ -8089,8 +8062,17 @@ static char *hxyterm[] = {
 " ",
 #endif /* CK_XYZ */
 "SET TERMINAL AUTOPAGE { ON, OFF }",
+"  For Wyse and Televideo terminals, Autopage mode causes the cursor to move",
+"  to the top of the next page of terminal memory when it scrolls off the ",
+"  bottom of the current page. In K95, it moves the cursor to the top line ",
+"  from the bottom since K95 only supports a single page of terminal memory.",
 " ",
 "SET TERMINAL AUTOSCROLL { ON, OFF }",
+"  Autoscroll mode is used on Televideo terminals when the size of a page of",
+"  terminal memory is larger than the view screen. On ADDS Regent terminals,",
+"  when autoscroll is off anything that causes the cursor to move down from ",
+"  the bottom line of the screen will cause the cursor to wrap around to the",
+"  top of the screen.",
 " ",
 #else /* OS2 */
 "SET TERMINAL AUTODOWNLOAD { ON, OFF, ERROR { STOP, CONTINUE } }",
@@ -8115,9 +8097,18 @@ static char *hxyterm[] = {
 #endif /* OS2 */
 
 #ifdef OS2
+#ifdef KUI
+"SET TERMINAL BELL { AUDIBLE, VISIBLE, FLASH-WINDOW, NONE }",
+#else
 "SET TERMINAL BELL { AUDIBLE, VISIBLE, NONE }",
+#endif /* KUI */
 "  Specifies how Control-G (bell) characters are handled.  AUDIBLE means",
 "  a beep is sounded; VISIBLE means the screen is flashed momentarily.",
+#ifdef KUI
+" ",
+" FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
+" enabled independently of other options.",
+#endif /* KUI */
 " ",
 "  (This command has been superseded by SET BELL.)",
 " ",
@@ -8149,7 +8140,28 @@ static char *hxyterm[] = {
 #endif /* NOCSETS */
 
 #ifdef OS2
-
+"SET TERMINAL CLIPBOARD-ACCESS { ALLOW-BOTH, ALLOW-READ, ALLOW-WRITE } ",
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+"  { ON, OFF } NOTIFY",
+#else /* CK_SHELL_NOTIFY */
+"  { ON, OFF }",
+#endif /* CK_SHELL_NOTIFY */
+#else /* KUI */
+"  { ON, OFF }",
+#endif /* KUI */
+" Enable or disable clipboard access by the remote host using OSC-52. You can",
+" turn read and write on or off individually, or you can set both at once with",
+" the ALLOW-BOTH option. ",
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+" ",
+" You can optionally choose to be notified when the remote host attempts to ",
+" access the clipboard with the NOTIFY option. This requires Windows 2000 or ",
+" newer",
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+" ",
 "SET TERMINAL CODE-PAGE <number>",
 "  Lets you change the PC code page.  Only works for code pages that are",
 "  successfully prepared in CONFIG.SYS.  Use SHOW TERMINAL to list the",
@@ -8167,18 +8179,38 @@ static char *hxyterm[] = {
 "SET TERMINAL COLOR <screenpart> <foreground> <background>",
 " Sets the colors of the terminal emulation screen.",
 " <screenpart> may be any of the following:",
-"  DEBUG, HELP-TEXT, REVERSE, SELECTION, STATUS-LINE, TERMINAL-SCREEN, or",
-"  UNDERLINED-TEXT.",
+"  BLINK, BOLD, DEBUG, DIM, HELP-TEXT, ITALIC, REVERSE, SELECTION, ",
+"  STATUS-LINE, TERMINAL-SCREEN, CROSSED-OUT-TEXT or UNDERLINED-TEXT.",
 " <foreground> and <background> may be any of:",
 "  BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, BROWN, LGRAY, DGRAY, LBLUE,",
-"  LGREEN, LCYAN, LRED, LMAGENTA, YELLOW or WHITE.",
-" The L prefix for the color names means Light.",
+"  LGREEN, LCYAN, LRED, LMAGENTA, YELLOW, WHITE, INDEX, or RGB",
+" The L prefix for the color names means Light. If INDEX is specified then ",
+" it must be followed by the number of a color from the current color palette",
+" as set by SET TERMINAL COLOR PALETTE. For example:",
+"   SET TERMINAL COLOR SELECTION INDEX 82 INDEX 208",
+" would set the SELECTION foreground color to a shade of green and background",
+" color to amber in the xterm-256 palette. If RGB is specified then it must be",
+" followed by three numbers - a red value, a green value and a blue value.",
+" This allows setting the foreground and background colors to any color by its",
+" RGB value. For example:",
+"   SET TERMINAL COLOR TERMINAL RGB 255 110 0 black",
+" would give the terminal an amber foreground and black background",
 " ",
 
 "SET TERMINAL COLOR ERASE { CURRENT-COLOR, DEFAULT-COLOR }",
 "  Determines whether the current color as set by the host or the default",
 "  color as set by the user (SET TERMINAL COLOR TERMINAL) is used to clear",
 "  the screen when erase commands are received from the host.",
+" ",
+
+#ifdef CK_COLORS_24BIT
+"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88, XTERM-RGB }",
+#else
+"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88 }",
+#endif
+"  Sets the active color palette. In the Windows Console and OS/2 versions of",
+"  Kermit 95 (or K95G built with only 16-color support), colors are mapped",
+"  from the chosen palette into AIXTERM-16 for display.",
 " ",
 
 "SET TERMINAL COLOR RESET-ON-ESC[0m { CURRENT-COLOR, DEFAULT-COLOR }",
@@ -8242,7 +8274,7 @@ static char *hxyterm[] = {
 #ifdef OS2
 #ifdef KUI
 "SET TERMINAL FONT <facename> <height>",
-"  Specifies the font to be used in the C-Kermit terminal window.  The font",
+"  Specifies the font to be used in the Kermit window.  The font",
 "  is determined by the choice of a facename and a height measured in Points.",
 "  The available facenames are those installed in the Font Control Panel.",
 " ",
@@ -8336,8 +8368,12 @@ static char *hxyterm[] = {
 "  To find out the keycode and mapping for a particular key, use the SHOW",
 "  KEY command.  Use the SAVE KEYS command to save all settings to a file.",
 " ",
-"SET TERMINAL KEYBOARD-MODE { NORMAL, EMACS, RUSSIAN, HEBREW }",
-"  Select a special keyboard mode for use in the terminal screen.",
+"SET TERMINAL KEYBOARD-MODE { NORMAL, EMACS, RUSSIAN, HEBREW, WP, META, ",
+"   XTERM-META }",
+"  Select a special keyboard mode for use in the terminal screen. META is a",
+"  subset of EMACS which does not modify any function key definitions, while ",
+"  XTERM-META shifts characters into the 128-255 range (equivalent to xterms ",
+"  default behavior.",
 " ",
 
 "SET TERMINAL KEYPAD-MODE { APPLICATION, NUMERIC }",
@@ -8418,6 +8454,21 @@ static char *hxyterm[] = {
 "  Tells how long to pause between sending each character to the host during",
 "  CONNECT mode.  Normally not needed but sometimes required to work around",
 "  TRANSMISSION BLOCKED conditions when pasting into the terminal window.",
+" ",
+
+"SET TERMINAL PAGE ACTIVE <page>",
+"  Moves the cursor to the specified page. If Page Cursor Coupling is enabled,",
+"  the display will move to that page also. The cursor is not sent to home.",
+" ",
+
+"SET TERMINAL PAGE COUNT <number>",
+"  Specifies the number of pages available, up to the maximum supported by the",
+"  currently selected terminal type.",
+" ",
+
+"SET TERMINAL PAGE CURSOR-COUPLING { ON, OFF}",
+"  Enables or disables Page Cursor Coupling. When enabled, moving the cursor",
+"  to another page moves the display to that page to keep the cursor visible.",
 " ",
 
 #ifdef PCTERM
@@ -8513,6 +8564,13 @@ static char *hxyterm[] = {
 "  escape sequences to set color.",
 " ",
 
+#ifdef OS2
+"SET TERMINAL SIZE <cols> <rows>",
+"  Sets the number of columns and rows in the terminal screen. This is",
+"  shorthand for SET TERMINAL WIDTH <cols>, SET TERMINAL HEIGHT <rows>",
+" ",
+#endif /* OS2 */
+
 "SET TERMINAL SNI-CH.CODE { ON, OFF }",
 "  This command controls the state of the CH.CODE key.  It is the equivalent",
 "  to the SNI_CH_CODE Keyboard verb.  The SNI terminal uses CH.CODE to",
@@ -8580,7 +8638,7 @@ static char *hxyterm[] = {
 "  NRC mode is activated.  The default is \"North American\".",
 " ",
 "SET TERMINAL VT-NRC-MODE { ON, OFF }",
-"  OFF (default) chooses VT multinational Character Set mode.  OFF chooses",
+"  OFF (default) chooses VT multinational Character Set mode.  ON chooses",
 "  VT National Replacement Character-set mode.  The NRC is selected with",
 "  SET TERMINAL VT-LANGUAGE",
 " ",
@@ -9428,7 +9486,7 @@ static char *hxytel[] = {
 "SET TELNET FORWARD-X XAUTHORITY-FILE <file>",
 "  If your X Server requires X authentication and the location of the",
 "  .Xauthority file is not defined by the XAUTHORITY environment variable,",
-"  use this command to specify the location of the .Xauthority file."
+"  use this command to specify the location of the .Xauthority file.",
 "  ",
 #endif /* CK_FORWARD_X */
 #ifdef CK_SNDLOC
@@ -9465,6 +9523,15 @@ static char *hxytel[] = {
 "  is ON.  Remote echoing may be turned off when it is necessary to read",
 "  a password with the INPUT command.",
 " ",
+#ifdef OS2
+"SET TELNET SEND-COLORTERM { ON, OFF }",
+"  When ON, Kermit 95 will attempt set the COLORTERM environment variable on",
+"  the remote host to \"truecolor\" if 24-bit RGB color is currently enabled",
+"  via the SET TERMINAL COLOR PALETTE command. Some applications use the",
+"  COLORTERM environment variable to determine if the terminal in use",
+"  supports 24-bit color, rather than relying on $TERM and terminfo/termcap",
+" ",
+#endif
 "SET TELNET TERMINAL-TYPE name",
 "  The terminal type to send to the remote TELNET host.  If none is given,",
 #ifdef OS2
@@ -9509,11 +9576,15 @@ static char *hxymacr[] = {
 static char *hmxyprm[] = {
 "Syntax: SET PROMPT [ text ]",
 " ",
+#ifdef OS2
+"Prompt text for this program, normally 'K-95>'.  May contain backslash",
+#else
 #ifdef MAC
 "Prompt text for this program, normally 'Mac-Kermit>'.  May contain backslash",
 #else
 "Prompt text for this program, normally 'C-Kermit>'.  May contain backslash",
 #endif /* MAC */
+#endif /* OS2 */
 "codes for special effects.  Surround by { } to preserve leading or trailing",
 #ifdef OS2
 "spaces.  If text omitted, prompt reverts to K-95>.  Prompt can include",
@@ -9547,6 +9618,8 @@ static char *hxywild[] = {
 "  used (for example) in creating backup files.",
 "" };
 #else
+#ifdef COMMENT
+/* Set wildcard-expansion is only available on UNIX */
 static char *hxywild[] = {
 "Syntax: SET WILDCARD-EXPANSION { ON, OFF }",
 "  ON (the default) means that filenames given to Kermit commands such as",
@@ -9558,6 +9631,7 @@ static char *hxywild[] = {
 "  treat each name in the list as a literal name.  See HELP WILDCARDS for",
 "  details about wildcard syntax.",
 "" };
+#endif /* COMMENT */
 #endif /* UNIX */
 
 #ifndef NOXFER
@@ -9933,11 +10007,21 @@ static char *hxywin95[] = {
 
 static char *hmxybel[] = {
 #ifdef OS2
+#ifdef KUI
+"Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, ",
+"    FLASH-WINDOW [ { ON, OFF } ], NONE }",
+#else
 "Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, NONE }",
+#endif /* KUI */
 "  Specifies how incoming Ctrl-G (bell) characters are handled in CONNECT",
 "  mode and how command warnings are presented in command mode.  AUDIBLE",
 "  means either a beep or a system-sound is generated; VISIBLE means the",
 "  screen is flashed momentarily.",
+#ifdef KUI
+" ",
+" FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
+" enabled independently of other options.",
+#endif /* KUI */
 #else
 "Syntax: SET BELL { OFF, ON }",
 "  ON (the default) enables ringing of the terminal bell (beep) except where",
@@ -10226,7 +10310,12 @@ static char * hsetiks[] = {
 /*  D O H S E T  --  Give help for SET command  */
 
 int
-dohset(xx) int xx; {
+#ifdef CK_ANSIC
+dohset( int xx ) 
+#else
+dohset(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x;
 
     if (xx == -3) return(hmsga(hmhset));
@@ -10654,6 +10743,14 @@ case XYUNCS:
   character sets.  KEEP means to accept them anyway."));
 #endif /* NOCSETS */
 
+#ifdef VMS
+case XYVMSTF:
+    return(hmsg("Syntax: SET VMS_TEXT { STREAM_LF, VARIABLE }\n\
+  Selects the record format for text output files on VMS\n\
+  (Stream_LF (default) or Variable-length)."
+));
+#endif /* VMS */
+
 #ifdef UNIX
 case XYWILD:
     return(hmsga(hxywild));
@@ -10836,7 +10933,19 @@ case XYTIMER:
 
 #ifdef ANYSSH
   case XYSSH:
+#ifdef SSHBUILTIN
+    {
+        const char **help_content;
+        if (ck_ssh_is_installed()) {
+            help_content = ssh_get_set_help();
+        } else {
+            help_content = (const char**)hmxyssh;
+        }
+        return(hmsga((char**)help_content));
+    }
+#else
     return(hmsga(hmxyssh));
+#endif /* SSHBUILTIN */
 #endif /* ANYCMD */
 
 #ifdef LOCUS
@@ -10863,9 +10972,10 @@ case XYTIMER:
   case XYVAREV:
     return(hmsg("Syntax: SET VARIABLE-EVALUATION { RECURSIVE, SIMPLE }\n\
   Tells Kermit weather to evaluate \\%x and \\&x[] variables recursively\n\
-  (which is the default for historical reasons) or by simple string\n\
-  replacement, which lets you use these variables safely to store strings\n\
-  (such as Windows pathnames) that might contain backslashes."));
+  In C-Kermit 10.0 the default is SIMPLE, meaning variables return their\n\
+  values like in any other programming language, making life much easier\n\
+  when those values happen to be Windows or DOS pathnames, which contain\n\
+  backslashes."));
 #endif	/* NOSPL */
 
 #ifdef HAVE_LOCALE
@@ -10942,7 +11052,12 @@ static char * hfsplit[] = {
 /*  D O H F U N C  --  Give help for a function  */
 
 int
-dohfunc(xx) int xx; {
+#ifdef CK_ANSIC
+dohfunc( int xx )
+#else
+dohfunc(xx) int xx;
+#endif /* CK_ANSIC */
+{
     /* int x; */
     if (xx == -3) {
         return(hmsga(hmxxfunc));
@@ -12197,38 +12312,12 @@ represent.\n");
     other than 7BIT, 8BIT, or UTF8 (this probably will never appear).\n");
         break;
 
-      case FN_STRCMP:
-        printf("\\fstrcmp(s1,s2[,case[,start[,length]]])\n\
-  s1, s2 = strings\n\
-  case, start, length = numbers or arithmetic expressions.\n\
-    case = 0 [default] means to do a case-independent comparison;\n\
-    nonzero case requests a case-sensitive comparison.\n\
-    The optional start and length arguments apply to both s1 and s2\n\
-    and allow specification of substrings if it is not desired to compare\n\
-    the whole strings.  Results for non-ASCII strings are implentation-\n\
-    and locale-dependent.\n\
-  Returns a number:\n\
-    -1: s1 is lexically less than s2;\n\
-     0: s1 and s2 are lexically equal;\n\
-     2: s1 is lexically greater than s2.\n");
+      case FN_STRCMP:                   /* fdc 12 November 2022 */
+        hmsga(hmfstrcmp);               /* Literal string was too long */
         break;
 
-      case FN_FILEINF:
-        printf("\\ffileinfo(s1,&a)\n\
-  s1 = file specification string\n\
-  &a = array designator for results (required)\n\
-  Returns a number:\n\
-     0: File not found or not accessible or bad arguments;\n\
-    >0: The number of attributes returned in the array, normally 7 or 8:\n");
-        printf(" 1. The file's name\n\
- 2. The full path of the directory where the file resides\n\
- 3. The file's modification date-time yyyymmdd hh:mm:ss\n\
- 4. Platform-specific permissions string, e.g. drwxrwxr-x or RWED,RWE,RE,E\n\
- 5. Platform-specific permissions code, e.g. an octal number like 40775\n\
- 6. The file's size in bytes\n\
- 7. Type: regular file, executable, directory, link, or unknown\n\
- 8. If link, the name of the file linked to.\n\
- 9. Transfer mode for file: text or binary\n");
+      case FN_FILEINF:                  /* fdc 12 November 2022 */
+        hmsga(hmffileinfo);             /* Literal string was too long */
         break;
 
       case FN_FILECMP:
@@ -12241,27 +12330,26 @@ represent.\n");
     -1: Error opening or reading either file.\n");
         break;
 
-      case FN_DAYNAME:
-        printf("\\fdayname(s1,n)\n\
-  s1 = free-format date OR day-of-week number 1-7 OR leave blank.\n\
-  n  = function code: 0 to return full name; nonzero to return abbreviation.\n\
-  Returns a string: the name of the weekday for the given date or weekday\n\
-    number or, if s1 was omitted, of the current date, in the language and\n\
-    character-set specified by the locale.  If n is nonzero, the result\n\
-    is abbreviated in the locale-appropriate way.  If given inappropriate\n\
-    arguments, the result is empty and an error message is printed.\n");
+      case FN_DAYNAME:                  /* fdc 12 November 2022 */
+        hmsga(hmfdayname);              /* Literal string was too long */
         break;
 
-      case FN_MONNAME:
-        printf("\\fmonthname(s1,n)\n\
-  s1 = free-format date OR month-of-year number 1-12 OR leave blank.\n\
-  n  = function code: 0 to return full name; nonzero to return abbreviation.\n\
-  Returns a string: the name of the month for the given date or month\n\
-    number or, if s1 was omitted, of the current date, in the language and\n\
-    character-set specified by the locale.  If n is nonzero, the result\n\
-    is abbreviated in the locale-appropriate way.  If given inappropriate\n\
-    arguments, the result is empty and an error message is printed.\n");
+      case FN_MONNAME:                  /* fdc 12 November 2022 */
+        hmsga(hmfmonname);              /* Literal string was too long */
         break;
+
+#ifdef OS2
+      case FN_TERMCKS:
+        printf("\\fterminalchecksum(n1,n2,n3,n4,n5)\n\
+  Returns a checksum of the terminal screen using the same algorithm as the\n\
+  DECRQCRA control sequence found on the DEC VT420 and VT520 terminals.\n\
+  n1 is the top line, n2 is the left column, n3 is the bottom line and n4 is\n\
+  the right column, and n5 is the page number. Unlike DECRQCRA, any margins \n\
+  set do not apply. All parameters are optional and default to a checksum of\n\
+  the entire page that is currently being displayed. All coordinates and page\n\
+  numbers start from 1.");
+        break;
+#endif /* OS2 */
 
       default:
         printf("Sorry, help not available for \"%s\"\n",cmdbuf);
@@ -12450,7 +12538,7 @@ dohkverb(xx) int xx; {
         printf("\\Kdecremove     Transmit DEC REMOVE sequence\n");
         break;
     case  K_DECSELECT :                 /* DEC Select key */
-        printf("\\Kdecfselect    Transmit DEC SELECT sequence\n");
+        printf("\\Kdecselect     Transmit DEC SELECT sequence\n");
         break;
     case  K_DECPREV   :                 /* DEC Previous Screen key */
         printf("\\Kdecprev       Transmit DEC PREV SCREEN sequence\n");
@@ -12538,11 +12626,17 @@ dohkverb(xx) int xx; {
     case  K_DNSCN     :                 /* Screen rollback: down one screen */
       printf("\\Kdnscn         Screen rollback: down one screen\n");
       break;
+    case  K_DNHSCN    :                 /* Screen rollback: down half a screen */
+      printf("\\Kdnhscn        Screen rollback: down half of one screen\n");
+      break;
     case  K_UPONE     :                 /* Screen rollback: Up one line */
       printf("\\Kupone         Screen rollback: up one line\n");
       break;
     case  K_UPSCN     :                 /* Screen rollback: Up one screen */
       printf("\\Kupscn         Screen rollback: up one screen\n");
+      break;
+    case  K_UPHSCN    :                 /* Screen rollback: Up half a screen */
+      printf("\\Kuphscn        Screen rollback: up half of one screen\n");
       break;
     case  K_ENDSCN    :                 /* Screen rollback: latest screen */
       printf("\\Kendscn        Screen rollback: latest screen\n");
@@ -12718,7 +12812,7 @@ dohkverb(xx) int xx; {
       printf("\\Ktn_ao         TELNET: Transmit Cancel-Output request\n");
       break;
     case  K_TN_AYT      :               /* TELNET Are You There */
-      printf("\\Ktnayt         TELNET: Transmit Are You There? request\n");
+      printf("\\Ktn_ayt        TELNET: Transmit Are You There? request\n");
       break;
     case  K_TN_EC       :               /* TELNET Erase Character */
       printf("\\Ktn_ec         TELNET: Transmit Erase Character request\n");
@@ -12764,7 +12858,7 @@ dohkverb(xx) int xx; {
       printf("\\Kkeyclick      Toggle Keyclick mode\n");
       break;
     case  K_LOGDEBUG    :               /* Toggle Debug Log File */
-      printf("\\Klogdebug      Toggle Debug Logging to File\n");
+      printf("\\Kdebuglog      Toggle Debug Logging to File\n");
       break;
     case  K_FNKEYS      :               /* Show Function Key Labels */
       printf("\\Kfnkeys        Display Function Key Labels\n");
@@ -13508,7 +13602,7 @@ dohkverb(xx) int xx; {
       printf("\\Kdgbs          Transmit Data General: Backspace         \n");
       break;
     case  K_DGSHOME      :
-      printf("\\Kdshome        Transmit Data General: Shift-Home        \n");
+      printf("\\Kdgshome       Transmit Data General: Shift-Home        \n");
       break;
 
 
@@ -14721,7 +14815,12 @@ static char *hrset[] = {
 "  Kermit if it were in interactive mode.", "" };
 
 int
-dohrmt(xx) int xx; {
+#ifdef CK_ANSIC
+dohrmt( int xx )
+#else
+dohrmt(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x;
     if (xx == -3) return(hmsga(hmhrmt));
     if (xx < 0) return(xx);
@@ -14907,6 +15006,24 @@ case XZXIT:
     return(hmsg("Syntax: REMOTE EXIT\n\
   Asks the Kermit server to exit.  Synonym: REXIT."));
 #endif /* NEWFTP */
+
+case XZSTA:
+    return(hmsg("Syntax: REMOTE STATUS\n\
+  Asks the remote Kermit server for information about itself.  Typically\n\
+  this would include the name and version of Kermit program,the underlying\n\
+  hardware/architecture, operating system, current directory, and the\n\
+  details of the most recent file transfer (if any)."));
+
+case XZCDU:
+#ifdef NEWFTP
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit or FTP server to change its working directory to\n\
+  the directory above it.  Synonym: RCDUP."));
+#else
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit server to change its working directory to the directory\n\
+  above it.  Synonym: RCDUP."));
+#endif  /* NEWFTP */
 
 default:
     if ((x = cmcfm()) < 0) return(x);

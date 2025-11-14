@@ -1,7 +1,9 @@
 /***************************/
 /* OS/2 API support        */
 /***************************/
+#ifndef OS2
 #define OS2
+#endif /* OS2 */
 #define INCL_DOS
 #define INCL_VIO
 #define INCL_BASE
@@ -33,6 +35,13 @@
 #include <netdb.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+
+#ifdef __WATCOMC__
+#ifndef TCPV40HDRS
+#include <tcpustd.h>
+#include <arpa/inet.h>
+#endif /* TCPV40HDRS */
+#endif
 
 void _System addsockettolist(int socket);
 

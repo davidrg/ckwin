@@ -1,0 +1,696 @@
+#  +-------------------+------------------+-------------------------------+
+#  | File Version:   1 | Date: 2025-05-21 | Kermit 95 Version: 3.0 beta.8 |
+#  +-------------------+------------------+-------------------------------+
+#
+########### HELP WANTED ######################################################
+#                                                                            #
+# This is a first attempt at a terminfo file for Kermit 95 by someone who    #
+# has never used curses or had a close look at terminfo before. There are    #
+# sure to be things that are wrong, or could perhaps be done better. Maybe   #
+# additional Kermit 95 features that could be exposed. Maybe additional      #
+# entries to support Kermit 95s various keyboard modes and other features    #
+# Perhaps there are bits from the regular curses distribution that can be    #
+# reused rather than including absolutely everything here?                   #
+#                                                                            #
+# The green "k95" column in the tables at this URL are what this term info   #
+# file is attempting to describe:                                            #
+#         https://davidrg.github.io/ckwin/dev/tt-ctlseqs.html                #
+# And the keymap is the k95 column on this page:                             #
+#         https://davidrg.github.io/ckwin/dev/keyb.html                      #
+#                                                                            #
+##############################################################################
+#
+# This terminfo file was written starting from the vt320 terminfo entry as the
+# k95 terminal type is a VT320 with VT420 and xterm extensions (among others),
+# so it seemed like a reasonable starting point for something that wouldn't
+# start out too far from correct.
+#
+# From there, it was compared with the xterm-256color terminfo entry. The
+# terminfo manpage and Kermit 95 control sequences document was used to copy
+# relevant capabilities over with adjustments as necessary.
+#
+# The plan is to slowly evolve the k95 terminal type towards the vt520 feature
+# level with more extensions from xterm and elsewhere if they don't conflict.
+#
+# Differences from xterm-256color:
+#  Not many! In general, if an application doesn't need L/R margins then
+#  TERM=xterm-256color shouldn't break anything. The main differences are:
+#   - No support for left/right margins yet    | Both of these are
+#   - No title stack                           | high-priority features
+#   - K95 has a status line (later versions of xterm seem to as well though)
+#   - Cursor normal and very visible is set via DECSCUSR (VT520) to change its
+#     shape from the default blinking underline to a blinking block
+#   - is2 and rs2 just do a soft-reset and hard-reset respectively. These
+#     *should* be good enough to get K95 into a sensible state.
+#   - K95 doesn't include 'ii' in the acsc string - likely not supported.
+#
+# There are two major variants of Kermit 95: the one that runs as a GUI
+# application on Windows, and the one that runs as a text-mode application in
+# the Windows or OS/2 console window. The text-mode version:
+#   - is 16 colors only with no control over the palette (if a program
+#     ignores terminfo and tries 256-color or direct RGB anyway, K95 will
+#     still try to "do the right thing" and pick the nearest color in its 16-
+#     color palette).
+#   - Simulates Double-height and double-width lines
+#   - Simulates the Bold, Underline, Italic, etc. attributes
+#
+# Additionally,
+#   - The GUI version for older versions of windows may not allow direct
+#     setting of arbitrary RGB colors via SGR. The palette can still be
+#     customised however, and up to 256 colors are still supported.
+#   - K95 *can* be set to use a smaller color palette (16 or 88 colors). This
+#     terminfo entry assumes the 256-color palette which is the default.
+#
+# TODO:
+# - Meta key: we have one, but its not on by default. Should we still set the
+#   'km' capability?
+# - Color capability: currently we're specifying 256-color support with the
+#   ability to change color definitions. Can we *also* allow direct color, or
+#   is it one or the other?
+# - Add 16-color and 88-color variants, and have K95 set $TERM differently if
+#   a smaller palette is selected. The console version should probably always
+#   report a 16-color palette as while it *understands* 256-color and direct
+#   RGB, colors are always converted to something valid for its 16-color
+#   display palette
+# - Should probably have a different terminfo entry for the console variant,
+#   which lacks a number of features (>16 colours, synchronised output, etc)
+# - Is there a capability to switch into/out of meta-sends-esc mode like there
+#   is for meta-sets-8th-bit? This would set/reset DEC mode 1036.
+# - We're currently using the private-mode mc4/mc5 as the VT320 terminfo entry
+#   did which differs from xterm, and xterm also advertises the mc5i
+#   capability. Need to investigate which is more appropriate.
+#
+# - Extra capabilities to consider:
+#   - Terminfo has capabilities for the PC scancode keyboard (PCTERM) mode.
+#     And K95 does implement PCTERM mode, its just lacking the VT420 control
+#     sequences to enter/exit it - it has to be initiated by the user at the
+#     moment. Might need to fire up a Digital UNIX box to see if its terminfo
+#     man page gives any more details about these capabilities too.
+#   - There are a bunch of extra capabilities listed in Caps-ncurses that arent
+#     documented in the terminfo man page. Some of them cover features
+#     supported by Kermit 95. Would it be reasonable to add them here too? Or
+#     are they for private use by particular applications?
+# - The Keymap: Given the choice of "doing what xterm does", and "doing what
+#   a VT520 does", I'd kind of prefer to take the VT520 option, something K95
+#   currently does for the numeric key pad (to an extent), but less so for the
+#   editing keypad and F1-F4. Copying xterm does have its advantages (people
+#   will inevitably ignore this terminfo file and just set
+#   TERM=xterm-256color), but its also just making the decision to copy another
+#   programs behaviour for ever, rather than doing what some real piece of
+#   hardware did.
+
+k95|Kermit 95 v3.0.0 beta 8,
+#
+# Boolean Capabilities
+# --------------------
+# auto-right-margin
+	am, 
+# Screen erased with background color
+	bce,
+# Color palette can be changed
+	ccc,
+# We have a meta key
+	km,
+# status_line_esc_ok (ESC can be used in the status line)
+	eslok, 
+# has_status_line
+	hs, 
+# move_insert_mode (safe to move in insert mode)
+	mir, 
+# move_standout_mode (safe to move while in standout mode)
+	msgr,
+# No pad character
+	npc,
+# eat_newline_glitch (newline ignored after 80cols)
+	xenl,
+#
+# Numeric Capabilities
+# --------------------
+# Up to 256 colors
+	colors#0x100,
+# 80 columns
+	cols#80,
+# Tab stop every 8 characters
+	it#8,
+# 24 lines by default.
+	lines#24,
+# And up to 65,536 color pairs
+	pairs#0x10000,
+# Width of status line is 80 columns
+	wsl#80,
+#
+# String Capabilities
+# -------------------
+# Graphics charset pairs - xterm additionally includes 'ii' in this list
+	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+# Bel is ^G
+	bel=^G,
+# SGR - blinking text on	
+	blink=\E[5m,
+# SGR - bold text on	
+	bold=\E[1m,
+# Back tab
+	cbt=\E[Z,
+# Make cursor invisible	
+	civis=\E[?25l,
+# Clear screen	
+	clear=\E[H\E[2J,
+# Make cursor appear normal - a blinking underline is the K95 default. For this
+# use DECSCUSR to change the cursor shape, and DECSET-25 to make sure its on.
+# Xterm instead turns blink on/off (its default cursor shape is a block).
+	cnorm=\E[3 q\E[?25h,
+# Carriage Return is CR	
+	cr=\r,
+# Reset cursor color
+	Cr=\E]112\E\\,
+# Set Cursor Color
+	Cs=\E]12;%p1%s\E\\,
+# Change Scroll Region (set top/bottom margins)	
+	csr=\E[%i%p1%d;%p2%dr,
+# Move # characters backwards (to the left)
+	cub=\E[%p1%dD,
+# Move one space left
+	cub1=^H,
+# Move down # lines
+	cud=\E[%p1%dB,
+# Move down 1 line
+	cud1=\n,
+# Move # characters forward (to the right)
+	cuf=\E[%p1%dC,
+# Move 1 character forward (to the right)
+	cuf1=\E[C,
+# Move cursor to row #1 column #2
+	cup=\E[%i%p1%d;%p2%dH,
+# Move cursor up # lines
+	cuu=\E[%p1%dA,
+# Move cursor up 1 line
+	cuu1=\E[A,
+# Make cursor very visible - a blinking block, via DECSCUSR.
+        cvvis=\E[0\sq\E[?25h,
+# Delete # characters
+	dch=\E[%p1%dP,
+# Delete 1 character
+	dch1=\E[P,
+# SGR Dim attribute ON
+	dim=\E[2m,
+# Delete # lines
+	dl=\E[%p1%dM,
+# Delete 1 line
+	dl1=\E[M,
+# Disable status line
+	dsl=\E[0$~,
+# Erase # characters
+	ech=\E[%p1%dX,
+# Clear to end of screen
+	ed=\E[J,
+# Clear to end of line
+	el=\E[K,
+# Clear to beginning of line
+	el1=\E[1K,
+# Visible Bell (briefly reverse the screen)
+	flash=\E[?5h$<100/>\E[?5l,
+# Return from status line
+	fsl=\E[0$},
+# Home the cursor
+	home=\E[H,
+# Horizontal Position # absolute
+	hpa=\E[%i%p1%dG,
+# Horizontal tab
+	ht=^I,
+# Set tab in every row, current columns
+	hts=\EH,
+# Insert # characters
+	ich=\E[%p1%d@,
+# Insert # lines
+	il=\E[%p1%dL,
+# Insert 1 line
+	il1=\E[L,
+# Scroll text forward (up)
+# The VT320 uses IND for this (\ED), while xterm uses LF (\n). In K95 for a DEC
+# VT-style emulation the only difference is that \n is ignored if the cursor
+# is in the status line (there are more differences for WYSE, SNI-97801, etc
+# but we don't care about those here). As \n is shorter, we'll go with that.
+	ind=\n,
+# Scroll forward # lines
+	indn=\E[%p1%dS,
+# Initialise colours
+ 	initc=\E]4;%p1%d;rgb\:%p2%{255}%*%{1000}%/%2.2X/%p3%{255}%*%{1000}%/%2.2X/%p4%{255}%*%{1000}%/%2.2X\E\\,
+# SGR Invisible attribute ON
+	invis=\E[8m,
+# Initialisation string 2 - a soft reset should be good enough. It won't affect
+# the size of the terminal window, but then it probably shouldn't if the user
+# specified a different size.
+	is2=\E[!p,
+# Mouse event "key"
+	kmous=\E[<,
+# Print contents of screen
+	mc0=\E[i,
+# Turn off printer
+	mc4=\E[?4i,
+# Turn on printer
+	mc5=\E[?5i,
+# Lock/Unlock memory above the cursor (sets the top margin). These don't appear
+# in the terminfo man page, but xterm reports these capabilities and K95
+# supports them too.
+	meml=\El,
+	memu=\Em,
+#######
+# TODO: Clear left/right margins
+# TODO: K95 doesn't implement DECSLRMM yet
+# TODO:	mgc=\E[?69l,
+#######
+# Modify clipboard
+	Ms=\E]52;%p1%s;%p2%s\E\\,
+# Newline (behave like CR+LF)
+	nel=\EE,
+# Reset color palette to original values
+	oc=\E]104\007,
+# Set default attribute to normal colors
+ 	op=\E[39;49m,
+# Restore cursor
+	rc=\E8,
+# Repeat character p1 p2 times
+	rep=%p1%c\E[%p2%{1}%-%db,
+# Reverse video ON
+	rev=\E[7m,
+# Scroll text down
+	ri=\EM,
+# Scroll text down # lines
+ 	rin=\E[%p1%dT,
+# Exit alternate characterset mode
+# .. and return to UTF-8 mode
+	rmacs=\E%%G\E(B,
+# Turn off automatic margins (am)
+	rmam=\E[?7l,
+# Exit alternate screen mode
+# TODO: Add \E[23;0;0t to pop the title from the stack (when we have one)
+    rmcup=\E[?1049l,
+# Exit insert mode
+	rmir=\E[4l,
+# SGR Italic attribute OFF
+ 	ritm=\E[23m,
+# Exit keyboard transmit mode (application/normal cursor keys)
+	rmkx=\E[?1l\E>,
+# Turn off meta mode (switches out of any special keyboard mode)
+	rmm=\E[?1034l,
+# Exit standout mode
+	rmso=\E[27m,
+# Exit undeline mode
+	rmul=\E[24m,
+# Exit strikeout/crossed-out
+    rmxx=\E[29m,
+# Reset string 2: Just do a hard reset - that should set everything back to
+# defaults or user-specified values. If it doesn't, its probably a K95 bug.
+	rs2=\Ec,
+# Save cursor position
+	sc=\E7,
+# Reset cursor style to default
+	Se=\E[3\sq,	
+# SGR Set background color
+	setab=\E[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48:5:%p1%d%;m,
+# SGR Set foreground color
+	setaf=\E[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38:5:%p1%d%;m,
+# Set video attributes 1-7
+	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p5%t;2%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
+# Turn off all video attributes
+	sgr0=\E[m\E(B,
+# SGR Italic attribute ON
+	sitm=\E[3m,
+# Switch to alternate character set mode
+# This only works when K95 isn't in UTF-8 mode as it does not yet have an
+# equivalent to xterms vt100Graphics resource (its on the to-do list, but the
+# to-do list is very very long for only one developer...), so for now we'll
+# just take K95 out of UTF-8 mode when starting the alternate character set
+# which will at least make it work.
+	smacs=\E%%@\E(0,
+# Enable alternate margins (am)
+	smam=\E[?7h,
+# Enter alternate screen mode
+# TODO: Add \E[22;0;0t to push the title on the stack (when we have one)
+    smcup=\E[?1049h,
+#######
+# TODO: Set left margin at column p1
+# TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
+# TODO:	smglp=\E[?69h\E[%i%p1%ds
+#
+# TODO: Set left and right margins at columns p1 and p2
+# TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
+# TODO:	smglr=\E[?69h\E[%i%p1%d;%p2%ds,
+#
+# TODO: Set right margin at column p1
+# TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
+# TODO:	smgrp=\E[?69h\E[%i;%p1%ds,
+#######
+# Enter insert mode
+	smir=\E[4h,
+# Enter keyboard transmit mode (application/normla cursor keys)
+	smkx=\E[?1h\E=,
+# Enable the meta key (switches to the META special keyboard mode)
+	smm=\E[?1034h,
+# Enter standout mode (reverse vide)
+	smso=\E[7m,
+# Enter underline mode
+	smul=\E[4m,
+# Enter strikeout/crossed-out mode
+    smxx=\E[9m,
+# Set cursor style (DECSCUSR)
+	Ss=\E[%p1%d\sq,
+# Synchronized Output (K95G only)
+    Sync=\E[?2026%?%p1%{1}%-%tl%eh,
+# Clear all tab stops
+	tbc=\E[3g,
+# Move to status line
+	tsl=\E[2$~\E[1$}\E[%i%p1%d`,
+# Vertical position # absolute
+	vpa=\E[%i%p1%dd,
+# Initialize alternate xterm mouse mode. Not in the terminfo manpage, but
+# listed in Caps-ncurses.
+	XM=\E[?1006;1000%?%p1%{1}%=%th%el%;,
+# Mouse response. Not in the terminfo man page, but listed in Caps-ncurses
+	xm=\E[<%i%p3%d;%p1%d;%p2%d;%?%p4%tM%em%;,
+#
+# User Strings
+# ------------
+# The terminfo manpage doesn't say what these are for. vt320 and xterm use the
+# same values for these, so they should be valid for K95 too as its being an
+# extended VT320.
+#
+# u7 looks like a DSR asking for cursor position, and u6 would be the response
+	u6=\E[%i%d;%dR,
+	u7=\E[6n,
+# While these two appear to be device attributes
+	u8=\E[?%[;0123456789]c,
+	u9=\E[c,
+#	
+# String Capabilities: Keyboard
+# -----------------------------
+# Kermit 95s 'k95' terminal type aims to match xterm as much as possible for
+# its default keymap. The biggest differnece is that the Alt key by default
+# performs local actions rather than being used as a meta key or sending ESC,
+# though K95 can be switched into either of these modes using the same DEC
+# private modes that xterm uses.
+#
+# -- Numeric Keypad (Application Mode) --
+# In Application mode, this works like the VT320 numpad in K95, except that
+# F1-4 and PF1-4 are swapped around to match xterm which for some reason
+# doesn't use the VT520 PC-Keyboard function keys anymore. So those are moved
+# over to the top row of the numpad with the Shift modifier
+#
+# TODO: Shift+Numlock sends \E[11~ (VT520 w/pc keyboard, F1)
+# TODO: Shift+/ sends \E[12~ (VT520 w/pc keyboard, F2)
+# TODO: Shift+* sends \E[13~ (VT520 w/pc keyboard, F3)
+# TODO: Shift+- sends \E[14~ (VT520 w/pc keyboard, F4)
+# Shift+add (DEC comma)
+	kpCMA=\EOl,
+# Alt+Add (DEC subtract)
+	kpSUB=\EOm,
+# Numpad enter
+	kent=\EOM,
+# Numpad .
+	kpDOT=\EOn,
+# Numpad 0
+	kpZRO=\EOp,
+# Lower left: Numpad 1
+	kc1=\EOq,
+# Numpad 2
+	kc2=\EOr,
+# Lower right: Numpad 3
+	kc3=\EOs,
+# Numpad 4
+	kb1=\EOt,
+# Center: Numpad 5
+	kb2=\EOu,
+# Numpad 6
+	kb3=\EOv,
+# Upper left: Numpad 7
+	ka1=\EOw,
+# Numpad 8
+	ka2=\EOx,
+# Upper right: Numpad 9
+	ka3=\EOy,
+#
+# -- Editing Keypad --
+# For insert, the shift modifier seems to have no effect on xterm, so these
+# aren't mapped in K95s default keymap.
+# Insert
+	kich1=\E[2~,
+# Shift+Insert
+	kIC=\E[2;2~,
+# Alt+Insert
+	kIC3=\E[2;3~,
+# Alt+Shift+Insert
+	kIC4=\E[2;4~,
+# Ctrl+Insert
+	kIC5=\E[2;5~,
+# Ctrl+Shift
+	kIC6=\E[2;6~,
+# Ctrl+Alt+Insert
+	kIC7=\E[2;7~,
+# Ctrl+Alt+Shift+Insert - not currently mapped
+#
+# Delete
+	kdch1=\E[3~,
+# Shift+Delete
+	kDC=\E[3;2~,
+# Alt+Delete
+	kDC3=\E[3;3~,
+# Alt+Shift+Delete
+	kDC4=\E[3;4~, 
+# Ctrl+Delete
+	kDC5=\E[3;5~,
+# Ctrl+Shift+Delete
+	kDC6=\E[3;6~,
+# Ctrl+Alt+Delete - not currently mapped (intercepted by Windows)
+# 	kDC7=\E[3;7~,
+# Ctrl+Alt+Shift+Delete
+#	??=\E[3;8~,
+#
+# Home
+	khome=\EOH,
+# Shift+Home
+	kHOM=\E[1;2H,
+# Alt+Home
+	kHOM3=\E[1;3H,
+# Alt+Shift+Home
+	kHOM4=\E[1;4H,
+# Ctrl+Home
+	kHOM5=\E[1;5H,
+# Ctrl+Shift+Home
+	kHOM6=\E[1;6H,
+# Ctrl+Alt+Home
+	kHOM7=\E[1;7H,
+# Ctrl+Alt+Shift+Home - not currently mapped
+#
+# End
+	kend=\EOF,
+# Shift+End
+	kEND=\E[1;2F,
+# Alt+End
+	kEND3=\E[1;3F, 
+# Alt+Shift+End
+	kEND4=\E[1;4F,
+# Ctrl+End
+	kEND5=\E[1;5F, 
+# Ctrl+Shift+End
+	kEND6=\E[1;6F, 
+# Ctrl+Alt+End
+	kEND7=\E[1;7F,
+# Ctrl+Alt+Shift+End
+#	??=\E[1;8F,
+#
+# PgUp
+	kpp=\E[5~,
+# Shift+PgUp
+	kPRV=\E[5;2~,
+# Alt+PgUp
+	kPRV3=\E[5;3~,
+# Alt+Shift+PgUp
+	kPRV4=\E[5;4~, 
+# Ctrl+PgUp
+	kPRV5=\E[5;5~,
+# Ctrl+Shift+PgUp
+	kPRV6=\E[5;6~, 
+# Ctrl+Alt+PgUp
+	kPRV7=\E[5;7~,
+# Ctrl+Alt+Shift+PgUp - not currently mapped
+#
+# PgDown
+	knp=\E[6~,
+# Shift+PgDown
+	kNXT=\E[6;2~, 
+# Alt+PgDown
+	kNXT3=\E[6;3~,
+# Alt+Shift+PgDown
+	kNXT4=\E[6;4~,
+# Ctrl+PgDown
+	kNXT5=\E[6;5~,
+# Ctrl+Shift+PgDown
+	kNXT6=\E[6;6~, 
+# Ctrl+Alt+PgDown
+	kNXT7=\E[6;7~,
+# Ctrl+Alt+Shift+PgDown - not currently mapped
+#
+#
+# -- Arrow Keys (Application Mode) --
+# Left
+	kcub1=\EOD,
+# Down
+	kcud1=\EOB,
+# Right
+	kcuf1=\EOC,
+# Up
+	kcuu1=\EOA,
+#
+# -- Arrow Keys (Normal Mode) --
+# Seems terminfo can't represent both application mode and normal mode
+# sequences, so only the shifted variants are here
+#
+# Left
+#	??=\E[D,
+# Shift+Left
+	kLFT=\E[1;2D,
+# Alt+Left
+	kLFT3=\E[1;3D,
+# Alt+Shift+Left
+	kLFT4=\E[1;4D,
+# Ctrl+Left
+	kLFT5=\E[1;5D,
+# Ctrl+Shift+Left
+	kLFT6=\E[1;6D,
+# Ctrl+Alt+Left
+	kLFT7=\E[1;7D,
+# Ctrl+Alt+shift+Left
+#       ??=\E[1;8D,
+# Down
+#	??=\E[B,
+# Shift+Down
+	kDN=\E[1;2B,
+# Alt+Down
+	kDN3=\E[1;3B,
+# Alt+Shift+Down
+	kDN4=\E[1;4B,
+# Ctrl+Down
+	kDN5=\E[1;5B,
+# Ctrl+Shift+Down
+	kDN6=\E[1;6B,
+# Ctrl+Alt+Down
+	kDN7=\E[1;7B,
+# Ctrl+Alt+shift+Down
+#	??=\E[1;8B,
+# Right
+#	??=\E[C,
+# Shift+Right
+	kRIT=\E[1;2C,
+# Alt+Right
+	kRIT3=\E[1;3C,
+# Alt+Shift+Right
+	kRIT4=\E[1;4C,
+# Ctrl+Right
+	kRIT5=\E[1;5C,
+# Ctrl+Shift+Right
+	kRIT6=\E[1;6C,
+# Ctrl+Alt+Right
+	kRIT7=\E[1;7C,
+# Ctrl+Alt+Shift+Right
+#	??=\E[1;8C,
+# Up
+#	??=\E[A,
+# Shift+Up
+	kUP=\E[1;2A,
+# Alt+Up
+	kUP3=\E[1;3A,
+# Alt+Shift+Up
+	kUP4=\E[1;4A,
+# Ctrl+Up
+	kUP5=\E[1;5A,
+# Ctrl+Shift+Up
+	kUP6=\E[1;6A,
+# Ctrl+Alt+Up
+	kUP7=\E[1;7A,
+# Ctrl+Alt+Shift+Up
+#	??=\E[1;8A,
+#
+# -- Misc Keys --
+# Backspace
+	kbs=^?,
+# Shift+Tab
+	kcbt=\E[Z,
+#
+# -- Function Keys --
+# F1-12
+	kf1=\EOP,
+	kf2=\EOQ,
+	kf3=\EOR,
+	kf4=\EOS,
+	kf5=\E[15~,
+	kf6=\E[17~,
+	kf7=\E[18~,
+	kf8=\E[19~,
+	kf9=\E[20~,
+	kf10=\E[21~,
+	kf11=\E[23~,
+	kf12=\E[24~,
+# Shift+F1-12
+	kf13=\E[1;2P,
+	kf14=\E[1;2Q,
+	kf15=\E[1;2R,
+	kf16=\E[1;2S,
+	kf17=\E[15;2~,
+	kf18=\E[17;2~,
+	kf19=\E[18;2~,
+	kf20=\E[19;2~,
+	kf21=\E[20;2~,
+	kf22=\E[21;2~,
+	kf23=\E[23;2~,
+	kf24=\E[24;2~,
+# Ctrl+F1-12
+	kf25=\E[1;5P,
+	kf26=\E[1;5Q,
+	kf27=\E[1;5R,
+	kf28=\E[1;5S,
+	kf29=\E[15;5~,
+	kf30=\E[17;5~,
+	kf31=\E[18;5~,
+	kf32=\E[19;5~,
+	kf33=\E[20;5~,
+	kf34=\E[21;5~,
+	kf35=\E[23;5~,
+	kf36=\E[24;5~,
+# Ctrl+Shift+F1-12
+	kf37=\E[1;6P,
+	kf38=\E[1;6Q,
+	kf39=\E[1;6R,
+	kf40=\E[1;6S,
+	kf41=\E[15;6~,
+	kf42=\E[17;6~,
+	kf43=\E[18;6~,
+	kf44=\E[19;6~,
+	kf45=\E[20;6~,
+	kf46=\E[21;6~,
+	kf47=\E[23;6~,
+	kf48=\E[24;6~,
+# Alt+F1-12
+	kf49=\E[1;3P,
+	kf50=\E[1;3Q,
+	kf51=\E[1;3R,
+	kf52=\E[1;3S,
+	kf53=\E[15;3~,
+	kf54=\E[17;3~,
+	kf55=\E[18;3~,
+	kf56=\E[19;3~,
+	kf57=\E[20;3~,
+	kf58=\E[21;3~,
+	kf59=\E[23;3~,
+	kf60=\E[24;3~,
+# Alt+Shift+F1-12
+	kf61=\E[1;4P,
+	kf62=\E[1;4Q,
+	kf63=\E[1;4R,
+# f64  \E[15;4~
+# f65 \E[17;4~
+# f66 \E[18;4~
+# f67 \E[19;4~
+# f68 \E[20;4~
+# f69 \E[21;4~
+# f70 \E[23;4~
+# f71 \E[24;4~

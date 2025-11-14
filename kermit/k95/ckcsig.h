@@ -134,7 +134,8 @@ cksetjmp( ckjptr jmp ) {
 __inline void
 cklongjmp( ckjptr jmp, int retval ) {
     extern HANDLE tidCommand;
-    extern int ttyfd, mdmtyp ;
+    extern int mdmtyp ;
+    extern CK_TTYFD_T ttyfd;
     extern DWORD CommandID;
     extern int isinterrupted;
 
@@ -161,7 +162,8 @@ void crash( void ) ;
 __inline void
 cklongjmp( ckjptr jmp, int retval ) {
     extern HANDLE tidCommand;
-    extern int ttyfd, mdmtyp;
+    extern int mdmtyp;
+    extern CK_TTYFD_T ttyfd;
     extern DWORD CommandID;
     CONTEXT context;
 

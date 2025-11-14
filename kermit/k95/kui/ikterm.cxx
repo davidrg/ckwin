@@ -2,20 +2,20 @@
 extern "C" {
 #include "ikui.h"
 extern enum markmodes markmodeflag[] ;
-extern videobuffer vscrn[VNUM]; /* = {0,0,0,0,0,0,{0,0},0,-1,-1}; */
+extern vscrn_t vscrn[VNUM]; /* = {0,0,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0}; */
 extern int inecho;          /* do we echo script INPUT output? */
 extern int updmode ;
 extern int priority ;
-extern unsigned char defaultattribute ;
+extern cell_video_attr_t defaultattribute ;
 extern int cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[];
 extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor, scrninitialized[], ttyfd, viewonly, carrier, network,
            tt_scrsize[], tt_modechg, pheight, pwidth, tt_status[], screenon, 
            decssdt, tt_url_hilite, tt_url_hilite_attr, tt_type_mode, ttnum;
+extern bool decssdt_override;
 extern TID tidTermScrnUpd ;
-extern unsigned char     colorstatus;
-extern unsigned char     colorselect;
-extern unsigned char     colorborder;
+extern cell_video_attr_t     colorstatus;
+extern cell_video_attr_t     colorselect;
 extern BYTE vmode;
 extern int tcsl;
 extern int nt351;
@@ -65,7 +65,7 @@ void getMaxSizes( int* column, int* row )
 ------------------------------------------------------------------------*/
 IKTerm::IKTerm( BYTE whichbuffer, K_CLIENT_PAINT* clipaint )
     : vnum( whichbuffer )
-    , kcp( clipaint ), mouseCaptured(0)
+    , kcp( clipaint ), mouseCaptured(0), vt_char_attrs(0)
 {
 }
 
@@ -80,9 +80,13 @@ IKTerm::~IKTerm()
 #define URLMINCNT 4096
 #define EXCLUSIVE 1
 
-BOOL IKTerm::getDrawInfo()
+BOOL IKTerm::getDrawInfo() {
+    return getDrawInfo( vmode );
+}
+
+BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
 {
-	vnum = vmode;
+	vnum = vscrn_number;
 #ifdef EXCLUSIVE
     /* Wait for exclusive access to the screen */
     if ( RequestVscrnMutex( vnum, 200 ) ) {
@@ -101,7 +105,8 @@ BOOL IKTerm::getDrawInfo()
     incnt = 0;
 
     vbuf = &(vscrn[vnum]);
-    if ( vbuf->lines == NULL ) {
+    vscrn_page_t *page = &vscrn_view_page(vnum);
+    if ( !vscrn_view_page_valid(vnum) ) {
         ReleaseVscrnMutex(vnum) ;
         return FALSE;
     }
@@ -148,9 +153,9 @@ BOOL IKTerm::getDrawInfo()
 #endif /* NEW_EXCLUSIVE */
             /* Get the next line */
             if (!scrollflag[vnum])
-                line = &vbuf->lines[(vbuf->top+y)%vbuf->linecount] ;
+                line = &page->lines[(page->top+y)%page->linecount] ;
             else
-                line = &vbuf->lines[(vbuf->scrolltop+y)%vbuf->linecount] ;
+                line = &page->lines[(page->scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -188,7 +193,7 @@ BOOL IKTerm::getDrawInfo()
 
                     textBuffer[c+x] = cell.c;
                     attrBuffer[c+x] = ComputeColorFromAttr( vnum,
-                                cell.a,
+                                cell.video_attr,
                                 vt_char_attrs);
                     effectBuffer[c+x] = vt_char_attrs;
                 }
@@ -197,12 +202,19 @@ BOOL IKTerm::getDrawInfo()
             {
                 /* In case we are in the middle of a scroll */
                 memset( &(textBuffer[c]), ' ', xs );
-                memset( &(attrBuffer[c]), defaultattribute, xs );
                 memset( &(effectBuffer[c]), '\0', xs );
 
+                // memset( &(attrBuffer[c]), defaultattribute, xs );
+                {
+                    cell_video_attr_t* str = &(attrBuffer[c]);
+                    for (int i = 0; i < xs; i++) {
+                        str[i] = defaultattribute;
+                    }
+                }
+
 #ifdef VSCRN_DEBUG
-                debug(F101,"OUCH!","",(scrollflag?(vbuf->scrolltop+y)
-                                    :(vbuf->top+y))%vbuf->linecount);
+                debug(F101,"OUCH!","",(scrollflag?(page->scrolltop+y)
+                                    :(page->top+y))%page->linecount);
 #endif /* VSCRN_DEBUG */
             }
 
@@ -222,7 +234,7 @@ BOOL IKTerm::getDrawInfo()
                     }
                     else
                         textBuffer[c+xo+i] = vscrn[vnum].popup->c[y-yo][i];
-                    attrBuffer[c+xo+i] = vscrn[vnum].popup->a;
+                    attrBuffer[c+xo+i] = vscrn[vnum].popup->video_attr;
                     effectBuffer[c+xo+i] = '\0';
                 }
             }
@@ -240,7 +252,7 @@ BOOL IKTerm::getDrawInfo()
             if ( RequestVscrnMutex( vnum, -1 ) )
                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
-            line = &vbuf->lines[(vbuf->scrolltop+y)%vbuf->linecount] ;
+            line = &page->lines[(page->scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -249,7 +261,7 @@ BOOL IKTerm::getDrawInfo()
 
             if (line->cells)
             {
-                if ( VscrnIsLineMarked(vnum,vbuf->scrolltop+y) )
+                if ( VscrnIsLineMarked(vnum,page->scrolltop+y) )
                 {
                     for ( x = 0 ; x < xs ; x++ )
                     {
@@ -284,7 +296,7 @@ BOOL IKTerm::getDrawInfo()
 
                             textBuffer[c+x] = line->cells[x+xho].c;
                             attrBuffer[c+x] = ComputeColorFromAttr( vnum,
-                                    line->cells[x+xho].a,
+                                    line->cells[x+xho].video_attr,
                                     vt_char_attrs );
                             effectBuffer[c+x] = vt_char_attrs;
                         }
@@ -315,7 +327,7 @@ BOOL IKTerm::getDrawInfo()
 
                         textBuffer[c+x] = line->cells[x+xho].c;
                         attrBuffer[c+x] = ComputeColorFromAttr(vnum,
-                            line->cells[x+xho].a,
+                            line->cells[x+xho].video_attr,
                             vt_char_attrs);
                         effectBuffer[c+x] = vt_char_attrs;
                     }
@@ -345,14 +357,15 @@ BOOL IKTerm::getDrawInfo()
 
     /* Status Line Display */
     if ( vnum == VTERM && tt_status[vnum] && decssdt != SSDT_BLANK ||
-         vnum != VTERM && tt_status[vnum])
+         vnum != VTERM && tt_status[vnum] || decssdt_override)
     {
-        if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1) {
-            line = &vscrn[VSTATUS].lines[0] ;
+        if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1
+                  && !decssdt_override && !scrollflag[vnum]) {
+            line = &vscrn_view_page(VSTATUS).lines[0] ;
             for ( x = 0 ; x < xs ; x++ ) {
                 textBuffer[c+x] = line->cells[x].c;
                 attrBuffer[c+x] = ComputeColorFromAttr(vnum,
-                                                        line->cells[x].a,
+                                                        line->cells[x].video_attr,
                                                         line->vt_char_attrs[x]);
                 effectBuffer[c+x] = line->vt_char_attrs[x];
             }
@@ -380,12 +393,14 @@ BOOL IKTerm::getDrawInfo()
 
     getCursorPos();
 
-    kcp->beg = vbuf->beg;
-    kcp->top = vbuf->top;
-    kcp->scrolltop = vbuf->scrolltop;
-    kcp->end = vbuf->end;
+    kcp->beg = page->beg;
+    kcp->top = page->top;
+    kcp->scrolltop = page->scrolltop;
+    kcp->end = page->end;
     kcp->maxWidth = maxWidth;
     kcp->len = c;
+    kcp->page = vscrn[vnum].view_page;
+    kcp->page_length = page->linecount;
     return TRUE;
 }
 
@@ -399,23 +414,36 @@ BOOL IKTerm::getCursorPos()
         return FALSE;
 
     vbuf = &(vscrn[vnum]);
+    vscrn_page_t *page = &vscrn_view_page(vmode);
 
     char buf[30];
-    ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
-              ckitoa(vbuf->cursor.y+1),NULL);
+    if (vscrn[vnum].cursor.p == 0) {
+        ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
+                  ckitoa(vbuf->cursor.y+1),NULL);
+    } else if (!on_alternate_buffer(vnum)) {
+        ckmakxmsg(buf,30,ckitoa(vscrn[vnum].cursor.p+1),"(",
+                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+                  NULL,NULL,NULL,NULL,NULL,NULL);
+    } else { /* cursor is on the alternate screen */
+        ckmakxmsg(buf,30,"A(",
+                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+                  NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+    }
     KuiSetTerminalStatusText(STATUS_CURPOS, buf);
 
     /* only calculated an offset if Roll mode is INSERT */
     if( scrollstatus[vnum] && tt_roll[vnum] && markmodeflag[vnum] == notmarking ) {
-        cursor_offset = (vbuf->top + vbuf->linecount - vbuf->scrolltop)
-                        % vbuf->linecount;
+        cursor_offset = (page->top + page->linecount - page->scrolltop)
+                        % page->linecount;
     }
     else {
         cursor_offset = 0;
     }
 
-    ys = VscrnGetHeight( vnum );
-    if( !cursorena[vnum] || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0) ) {
+    ys = VscrnGetHeightEx( vnum, FALSE );
+    if( (!cursorena[vnum] || !cursor_on_visible_page(vnum)
+            || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0))
+            && markmodeflag[vnum] == notmarking ) {
         kcp->cursorVisible = FALSE;
     }
     else {
@@ -522,6 +550,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
 
     GetKeyboardState(keystate);
 
+#ifdef COMMENT      /* COMMENT A */
     if ( 0 ) {
         inpEvt.Event.KeyEvent.uChar.AsciiChar = 0;
 #ifndef NOTERM
@@ -536,6 +565,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
 #endif /* NOTERM */
         win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
     } else {
+#endif /* COMMENT */      /* COMMENT A */
         if ( !isWin95() ) {
             int i;
             if ( !toUnicodeLoad ) {
@@ -549,7 +579,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                 debug(F101,"ToUnicode","",toUnicode);
             }
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
             if ( nt351 )
 #endif
                 keycount = toUnicode( inpEvt.Event.KeyEvent.wVirtualKeyCode,
@@ -558,7 +588,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                         (LPWSTR)wbuf,
                         8,
                         FALSE );
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
             else
                 keycount = toUnicodeEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
@@ -567,11 +597,11 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                         8,
                         FALSE,
                         GetKeyboardLayout(0) );
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
             for ( i=0;i<keycount;i++ )
                 buf[i] = xl_tx[tcsl](wbuf[i]);
         }
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         else {
             keycount = ToAsciiEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
@@ -580,7 +610,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                         FALSE,
                         GetKeyboardLayout(0) );                         
         }
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 
 #ifdef COMMENT
         printf("\n");
@@ -661,7 +691,9 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
 #endif /* NOTERM */
             win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
         }
+#ifdef COMMENT      /* COMMENT A */
     }
+#endif /* COMMENT */      /* COMMENT A */
     return TRUE;
 }
 
@@ -769,7 +801,7 @@ void IKTerm::mouseEvent( HWND hwnd, UINT msg, WPARAM wParam, int x, int y )
 
 #ifndef NOSCROLLWHEEL
         case WM_MOUSEWHEEL: {
-            signed char zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+            short zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
             char button;
             if( wParam & MK_LBUTTON )
                 button = FROM_LEFT_1ST_BUTTON_PRESSED;

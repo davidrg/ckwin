@@ -41,6 +41,7 @@ KStatus::KStatus( K_GLOBAL* kg )
     , custXOffset( 0 )
     , custXWidth( 0 )
     , whichPane( -1 )
+    , visible( TRUE )
 {
     paneArray = new KArray();
     offsets = 0;
@@ -73,10 +74,57 @@ KStatus::~KStatus()
 ------------------------------------------------------------------------*/
 void KStatus::getCreateInfo( K_CREATEINFO* info )
 {
+    // It took me several hours to figure out why window sizing was breaking
+    // on NT 3.1 when built with Visual C++ 2.0, then why the status bar
+    // dimensions were coming back as absurd values on NT 3.1 only, then why
+    // the status bar wasn't rendering at all.
+    //  Visual C++ 1.0: STATUSCLASSNAME "msctls_statusbar"
+    //  Visual C++ 2.0: STATUSCLASSNAME "msctls_statusbar32"
+    // Even worse, NT 3.50 is not backwards compatible with NT 3.1. The class
+    // name "msctls_statusbar" only works on NT 3.10
+
+
+#ifdef CKT_NT31ONLY
+    info->classname = "msctls_statusbar";
+#else
+#ifdef CKT_NT35_AND_31
+    // Detect which we're running on and use the appropriate class name
+    DWORD dwVersion;
+    int major, minor, build;
+
+    dwVersion = GetVersion();
+
+    major = LOBYTE(LOWORD(dwVersion));
+    minor = HIBYTE(LOWORD(dwVersion));
+    build = HIWORD(dwVersion);
+
+    if (dwVersion < 0x80000000) {
+        /* Windows NT */
+        if (major == 3 && minor < 50) {
+            /* Older than NT 3.50, use NT 3.10 class name
+             * (ideally we'd check the build number too so the oldest
+             * NT 3.50 betas work properly) */
+            info->classname = "msctls_statusbar";
+        } else {
+            /* NT 3.50 or newer - use standard class name */
+            info->classname = STATUSCLASSNAME;
+        }
+    } else if (LOBYTE(LOWORD(dwVersion))<4) {
+        /* Win32s - use the same as NT 3.10??? */
+        info->classname = "msctls_statusbar";
+    } else {
+        /* Windows 95 - use standard class name*/
+        info->classname = STATUSCLASSNAME;
+    }
+#else
+    // NT 3.1 not supported at all, use standard class name
     info->classname = STATUSCLASSNAME;
+#endif /* CKT_NT35_AND_31 */
+#endif /* CKT_NT31ONLY */
+    
     info->objId = ::GetGlobalID();
     info->style = WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | SBT_NOBORDERS
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
             | SBS_SIZEGRIP
 #endif
             ; // | WS_BORDER | CCS_BOTTOM;
@@ -90,7 +138,11 @@ void KStatus::createWin( KWin* par )
 
     // subclass the statusbar
     //
+#ifdef _WIN64
+    defproc = (WNDPROC) SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) KStatusProc );
+#else /* _WIN64 */
     defproc = (WNDPROC) SetWindowLong( hWnd, GWL_WNDPROC, (LONG)KStatusProc );
+#endif /* _WIN64 */
 }
 
 
@@ -154,6 +206,24 @@ void KStatus::size( int width, int height )
     }
 
     SendMessage( hWnd, SB_SETPARTS, numParts, (LPARAM)statusWidths );
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KStatus::setVisible( Bool visible ) {
+    if (visible == this->visible) return;
+
+    if (!visible) {
+        // Hide the statusbar
+        ShowWindow(hwnd(), SW_HIDE);
+        //SetParent(hwnd(), NULL);
+    } else {
+        // Show the statusbar
+        ShowWindow(hwnd(), SW_SHOW);
+        //SetParent(hwnd(), parent->hwnd());
+    }
+
+    this->visible = visible;
 }
 
 /*------------------------------------------------------------------------
@@ -660,29 +730,29 @@ Bool KStatus::endPaneMove( eAction action, long xpos )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KStatus::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
     switch( msg )
     {    
         case WM_MOUSEMOVE:
             if( _customize )
-                ret = mouseMove( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = mouseMove( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_LBUTTONDOWN:
             if( _customize )
-                ret = lButtonDown( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = lButtonDown( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_LBUTTONUP:
             if( _customize )
-                ret = lButtonUp( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = lButtonUp( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_RBUTTONDOWN:
             if( _customize )
-                ret = rButtonDown( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = rButtonDown( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_SETCURSOR:

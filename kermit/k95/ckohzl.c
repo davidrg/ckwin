@@ -23,12 +23,21 @@
 #include "ckcuni.h"
 #include "ckocon.h"
 #include "ckohzl.h"
+/* For wyseascii() */
+#include "ckowys.h"
 #ifdef NETCONN
 #ifdef TCPSOCKET
 #include "ckcnet.h"
 extern int network, nettype, ttnproto, u_binary;
 #endif /* TCPSOCKET */
 #endif /* NETCONN */
+
+void setkeyclick(int);          /* ckoco3.c */
+void selclrscreen(BYTE, CHAR);  /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+USHORT tx_lucidasub(USHORT);    /* ckcuni.c */
+USHORT tx_usub(USHORT);         /* ckcuni.c */
+USHORT tx_hslsub(USHORT);       /* ckcuni.c */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -37,12 +46,11 @@ extern int  insertmode, tnlm ;
 extern int  escstate, debses, decscnm, tt_cursor ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern int ttpush;
 extern int autoscroll, protect ;
 
@@ -121,8 +129,6 @@ hzlinc(void)
 void
 hzlctrl( int ch )
 {
-    int i,j;
-
     if ( !xprint ) {
     switch ( ch ) {
     case SOH:
@@ -248,9 +254,8 @@ hzlctrl( int ch )
 void
 hzlascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
+    int x,y;
+    extern vscrn_t vscrn[];
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
@@ -338,10 +343,11 @@ hzlascii( int ch )
             VscrnScroll(VTERM,
                          UPWARD,
                          wherey[VTERM] - 1,
-                         marginbot - 1,
+                         vscrn_c_page_margin_bot(VTERM) - 1,
                          1,
                          FALSE,
-                         SP);
+                         SP,
+                         FALSE);
             break;
         case ETB: {
             /* Home Cursor and Clear Screen to Protected Spaces */
@@ -372,10 +378,11 @@ hzlascii( int ch )
             VscrnScroll(VTERM,
                          DOWNWARD,
                          wherey[VTERM] - 1,
-                         marginbot - 1,
+                         vscrn_c_page_margin_bot(VTERM) - 1,
                          1,
                          FALSE,
-                         SP);
+                         SP,
+                         FALSE);
             break;
         case XFS:
             /* Home Cursor and Clear Screen to spaces */

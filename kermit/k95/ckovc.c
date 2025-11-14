@@ -22,6 +22,7 @@
 #include "ckuusr.h"
 #include "ckocon.h"
 #include "ckovc.h"
+#include "ckcuni.h"
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -30,12 +31,11 @@ extern int  insertmode, tnlm ;
 extern int  escstate, debses, decscnm, tt_cursor ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 
 extern int autoscroll, protect ;
 
@@ -82,7 +82,6 @@ vcinc(void)
 void
 vcctrl( int ch )
 {
-    int i,j;
 
     switch ( ch ) {
     case SOH:
@@ -219,10 +218,6 @@ vcctrl( int ch )
 void
 vcascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
-
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
 

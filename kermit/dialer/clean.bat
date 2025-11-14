@@ -1,0 +1,11 @@
+if exist *.obn del *.obn
+if exist *.obo del *.obo
+if exist *.exe del *.exe
+if exist *.map del *.map
+if exist *.res del *.res
+if exist *.err del *.err
+if exist registry\*.obn del registry\*.obn
+if exist registry\*.map del registry\*.map
+if exist registry\*.exe del registry\*.exe
+if exist registry\*.err del registry\*.err
+if exist registry\*.res del registry\*.res

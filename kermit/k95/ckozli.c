@@ -10,7 +10,7 @@
 
 #ifdef ZLIB
 #ifdef __WATCOMC__
-/* zlib.h pulls in unistd.h which, in OpenWatcom, contains a definition of
+/* zlib.h pulls in unistd.h which, in Open Watcom, contains a definition of
  * sleep that is incompatible with the definition in ckcdeb.h. If unistd.h
  * doesn't get included first Watcom gives an error */
 #include <zlib.h>
@@ -25,6 +25,7 @@
 #define INCL_DOSMODULEMGR
 #define INCL_DOSSEMAPHORES
 #include <os2.h>
+#undef COMMENT
 #endif /* NT */
 #include <stdarg.h>
 
@@ -61,13 +62,19 @@ ck_zlib_is_installed()
     return(zlib_dll_loaded);
 }
 
+typedef int (WINAPI *p_deflateInit_t)(z_streamp strm, int level, const char *version, int stream_size);
+typedef int (WINAPI *p_inflateInit_t)(z_streamp strm, const char *version, int stream_size);
+typedef int (WINAPI *p_deflateEnd_t)(z_streamp strm);
+typedef int (WINAPI *p_inflateEnd_t)(z_streamp strm);
+typedef int (WINAPI *p_inflate_t)(z_streamp strm, int flush);
+typedef int (WINAPI *p_deflate_t)(z_streamp strm, int flush);
 
-int (WINAPI *p_deflateInit_)(z_streamp strm, int level, const char *version, int stream_size)=NULL;
-int (WINAPI *p_inflateInit_)(z_streamp strm, const char *version, int stream_size)=NULL;
-int (WINAPI *p_deflateEnd)(z_streamp strm)=NULL;
-int (WINAPI *p_inflateEnd)(z_streamp strm)=NULL;
-int (WINAPI *p_inflate)(z_streamp strm, int flush)=NULL;
-int (WINAPI *p_deflate)(z_streamp strm, int flush)=NULL;
+p_deflateInit_t p_deflateInit_=NULL;
+p_inflateInit_t p_inflateInit_=NULL;
+p_deflateEnd_t p_deflateEnd=NULL;
+p_inflateEnd_t p_inflateEnd=NULL;
+p_inflate_t p_inflate=NULL;
+p_deflate_t p_deflate=NULL;
 
 int
 ck_deflateInit_(z_streamp strm, int level, const char *version, int stream_size)
@@ -167,43 +174,43 @@ ck_zlib_loaddll( void )
         return(0);
     }
 
-    if (((FARPROC) p_inflateInit_ =
-          GetProcAddress( hZLIB, "inflateInit_" )) == NULL )
+    if ((p_inflateInit_ =
+          (p_inflateInit_t)GetProcAddress( hZLIB, "inflateInit_" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111,"ZLIB GetProcAddress failed","inflateInit_",rc);
         load_error = 1;
     }
-    if (((FARPROC) p_deflateInit_ =
-          GetProcAddress( hZLIB, "deflateInit_" )) == NULL )
+    if ((p_deflateInit_ =
+            (p_deflateInit_t)GetProcAddress( hZLIB, "deflateInit_" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111,"ZLIB GetProcAddress failed","deflateInit_",rc);
         load_error = 1;
     }
-    if (((FARPROC) p_inflateEnd =
-          GetProcAddress( hZLIB, "inflateEnd" )) == NULL )
+    if ((p_inflateEnd =
+          (p_inflateEnd_t)GetProcAddress( hZLIB, "inflateEnd" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111,"ZLIB GetProcAddress failed","inflateEnd",rc);
         load_error = 1;
     }
-    if (((FARPROC) p_deflateEnd =
-          GetProcAddress( hZLIB, "deflateEnd" )) == NULL )
+    if ((p_deflateEnd =
+          (p_deflateEnd_t)GetProcAddress( hZLIB, "deflateEnd" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111,"ZLIB GetProcAddress failed","deflateEnd",rc);
         load_error = 1;
     }
-    if (((FARPROC) p_inflate =
-          GetProcAddress( hZLIB, "inflate" )) == NULL )
+    if ((p_inflate =
+          (p_inflate_t)GetProcAddress( hZLIB, "inflate" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111,"ZLIB GetProcAddress failed","inflate",rc);
         load_error = 1;
     }
-    if (((FARPROC) p_deflate =
-          GetProcAddress( hZLIB, "deflate" )) == NULL )
+    if ((p_deflate =
+          (p_deflate_t)GetProcAddress( hZLIB, "deflate" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111,"ZLIB GetProcAddress failed","deflate",rc);

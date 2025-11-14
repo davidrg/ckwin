@@ -1,6 +1,6 @@
 /* A simple ring-buffer implementation for the SSH Subsystem.
  *
- * C-Kermit for Windows SSH Subsystem
+ * Kermit 95 SSH Subsystem
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@ typedef ring_buffer_t* ring_buffer_handle_t;
 #define RING_BUFFER_TIMEOUT 1
 #define RING_BUFFER_TRY_AGAIN 2
 #define RING_BUFFER_LOCK_ERROR 3
+#define RING_BUFFER_NO_RING_BUFFER 4
 
 /** Creates a new ring buffer. Pass to ring_buffer_free() to delete it.
  *
@@ -216,5 +217,13 @@ void ring_buffer_signal_error(ring_buffer_handle_t buf, int error);
  * @param buf
  */
 void ring_buffer_get_error(ring_buffer_handle_t buf);
+
+/** Gets an event that will be set whenever data is written to the
+ * ring buffer.
+ *
+ * @param buf Buffer to get an event for
+ * @return An event
+ */
+HANDLE ring_buffer_get_ready_read_event(ring_buffer_handle_t buf);
 
 #endif /* CKWIN_RINGBUF_H */

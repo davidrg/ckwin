@@ -23,13 +23,13 @@ public:
     ~Kui();
 
     int init();
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
     void start();
     void cleanup();
 
     void savePositions();
-    void setProperty( int propid, long param1, long param2 );
-    void getProperty( int propid, long param1, long param2 );
+    void setProperty( int propid, intptr_t param1, intptr_t param2 );
+    int getProperty( int propid, void* out );
 
     void setDialogHwnd( HWND h ) { dialogHwnd = h; }
     KTerminal * getTerminal(void) { return terminal; };

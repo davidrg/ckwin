@@ -19,6 +19,7 @@
 #define INCL_DOSMODULEMGR
 #define INCL_DOSSEMAPHORES
 #include <os2.h>
+#undef COMMENT
 #endif /* NT */
 #include <stdarg.h>
 

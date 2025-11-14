@@ -31,7 +31,7 @@ public:
     void createWin( KWin* par );
     void size( int width, int height );
 
-    Bool message( HWND hpar, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hpar, UINT msg, WPARAM wParam, LPARAM lParam );
 
     void initButtons( int numbut, int numbit, ToolBitmapDef* );
     void createTermTypeCombo();
@@ -43,9 +43,15 @@ public:
     void setCharset( char* cs );
     void setFontName( char * fnt );
     void setFontHeight( int );
+    void setVisible(Bool visible);
+    BOOL isVisible() { return visible; }
 
 protected:
-    char* findBubbleHelp( int idx );
+#if defined(_MSC_VER) && _MSC_VER < 1300
+    char* findBubbleHelp( UINT idx );
+#else
+    char* findBubbleHelp( UINT_PTR idx );
+#endif
 
 private:
     ToolBitmapDef* buttonDefs;
@@ -53,6 +59,7 @@ private:
     int numBitmaps;
     int toolbarid;
     int disabled;
+    int visible;
 
     HWND hWndTermTypeCombo;
     HWND hWndFontNameCombo;

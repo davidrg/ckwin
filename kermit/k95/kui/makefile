@@ -5,11 +5,56 @@ OUTDIR = .\win95
 !include ..\compiler_detect.mak
 !include ..\feature_flags.mak
 
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 RTFLAG = /MT
 !else
 RTFLAG = /MD
 !endif
+
+!if "$(MIPS_CENTAUR)" == "yes"
+!message MIPS Centaur compiler - forcing build with statically linked CRT.
+# /QmipsOb5000 increases the basic block threshold for optimisation
+COMMON_CFLAGS = /D_MT /QmipsOb5000
+CKB_STATIC_CRT_NT = yes
+!endif
+
+!if "$(CMP)" == "VCXX"
+
+# PDB Generation Stuff
+
+!if ($(MSC_VER) < 180) && ("$(ISJOM)" == "yes") && ("$(CKB_MAKE_PDB)" != "yes")
+!message Make is JOM and compiler is older than Visual C++ 2013. Can't reliably
+!message synchronise writes to a PDB file with this compiler. Disabling PDB
+!message generation. override with: set CKB_MAKE_PDB=yes but you may get build
+!message errors.
+CKB_MAKE_PDB=no
+!endif  # EndIf MSC_VER < 180 and ISJOM == yes and CKB_MAKE_PDB != yes
+
+!if "$(CKB_MAKE_PDB)" != "no"
+# Lets see if we can make a PDB file! This requires Visual C++ 4.0 or newer.
+!if ($(MSC_VER) > 90)
+!message Enabling PDB generation
+
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Zi
+
+# /FS is required to synchronise writes to a PDB when doing parallel builds with
+# something like JOM. It was introduced in Visual C++ 2013.
+!if ($(MSC_VER) >= 180)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
+!endif  # EndIf MSC_VER >= 180
+
+!endif  # EndIf MSC_VER > 90
+!endif  # EndIf CKB_MAKE_PDB != no
+
+# End PDB Generation Stuff
+
+!else   # Else CMP == VCXX
+
+!if "$(CKB_MAKE_PDB)" != "no"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Z7
+!endif  # EndIf CKB_MAKE_PDB != no
+
+!endif  # EndIf CMP == VCXX
 
 all: $(OUTDIR)\$(PROJ).exe 
 
@@ -73,73 +118,97 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 !ifdef NODEBUG
 # Non-debugging options
 
-!MESSAGE 32-bit Non-debugging build
+!MESSAGE Non-debugging build
 
-CFLAGS    = /c /W3 $(RTFLAG) /Ox /GA /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
-CDEFINES  = /D_MT /DSTRICT /D_X86_ /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
+CFLAGS    = /c /W3 $(RTFLAG) /Ox /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
+CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
                 -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DOS2TEST -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
-LFLAGS    = /NOD /NOLOGO /SUBSYSTEM:windows
+!if "$(CMP)" == "VCXX"
+LFLAGS    = /NOLOGO /SUBSYSTEM:windows /NOD
+!else
+LFLAGS    = /NOLOGO /SUBSYSTEM:windows
+!endif
 RCFLAGS   = /r
-RCDEFINES = /dNDEBUG /dWIN32 $(RC_FEATURE_DEFS)
+RCDEFINES = /dNDEBUG
 MAPFILE   =
 
-# /G5 is only valid on 7.1 and earlier
+# /D_X86_
+
+# /G5 is only valid on 7.1 and earlier targeting x86
 !if ($(MSC_VER) < 140)
+!if "$(TARGET_CPU)" == "x86"
 CFLAGS = $(CFLAGS) /G5
+!endif
+!endif
+
+!if ($(MSC_VER) > 90)
+!if "$(TARGET_CPU)" != "MIPS"
+# This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
+# It isn't supported by any WATCOM or Open Watcom compilers
+!if "$(CMP)" == "VCXX"
+CFLAGS = $(CFLAGS) /GA
+!endif
+!endif
+!endif
+
+!if "$(TARGET_CPU)" == "AXP64"
+# This compiler is capable of targeting AXP64, so add the build flag to do that.
+CFLAGS = $(CFLAGS) /Ap64
 !endif
 
 !else
 # Debugging options
 
-!MESSAGE 32-bit Debugging build
+!MESSAGE Debugging build
 
-CFLAGS    = /c /W3 /MD /Od /Zi /J /Fd$(OUTDIR)\$(PROJ).pdb /nologo \
+!if "$(CMP)" == "VCXX"
+DEBUG_CFLAGS = /Zi /Fd$(OUTDIR)\$(PROJ).pdb
+!else
+DEBUG_CFLAGS = /Z7
+!endif
+
+CFLAGS    = /nologo /c /W3 $(RTFLAG) /Od $(DEBUG_CFLAGS) /J \
                 /Fo$(OUTDIR)\ /I$(KERMITDIR)
-CDEFINES  = /D_MT /D_X86_ /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
+CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET -DSUPERLAT\
                 -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DRLOGCODE \
                 -DNETFILE -DONETERMUPD -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
+#  /D_X86_
 
-LFLAGS    = /NOD /NOLOGO /DEBUG:full /DEBUGTYPE:cv /SUBSYSTEM:windows
-RCFLAGS   = /r
-RCDEFINES = /d_DEBUG /dWIN32 /dCOMPILER_$(CMP)
-!if "$(CKT_NT31)" == "yes"
-RCDEFINES = $(RCDEFINES) /dCKT_NT31
+!if "$(CMP)" == "VCXX"
+LFLAGS    = /NOLOGO /DEBUG:full /SUBSYSTEM:windows /DEBUGTYPE:cv /NOD
+!else
+LFLAGS    = /NOLOGO /DEBUG:full /SUBSYSTEM:windows
 !endif
+RCFLAGS   = /r
+RCDEFINES = /d_DEBUG
 MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 
 !endif
 
-!if "$(CKF_TOOLBAR)" == "no"
-RCDEFINES = $(RCDEFINES) /dNOTOOLBAR
-!endif
+RCDEFINES = $(RCDEFINES) /dWIN32 /dWINVER=0x0400 /dCOMPILER_$(CMP)
 
 # Customise for the compiler version we're using
-!IF ($(MSC_VER) == 80)
-# We don't do 16bit
-!ERROR *** 16bit windows is not supported
-!ELSEIF ($(MSC_VER) < 90)
-!ERROR *** Visual C++ 1.0 and earlier are not supported
-!ELSEIF ($(MSC_VER) < 131)
-# Visual C++ 6.0 and 7.0
-CFLAGS = $(CFLAGS) /noBool
+!if "$(CMP)" == "VCXX"
 
+!IF ($(MSC_VER) < 131)
+# Visual C++ 7.0 (2002) and earlier
 # Visual C++ 7.1 - nothing required
-!ELSEIF ($(MSC_VER) > 131)
+!elseif ($(MSC_VER) > 131)
 # Visual C++ 8.0 or newer
-
 CFLAGS = $(CFLAGS) /Zc:wchar_t-
 CDEFINES = $(CDEFINES) -D_CRT_SECURE_NO_DEPRECATE
+!endif
 
-!ENDIF
+!endif
 
 #--------------------------------------------------------------------------
-# 32-bit Build Rules
+# Build Rules
 
 $(OUTDIR):
     if not exist $(OUTDIR)\nul mkdir $(OUTDIR)
@@ -152,10 +221,10 @@ $(OUTDIR)\$(PROJ).EXE: $(OUTDIR) $(KUIOBJS) $(OUTDIR)\$(PROJ).res
 !endif
 
 $(OUTDIR)\$(PROJ).res: $(PROJ).rc $(RC_DEP)
-    rc $(RCFLAGS) $(RCDEFINES) /fo$(OUTDIR)\$(PROJ).res $(PROJ).rc
+    rc $(RCFLAGS) $(RCDEFINES) $(RC_FEATURE_DEFS) /fo$(OUTDIR)\$(PROJ).res $(PROJ).rc
 
-.c{$(OUTDIR)}.obj: 
+.c{$(OUTDIR)}.obj:
     cl $(CFLAGS) $(CDEFINES) $<
 
-.cxx{$(OUTDIR)}.obj: 
+.cxx{$(OUTDIR)}.obj:
     cl $(CFLAGS) $(CDEFINES) $<

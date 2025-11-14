@@ -1,0 +1,2 @@
+SET PLATFORM=NT
+%MAKE% -f p95.mak

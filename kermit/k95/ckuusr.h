@@ -4,11 +4,11 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Thu May 12 12:36:22 2022
+    Thu Feb 16 15:57:01 2023
 */
 #ifndef CKUUSR_H
 #define CKUUSR_H
@@ -1056,20 +1056,36 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_WY370   33	/*    WYSE 370 ANSI Terminal */
 #define     TT_97801   34       /*    Sinix 97801-5xx terminal */
 #define     TT_AAA     35       /*    Ann Arbor Ambassador */
-#define     TT_TVI910  36	/*    TVI 910+ */
-#define     TT_TVI925  37       /*    TVI 925  */
-#define     TT_TVI950  38       /*    TVI950   */
-#define     TT_ADM3A   39       /*    LSI ADM 3A */
-#define     TT_ADM5    40		/*    LSI ADM 5 */
-#define     TT_VTNT    41       /*    Microsoft NT Virtual Terminal */
-#define     TT_MAX   TT_VTNT
+#define     TT_K95     36       /*    Kermit 95 self-personality */
+#define     TT_TVI910  37	/*    TVI 910+ */
+#define     TT_TVI925  38       /*    TVI 925  */
+#define     TT_TVI950  39       /*    TVI950   */
+#define     TT_ADM3A   40       /*    LSI ADM 3A */
+#define     TT_ADM5    41		/*    LSI ADM 5 */
+#define     TT_VTNT    42       /*    Microsoft NT Virtual Terminal */
+#define     TT_REGENT25 43      /*    ADDS Regent 25 (ADDS25) */
+#define     TT_MAX   TT_REGENT25
+#define     TT_VT330   94   /*    DEC VT-330 (mono graphics) */
+#define     TT_VT340   95   /*    DEC VT-340 (color graphics) */
 #define     TT_VT420   96	/*    DEC VT-420 */
-#define     TT_VT520   97	/*    DEC VT-520/525 */
-#define     TT_TEK40 99	/*    Tektronix 401x */
+#define     TT_VT520   97	/*    DEC VT-520 */
+#define     TT_VT525   98   /*    DEC VT-525 */
+#define     TT_XTERM   98   /*    XTerm */
+#define     TT_TEK40   99	/*    Tektronix 401x */
+/* Other ADDS Regent terminals - not currently emulated */
+#define     TT_REGENT20 100     /* ADDS Regent 20  */
+#define     TT_REGENT40 101     /* ADDS Regent 40  */
+#define     TT_REGENT40P 102    /* ADDS Regent 40+ */
+#define     TT_REGENT60 103     /* ADDS Regent 60  */
+#define     TT_REGENT100 104    /* ADDS Regent 100 */
+#define     TT_REGENT200 105    /* ADDS Regent 200 */
+
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
 #define     TT_KBM_RUSSIAN TT_MAX+3
 #define     TT_KBM_WP      TT_MAX+4
+#define     TT_KBM_METAESC TT_MAX+5
+#define     TT_KBM_META    TT_MAX+6
 
 #define ISAAA(x)   (x == TT_AAA)
 #define ISANSI(x)  (x >= TT_SCOANSI && x <= TT_ANSI)
@@ -1094,15 +1110,20 @@ struct stringint {			/* String and (wide) integer */
 #define ISTVI950(x) (x == TT_TVI950)
 #define ISVT52(x)  (x == TT_VT52 || x == TT_H19)
 #ifdef COMMENT
+/* TODO: Add VT420/520/525 to the list of terminals
+ * that get DCS / DECRQSS / etc */
+#define ISVT525(x) (x == TT_VT525)
 #define ISVT520(x) (x == TT_VT520)
 #define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
 #else /* COMMENT */
-/* Since we do not yet support 420/520 extend 320 */
+/* Since we do not yet support 420/520/525 extend 320 */
+#define ISVT525(x) (ISVT320(x))
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
+#define ISVT330(x) (FALSE)
 #endif /* COMMENT */
-#define ISVT320(x) (x >= TT_VT320 && x <= TT_AAA)
-#define ISVT220(x) (x >= TT_VT220 && x <= TT_AAA || \
+#define ISVT320(x) (x >= TT_VT320 && x <= TT_K95)
+#define ISVT220(x) (x >= TT_VT220 && x <= TT_K95 || \
                     ISBEOS(x) || ISQANSI(x) || \
                     ISLINUX(x) || ISSUN(x))
 #define ISVT102(x) (x >= TT_VIP7809 && x <= TT_BA80 || \
@@ -1125,6 +1146,21 @@ struct stringint {			/* String and (wide) integer */
 #define ISVTNT(x)  (x == TT_VTNT)
 #define ISADM3A(x) (x == TT_ADM3A)
 #define ISADM5(x)  (x == TT_ADM5)
+/* ADDS Regent Terminals */
+#define ISREGENT20(x) (x == TT_REGENT20)
+#define ISREGENT25(x) (x == TT_REGENT25 || x == TT_REGENT20)
+#define ISREGENT40(x) (x == TT_REGENT40 || x == TT_REGENT25 \
+                            || x == TT_REGENT20)
+#define ISREGENT40P(x) (x == TT_REGENT40P || x == TT_REGENT40 \
+                            || x == TT_REGENT25 || x == TT_REGENT20)
+#define ISREGENT60(x) (x == TT_REGENT60 || x == TT_REGENT40P \
+                            || x == TT_REGENT40 || x == TT_REGENT25 \
+                            || x == TT_REGENT20)
+#define ISREGENT200(x) (x == TT_REGENT60 || x == TT_REGENT40P \
+                            || x == TT_REGENT40 || x == TT_REGENT25 \
+                            || x == TT_REGENT20 || x == TT_REGENT200)
+#define ISXTERM(x) (x == TT_XTERM)
+#define ISK95(x)   (x == TT_K95)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */
@@ -1296,6 +1332,19 @@ struct stringint {			/* String and (wide) integer */
 #define   XYTIACT   63  /* SET TERM IDLE-ACTION  */
 #define   XYTLSP    64  /* SET TERM LINE-SPACING */
 #define   XYTLFD    65	/* SET TERM LF-DISPLAY   */
+#ifdef OS2
+#define   XYTCLP    66  /* SET TERM CLIPBOARD-ACCESS */
+#define   XYTSIZE   67  /* SET TERM SIZE */
+#define   XYTALTBUF 68  /* SET TERM ALTERNATE-BUFFER */
+#define     AB_ENABLED 0
+#define     AB_DISABLED 1
+#define     AB_INACTIVE 2  /* Force the terminal out of the alternate screen buffer */
+#define     AB_ACTIVE 3    /* Force the terminal into the alternate screen buffer */
+#define   XYTPAGE   69  /* SET TERM PAGE */
+#define     P_PCCM    0
+#define     P_COUNT   1
+#define     P_ACTIVE  2
+#endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */
 #define XYSERV 35	/* Server parameters  */
@@ -1546,6 +1595,9 @@ struct stringint {			/* String and (wide) integer */
 #define  CK_TN_DL     29  /* TELNET DELAY-SB */
 #define  CK_TN_SFU    30  /* TELNET SFU-COMPATIBILITY */
 #define  CK_TN_LOG    31  /* TELNET LOGOUT */
+#ifdef OS2
+#define  CK_TN_COLORTERM 32 /* TELNET SEND-COLORTERM */
+#endif /* OS2 */
 #endif /* TNCODE */
 #define XYOUTP 68	/* OUTPUT command parameters */
 #define   OUT_PAC 0	/*   OUTPUT PACING */
@@ -1770,6 +1822,11 @@ struct stringint {			/* String and (wide) integer */
 #define XYEXTRN  135    /* SET EXTERNAL-PROTOCOL */
 #define XYVAREV  136    /* SET VARIABLE-EVALUATION */
 #define XYLOCALE 137    /* SET LOCALE */
+#ifdef VMS
+#define XYVMSTF  138    /* SET VMS_TEXT */
+#define  VMSTFS    1    /*  STREAM_LF */
+#define  VMSTFV    2    /*  VARIABLE */
+#endif /* VMS */
 
 /* End of SET commands */
 
@@ -2021,6 +2078,8 @@ struct stringint {			/* String and (wide) integer */
 #define SHOREN    72			/* SHOW RENAME */
 #define SHOLOC    73			/* SHOW LOCALE */
 #define SHOTMPDIR 74			/* SHOW TEMP-DIRECTORY */
+#define SHOVMSTXT 75			/* SHOW VMS_TEXT */
+#define SHONOTIF  76            /* SHOW NOTIFICATION */
 
 /* REMOTE command symbols */
 
@@ -2050,6 +2109,7 @@ struct stringint {			/* String and (wide) integer */
 #define XZRMD 23	/* rmdir */
 #define XZXIT 24	/* Exit */
 #define XZCDU 25        /* CDUP */
+#define XZSTA 26        /* Status (fdc 2023-02-16) */
 
 /* SET INPUT command parameters */
 
@@ -2428,6 +2488,9 @@ struct stringint {			/* String and (wide) integer */
 #define VN_MONTH    256			/* This month (name) */
 #define VN_NMONTH   257			/* This month (numeric) */
 #define VN_FULLVER  258			/* Full version number */
+#ifdef OS2
+#define VN_PALETTE  259         /* Terminal emulator color palette */
+#endif
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2632,6 +2695,10 @@ struct stringint {			/* String and (wide) integer */
 #define FN_DAYNAME 170			/* Day name according to locale */
 #define FN_MONNAME 171			/* Month name according to locale */
 
+#ifdef OS2
+#define FN_TERMCKS 172          /* Checksum of the terminal screen */
+#endif /* OS2 */
+
 #endif /* NOSPL */
 
 /* Time Units */
@@ -2691,6 +2758,16 @@ struct stringint {			/* String and (wide) integer */
 #define XSKEY   0			/* Key map file */
 #define XSCMD   1                       /* Command mode */
 #define XSTERM  2                       /* Terminal mode */
+#ifdef KUI
+#define XSTERM_FMT 0
+
+#define XSTERM_FMT_TEXT 0
+#define XSTERM_FMT_EMF  1
+#define XSTERM_FMT_BMP  2
+#define XSTERM_FMT_PNG  3
+#define XSTERM_FMT_GIF  4
+
+#endif
 #endif /* NOICP */
 
 #ifndef NODIAL
@@ -2712,6 +2789,8 @@ struct stringint {			/* String and (wide) integer */
 #define XSSH_KEY 6
 #define XSSH_CLR 7
 #define XSSH_AGT 8
+#define XSSH_LOAD 9
+#define XSSH_REM 10
 
 #ifdef COMMENT
 #define SSHKT_1R   0			/* SSH KEY TYPE symbols */
@@ -2755,6 +2834,9 @@ struct stringint {			/* String and (wide) integer */
 
 #define SSHC_LPF 1
 #define SSHC_RPF 2
+
+#define SSHR_LPF 1
+#define SSHR_RPF 2
 
 #define XSSH2_RKE 1
 
@@ -2881,9 +2963,6 @@ _PROTOTYP( int incvar, (char *, CK_OFF_T, int) );
 _PROTOTYP( int ckdial, (char *, int, int, int, int) );
 _PROTOTYP( int hmsg, (char *) );
 _PROTOTYP( int hmsga, (char * []) );
-_PROTOTYP( int mlook, (struct mtab [], char *, int) );
-_PROTOTYP( int mxlook, (struct mtab [], char *, int) );
-_PROTOTYP( int mxxlook, (struct mtab [], char *, int) );
 _PROTOTYP( int prtopt, (int *, char *) );
 _PROTOTYP( CHAR rfilop, (char *, char) );
 _PROTOTYP( int setcc, (char *, int *) );
@@ -2891,6 +2970,7 @@ _PROTOTYP( int setnum, (int *, int, int, int) );
 _PROTOTYP( int seton, (int *) );
 _PROTOTYP( int setonaut, (int *) );
 _PROTOTYP( VOID shmdmlin, (void) );
+_PROTOTYP( VOID slrestor, (void) );
 _PROTOTYP( VOID initmdm, (int) );
 _PROTOTYP( char * showoff, (int) );
 _PROTOTYP( char * showooa, (int) );

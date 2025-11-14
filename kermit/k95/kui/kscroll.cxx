@@ -14,6 +14,7 @@ KScroll::KScroll( K_GLOBAL* kg, Bool isVertical, Bool thumbtrack )
     , pageAmt( 1L )
     , method( 0 )
     , prevMaxVal( 0L )
+	, prevTtScroll( 1 )
     , disableNoScroll( 0 )
 {
 }
@@ -56,7 +57,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
 
     maxVal = max - 1/* viewable */;
 
-    if( maxVal == prevMaxVal )
+    if( maxVal == prevMaxVal && tt_scroll == prevTtScroll )
         return;
 
     if( vertical ) {
@@ -66,10 +67,12 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
             currentPos += maxVal - prevMaxVal;
     }
     prevMaxVal = maxVal;
+	prevTtScroll = tt_scroll;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     UINT mask = SIF_PAGE | SIF_RANGE | SIF_POS;
     if( vertical ) {
+        /* This is what hides (or doesn't show) the horizontal scroll bar */
         mask |= SIF_DISABLENOSCROLL;
         disableNoScroll = 1;
     }
@@ -92,7 +95,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
 #else
     SendMessage(parent->hwnd(), SBM_SETRANGE, minVal, maxVal);
     SendMessage(parent->hwnd(), SBM_SETPOS, currentPos, TRUE);
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 
     if( trackPos )
         track( currentPos );
@@ -105,7 +108,7 @@ Bool KScroll::isVisible()
     if ( !parent )
         return FALSE;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     SCROLLINFO info;
     memset( &info, '\0', sizeof(SCROLLINFO) );
     info.cbSize = sizeof(SCROLLINFO);
@@ -116,8 +119,29 @@ Bool KScroll::isVisible()
 
     if( !disableNoScroll && info.nPage && (info.nMax <= (int)info.nPage) )
         return FALSE;
-    /* TODO: #else do the equivalent of the above */
-#endif
+
+    if ( !vertical ) {
+        /* As far as I can tell the horizontal scrollbar has never been present
+         * in any released version of K95. The code in setRange specifically
+         * enables the vertical scrollbar only, so the horizontal scrollbar
+         * can never be visisble so we should *always* be returning FALSE. But
+         * it turns out K95 did return TRUE here occasionally - mostly during
+         * pp startup before the scrollbar was properly initialised, but also
+         * after window size change if the terminal was on a page other than
+         * page 0. This would cause the window to resize to accommodate a
+         * horizontal scroll bar even though none was visible and there was
+         * nothing to scroll. So now we just always return FALSE.
+         *
+         * In the future if we wanted to make the Horizontal Scrollbar work,
+         * that code in setRange() would need to change, and we'd also need to
+         * clear disableNoScroll on window size so that the horizontal scroll
+         * bar doesn't automatically reappear on window resize before we know
+         * if there is anything to scroll. */
+        return FALSE;
+    }
+#else
+    /* TODO: do the equivalent of the above */
+#endif /* CKT_NT35_OR_31 */
 
     return TRUE;
 }
@@ -225,7 +249,7 @@ Bool KScroll::pageUp()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KScroll::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     int     nScrollCode   = (int)     LOWORD(wParam);
     short   nPos          = (short)   HIWORD(wParam);

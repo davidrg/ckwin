@@ -10,16 +10,17 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 */
 
 #include <windows.h>
-#ifndef NODIAL
-#include <tapi.h>
-#endif
+#include <process.h>
 #include <commctrl.h>
 #include "ckcdeb.h"
 #include "ckcker.h"
 #include "ckcasc.h"
 #include "cknwin.h"
 #include "ckowin.h"
+#ifdef CK_TAPI
+#include <tapi.h>
 #include "ckntap.h"
+#endif /* CK_TAPI */
 #include "ckocon.h"
 #include "ckuusr.h"
 #include "ckokey.h"
@@ -31,14 +32,30 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 
 /* Visual C++ 6 fixes */
 #ifndef DS_SHELLFONT
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
 #define DS_SHELLFONT        (DS_SETFONT | DS_FIXEDSYS)
 #else
 #define DS_SHELLFONT        DS_SETFONT
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 #endif
+
+#ifndef __GNUC__
+#if defined(_MSC_VER) && _MSC_VER < 1300
+typedef unsigned long ULONG_PTR;
+#endif /* _MSC_VER < 1300 */
+
 #ifndef DWORD_PTR
+#ifdef _WIN64
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
+#else /* _WIN64 */
 typedef unsigned long DWORD_PTR, *PDWORD_PTR;
+#endif /* _WIN64 */
+#endif
+#endif /* __GCC__ */
+
+#ifdef CKT_NT35_OR_31
+/* Windows NT 3.1 and 3.50 don't have ShowWindowAsync - use ShowWindow instead */
+#define ShowWindowAsync ShowWindow
 #endif
 
 /* Global variable */
@@ -68,6 +85,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int);
 InitApplication(HINSTANCE);
 InitInstance(HINSTANCE, int);
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
+int _zshcmd(char* s, int wait);                    /* ckofio.c */
+
+#ifdef CK_TAPI
+void wintapiinit();                 /* ckntap.c */
+void wintapishutdown();             /* ckntap.c */
+#endif /* CK_TAPI */
 
 /* Application entry point */
 
@@ -210,7 +233,6 @@ void
 ckMainThread( void * param )
 {
     LPTSTR CmdLine = GetCommandLine() ;
-    HANDLE hOut, hIn ;
     char ** argv;
     int    argc = 0 ;
     int i = 0, quote = 0 ;
@@ -273,6 +295,8 @@ ckMainThread( void * param )
 #ifndef KUI
     if ( AllocConsole() )
     {
+        HANDLE hOut, hIn ;
+
         hOut = CreateFile( "CONOUT$", GENERIC_READ | GENERIC_WRITE,
                                   FILE_SHARE_READ | FILE_SHARE_WRITE,
                                   NULL,
@@ -297,9 +321,63 @@ ckMainThread( void * param )
 HANDLE
 MainThreadInit( HINSTANCE hInst )
 {
-    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, hInst ) ;
+    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, (void *)hInst ) ;
     return(MainThread);
 }
+
+#ifdef CKMODERNSHELL
+#ifdef KUI
+typedef HRESULT (WINAPI *SetCurrentProcessExplicitAppUserModelID_t)(const wchar_t*);
+
+static void SetAppUserModelId() {
+    HINSTANCE hInstance;
+    HRESULT rc;
+    SetCurrentProcessExplicitAppUserModelID_t setId;
+    BOOL haveCM = FALSE;
+    char cmpath[512];
+    WIN32_FIND_DATA findFileData;
+    HANDLE handle;
+    char* p;
+
+    /* We only want to set an explicit App ID for the purpose of making
+     * Jump Lists work, and that requires the K95 Connection Manager to be
+     * present. So if we can't find the Connection Manager, don't bother.
+     */
+
+    GetModuleFileName(NULL, cmpath, 512);
+    p = cmpath + strlen(cmpath);
+    while ( *p != '\\' && p > cmpath ) p--;
+    if ( p != cmpath )
+        p++;
+    strcpy(p,"cm.exe");
+
+    handle = FindFirstFile(cmpath, &findFileData);
+
+    haveCM = handle != INVALID_HANDLE_VALUE;
+
+    if (haveCM) {
+        hInstance = LoadLibrary("shell32");
+        if ( !hInstance ) {
+            rc = GetLastError();
+            debug(F111, "SetAppUserModelId - LoadLibrary failed","shell32",rc);
+            return;
+        }
+
+        setId = (SetCurrentProcessExplicitAppUserModelID_t)GetProcAddress(
+            hInstance,"SetCurrentProcessExplicitAppUserModelID");
+
+        if (setId == NULL) {
+            rc = GetLastError();
+            debug(F111, "SetAppUserModelId - failed to get address",
+                "SetCurrentProcessExplicitAppUserModelID",rc);
+            return;
+        }
+
+        setId(L"KermitProject.Kermit95");
+    }
+}
+#endif /* KUI */
+#endif /* MODERN_SHELL */
 
 int WINAPI
 WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
@@ -307,8 +385,23 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
 #ifdef KUI
     extern int deblog ;
 
+#ifdef CKMODERNSHELL
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+    if (!SUCCEEDED(hr)) {
+        return 0;
+    }
+
+    SetAppUserModelId();
+#endif /* CKMODERNSHELL */
+
     kui_init.nCmdShow = nCmdShow;
     ckMainThread( hInstance ) ;
+
+#ifdef CKMODERNSHELL
+    CoUninitialize();
+#endif /* CKMODERNSHELL */
+
     return 0;
 #else /* KUI */
     MSG msg;
@@ -338,7 +431,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
 }
 #endif
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
 BOOL InitApplication(hinstance)
 HINSTANCE hinstance;
 {
@@ -408,7 +501,7 @@ BOOL InitApplication(hinstance)
 
     return RegisterClass(&wc);
 }
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 
 BOOL
 InitInstance(hinstance, nCmdShow)
@@ -455,7 +548,7 @@ int nCmdShow;
    ShowWindow( hwndGUI, SW_HIDE ) ;
    /* Let the dialer know */
    if ( StartedFromDialer )
-      DialerSend( OPT_KERMIT_HWND, (LONG) hwndGUI ) ;
+      DialerSend( OPT_KERMIT_HWND, (LPARAM) hwndGUI ) ;
 
      /*
       * Show the window and send a WM_PAINT message to the window
@@ -478,10 +571,10 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_QUERYENDSESSION:
         debug(F111,"MainWndProc","WM_QUERYENDSESSION",msg);
         result = TRUE;
-#if _MSC_VER > 1000
+#if !defined(_MSC_VER) || _MSC_VER > 1010
         if ( lparam & ENDSESSION_LOGOFF ) {
 #else
-        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
          * (on Windows 95 only according to the docs) */
         if (lparam) {
 #endif
@@ -495,10 +588,10 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
     case WM_ENDSESSION:
         debug(F111,"MainWndProc","WM_ENDSESSION",msg);
-#if _MSC_VER > 1000
+#if !defined(_MSC_VER) || _MSC_VER > 1010
         if ( wparam && (lparam & ENDSESSION_LOGOFF) ) {
 #else
-        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
         * (on Windows 95 only according to the docs) */
         if (wparam && lparam) {
 #endif
@@ -569,7 +662,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 ckstrncpy(cmdfil,file,CKMAXPATH+1);
                 DeleteStartupFile = 1;
             }
-            DialerSend( OPT_KERMIT_HWND, (LONG) hwnd ) ;
+            DialerSend( OPT_KERMIT_HWND, (LPARAM) hwnd ) ;
         }
         result = TRUE;
         break;
@@ -586,7 +679,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 // Checks to see if the dialer (k95dial.exe) exists in the executables directory.
-BOOL DialerExists() {
+BOOL ADialerExists(BOOL lookForCM) {
 	char buf[MAX_PATH];
 	extern char exedir[CKMAXPATH];
 	char* lastCharacter;
@@ -607,7 +700,11 @@ BOOL DialerExists() {
 
 	if (*lastCharacter != '\\')
 		strcat(buf, "\\");
-	strcat(buf, "k95dial.exe");
+    if (lookForCM) {
+        strcat(buf, "cm.exe");
+    } else {
+        strcat(buf, "k95dial.exe");
+    }
 
 	// Go see if the dialer executable exists.
 	handle = FindFirstFile(buf, &findFileData);
@@ -618,6 +715,13 @@ BOOL DialerExists() {
 		FindClose(handle);
 
 	return found;
+}
+
+BOOL DialerExists()
+{
+    // Look for the Connection Manager first. If we can't find it, then
+    // look for the old Kermit 95 Dialer instead.
+    return ADialerExists(TRUE) || ADialerExists(FALSE);
 }
 
 void
@@ -645,58 +749,90 @@ StartDialer(void)
 
     if ( StartedFromDialer ) {
         if ( reuse ) {
-            DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
-#ifndef CKT_NT31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
-#else
-        ShowWindow(hwndDialer,SW_SHOWNORMAL);
-#endif
         SetForegroundWindow(hwndDialer);
-    } else if (_hwndDialer = FindWindow(NULL, "Kermit-95 Dialer")) {
+    } else if (_hwndDialer = FindWindow(NULL, "Kermit 95 Dialer")) {
+        dialerIsCKCM = FALSE;
         StartedFromDialer = 1;
         hwndDialer = _hwndDialer;
         KermitDialerID = 0;
-        DialerSend(OPT_KERMIT_HWND, (unsigned long)hwndGUI);
+        DialerSend(OPT_KERMIT_HWND, (LPARAM)hwndGUI);
         if ( reuse ) {
-            DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
-#ifndef CKT_NT31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
-#else
-        ShowWindow(hwndDialer,SW_SHOWNORMAL);
-#endif
+        SetForegroundWindow(hwndDialer);
+        StartedFromDialer = 0;
+    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit for Windows Dialer")) {
+        /* Temporary: The dialer was called the "C-Kermit for Windows Dialer"
+         *            in betas 4, 5 and 6. So we'll check for that too. */
+        dialerIsCKCM = FALSE;
+        StartedFromDialer = 1;
+        hwndDialer = _hwndDialer;
+        KermitDialerID = 0;
+        DialerSend(OPT_KERMIT_HWND, (LPARAM)hwndGUI);
+        if ( reuse ) {
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
+            DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
+        }
+        ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+        SetForegroundWindow(hwndDialer);
+        StartedFromDialer = 0;
+    }else if (_hwndDialer = FindWindow(NULL, "C-Kermit Connection Manager")) {
+        /* The new Win32 replacement for the dialer */
+        dialerIsCKCM = TRUE;
+        StartedFromDialer = 1;
+        hwndDialer = _hwndDialer;
+        KermitDialerID = 0;
+        DialerSend(OPT_KERMIT_HWND, (LPARAM)hwndGUI);
+        if ( reuse ) {
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
+            DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
+        }
+        ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
         SetForegroundWindow(hwndDialer);
         StartedFromDialer = 0;
     } else {
         static char buf[512] = "start ", *p, *q;
 
-        for ( p = exedir, q = buf + 6; *p; p++, q++ ) {
-            if ( *p == '/' ) {
+        for (p = exedir, q = buf + 6; *p; p++, q++) {
+            if (*p == '/') {
                 *q = '\\';
             } else
                 *q = *p;
-            if ( *q == '\\' ) {
+            if (*q == '\\') {
                 q++;
                 *q = '\\';
             }
         }
-        for ( p = "k95dial.exe"; *p ; p++, q++ )
-            *q = *p;
-        if ( reuse ) {
-            for ( p = " -k "; *p ; p++, q++ )
+        if (ADialerExists(TRUE)) {
+            for (p = "cm.exe"; *p; p++, q++)
                 *q = *p;
-            for ( p = ckultoa((LONG) hwndGUI); *p ; p++, q++ )
+        } else {
+            for (p = "k95dial.exe"; *p; p++, q++)
                 *q = *p;
+        }
+        if (reuse) {
+            for (p = " -k "; *p; p++, q++)
+                *q = *p;
+#ifdef _WIN64
+            for ( p = _ui64toa((unsigned __int64)hwndGUI, p, 10); *p ; p++, q++ )
+                *q = *p;
+#else /* _WIN64 */
+            for (p = ckultoa((LONG) hwndGUI); *p; p++, q++)
+                *q = *p;
+#endif /* _WIN64 */
             *q++ = ' ';
-            for ( p = ckultoa((LONG) GetCurrentProcessId()); *p ; p++, q++ )
+            for (p = ckultoa((LONG) GetCurrentProcessId()); *p; p++, q++)
                 *q = *p;
         }
         *q = '\0';
-        _zshcmd(buf,0);
-    }
+        _zshcmd(buf, 0);
+        }
 }
 
 HWND
@@ -733,9 +869,9 @@ GetConsoleHwnd( void )
 static LPWORD 
 lpwAlign( LPWORD lpIn )
 {
-    ULONG ul;
+    ULONG_PTR ul;
 
-    ul = (ULONG) lpIn;
+    ul = (ULONG_PTR) lpIn;
     ul += 3;
     ul >>=2;
     ul <<=2;
@@ -806,7 +942,6 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
     LPWSTR lpwsz;
     LRESULT ret;
     int nchar, i;
-    char * p;
 
     hgbl = GlobalAlloc(GMEM_ZEROINIT, 4096);
     if (!hgbl)
@@ -820,7 +955,7 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
                    | DS_MODALFRAME | WS_CAPTION
                    | DS_SETFOREGROUND
                    | DS_SHELLFONT
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
                    | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
 #endif
                    ;
@@ -1055,11 +1190,7 @@ MultiInputDialogProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
             }
             /* fallthrough */
         case IDCANCEL:
-#ifndef CKT_NT31
             ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
-#else
-            ShowWindow(hwndConsole,SW_SHOWNORMAL);
-#endif
             SetForegroundWindow(hwndConsole);
             EndDialog(hwndDlg, LOWORD(wParam));
             return TRUE;
@@ -1085,7 +1216,6 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     LPWSTR lpwsz;
     LRESULT ret;
     int nchar, i, pwid;
-    char * p;
 
     hgbl = GlobalAlloc(GMEM_ZEROINIT, 4096);
     if (!hgbl)
@@ -1101,7 +1231,7 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
                    | DS_MODALFRAME | WS_CAPTION
                    | DS_SETFOREGROUND | DS_SHELLFONT
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
                    | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
 #endif
                    ;
@@ -1353,7 +1483,6 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     LPWSTR lpwsz;
     LRESULT ret;
     int nchar, i, j;
-    char * p;
 
     hgbl = GlobalAlloc(GMEM_ZEROINIT, 8192);
     if (!hgbl)
@@ -1366,7 +1495,7 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     lpdt->style = WS_POPUP | WS_BORDER | WS_SYSMENU
                    | DS_MODALFRAME | WS_CAPTION
                    | DS_SETFOREGROUND | DS_SETFONT
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
                    | DS_3DLOOK | DS_CENTER | DS_NOFAILCREATE
 #endif
                    ;
@@ -1488,8 +1617,6 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
 int
 gui_videopopup_dialog(videopopup * vp, int timeout)
 {
-    int i;
-
     sid_timeout = timeout;
 
     return(VideoPopupDialog(hInstance, hwndConsole, vp));
@@ -1527,6 +1654,10 @@ gui_win_run_mode(int x)
     return(1);
 }
 
+int gui_get_win_run_mode() {
+    return KuiGetTerminalRunMode();
+}
+
 int
 gui_file_dialog(char * preface, char * prompt, int fc,
                 char * def, char * result, int rlength)
@@ -1560,6 +1691,13 @@ int
 get_gui_resize_mode(void)
 {
     return KuiGetTerminalResizeMode();
+}
+
+void
+gui_flash_window(void)
+{
+    /* FlashWindow is available starting with NT 3.1 */
+    FlashWindow(getHwndKUI(), TRUE);
 }
 
 #ifndef NORICHEDIT
@@ -1620,8 +1758,7 @@ TextPopupDialog( HINSTANCE hinst, HWND hwndOwner, char * title, int h, int w)
     LPWORD lpw;
     LPWSTR lpwsz;
     LRESULT ret;
-    int nchar, i, j, font = 12;
-    char * p;
+    int nchar, font = 12;
 
     if ( !w ) w = 80;
     if ( !h ) h = 25;
@@ -1787,8 +1924,8 @@ EditStreamCallback(DWORD_PTR dwCookie,
 
 static EDITSTREAM EditStream = { 0, 0, EditStreamCallback };
 
-#if _MSC_VER <= 1000
-/* Visual C++ 4.0 and earlier don't know about these. They require Rich Edit
+#if defined(_MSC_VER) && _MSC_VER <= 1020
+/* Visual C++ 4.2 and earlier don't know about these. They require Rich Edit
  * 2.0 or newer */
 #ifndef EM_AUTOURLDETECT
 #define EM_AUTOURLDETECT (WM_USER+91)

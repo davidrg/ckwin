@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -200,6 +200,11 @@ _PROTOTYP( int netinc, (int) );
 _PROTOTYP( int netxin, (int, CHAR *) );
 _PROTOTYP( int nettol, (CHAR *, int) );
 _PROTOTYP( int nettoc, (CHAR) );
+_PROTOTYP( int net_read, (int fd, register char *buf, register int len) );
+_PROTOTYP( int net_write, (int fd, register const char *buf, int len) );
+_PROTOTYP( int rlog_ctrl, (unsigned char *cp, int n) );
+_PROTOTYP( int locate_txt_rr, (char *prefix, char *name, char **retstr) );
+
 #ifdef TCPSOCKET
 _PROTOTYP( int gettcpport, (void) );
 _PROTOTYP( int gettcpport, (void) );
@@ -921,6 +926,10 @@ unsigned long inet_network();
 #include "multinet_root:[multinet.include.netinet]in.h"
 #include "multinet_root:[multinet.include.arpa]inet.h"
 #include "multinet_root:[multinet.include.sys]ioctl.h"
+#include "multinet_root:[multinet.include.vms]ucx$inetdef.h"
+#include "multinet_root:[multinet.include.sys]time.h"
+/*AGN 08-Jun-2023 Multinet supplies inet_aton()*/
+#define NO_DCL_INET_ATON
 
 #ifdef COMMENT
 /*
@@ -1416,7 +1425,9 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 
 #ifndef SOCKOPT_T
 #ifdef CK_64BIT
+#ifndef NT
 #define SOCKOPT_T socklen_t
+#endif  /* NT */
 #endif	/* CK_64BIT */
 #endif	/* SOCKOPT_T */
 
@@ -1461,7 +1472,9 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 
 #ifndef GSOCKNAME_T
 #ifdef CK_64BIT
+#ifndef NT
 #define GSOCKNAME_T socklen_t
+#endif  /* NT */
 #endif	/* CK_64BIT */
 #endif	/* GSOCKNAME_T */
 

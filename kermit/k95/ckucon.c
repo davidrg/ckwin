@@ -1,13 +1,13 @@
 #include "ckcsym.h"
 
-char *connv = "CONNECT Command for UNIX:fork(), 9.0.117, 14 Jul 2011";
+char *connv = "CONNECT Command for UNIX:fork(), 10.0.119, 13 May 2023";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2011,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -24,6 +24,9 @@ char *connv = "CONNECT Command for UNIX:fork(), 9.0.117, 14 Jul 2011";
   and to Neal P. Murphy of the Motorola Cellular Infrastructure Group in 1996
   for rearranging the code to allow operation on the BeBox, yet still work
   in regular UNIX.
+
+  CR symbol changed to CK_CR in C-Kermit 10.0 due to conflict with a 
+  Windows header file.
 */
 #include "ckcdeb.h"			/* Common things first */
 
@@ -68,6 +71,8 @@ _PROTOTYP( static VOID concld, (void) );
 #ifndef NOCSETS
 #include "ckcxla.h"			/* Character set translation */
 #endif /* NOCSETS */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 /* Internal function prototypes */
 
@@ -317,7 +322,7 @@ extern USHORT (*xfu)();
 #define CEV_TRI 9			/* Trigger string */
 
 #ifdef NOESCSEQ
-#define chkaes(x) 0
+#define chkaes(x,y) 0
 #else
 /*
   As of edit 178, the CONNECT command skips past ANSI escape sequences to
@@ -404,9 +409,9 @@ extern USHORT (*xfu)();
 */
 int
 #ifdef CK_ANSIC
-chkaes(char c)
+chkaes(char c, int src)
 #else
-chkaes(c) char c;
+chkaes(c) char c; int src;
 #endif /* CK_ANSIC */
 /* chkaes */ {
 
@@ -1120,7 +1125,7 @@ concld (
 	    /* Handle TELNET negotiations... */
 
 	    if ((c == NUL) && network && IS_TELNET()) {
-		if (prev == CR)		/* Discard <NUL> of <CR><NUL> */
+		if (prev == CK_CR)      /* Discard <NUL> of <CR><NUL> */
 		  if (!TELOPT_U(TELOPT_BINARY))
 		    continue;
 	    }
@@ -1397,7 +1402,7 @@ concld (
 
 #ifndef NOESCSEQ
 		if (escseq)		/* If handling escape sequences */
-		  apcrc = chkaes((char)c); /* update our state */
+		  apcrc = chkaes((char)c,1); /* update our state */
 #ifdef CK_APC
 /*
   If we are handling APCs, we have several possibilities at this point:
@@ -1451,15 +1456,16 @@ concld (
 #endif /* CK_APC */
 			) {
 			c &= cmdmsk;	/* Apply command mask. */
-			if (c == CR && tt_crd) { /* SET TERM CR-DISPLA CRLF? */
+                        /* SET TERM CR-DISPLAY CRLF? */
+			if (c == CK_CR && tt_crd) { 
 			    ckcputc(c);	/* Yes, output CR */
 			    if (seslog && !sessft)
 			      logchar((char)c);
 			    c = LF;	/* and insert a linefeed */
 			}
 			if (c == LF && tt_lfd) { /* SET TERM CR-DISPLA CRLF? */
-			    ckcputc(CR); /* Yes, output CR */
-			    if (seslog && !sessft) logchar((char)CR);
+			    ckcputc(CK_CR); /* Yes, output CR */
+			    if (seslog && !sessft) logchar((char)CK_CR);
 			}
 			ckcputc(c);	/* Write character to screen */
 		    }
@@ -2136,7 +2142,7 @@ conect() {
 #endif /* UNICODE */
 		    }
 		    if (escseq)
-		      apcrc = chkaes((char)c);
+		      apcrc = chkaes((char)c,0);
 #else
 		    outxbuf[0] = c;
 		    outxcount = 1;
@@ -2179,8 +2185,8 @@ conect() {
 				if (seslog && !sessft)
 				  logchar(c);
 			    }
-			    if (c == CR && (padparms[PAD_LF_AFTER_CR] == 4 ||
-					    padparms[PAD_LF_AFTER_CR] == 5)) {
+			    if (c==  CK_CR && (padparms[PAD_LF_AFTER_CR] == 4
+                                  ||  padparms[PAD_LF_AFTER_CR] == 5)) {
 				if (debses)
 				  conol(dbchr(LF)) ;
 				else
@@ -2214,7 +2220,7 @@ conect() {
 			    } else {
 				x25obuf [obufl++] = c;
 				if (obufl == MAXOX25) tosend = 1;
-				else if (c == CR) tosend = 1;
+				else if (c == CK_CR) tosend = 1;
 			    }
 			    if (tosend) {
 				if (ttol((CHAR *)x25obuf,obufl) < 0) {

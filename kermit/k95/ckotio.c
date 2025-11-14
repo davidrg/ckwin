@@ -1,5 +1,5 @@
 #ifdef NT
-char *ckxv = "Win32 Communications I/O, 8.0.229, 29 Dec 2005";
+char *ckxv = "Win32 Communications I/O, 10.0, 2 Jul 2023";
 #else
 char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #endif /* NT */
@@ -66,6 +66,8 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #endif /* NT */
 #include "ckodir.h"
 
+#include "ckoreg.h"
+
 /* macros we might need */
 #ifndef _O_APPEND
 #define _O_APPEND  O_APPEND
@@ -95,11 +97,11 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #ifdef NT
 #include <windows.h>
 #include <commctrl.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "cknwin.h"
 #ifdef CK_TAPI
 int TAPIAvail = 0 ;   /* is TAPI Installed */
@@ -123,17 +125,26 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define _WIN32_WINNT_WINBLUE 0x0603
 #endif /* _WIN32_WINNT_WINBLUE */
 
-#if _MSC_VER >= 1800
-/* Visual C++ 2013 and the Windows 8.1 Platform SDK introduce this header and
- * though the Win32 APIs it relies on have been around since Windows 2000 */
-#include <VersionHelpers.h>
+#ifdef NT
+#ifndef __WATCOMC__
+#if !defined(_MSC_VER) || _MSC_VER >= 1920
+/* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
+ * and though the Win32 APIs it relies on have been around since Windows 2000,
+ * though building with Visual C++ 2017 (1910) fails with unresovled external
+ * symbol so we'll only do this on Visual C++ 2019 or newer */
+#include <versionhelpers.h>
 #define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
-#else
-/* Anything older than Visual C++ we won't bother trying to detect Windows 8.1
- * or newer - if you're building for a modern version of windows you really
- * should be using a modern compiler. */
+#else /* _MSC_VER */
+/* Anything older than Visual C++ 2019 we won't bother trying to detect
+ * Windows 8.1 or newer - if you're building for a modern version of windows
+ * you really should be using a modern compiler. */
 #define CKWIsWinVerOrGreater(ver) (FALSE)
-#endif
+#endif /* _MSC_VER */
+#else /* __WATCOMC__ */
+/* Open Watcom doesn't have versionhelpers.h */
+#define CKWIsWinVerOrGreater(ver) (FALSE)
+#endif /* __WATCOMC__ */
+#endif /* NT */
 
 /* Version herald(s) */
 
@@ -151,7 +162,9 @@ char unm_mch[80]="";
 char unm_ver[80]="";
 char unm_mod[80]="";
 #endif /* CK_UTSNAME */
+#ifdef OS2ONLY
 static char *ckxrev = "32-bit";
+#endif /* OS2ONLY */
 
 /* OS/2 system header files & related stuff */
 
@@ -177,12 +190,21 @@ static char *ckxrev = "32-bit";
 #define INCL_DOSDATETIME
 #define INCL_DOSNMPIPES
 #include <os2.h>        /* This pulls in a whole load of stuff */
+#undef COMMENT
+#endif /* NT */
+
 #ifdef CK_REXX
+
+#ifdef NT
+/* Regina REXX wants to typedef char to CHAR, but we already do that */
+#define CHAR_TYPEDEFED
+#define USHORT_TYPEDEFED
+#define ULONG_TYPEDEFED
+#endif
+
 #define  INCL_REXXSAA
 #include <rexxsaa.h>
 #endif /* CK_REXX */
-#undef COMMENT
-#endif /* NT */
 
 #include "ckowin.h"
 #include "ckcuni.h"
@@ -190,6 +212,17 @@ static char *ckxrev = "32-bit";
 #include "ckcsig.h"
 #include "ckokey.h"
 #include "ckoslp.h"
+
+#ifdef KUI
+extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG SavedWY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
+#endif /* KUI */
+extern ULONG RGBTable[], RGBTable256[], RGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG WY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
 
 #ifdef CK_XYZ
 #include "p.h"
@@ -218,6 +251,43 @@ int p_avail = 1 ;      /* No DLL to load - built-in */
 #endif
 #endif
 
+#ifdef NT
+/* These aren't known to Visual C++ 1.0 32-bit edition or Windows NT 3.1, but
+ * they're useful constants to have */
+#ifndef VER_PLATFORM_WIN32s
+#define VER_PLATFORM_WIN32s 0
+#endif /* VER_PLATFORM_WIN32s */
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+#define VER_PLATFORM_WIN32_WINDOWS 1
+#endif /* VER_PLATFORM_WIN32_WINDOWS */
+#ifndef VER_PLATFORM_WIN32_NT
+#define VER_PLATFORM_WIN32_NT 2
+#endif /* VER_PLATFORM_WIN32_NT */
+#endif /* NT */
+
+int charinbuf(int);       /* ckokey.c */
+int os2settimo(int, int); /* this file */
+
+#ifndef NOTERM
+void doreset(int);      /* ckoco3.c */
+#endif /* NOTERM */
+
+#ifndef NOLOCAL
+void VscrnForceFullUpdate();    /* ckoco2.c */
+int ttgcwsz();                  /* ckocon.c */
+#endif /* NOLOCAL */
+
+#ifdef CK_SECURITY
+int ck_security_unloaddll();
+int ck_security_loaddll();
+#endif /* CK_SECURITY */
+
+#ifdef __WATCOMC__
+/* The Watcom headers (in Open Watcom 1.9 at least) don't seem to
+ * have _tzset(), but they do have tzset()... */
+#define _tzset tzset
+#endif /* __WATCOMC__ */
+
 HKBD KbdHandle = 0 ;
 TID tidKbdHandler = (TID) 0,
     tidRdComWrtScr   = (TID) 0,
@@ -236,9 +306,23 @@ extern int tt_status[VNUM] ;
 int k95stdin=0,k95stdout=0;
 extern int inserver, local;
 
+/* This is set by prescan() if the -h flag was given. In this case we want to
+ * skip some parts of startup in order to preserve the console and exit
+ * faster */
+int usageparm = 0;
+
 #ifdef CHAR
 #undef CHAR
 #endif /* CHAR */
+
+#ifdef NT
+#ifdef __GNUC__
+/* We're building with char being unsigned by default, but GCC
+ * still considers 'unsigned char' and 'char' to be different
+ * types so... */
+#define CHAR unsigned char
+#endif
+#endif
 
 /*
  Variables available to outside world:
@@ -353,12 +437,31 @@ extern int os2pm;
 char *dftty = "0"; /* stdin */
 int dfloc = 0;
 #else
+
+/* For K95G we used to just assume the user was going to
+ * use a modem attached to COM1 and so go and open that
+ * device automatically on startup if nothing else had
+ * it open. In 2024 this behaviour is less likely to be
+ * useful, so now K95G behaves as K95 does - it opens
+ * stdin instead so as to not unexpectedly lock resources
+ * that might be needed by other applications. The
+ * original COM1 opening code is left below primarily as
+ * an example of how dftty and dfloc work.
+ */
+
+#ifdef COMMENT
 char *dftty = "com1"; /* COM1 */
 int dfloc = 1;
+#else /* COMMENT */
+char *dftty = "0"; /* stdin */
+int dfloc = 0;
+#endif /* COMMENT */
+
 #endif /* K95G */
 
 int OSVer = 0;
 int nt351 = 0;
+int nt5 = 0;
 
 #ifdef NTSIG
 int TlsIndex = 0;
@@ -369,7 +472,7 @@ bool ttslip = 0 ;  /* Equals 1 if being used as a replacement for SLIPTERM */
 bool ttppp  = 0 ;  /* Equals 1 if being used as a replacement for SLATTACH */
 #endif /* OS2ONLY */
 bool ttshare = 0;                /* do not open devices in shared mode */
-int ttyfd = -1;         /* TTY file descriptor (not open yet) */
+CK_TTYFD_T ttyfd = -1;          /* TTY file descriptor (not open yet) */
 int dfprty = 0;                 /* Default parity (0 = none) */
 int ttprty = 0;                 /* Parity in use. */
 int ttmdm = 0;                  /* Modem in use. */
@@ -404,7 +507,9 @@ static struct rdchbuf_rec {             /* Buffer for serial characters */
 int ttpush=-1;                          /* So we can perform a peek */
 
 static ULONG tcount;                    /* Elapsed time counter */
-static int conmode, consaved;
+#ifdef OS2ONLY
+static int conmode;
+#endif /* OS2ONLY */
 static int ttpmsk = 0377;               /* Parity stripping mask. */
 static char ttnmsv[DEVNAMLEN+1];
 int islocal;
@@ -412,8 +517,10 @@ int ishandle=0;
 int pid = 0;
 #ifdef NT
 static DCB ttydcb ;
+#ifndef CKT_NT31ONLY
 static LPCOMMCONFIG ttycfg=NULL;
 static DWORD cfgsize=0;
+#endif
 #else /* NT */
 static DCBINFO ttydcb;
 #endif /* NT */
@@ -494,6 +601,7 @@ static OVERLAPPED overlapped_read[30] = {
     {0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1},
     {0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1}
 };
+#ifdef NEWRDCH
 static char * or_ptr[30] = {
     NULL, NULL, NULL, NULL, NULL,NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL,NULL, NULL, NULL, NULL, NULL,
@@ -514,6 +622,7 @@ static int    or_read[30] = {
     0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0
 };
+#endif /* NEWRDCH */
 int nActuallyRead ;
 
 /* Lets try owwait = FALSE and see if anybody notices */
@@ -606,8 +715,10 @@ ckntsignal(int sig, SIGTYP (*f)(int)))(int) {
 static int savedtty = 0;
 #ifdef NT
 static DCB saveddcb ;
+#ifndef CKT_NT31ONLY
 static LPCOMMCONFIG savedcfg=NULL;
 static DWORD savedcfgsize=0;
+#endif /* CKT_NT31ONLY */
 #else /* NT */
 static long savedspeed;
 static LINECONTROL savedlc;
@@ -615,6 +726,63 @@ static DCBINFO saveddcb;
 static BYTE savedstat;
 #endif /* NT */
 
+/* Visual C++ 1.0 (and perhaps some other ancient Win32 compilers) don't
+ * know what HINSTANCE is. Visual C++ 1.0 docs say LoadLibrary returns a
+ * HANDLE, while Visual C++ 2.0 docs say HINSTANCE. */
+#ifdef NT
+#ifndef HINSTANCE
+#define HINSTANCE HANDLE
+#endif /* HINSTANCE */
+#endif /* NT */
+
+/* Code to handle potential unavailability of GetVersionEx when
+ * targeting both Windows NT 3.1 *AND* Windows NT 3.50. When targeting
+ * NT 3.50 and newer we'll just always call GetVersionEx directly, and
+ * when targeting NT 3.1 *ONLY* we'll never bother with GetVersionEx at
+ * all. */
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+
+#else
+#ifndef CKT_NT31ONLY
+#define _GetVersionEx GetVersionEx
+#endif
+#endif /* CKT_NT35_AND_31 */
+
+#ifdef CKT_NT35_AND_31
+BOOL _GetVersionEx(LPOSVERSIONINFO lpVersionInformation) {
+    static BOOL (__stdcall *getVersionEx)(LPOSVERSIONINFO)=NULL;
+    static BOOL loaded = FALSE;
+
+    if (!loaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        loaded = TRUE;
+
+        if (hKernel32 != NULL) {
+#ifdef CK_NT_UNICODE
+            getVersionEx = (BOOL (__stdcall *)(LPOSVERSIONINFO))
+                        GetProcAddress( hKernel32, "GetVersionExW" );
+#else
+            getVersionEx = (BOOL (__stdcall *)(LPOSVERSIONINFO))
+                        GetProcAddress( hKernel32, "GetVersionExA" );
+#endif
+        }
+
+        if (getVersionEx == NULL) {
+            debug(F100, "GetVersionEx is NOT available", "", 0);
+            return FALSE;
+        } else {
+            debug(F100, "GetVersionEx is available", "", 0);
+        }
+    }
+
+    if (getVersionEx != NULL) {
+        return getVersionEx(lpVersionInformation);
+    }
+    return FALSE; /* GetVersionEx unavailable */
+}
+#endif /* CKT_NT35_AND_31 */
+#endif /* NT */
 
 #ifdef NT
 /* d e b u g C o m m -- generate a debug log entry for the */
@@ -666,6 +834,29 @@ debugComm( char * msg, DCB * lpDCB, COMMTIMEOUTS * timeouts )
 
 int
 savetty() {
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+    /* When targeting both Windows NT 3.50 and Windows NT 3.1, we'll try to
+     * dynamically load GetCommConfig as its only available on Windows NT 3.50
+     * and newer.
+     */
+    static BOOL (__stdcall *_GetCommConfig)(HANDLE,LPCOMMCONFIG,LPDWORD)=NULL;
+    static BOOL GetCommConfigLoaded = FALSE;
+
+    if (!GetCommConfigLoaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        GetCommConfigLoaded = TRUE;
+        _GetCommConfig = (BOOL (__stdcall *)(HANDLE,LPCOMMCONFIG,LPDWORD))
+                    GetProcAddress( hKernel32, "GetGommConfig" );
+        if (_GetCommConfig == NULL) {
+            debug(F100, "GetCommConfig is NOT available", "", 0);
+        } else {
+            debug(F100, "GetCommConfig is available", "", 0);
+        }
+    }
+#endif
+#endif
+
     if (ttyfd != -1) {
 #ifdef NT
         saveddcb.DCBlength = sizeof(DCB);
@@ -674,9 +865,25 @@ savetty() {
         if ( deblog )
             debugComm( "savetty initial values", &ttydcb, NULL );
 
+        /* GetCommConfig is only available on NT 3.50 and higher. If we're
+         * targeting NT 3.1 only we won't bother compiling this stuff in as it
+         * will never be used. If we're targeting NT 3.50 *and* 3.1, we'll
+         * compile in a version that does a runtime check to see if
+         * GetCommConfig is available. If we're targeting NT 3.51+ then we'll
+         * just assume GetCommConfig is always available (because the runtime
+         * library won't let the binary run anywhere it isn't)
+         */
+#ifdef CKT_NT35_AND_31
+        savedcfg->dwSize = 1024;
+        savedcfgsize = 1024;
+        _GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+#else
+#ifndef CKT_NT31ONLY
         savedcfg->dwSize = 1024;
         savedcfgsize = 1024;
         GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+#endif /* CKT_NT31ONLY */
+#endif /* CKT_NT35_AND_31 */
 #else /* NT */
         savedspeed = ttgspd();
         DosDevIOCtl(&savedlc,sizeof(savedlc),NULL,0,
@@ -698,13 +905,47 @@ restoretty() {
     UINT cmd = 0, data = 0 ;
 #endif /* NT */
 
-  if (savedtty) {
 #ifdef NT
-#ifdef COMMENT
+#ifdef CKT_NT35_AND_31
+    /* When targeting both Windows NT 3.50 and Windows NT 3.1, we'll try to
+     * dynamically load SetCommConfig as its only available on Windows NT 3.50
+     * and newer.
+     */
+    static BOOL (__stdcall *_SetCommConfig)(HANDLE,LPCOMMCONFIG,DWORD)=NULL;
+    static BOOL SetCommConfigLoaded = FALSE;
+
+    if (!SetCommConfigLoaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        SetCommConfigLoaded = TRUE;
+        _SetCommConfig = (BOOL (__stdcall *)(HANDLE,LPCOMMCONFIG,DWORD))
+                    GetProcAddress( hKernel32, "SetCommConfig" );
+        if (_SetCommConfig == NULL) {
+            debug(F100, "SetCommConfig is NOT available", "", 0);
+        } else {
+            debug(F100, "SetCommConfig is available", "", 0);
+        }
+    }
+#endif
+#endif
+
+  if (savedtty) {
+      /* On NT 3.50+ : Call SetCommConfig directly - don't bother with a runtime check
+       * On NT 3.1+3.50: Do a runtime check, call SetCommConfig if its available
+       * On NT 3.1 only: Don't bother with SetCommConfig, always call SetCommState */
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+      if (_SetCommConfig == NULL) {
+          SetCommState( (HANDLE) ttyfd, &saveddcb ) ;
+      } else {
+          _SetCommConfig( (HANDLE) ttyfd, savedcfg, savedcfgsize );
+      }
+#else /* CKT_NT35_AND_31 */
+#ifdef CKT_NT31ONLY
       SetCommState( (HANDLE) ttyfd, &saveddcb ) ;
 #else
       SetCommConfig( (HANDLE) ttyfd, savedcfg, savedcfgsize );
-#endif
+#endif /* CKT_NT31ONLY */
+#endif /* CKT_NT35_AND_31 */
 #else /* NT */
     ttsetspd(savedspeed);
     DosDevIOCtl(&data,sizeof(data),&cmd,sizeof(cmd),
@@ -790,8 +1031,11 @@ os2getcplist(cplist, size) int *cplist; int size; {
 
     CPList[0] = GetConsoleCP() ;
 
+#ifndef CKT_NT31
+   /* TODO: Any way to do this on NT 3.1? */
    if (size > 1)
        EnumSystemCodePages( enumproc, CP_INSTALLED ) ;
+#endif
 
     return CPListIndex ;
 #else /* NT */
@@ -850,13 +1094,23 @@ os2getpid(void)
 int
 setOSVer( void )
 {
+#ifndef CKT_NT31ONLY
     OSVERSIONINFO osverinfo ;
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-    GetVersionEx( &osverinfo ) ;
-    OSVer = osverinfo.dwPlatformId ;
-    if ( osverinfo.dwMajorVersion < 4 )
-        nt351 = 1;
-    return(OSVer);
+    if (_GetVersionEx( &osverinfo )) {
+        OSVer = osverinfo.dwPlatformId ;
+        if ( osverinfo.dwMajorVersion < 4 ) {
+            nt351 = 1;
+        }
+        return OSVer;
+    }
+#endif /* CKT_NT31ONLY */
+
+    /* Safe default - NT 3.x */
+    OSVer = VER_PLATFORM_WIN32_NT;
+    nt351 = 1;
+
+    return (OSVer);
 }
 #endif /* NT */
 
@@ -869,7 +1123,7 @@ getcpu( void )
    char numstr[32] ;
    memset( &si, 0, sizeof(si) ) ;
    GetSystemInfo( &si ) ;
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
    if ( isWin95() && !si.wProcessorLevel )
    {
       switch ( si.dwProcessorType ) {
@@ -953,6 +1207,36 @@ getcpu( void )
             ckstrncat( buffer, numstr, 64 );
          }
          break;
+#ifdef PROCESSOR_ARCHITECTURE_ALPHA64
+      case PROCESSOR_ARCHITECTURE_ALPHA64:
+          ckstrncpy( buffer, "alpha64-", 64 ) ;
+          switch ( si.wProcessorLevel ) {
+              default:
+                  _itoa( si.wProcessorLevel, numstr, 10 ) ;
+                  ckstrncat( buffer, numstr, 64 );
+          }
+          break;
+#endif /* PROCESSOR_ARCHITECTURE_ALPHA64 */
+#ifdef PROCESSOR_ARCHITECTURE_AMD64
+      case PROCESSOR_ARCHITECTURE_AMD64:
+          ckstrncpy( buffer, "x86-64", 64 ) ;
+          break;
+#endif /* PROCESSOR_ARCHITECTURE_AMD64 */
+#ifdef PROCESSOR_ARCHITECTURE_ARM
+      case PROCESSOR_ARCHITECTURE_ARM:
+          ckstrncpy( buffer, "arm", 64 ) ;
+          break;
+#endif /* PROCESSOR_ARCHITECTURE_ARM */
+#ifdef PROCESSOR_ARCHITECTURE_ARM64
+      case PROCESSOR_ARCHITECTURE_ARM64:
+          ckstrncpy( buffer, "arm64", 64 ) ;
+          break;
+#endif /* PROCESSOR_ARCHITECTURE_ARM64 */
+#ifdef PROCESSOR_ARCHITECTURE_IA64
+      case PROCESSOR_ARCHITECTURE_IA64:
+          ckstrncpy( buffer, "itanium", 64 ) ;
+          break;
+#endif /* PROCESSOR_ARCHITECTURE_IA64 */
 
       case PROCESSOR_ARCHITECTURE_UNKNOWN:
          ckstrncpy( buffer, "unknown", 64 ) ;
@@ -1000,7 +1284,7 @@ getcpu( void )
         ckstrncpy( buffer, "alpha-21064", 64 ) ;
         break;
     }
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 #else /* NT */
    ckstrncpy( buffer, CKCPU, 64 ) ;
 #endif
@@ -1163,22 +1447,24 @@ Win95AltGrInit( void )
 void
 Win95DisplayLocale( void )
 {
-    LCID    Locale = LOCALE_SYSTEM_DEFAULT ;
     LCTYPE  LCType = 0;
     CHAR    lpLCDATA[1024]="";
     int     cchData=1024;
     int     rc=0;
-    int     i=0;
     HKL     KBLayout=0;
     CHAR    lpLayoutName[KL_NAMELENGTH]="";
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     /* Visual C++ 2.0 and earlier don't know about GetKeyboardLayout() */
     KBLayout = GetKeyboardLayout(0);
     GetKeyboardLayoutName(lpLayoutName);
     printf("Keyboard Layout = %s [%u]\n",lpLayoutName,(unsigned short)KBLayout);
 #endif
 
+#ifndef CKT_NT35_OR_31
+    /* And Windows NT 3.1 doesn't have GetLocaleInfo. If we're targeting NT 3.1
+     * or 3.50 we'll just omit it entirely as this entire function is only used
+     * on Windows 9x */
     printf("Locale Information:\n");
     for ( LCType=0 ; LCType<= 0x5A ; LCType++ ) {
         rc = GetLocaleInfo( LOCALE_SYSTEM_DEFAULT,LCType,lpLCDATA,cchData);
@@ -1186,6 +1472,7 @@ Win95DisplayLocale( void )
         rc = GetLocaleInfo( LOCALE_USER_DEFAULT,LCType,lpLCDATA,cchData);
         printf("  \"%-25s\"\n",lpLCDATA);
     }
+#endif /* CKT_NT35_OR_31 */
 }
 #endif /* NT */
 
@@ -1331,7 +1618,6 @@ sysinit() {
     */
 #ifdef NT
     int    WinThreadInit=0;
-    DWORD mode ;
 #ifndef NOTERM
     extern int tt_attr_bug ;
 #endif /* NOTERM */
@@ -1340,6 +1626,7 @@ sysinit() {
     ck_sleepint = isWin95() ? CK_SLEEPINT : CK_SLEEPINT * 2;
     SetFileApisToOEM() ;  /* Otherwise, filenames are translated */
 
+#ifndef CKT_NT31
     /* Allocate memory for COMMCONFIG structure */
     savedcfg = (LPCOMMCONFIG) malloc( 1024 );
     if ( savedcfg ) {
@@ -1351,6 +1638,7 @@ sysinit() {
         memset( ttycfg, 0, 1024 );
         ttycfg->dwSize = 1024;
     }
+#endif /* CKT_NT31 */
 
 #ifndef NOLOCAL
 #ifndef KUI
@@ -1362,97 +1650,163 @@ sysinit() {
     /* Construct the system ID string */
 #ifdef NT
     {
+#ifndef CKT_NT31ONLY
+        BOOL getVersionResult = FALSE;
         OSVERSIONINFO osverinfo ;
         osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-        GetVersionEx( &osverinfo ) ;
+        getVersionResult = _GetVersionEx( &osverinfo );
 
-        if ( startflags & 1 )
-            OSVer = VER_PLATFORM_WIN32_NT;
-        else
-            OSVer = osverinfo.dwPlatformId ;
+        if (!getVersionResult) {
+#endif /* CKT_NT31ONLY */
+            /* _GetVersionEx will fail on NT 3.1 because GetVersionEx isn't
+             * available there, we have to use GetVersion instead. KB article
+             * Q92395 details how to extract the major, minor and build number
+             * plus determine the platform (NT, 9x or Win32s) */
+            DWORD dwVersion;
+            int major, minor, build;
 
-        sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
-                 ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
-                   (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
-                   osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ?
-                   (osverinfo.dwMajorVersion < 5 ? "Windows NT" : "Windows 2000/XP") :
-                   "Windows Unknown" ),
-                 osverinfo.dwMajorVersion,
-                 osverinfo.dwMinorVersion,
-                 LOWORD(osverinfo.dwBuildNumber),
-                 osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
-                 osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
-#ifdef CK_UTSNAME
-        if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
-            /* Windows 95 / 98 / ME */
-            sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
-                osverinfo.dwMinorVersion == 1 ? "Windows 98" :
-                    osverinfo.dwMinorVersion == 9 ? "Windows ME" :
-                        "Windows - unknown");
-        } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-            /* Windows NT */
+            dwVersion = GetVersion();
 
-            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
-                /* Windows 10 or newer. There is currently no constant
-                 * for Windows 11 defined so this is the best we can
-                 * do. */
-                sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
-            } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
-                sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+            major = LOBYTE(LOWORD(dwVersion));
+            minor = HIBYTE(LOWORD(dwVersion));
+            build = HIWORD(dwVersion);
+
+            if (dwVersion < 0x80000000) {
+                /* Windows NT */
+                OSVer = VER_PLATFORM_WIN32_NT;
+            } else if (LOBYTE(LOWORD(dwVersion))<4) {
+                /* Win32s */
+                OSVer = VER_PLATFORM_WIN32s;
+                build = build & ~0x8000;
             } else {
-                if (osverinfo.dwMajorVersion < 5) {
-                    sprintf(unm_nam, "Windows NT");
-                } else if (osverinfo.dwMajorVersion == 5) {
-                    /* Windows 2000 / XP / 2003 */
-                    if (osverinfo.dwMinorVersion == 0) {
-                        sprintf(unm_nam, "Windows 2000" );
-                    } else if (osverinfo.dwMinorVersion == 1) {
-                        sprintf(unm_nam, "Windows XP" );
-                    } else if (osverinfo.dwMinorVersion == 2) {
-                        sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
-                    } else {
-                        sprintf(unm_nam, "Windows NT 5.x - unknown" );
-                    }
-                } else if (osverinfo.dwMajorVersion == 6) {
-                    /* Windows Vista / 7 / 8 / 8.1 */
-                    if (osverinfo.dwMinorVersion == 0) {
-                        sprintf(unm_nam, "Windows Vista / Server 2008" );
-                    } else if (osverinfo.dwMinorVersion == 1) {
-                        sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
-                    } else if (osverinfo.dwMinorVersion == 2) {
-                        sprintf(unm_nam, "Windows 8 / Server 2012 !!");
-                    } else if (osverinfo.dwMinorVersion == 3) {
-                        sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
-                    } else  {
-                        sprintf(unm_nam, "Windows NT 6.x - unknown" );
-                    }
-                } else if (osverinfo.dwMajorVersion == 10) {
-                    /* With the right stuff in the manifest, GetVersionEx should
-                     * tell the truth even when the executable has been built
-                     * with an older compiler. When built with Visual C++
-                     * 2013 or newer we won't ever get this far - Windows 10+
-                     * should be detected earlier on. */
-
-                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
-
-                } else {
-                    /* Don't know */
-                    sprintf(unm_nam, "Windows NT - unknown" );
-                }
+                /* Windows 95 */
+                OSVer = VER_PLATFORM_WIN32_WINDOWS;
+                build = build & ~0x8000;
             }
-        } else {
-            /* Unknown */
-            sprintf(unm_nam, "Windows NT - unknown" );
-        }
 
-        sprintf(unm_rel,"%1d.%02d",
-                 osverinfo.dwMajorVersion,
-                 osverinfo.dwMinorVersion);
-        sprintf(unm_ver,"(%1d)%s%s",
-                LOWORD(osverinfo.dwBuildNumber),
-                osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
-                osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+            if (major < 4) nt351 = 1; /* We're on NT 3.51 */
+
+            /* OS Name and version */
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)",
+                    OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                    OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                    OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                    "Unknown",
+                    major, minor, build
+            );
+#ifdef CK_UTSNAME
+            sprintf(unm_nam,
+                    OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                    OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                    OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                    "Windows Unknown" );
+            sprintf(unm_rel,"%1d.%02d", major, minor); /* OS Release */
+            sprintf(unm_ver,"%1d", build); /* OS Version */
 #endif /* CK_UTSNAME */
+#ifndef CKT_NT31ONLY
+        } else {
+
+            if ( startflags & 1 )
+                OSVer = VER_PLATFORM_WIN32_NT;
+            else
+                OSVer = osverinfo.dwPlatformId ;
+
+            if (osverinfo.dwMajorVersion < 4) nt351 = 1; /* We're on NT 3.51 */
+            if (osverinfo.dwMajorVersion > 4) nt5 = 1; /* We're on Win2k or newer */
+
+#ifndef CK_UTSNAME
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
+                     ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
+                       (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
+                       osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ?
+                       (osverinfo.dwMajorVersion < 5 ? "Windows NT" : "Windows 2000/XP") :
+                       "Windows Unknown" ),
+                     osverinfo.dwMajorVersion,
+                     osverinfo.dwMinorVersion,
+                     LOWORD(osverinfo.dwBuildNumber),
+                     osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                     osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+#else /* CK_UTSNAME */
+            if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+                /* Windows 95 / 98 / ME */
+                sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
+                    osverinfo.dwMinorVersion == 1 ? "Windows 98" :
+                        osverinfo.dwMinorVersion == 9 ? "Windows ME" :
+                            "Windows - unknown");
+            } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+                /* Windows NT */
+
+                if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                    /* Windows 10 or newer. There is currently no constant
+                     * for Windows 11 defined so this is the best we can
+                     * do. */
+                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+                } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
+                    sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                } else {
+                    if (osverinfo.dwMajorVersion < 5) {
+                        sprintf(unm_nam, "Windows NT");
+                    } else if (osverinfo.dwMajorVersion == 5) {
+                        /* Windows 2000 / XP / 2003 */
+                        if (osverinfo.dwMinorVersion == 0) {
+                            sprintf(unm_nam, "Windows 2000" );
+                        } else if (osverinfo.dwMinorVersion == 1) {
+                            sprintf(unm_nam, "Windows XP" );
+                        } else if (osverinfo.dwMinorVersion == 2) {
+                            sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
+                        } else {
+                            sprintf(unm_nam, "Windows NT 5.x - unknown" );
+                        }
+                    } else if (osverinfo.dwMajorVersion == 6) {
+                        /* Windows Vista / 7 / 8 / 8.1 */
+                        if (osverinfo.dwMinorVersion == 0) {
+                            sprintf(unm_nam, "Windows Vista / Server 2008" );
+                        } else if (osverinfo.dwMinorVersion == 1) {
+                            sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
+                        } else if (osverinfo.dwMinorVersion == 2) {
+                            sprintf(unm_nam, "Windows 8 / Server 2012 !!");
+                        } else if (osverinfo.dwMinorVersion == 3) {
+                            sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                        } else  {
+                            sprintf(unm_nam, "Windows NT 6.x - unknown" );
+                        }
+                    } else if (osverinfo.dwMajorVersion == 10) {
+                        /* With the right stuff in the manifest, GetVersionEx should
+                         * tell the truth even when the executable has been built
+                         * with an older compiler. When built with Visual C++
+                         * 2013 or newer we won't ever get this far - Windows 10+
+                         * should be detected earlier on. */
+
+                        sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+
+                    } else {
+                        /* Don't know */
+                        sprintf(unm_nam, "Windows NT - unknown" );
+                    }
+                }
+            } else {
+                /* Unknown */
+                sprintf(unm_nam, "Windows NT - unknown" );
+            }
+
+            sprintf(unm_rel,"%1d.%02d",
+                     osverinfo.dwMajorVersion,
+                     osverinfo.dwMinorVersion);
+            sprintf(unm_ver,"(%1d)%s%s",
+                    LOWORD(osverinfo.dwBuildNumber),
+                    osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                    osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
+                    unm_nam,
+                    osverinfo.dwMajorVersion,
+                    osverinfo.dwMinorVersion,
+                    LOWORD(osverinfo.dwBuildNumber),
+                    osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                    osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+#endif /* CK_UTSNAME */
+        }
+#endif /* CKT_NT31ONLY */
 #ifdef KUI
         InitCommonControls();
 #endif /* KUI */
@@ -1555,6 +1909,7 @@ sysinit() {
     CreateKeyMapInitSem( FALSE ) ;
     CreateVscrnDirtySem( TRUE );
 #endif /* NOLOCAL */
+    CreateZoutDumpMutex( FALSE );
 
 #ifndef NOSETKEY
     keymapinit();                       /* Initialize key maps */
@@ -1576,7 +1931,7 @@ sysinit() {
     debug(F101,"hInstance","",hInstance);
     hwndConsole = GetConsoleHwnd() ;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     /* MENUITEMINFO and related bits are new to Windows 95 and not known to
      * Visual C++ 2.0 and older. */
     if ( isWin95() )
@@ -1590,7 +1945,7 @@ sysinit() {
         DrawMenuBar(hwndConsole);
         CloseHandle(hMenu);
     }
-#endif /* _MSC_VER > 900 */
+#endif /* CKT_NT35_OR_31 */
 #endif /* KUI */
     WinThreadInit = WindowThreadInit( (void *) hInstance );
 #endif /* NT */
@@ -1614,7 +1969,11 @@ sysinit() {
 #ifdef IKSD
     if ( !inserver )
 #endif /* IKSD */
-    KbdHandlerInit() ;
+    if ( !usageparm ) {
+        /* If we're just going to show usage info and exit, we don't need a
+         * keyboard handler. Starting it just slows down our escape. */
+        KbdHandlerInit();
+    }
 #endif /* KUI */
 #endif /* NOLOCAL */
 
@@ -1663,8 +2022,7 @@ sysinit() {
 #endif /* NT */
 
     getcmdcolor();
-    os2gettitle(szOldTitle, sizeof(szOldTitle));
-    debug(F110,"sysinit szOldTitle",szOldTitle,0);
+    os2gettitle(szOldTitle, sizeof(szOldTitle));debug(F110,"sysinit szOldTitle",szOldTitle,0);
     os2settitle("", TRUE);
 #endif /* NOLOCAL */
 
@@ -1721,17 +2079,17 @@ sysinit() {
     }
 
 
-#ifdef __IBMC__
+#ifdef OS2ONLY
     setvbuf(stdout, NULL, _IONBF, 0);
     setmode(1, _O_TEXT);
-#endif /* __IBMC__ */
+#endif /* OS2ONLY */
 
 #ifdef NT
     {
         char * p = GetLoadPath();
         DWORD len;
 
-        len = GetShortPathName(p,exedir,CKMAXPATH);
+        len = ckGetShortPathName(p,exedir,CKMAXPATH);
         if ( len == 0 || len > CKMAXPATH )
             ckstrncpy(exedir, p, CKMAXPATH);
     }
@@ -1755,7 +2113,7 @@ sysinit() {
         char * p = zgtdir();
         DWORD len;
 
-        len = GetShortPathName(p,startupdir,CKMAXPATH);
+        len = ckGetShortPathName(p,startupdir,CKMAXPATH);
         if ( len == 0 || len > CKMAXPATH )
             ckstrncpy(startupdir, p, CKMAXPATH);
     }
@@ -1791,6 +2149,19 @@ sysinit() {
         if ( !row_init && !col_init )
             ttgwsiz() ;
     }
+
+#ifdef KUI
+    {
+        int i;
+        // Initialise the backup copies of the RGB colour tables
+        for (i = 0; i < 256; i++) SavedRGBTable256[i] = RGBTable256[i];
+        for (i = 0; i < 88; i++) SavedRGBTable88[i] = RGBTable88[i];
+        for (i = 0; i < 16; i++) SavedRGBTable[i] = RGBTable[i];
+#ifdef CK_PALETTE_WY370
+        for (i = 0; i < 65; i++) SavedWY370RGBTable[i] = WY370RGBTable[i];
+#endif /* CK_PALETTE_WY370 */
+    }
+#endif /* KUI*/
 
     debug(F100,"about to VscrnInit()","",0);
     /* Setup the Virtual Screens */
@@ -1850,7 +2221,7 @@ sysinit() {
 #ifndef NOLOCAL
 #ifndef KUI
 #ifdef ONETERMUPD
-    if ( !(inserver && k95stdout) )
+    if ( !k95stdout )
         tidTermScrnUpd = (TID) ckThreadBegin( &TermScrnUpd,
                                           THRDSTKSIZ, 0, TRUE, 0 ) ;
 #endif /* ONETERMUPD */
@@ -2142,6 +2513,7 @@ syscleanup() {
     VioHandle = 0 ;
 #endif /* NT */
     CloseThreadMgmtMutex() ;
+    CloseZoutDumpMutex();
     debug(F100,"Close Mutexes and Semaphores done","",0);
 
 #ifndef NOLOCAL
@@ -2174,9 +2546,6 @@ syscleanup() {
 
 /* Timeout handler for communication line input functions */
 
-static ckjmpbuf kbbuf;                  /* Timeout longjmp targets */
-static ckjmpbuf sjbuf;
-
 #ifndef __EMX__
 unsigned alarm(unsigned);               /* Prototype */
 #endif /* __EMX__ */
@@ -2200,7 +2569,7 @@ ttimoff() {                             /* Turn off any timer interrupts */
 
 
 /* O S 2 S E T T I M O -- set read and write timeouts */
-
+/* spd is connetion speed, modem is if connection is via modem or not */
 int
 os2settimo(int spd, int modem)
 {
@@ -2227,13 +2596,15 @@ os2settimo(int spd, int modem)
     if ( maxow > maxow_usr )
         maxow = maxow_usr;
 
+    /* A number of values are divided by spd, making a zero-value a bit risky.
+     * While we only get zero passed in here by sysinit() which happens to work
+     * during program start, we're better off forcing a valid value just in case. */
+    if (spd <= 0)
+        spd = 1;
+
 #ifdef CK_TAPI
     if ( tttapi && !tapipass ) {
         HANDLE hModem = NULL;
-        LPDEVCFG        lpDevCfg = NULL;
-        LPCOMMCONFIG    lpCommConfig = NULL;
-        LPMODEMSETTINGS lpModemSettings = NULL;
-        DCB *           lpDCB = NULL;
 
         hModem = GetModemHandleFromLine( (HLINE) 0 );
         if ( hModem == NULL )
@@ -2310,10 +2681,6 @@ os2settimo(int spd, int modem)
 
 int
 ttsetflow(int nflow) {
-#ifdef NT
-   DWORD mode ;
-#endif /* NT */
-
     debug(F101,"setflow","",nflow) ;
 
 #ifdef TN_COMPORT
@@ -2807,11 +3174,11 @@ ttopen(char *ttname, int *lcl, int modem, int spare) {
     char *x;
     extern char* ttyname();
     int rc=0 ;
-    U_INT action, res;
 #ifdef NT
-    int i ;
     SECURITY_ATTRIBUTES security ;
     char portname[267];
+#else
+    U_INT action, res;
 #endif
 
     debug(F111,"ttopen DEVNAMLEN","",DEVNAMLEN);
@@ -3009,7 +3376,7 @@ ttopen(char *ttname, int *lcl, int modem, int spare) {
             ckstrncpy(&portname[4],ttname,263);
         }
         if ( (HANDLE)(ttyfd =
-                       (int) CreateFile(portname,
+                       (CK_TTYFD_T) CreateFile(portname,
                                          GENERIC_READ | GENERIC_WRITE,
                                          ttshare ? (FILE_SHARE_READ | FILE_SHARE_WRITE) : 0,
                                          &security,
@@ -3567,7 +3934,6 @@ ttres() {                               /* Restore the tty to normal. */
 
 ttpkt(long speed, int flow, int parity) {
     extern int priority;
-    int s;
 #ifdef NT
     char * p = NULL;
 #endif /* NT */
@@ -4012,7 +4378,7 @@ le_inbuf( void ) {
 }
 
 int
-le_putstr( char * s )
+le_putstr( CHAR * s )
 {
     int rc = 0;
     if ( s && s[0] )
@@ -4021,7 +4387,7 @@ le_putstr( char * s )
 }
 
 int
-le_puts( char * s, int n )
+le_puts( CHAR * s, int n )
 {
     int rc = 0 ;
     int i = 0;
@@ -4051,7 +4417,7 @@ le_puts( char * s, int n )
 }
 
 int
-le_putchar( char ch ) {
+le_putchar( CHAR ch ) {
     int rc = 0 ;
 
     RequestLocalEchoMutex( SEM_INDEFINITE_WAIT ) ;
@@ -4105,9 +4471,10 @@ le_getchar( CHAR * pch )
 /*  T T F L U I  --  Flush tty input buffer */
 
 ttflui() {
+#ifdef OS2ONLY
     char parm=0;
     long int data;
-    int i;
+#endif /* OS2ONLY */
 
     ttpush = -1;                               /* Clear the peek-ahead char */
 
@@ -4293,6 +4660,7 @@ ttchk() {
     return(count);
 }
 
+static int rdch(int timo);
 
 /*  T T X I N  --  Get n characters from tty input buffer  */
 
@@ -4303,7 +4671,7 @@ ttchk() {
 
 int
 ttxin(int n, CHAR *buf) {
-    int i=0, j=0, k=0;
+    int i=0, j=0;
     CHAR m=0 ;
 
     m = (ttprty) ? 0177 : 0377;         /* Parity stripping mask. */
@@ -4582,10 +4950,10 @@ getOverlappedIndex( int serial ) {
 }
 
 #ifndef __WATCOMC__
-#if _MSC_VER <= 1000
-/* Visual C++ 4.0 and earlier lack this macro */
+#if defined(_MSC_VER) && _MSC_VER <= 1010
+/* Visual C++ 4.1 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
-#endif /* _MSC_VER <= 1000 */
+#endif /* _MSC_VER <= 1010 */
 #endif /* __WATCOM__ */
 
 int
@@ -4687,7 +5055,7 @@ freeOverlappedComplete( int serial ) {
 */
 
 int
-ttxout(char *s, int n) {
+ttxout(CHAR *s, int n) {
     int rc = 0, i=0 ;
 #ifndef NOLOCAL
     extern int tt_pacing;               /* output pacing */
@@ -4804,10 +5172,10 @@ OverlappedWriteInit( void )
     return(0);
 }
 
+#ifdef NEWRDCH
 static int OldReadPending = FALSE ;
 static int NextReadPending = 0;
 
-#ifdef NEWRDCH
 int
 OverlappedReadInit( void )
 {
@@ -5125,7 +5493,9 @@ static int nxpacket = 0;
 
 int
 ttol(CHAR *s, int n) {
+#ifdef OS2ONLY
     UINT i;
+#endif /* OS2ONLY */
     int  rc = 0 ;
     int  charsleft;
     CHAR *chars;
@@ -5243,8 +5613,9 @@ int
 ttoc(char c) {
     int rc = 0 ;
 #ifdef NT
-    DWORD i ;
+#ifdef COMMENT
     int ow = 0 ;
+#endif /* COMMENT */
 #else /* NT */
     UINT i;
 #endif /* NT */
@@ -5336,8 +5707,10 @@ ttoc(char c) {
 #ifdef NEWTTOCI
 int
 ttoci(char c) {
+#ifdef OS2ONLY
     int x;
     BYTE i;
+#endif /* OS2ONLY */
     ULONG Data = 0L ;
 #ifdef NT
    DWORD errors ;
@@ -5447,7 +5820,7 @@ static int inlret ;
 static CHAR * inldest, inleol, inlstart ;
 static int inlmax, inlturn ;
 
-static int
+int
 ckcgetc(int dummy) {
     return ttinc(1);
 }
@@ -5457,7 +5830,7 @@ ckcgetc(int dummy) {
 /*
   blah blah
 */
-ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
+int ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
     extern int xfrcan, xfrchr, xfrnum;  /* Defined in ckcmai.c */
     extern int priority;
     int x=0, c=0, ccn=0;
@@ -5869,7 +6242,6 @@ ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
 /* or -3 if session limit has expired,                                     */
 /* or -4 if something or other...                                          */
 
-int rdch(int timo);
 int
 ttinc(int timo) {
     int m, i=0, j=0;
@@ -5878,6 +6250,19 @@ ttinc(int timo) {
     int tt, tr, interval;
 #endif /* NT */
     int t ;
+#ifndef NOTERM
+    extern bool vt_macro_invocation;  /* ckoco3.c */
+    extern int tt_type_mode;
+
+    /* VT level 4 text macros: If a macro has being invoked, get the next
+     * character from there rather than the communication line. */
+    if (ISVT420(tt_type_mode) && vt_macro_invocation) {
+        int c = vt_macro_in();
+        if (c > 0) {
+            return c;
+        }
+    }
+#endif /* NOTERM */
 
     m = (ttprty) ? 0177 : 0377;         /* Parity stripping mask. */
 
@@ -6286,7 +6671,9 @@ rdch(int timo /* ms */) {
 #else /* NEWRDCH */
 static int
 rdch(int timo /* ms */) {
+#ifdef OS2ONLY
     ULONG Nesting;
+#endif /* OS2ONLY */
 #ifdef NT
     COMMTIMEOUTS timeouts ;
     static int OldReadPending = FALSE ;
@@ -7069,8 +7456,9 @@ void
 ztime(char **s) {
     time_t clock_storage;
 
-    clock_storage = time( (long *) 0 );
+    clock_storage = time( NULL );
     *s = ctime( &clock_storage );
+
 }
 
 void
@@ -7105,7 +7493,7 @@ loadtod( int hh, int mm )
 
 int
 conoc(char c) {
-    extern unsigned char colorcmd;
+    extern cell_video_attr_t colorcmd;
     extern int wherex[];    /* Screen column, 1-based */
     extern int wherey[];        /* Screen row, 1-based */
 
@@ -7132,7 +7520,7 @@ conoc(char c) {
 
 int
 conxo(int x, char *s) {
-    int i, rc;
+    int i;
 
     if ( s == NULL )
         return(-1);
@@ -7154,7 +7542,7 @@ conxo(int x, char *s) {
 
 int
 conol(char *s) {
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
 
     if ( s == NULL )
         return(-1);
@@ -7224,7 +7612,7 @@ conchk() {
 
 int
 coninc(timo) int timo; {
-    int c, rc = -1, cm;
+    int c;
     extern int what;
 #ifndef NOTERM
     extern enum markmodes markmodeflag[VNUM];
@@ -7416,6 +7804,8 @@ congev( int vmode, int timo ) {
     ULONG timeout = 0;
     con_event evt ;
     int tt,tr,interval,i ;
+
+    memset(&evt,0,sizeof(con_event));
 
 #ifdef IKSD
     if ( inserver ) {
@@ -7658,7 +8048,9 @@ congks(int timo) {
 int
 conraw() {
 #ifdef NT
+#ifndef KUI
    DWORD mode ;
+#endif /* KUI */
    extern int mouseon ;
 #ifndef KUI
 #ifdef COMMENT
@@ -7892,11 +8284,13 @@ alarm_thread(VOID *args) {
         ReleaseAlarmMutex() ;
     }
 
-   /* this will never execute */
+   /* this will never execute
    running = FALSE;
    ckThreadEnd(args);
+    */
 }
 
+#ifndef NTSIG
 static void
 alarm_signal(int sig) {
     debug(F101,"alarm_signal handler","",sig) ;
@@ -7908,6 +8302,7 @@ alarm_signal(int sig) {
         KillProcess(pid);
     }
 }
+#endif /* NTSIG */
 
 unsigned
 alarm(unsigned sec) {
@@ -8616,14 +9011,14 @@ pclose(FILE *pipe) {
 static DWORD exitcode;
 
 void
-ttruncmd2( HANDLE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     DWORD io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = ReadFile( pipe, &outc, 1, &io, NULL ) )
+        if ( success = ReadFile( (HANDLE)pipe, &outc, 1, &io, NULL ) )
         {
             ttoc(outc) ;
         }
@@ -8635,7 +9030,7 @@ int
 ttruncmd(char * cmd)
 { /* Return: 0 = failure, 1 = success */
     extern int pexitstat;
-    int rc = 0, n;
+    int n;
 
     if (!cmd) return(0);
     if (!cmd[0]) return(0);
@@ -8671,8 +9066,7 @@ ttruncmd(char * cmd)
     {
         HANDLE hSaveStdIn, hSaveStdOut, hSaveStdErr;
         HANDLE hChildStdinRd, hChildStdinWr, hChildStdinWrDup,
-        hChildStdoutRd, hChildStdoutWr, hChildStdoutRdDup,
-        hInputFile, hSaveStdin, hSaveStdout;
+               hChildStdoutRd, hChildStdoutWr, hChildStdoutRdDup;
         SECURITY_ATTRIBUTES saAttr;
         BOOL fSuccess;
         PROCESS_INFORMATION procinfo ;
@@ -8810,6 +9204,11 @@ ttruncmd(char * cmd)
 
       memset( &startinfo, 0, sizeof(STARTUPINFO) ) ;
       startinfo.cb = sizeof(STARTUPINFO) ;
+      startinfo.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+      startinfo.wShowWindow = SW_HIDE;
+      startinfo.hStdInput = hChildStdinRd;
+      startinfo.hStdOutput = hChildStdoutWr;
+      startinfo.hStdError = hChildStdoutWr;
 
       fSuccess = CreateProcess( NULL,       /* application name */
                      cmd_line,              /* command line */
@@ -8841,15 +9240,11 @@ ttruncmd(char * cmd)
             return(0);
         }
 
-        CloseHandle(procinfo.hProcess);
-        CloseHandle(procinfo.hThread);
-
         exitcode = STILL_ACTIVE;
-        _beginthread( ttruncmd2, 65536, hChildStdoutRd );
+        _beginthread( ttruncmd2, 65536, (void *)hChildStdoutRd );
         do {
             DWORD io ;
             int  inc ;
-            unsigned char outc ;
 
             inc = ttinc( 1 ) ;
             if ( inc < -1 )
@@ -8873,6 +9268,8 @@ ttruncmd(char * cmd)
         if ( exitcode == STILL_ACTIVE )
             exitcode = 128;
 
+        pexitstat = exitcode;
+
         /* Close the pipe handle so the child stops reading. */
         CloseHandle(hChildStdoutRd);    hChildStdoutRd = NULL;
         CloseHandle(hChildStdoutWr);    hChildStdoutWr = NULL;
@@ -8882,8 +9279,7 @@ ttruncmd(char * cmd)
         CloseHandle( procinfo.hProcess ) ;
         CloseHandle( procinfo.hThread ) ;
 
-        pexitstat = exitcode;
-        return (exitcode>=0 ? 1 : 0);
+        return 1; /* DWORD is unsigned : (exitcode>=0 ? 1 : 0); */
     }
     return 0;   /* Should never be reached */
 }
@@ -8891,14 +9287,14 @@ ttruncmd(char * cmd)
 #define STILL_ACTIVE -1L
 static ULONG exitcode = 0;
 void
-ttruncmd2( HFILE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     ULONG io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = !DosRead( pipe, &outc, 1, &io ) )
+        if ( success = !DosRead( (HFILE)pipe, &outc, 1, &io ) )
         {
             ttoc(outc) ;
         }
@@ -8995,7 +9391,7 @@ ttruncmd(cmd) char *cmd; { /* Return: 0 = failure, 1 = success */
     debug(F111,"ttruncmd","PID",pid);
 
     exitcode = STILL_ACTIVE;
-    _beginthread( ttruncmd2, 0, 65536, hChildStdoutRd );
+    _beginthread( ttruncmd2, 0, 65536, (void *)hChildStdoutRd );
     do {
         ULONG io ;
         int inc ;
@@ -9089,7 +9485,10 @@ conkbg(void) {
 
     *p = '\0';
 
-/* TODO: This doesn't build on openwatcom currently*/
+/* TODO: This doesn't build on Open Watcom currently :
+ *      OpenWatcom names some of the KBDHWID struct members differently,
+ *      and KbdGetHWID produces an "undefined symbol KBD16GETHWID_"
+ *      link error */
 #ifndef __WATCOMC__
     memset( &kbID, 0, sizeof(kbID) ) ;
 
@@ -9130,11 +9529,51 @@ char *
 get_os2_vers() {
     APIRET rc ;
 #ifdef NT
+#ifndef CKT_NT31ONLY
     OSVERSIONINFO verinfo ;
     verinfo.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
 
-    rc = !GetVersionEx( &verinfo ) ;
+    rc = !_GetVersionEx( &verinfo ) ;
     if ( rc ) {
+#endif /* CKT_NT31ONLY */
+#ifdef CKT_NT35_OR_31
+        /* Could have failed because we're on NT 3.1 which doesn't have
+         * GetVersionE - we've got to use GetVersion() there instead. KB article
+         * Q92395 covers how to interpret the result. */
+
+        DWORD dwVersion;
+        int major, minor, build, _osver;
+
+        dwVersion = GetVersion();
+
+        major = LOBYTE(LOWORD(dwVersion));
+        minor = HIBYTE(LOWORD(dwVersion));
+        build = HIWORD(dwVersion);
+
+        if (dwVersion < 0x80000000) {
+            /* Windows NT */
+            _osver = VER_PLATFORM_WIN32_NT;
+        } else if (LOBYTE(LOWORD(dwVersion))<4) {
+            /* Win32s */
+            _osver = VER_PLATFORM_WIN32s;
+            build = build & ~0x8000;
+        } else {
+            /* Windows 95 */
+            _osver = VER_PLATFORM_WIN32_WINDOWS;
+            build = build & ~0x8000;
+        }
+
+        sprintf(os2version,"%s %02d.%02d.%02d",
+                _osver == VER_PLATFORM_WIN32_NT ? "WinNT" :
+                _osver == VER_PLATFORM_WIN32_WINDOWS ?
+                 (minor == 0 ? "Win95" : "Win98")  :
+                _osver == VER_PLATFORM_WIN32_WIN32S ? "Win32s" :
+                "unknown",
+                major,
+                minor,
+                build );
+#endif
+#ifndef CKT_NT31ONLY
         os2version[0] = '\0';
     } else {
         sprintf(os2version,"%s %02d.%02d.%02d",
@@ -9147,6 +9586,7 @@ get_os2_vers() {
                 verinfo.dwMinorVersion,
                 verinfo.dwBuildNumber );
     }
+#endif /* CKT_NT31ONLY */
 #else /* NT */
     ULONG StartIndex = QSV_VERSION_MAJOR ; /* Major Version Number */
     ULONG EndIndex   = QSV_VERSION_REVISION ; /* Revision Letter      */
@@ -9170,6 +9610,92 @@ get_os2_vers() {
 #ifdef CK_REXX
 extern char * mrval[] ;
 extern int maclvl ;
+
+#ifdef NT
+LONG APIENTRY os2rexx_exit_handler(
+        LONG ExitNumber,
+        LONG Subfunction,
+        PEXIT ParamBlock
+        ) {
+
+    debug(F111, "os2rexx_exit_handler", "ExitNumber", ExitNumber);
+    debug(F111, "os2rexx_exit_handler", "Subfunction", Subfunction);
+
+    switch(ExitNumber) {
+        case RXSIO: {
+            switch(Subfunction) {
+                case RXSIOSAY:
+                    {
+                        RXSIOSAY_PARM *param;
+                        RXSTRING sayString;
+
+                        param = (RXSIOSAY_PARM*)ParamBlock;
+                        sayString = param->rxsio_string;
+
+                        if (RXVALIDSTRING(sayString)) {
+                            char* buf = NULL;
+                            int len = RXSTRLEN(sayString) ;
+
+                            if (len > 0) {
+                                buf = malloc((len + 1) * sizeof(char));
+                                memcpy(buf, RXSTRPTR(sayString), len);
+                                buf[len] = '\0';
+
+                                debug(F110, "os2rexx_exit_handler - say", buf, 0);
+
+                                printf("%s\n", buf);
+                                free(buf);
+                            }
+                        }
+
+                        return RXEXIT_HANDLED;
+                    }
+                    break;
+                case RXSIOTRC:
+                    {
+                        RXSIOTRC_PARM *param;
+                        RXSTRING trcString;
+
+                        param = (RXSIOTRC_PARM*)ParamBlock;
+                        trcString = param->rxsio_string;
+
+                        if (RXVALIDSTRING(trcString)) {
+                            char* buf = NULL;
+                            int len = RXSTRLEN(trcString) ;
+
+                            if (len > 0) {
+                                buf = malloc((len + 1) * sizeof(char));
+                                memcpy(buf, RXSTRPTR(trcString), len);
+                                buf[len] = '\0';
+
+                                debug(F110, "os2rexx_exit_handler - trc", buf, 0);
+
+                                printf("%s\n", buf);
+                                free(buf);
+                            }
+                        }
+
+                        return RXEXIT_HANDLED;
+                    }
+                    break;
+                case RXSIOTRD:
+                case RXSIODTR:
+                case RXSIOTLL:
+                default:
+                    return RXEXIT_NOT_HANDLED;
+                    break;
+            }
+        }
+        break;
+    case RXFNC:
+        /* TODO: Handle RexxUtil Console I/O functions */
+    default:
+        return RXEXIT_NOT_HANDLED;
+        break;
+    }
+}
+
+#endif /* NT */
 
 /* This is the CkCommand/CKermit function handler.  It is an undocumented  */
 /* Kermit feature.  Do not remove this code.                             */
@@ -9232,33 +9758,88 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
     RXSTRING  Instore[2] ; /* Instorage rexx procedure */
     RXSTRING  retstr  ;  /* program return value    */
     int       retval  ;  /* os2rexx return value    */
+    RXSYSEXIT exits[2];  /* Exit handlers */
+    static int initted=0; /* os2rexxinit() called? */
 
     MAKERXSTRING( Instore[0], rexxcmd, strlen(rexxcmd) ) ;
     MAKERXSTRING( Instore[1], 0, 0 ) ;
     MAKERXSTRING( retstr, return_buffer, sizeof(return_buffer) ) ;
 
+#ifdef NT
+    /* For some reason we've got to re-reginster the subcommand handler
+     * here despite having done it on app start, but we've only got to do
+     * it once here. I guess the call to os2rexxinit() on app start isn't
+     * taking effect properly? Maybe some kind of threading issue? I'm not
+     * sure why, but if we don't do this somewhere in os2rexx()
+     * subcommands don't work.
+     *
+     * They work fine on OS/2 without doing this, so it appears to be
+     * a Windows and/or Regina specific thing.
+     */
+    if (!initted) {
+        os2rexxinit();
+        initted=1;
+    }
+
+    /*
+     * Register an exit handler so that "say" works. This is NT only
+     * for now as I'm not sure if it is required on OS/2 at all.
+     */
+
+    RexxRegisterExitExe( "CKExitHandler",
+#ifdef RX_WEAKTYPING
+                        (PFN) os2rexx_exit_handler,
+#else
+                        os2rexx_exit_handler,
+#endif
+                        NULL );     /* User Area */
+
+    exits[0].sysexit_name = "CKExitHandler";
+    exits[0].sysexit_code = RXSIO;
+    exits[1].sysexit_code = RXENDLST;
+#endif /* NT */
+
     debug(F110,"os2rexx: procedure",rexxcmd,0);
     return_code = RexxStart( 0,   /* no program arguments */
                              0,   /* null argument list   */
+#ifdef NT
+                            "Kermit 95 REXX Command",
+#else
                             "Kermit for OS/2 REXX Command",
+#endif
                                                /* default program name */
                             Instore, /* rexx procedure to interpret */
                             "CKermit",         /* default address name */
                             RXFUNCTION,         /* calling as a function */
+#ifdef NT
+                            exits,              /* Exit handlers */
+#else
                             0,                  /* no exits used */
+#endif /* NT */
                             &rc,                /* converted return code */
                             &retstr);           /* returned result */
 
     debug(F111,"os2rexx: returns",RXSTRPTR(retstr),return_code);
+    debug(F111,"os2rexx: retstr",RXSTRPTR(retstr),RXSTRLEN( retstr ));
     if ( !return_code && RXSTRLEN( retstr ) < rexxbuflen ) {
-        ckstrncpy( rexxbuf, RXSTRPTR(retstr), RXSTRLEN( retstr ) );
+        ckstrncpy( rexxbuf, RXSTRPTR(retstr), rexxbuflen );
+        debug(F110,"os2rexx: rexxbuf",rexxbuf,0);
         retval = 0 ;                    /* Success */
     } else {
         rexxbuf[0] = '\0' ;
         retval = 1 ;                    /* Failure */
     }
-    if (RXSTRPTR(retstr) != return_buffer)
-      DosFreeMem(RXSTRPTR(retstr));
+    if (RXSTRPTR(retstr) != return_buffer) {
+        if (RXSTRPTR(retstr) != NULL) {
+#ifdef NT
+            free(RXSTRPTR(retstr));
+#else
+            DosFreeMem(RXSTRPTR(retstr));
+#endif
+        }
+    }
+
+    printf("\n");
 
     return retval ;
 }
@@ -9270,6 +9851,11 @@ os2rexxinit()
    /* handler instead.  Both mechanisms can co-exist, so we leave in   */
    /* the CkCommand/CKermit as an undocumented function.               */
 
+#ifdef NT
+   RexxDeregisterFunction("CKermit");
+   RexxDeregisterFunction("CKCommand");
+   RexxDeregisterSubcom("CKermit", NULL);
+#endif
    RexxRegisterFunctionExe("CKermit",(PFN)os2rexxckcmd) ;
    RexxRegisterFunctionExe("CKCommand",(PFN)os2rexxckcmd) ;
    RexxRegisterSubcomExe("CKermit",(PFN)os2rexxsubcom, NULL);
@@ -9279,11 +9865,6 @@ os2rexxinit()
 #endif /* CK_REXX */
 
 #define TITLEBUF_LEN 128
-#ifdef NT
-#define TITLE_PLATFORM "Windows"
-#else
-#define TITLE_PLATFORM "OS/2"
-#endif
 int
 os2settitle(char *newtitle, int newpriv ) {
 #ifndef NOLOCAL
@@ -9323,30 +9904,30 @@ os2settitle(char *newtitle, int newpriv ) {
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
             _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "",
+                 private ? (inserver ? " - IKS" : " - Kermit 95") : "",
                      videomode
                  );
         }
         else {
             _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "", videomode
+                 private ? (inserver ? " - IKS" : " - Kermit 95") : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
         _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) :  "", videomode
+                 private ? (inserver ? "IKS" : "Kermit 95") :  "", videomode
                  );
     }
     else {
         _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) : "" , videomode
+                 private ? (inserver ? "IKS" : "Kermit 95") : "" , videomode
                  );
     }
 
 #ifdef NT
 #ifdef KUI
-    KuiSetProperty(KUI_TITLE,(long)titlebuf,(long)0) ;
+    KuiSetProperty(KUI_TITLE,(intptr_t)titlebuf,(intptr_t)0) ;
     return 1;
 #else /* KUI */
     return !SetConsoleTitle(titlebuf);
@@ -9551,9 +10132,9 @@ void
 DisplayCommProperties(HANDLE h)
 {
     COMMPROP *     lpCommProp = NULL;
-#ifndef NODIAL
+#ifdef CK_TAPI
     LPMODEMDEVCAPS lpModemDevCaps = NULL;
-#endif
+#endif /* CK_TAPI */
     int rc=0;
 
     /* leave enough room for provider specific information */
@@ -9562,7 +10143,14 @@ DisplayCommProperties(HANDLE h)
         return;
     memset( lpCommProp, 0, 1024 );
     lpCommProp->wPacketLength = 1024;
+#ifdef COMMPROP_INITIALIZED
+    /* Windows 95 only (according to VC4): Set to COMMPROP_INITIALIZED to
+     * indicate wPacketLength member is already valid. Visual C++ 4.0 is the
+     * first to document this, but Visual C++ 2.0 understands it too.
+     * Visual C++ 5.0 doesn't document it as win95-only so probably works on
+     * NT4 too. */
     lpCommProp->dwProvSpec1 = COMMPROP_INITIALIZED;
+#endif /* COMMPROP_INITIALIZED */
 
     rc = GetCommProperties( h, lpCommProp );
     if ( !rc ) {
@@ -9637,14 +10225,18 @@ DisplayCommProperties(HANDLE h)
     case PST_RS449           :
         printf("RS449");
         break;
+#ifdef PST_MODEM
+    /* PST_MODEM not known to Visual C++ 1.0 32-bit edition */
     case PST_MODEM           :
         printf("Modem");
         break;
+#endif
     case PST_FAX             :
         printf("Fax");
         break;
     case PST_SCANNER         :
         printf("Scanner");
+        break;
     case PST_NETWORK_BRIDGE  :
         printf("Network Bridge");
         break;
@@ -9705,7 +10297,7 @@ DisplayCommProperties(HANDLE h)
     printf("  Current Tx Queue   = %d (bytes)\n",lpCommProp->dwCurrentTxQueue);
     printf("  Current Rx Queue   = %d (bytes)\n",lpCommProp->dwCurrentRxQueue);
 
-#ifndef NODIAL
+#ifdef CK_TAPI
     if ( lpCommProp->dwProvSubType == PST_MODEM && lpCommProp->wcProvChar[0]) {
         lpModemDevCaps = (LPMODEMDEVCAPS) lpCommProp->wcProvChar;
         printf("Modem Device Capabilities:\n");
@@ -9819,7 +10411,7 @@ DisplayCommProperties(HANDLE h)
         printf("  Max DCE Rate           = %d (bits/second)\n",
                 lpModemDevCaps->dwMaxDCERate);
     }
-#endif /* NODIAL */
+#endif /* CK_TAPI */
     printf("\n");
     free(lpCommProp);
     return;

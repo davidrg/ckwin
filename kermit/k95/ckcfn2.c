@@ -6,11 +6,12 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Fri Sep 23 15:23:24 2022 (CR -> CK_CR)
+    Update: Fri Sep 23 15:23:24 2022 CR -> CK_CR
+    Update: Sat Apr 15 13:16:31 2023 ANSI function declarations and prototypes
 */
 /*
  Note -- if you change this file, please amend the version number and date at
@@ -23,6 +24,10 @@
 #include "ckcker.h"			/* Kermit symbols */
 #include "ckcxla.h"			/* Translation */
 #include "ckcnet.h"			/* IKS and VMS #define TCPSOCKET */
+#include "ckucmd.h"                     /* xx_strp */
+#include "ckuusr.h"                     /* mtab */
+#include "ckcfnp.h"                     /* Prototypes */
+
 #ifdef TCPSOCKET			/* For TELNET business in spack() */
 extern int tn_nlm, ttnproto, tn_b_nlm;
 #endif /* TCPSOCKET */
@@ -227,6 +232,9 @@ extern int hcflg, server, cxseen, czseen, discard, slostart;
 extern int nakstate, quiet, success, xitsta, what, filestatus;
 extern int spackets, rpackets, timeouts, retrans, crunched, urpsiz;
 extern int carrier, fdispla, srvidl;
+#ifdef OS2
+extern int ccseen;
+#endif /* OS2 */
 
 #ifdef GFTIMER
 extern CKFLOAT fptsecs, fpfsecs, fpxfsecs;
@@ -330,7 +338,12 @@ rttinit() {				/* Initialize round-trip timing */
      1 <= rcvtimo <= timint * 3.
 */
 int
-getrtt(nakstate, n) int nakstate, n; {
+#ifdef CK_ANSIC
+getrtt( int nakstate, int n )
+#else
+getrtt(nakstate, n) int nakstate, n;
+#endif /* CK_ANSIC */
+{
     extern int mintime, maxtime;
     static int prevz = 0, prevr = 0;
     int x, y, yy, z = 0, zz = 0;	/* How long did it take to get here? */
@@ -518,6 +531,13 @@ input() {
 	    fatalio = 1;
 	    return('q');
 	}
+#ifdef OS2
+	if (ccseen) {
+		debug(F100, "Canceled by Ctrl+C","",0);
+		ccseen = 0; /* we've seen it now, don't need to see it again */
+		return('q');
+	}
+#endif /* OS2 */
 	if (sstate != 0) {		/* If a start state is in effect, */
 	    type = sstate;		/* return it like a packet type, */
 	    sstate = 0;			/* and then nullify it. */
@@ -1095,6 +1115,9 @@ input() {
 	    }				/* End of file-sender NAK handler */
 
             if (rsn == winlo) {		/* Not ACK, NAK, timeout, etc. */
+/* BEGIN NEW 6 August 2023 */
+                if (type == 'V')
+/* END NEW 6 August 2023 */
 		debug(F000,"input send unexpected type","",type);
 		break;
 	    }
@@ -1212,7 +1235,12 @@ parchk(s,start,n) CHAR *s, start; int n;
   Call with a timout interval.  Returns it, adjusted if necessary.
 */
 int
-chktimo(timo,flag) int timo, flag; {
+#ifdef CK_ANSIC
+chktimo( int timo, int flag )
+#else
+chktimo(timo,flag) int timo, flag;
+#endif /* CK_ANSIC */
+{
     long cps, z; int x, y;
 #ifdef STREAMING
     debug(F101,"chktimo streaming","",streaming);
@@ -1588,7 +1616,12 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 /*  C H K 1  --  Compute a type-1 Kermit 6-bit checksum.  */
 
 int
-chk1(pkt,len) register CHAR *pkt; register int len; {
+#ifdef CK_ANSIC
+chk1( register CHAR *pkt, register int len )
+#else
+chk1(pkt,len) register CHAR *pkt; register int len;
+#endif /* CK_ANSIC */
+{
     register unsigned int chk;
 #ifdef CKTUNING
 #ifdef COMMENT
@@ -1611,7 +1644,12 @@ chk1(pkt,len) register CHAR *pkt; register int len; {
 /*  C H K 2  --  Compute the numeric sum of all the bytes in the packet.  */
 
 unsigned int
-chk2(pkt,len) register CHAR *pkt; register int len; {
+#ifdef CK_ANSIC
+chk2( register CHAR *pkt, register int len )
+#else
+chk2(pkt,len) register CHAR *pkt; register int len;
+#endif /* CK_ANSIC */
+{
     register long chk;
 #ifdef COMMENT
     register unsigned int m;
@@ -1634,7 +1672,12 @@ chk2(pkt,len) register CHAR *pkt; register int len; {
 */
 #ifdef COMMENT
 unsigned int
-chk3(pkt,parity,len) register CHAR *pkt; int parity; register int len; {
+#ifdef CK_ANSIC
+chk3( register CHAR *pkt, int parity, register int len )
+#else
+chk3(pkt,parity,len) register CHAR *pkt; int parity; register int len;
+#endif /* CK_ANSIC */
+{
     register long c, crc;
     register unsigned int m;
     m = (parity) ? 0177 : 0377;
@@ -1646,7 +1689,12 @@ chk3(pkt,parity,len) register CHAR *pkt; int parity; register int len; {
 }
 #else
 unsigned int
-chk3(pkt,len) register CHAR *pkt; register int len; {
+#ifdef CK_ANSIC
+chk3( register CHAR *pkt, register int len )
+#else
+chk3(pkt,len) register CHAR *pkt; register int len;
+#endif /* CK_ANSIC */
+{
     register long c, crc;
     for (crc = 0; len-- > 0; pkt++) {
 	c = crc ^ (long)(*pkt);
@@ -1730,7 +1778,12 @@ fastack() {				/* Acknowledge packet n */
 #endif /* STREAMING */
 
 int
-ackns(n,s) int n; CHAR *s; {		/* Acknowledge packet n */
+#ifdef CK_ANSIC
+ackns( int n, CHAR *s )                 /* Acknowledge packet n */
+#else
+ackns(n,s) int n; CHAR *s;
+#endif /* CK_ANSIC */
+{
     int j, k, x;
     debug(F111,"ackns",s,n);
 
@@ -1757,12 +1810,22 @@ ackns(n,s) int n; CHAR *s; {		/* Acknowledge packet n */
 }
 
 int
-ackn(n) int n; {			/* Send ACK for packet number n */
+#ifdef CK_ANSIC
+ackn( int n )                       /* Send ACK for packet number n */
+#else
+ackn(n) int n;
+#endif /* CK_ANSIC */
+{
     return(ackns(n,(CHAR *)""));
 }
 
 int
-ack1(s) CHAR *s; {			/* Send an ACK with data. */
+#ifdef CK_ANSIC
+ack1( CHAR *s )
+#else
+ack1(s) CHAR *s;
+#endif /* CK_ANSIC */
+{
     if (!s) s = (CHAR *)"";
     debug(F110,"ack1",(char *)s,0);
     return(ackns(winlo,s));
@@ -1777,7 +1840,12 @@ ack1(s) CHAR *s; {			/* Send an ACK with data. */
  More work is needed here.
 */
 int
-nack(n) int n; {
+#ifdef CK_ANSIC
+nack( int n )
+#else
+nack(n) int n;
+#endif /* CK_ANSIC */
+{
     int i, x;
 
     if (n < 0 || n > 63) {
@@ -1837,8 +1905,12 @@ nack(n) int n; {
  more.
 */
 VOID
-rcalcpsz() {
-
+#ifdef CK_ANSIC
+rcalcpsz( void ) {
+#else
+rcalcpsz()
+#endif /* CK_ANSIC */
+{
 #ifdef COMMENT
 /* Old way */
     register long x, q;
@@ -1896,7 +1968,12 @@ rcalcpsz() {
   in recpkt.
 */
 int
-resend(n) int n; {			/* Send packet n again. */
+#ifdef CK_ANSIC
+    resend( int n )			/* Send packet n again. */
+#else
+    resend(n) int n;
+#endif /* CK_ANSIC */
+{
     int j, k, x;
 #ifdef GFTIMER
     CKFLOAT t1 = 0.0, t2 = 0.0;
@@ -2031,7 +2108,12 @@ resend(n) int n; {			/* Send packet n again. */
 /*  E R R P K T  --  Send an Error Packet  */
 
 int
-errpkt(reason) CHAR *reason; {		/* ...containing the reason given */
+#ifdef CK_ANSIC
+    errpkt( CHAR *reason )        /* ...containing the reason given */
+#else
+    errpkt(reason) CHAR *reason;
+#endif /* CK_ANSIC */
+{	
     extern int rtimo, state, justone;
     int x, y;
     czseen = 1;				/* Also cancels batch */
@@ -2267,7 +2349,12 @@ sopkt() {
    1 if an O-packet was sent OK but more O packets still need to be sent.
 */
 int
-srinit(reget, retrieve, opkt) int reget, retrieve, opkt; {
+#ifdef CK_ANSIC
+    srinit( int reget, int retrieve, int opkt )
+#else
+    srinit(reget, retrieve, opkt) int reget, retrieve, opkt;
+#endif /* CK_ANSIC */
+{
     int x = 0, left = 0;
     extern int oopts, omode;
     CHAR * p = NULL;
@@ -2686,8 +2773,12 @@ autodown(ch) int ch;
 /*  C H K S P K T  --  Check if buf contains a valid S or I packet  */
 
 int
-chkspkt(packet) char *packet; {
-    int i;
+#ifdef CK_ANSIC
+    chkspkt( char *packet )
+#else
+    chkspkt(packet) char *packet;
+#endif /* CK_ANSIC */
+{
     int buflen;
     int len = -1;
     CHAR chk;

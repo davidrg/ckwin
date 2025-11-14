@@ -1,5 +1,5 @@
 #ifdef NT
-char *ckzv = "Win32 File support, 8.0.187, 18 July 2004";
+char *ckzv = "Win32 File support, 10.0, 26 May 2023";
 #else /* NT */
 char *ckzv = "OS/2 File support, 8.0.187, 18 July 2004";
 #endif /* NT */
@@ -45,9 +45,14 @@ char *ckzv = "OS/2 File support, 8.0.187, 18 July 2004";
 #endif /* CK_LOGIN */
 #include <stdio.h>
 #include <errno.h>
+#include <direct.h>
 _PROTOTYP( int os2settitle, (char *, int) );
 extern int priority;
 #include <signal.h>
+
+#include "ckoreg.h"
+#include "ckosyn.h"
+#include "ckuath.h"
 
 /*
 
@@ -85,7 +90,9 @@ extern int priority;
 #define DIRENT
 #endif /* SDIRENT */
 
+#define MAXPATHLEN_ONLY
 #include "ckodir.h"
+#include <direct.h>
 
 extern int binary;                      /* We need to know this for open() */
 #ifdef CK_CTRLZ
@@ -129,11 +136,12 @@ extern int pclose(FILE *);
 #endif /* COMMENT */
 #endif
 
+#ifdef __WATCOMC__
+#define stat    _stati64
+#else /* __WATCOMC__ */
 #ifdef NT
-#ifndef __WATCOMC__
 #define timezone _timezone
 #define fileno _fileno
-#endif /* __WATCOMC__ */
 #define write _write
 #define stricmp _stricmp
 #define setmode _setmode
@@ -141,14 +149,30 @@ extern int pclose(FILE *);
 #define unlink _unlink
 #define chdir  _chdir
 #define getcwd _getcwd
+#ifndef _CRT_DECLARE_NONSTDC_NAMES
+/* _CRT_DECLARE_NONSTDC_NAMES is only defined to work around an issue in the
+ * OpenSSL 3.x headers which introduced a dependency on some non-standard
+ * types. This issue remains as of OpenSSL 3.0.10 */
 #define utime  _utime
+#endif /* _CRT_DECLARE_NONSTDC_NAMES */
 #define rmdir  _rmdir
 #define utimbuf _utimbuf
+
+#if defined(__GNUC__) || _MSC_VER > 900
+#define stat    _stati64
+#else
+/* Visual C++ 1.0 32-bit, 2.0 and 2.2 don't have _stati64 */
+/* TODO This means that large file sizes won't be reported correclty in
+ *      directory listings when built for NT 3.1/3.50 - we'd have to define
+ *      the _stati64 struct ourselves to fix that. */
 #define stat    _stat
+#endif
+
 #ifndef SEM_INDEFINITE_WAIT
 #define SEM_INDEFINITE_WAIT INFINITE
 #endif /* SEM_INDEFINITE_WAIT */
 #endif /* NT */
+#endif /* __WATCOMC__ */
 
 /* Because standard stat has trouble with trailing /'s we have to wrap it */
 int os2stat(char *, struct stat *);
@@ -174,6 +198,25 @@ extern char exedir[CKMAXPATH];
 #ifndef XFERFILE
 #define XFERFILE "iksd.log"
 #endif /* XFERFILE */
+
+APIRET os2getpid();              /* ckotio.c */
+void prtfile(char *);            /* ckoco3.c */
+
+#ifdef NT
+int GetUserInfo(LPSTR, LPSTR);   /* this file */
+void ntlm_logout();     /* ckoath.c */
+int ntlm_impersonate(); /* ckoath.c */
+#endif /* NT */
+
+#ifndef KUI
+#include "ckocon.h"
+#include "ckokey.h"
+void VscrnForceFullUpdate();    /* ckoco2.c */
+_PROTOTYP( int os2gettitle, (char *, int) );
+#ifndef NOLOCAL
+int OS2WaitForKey();
+#endif /* NOLOCAL */
+#endif /* KUI */
 
 /*
   Functions (n is one of the predefined file numbers from ckcker.h):
@@ -339,6 +382,12 @@ int ckxpriv = 1;                        /* Allow Root logins? */
 #endif /* UNIX */
 #endif /* CK_LOGIN */
 
+#ifdef CK_LABELED
+/* forward declaration */
+static int os2getattr( char * name );
+static int os2setattr( char * name );
+#endif /* CK_LABELED */
+
 #ifndef CKWTMP
 int ckxwtmp = 0;
 #else
@@ -413,7 +462,6 @@ extern int zincnt, zoutcnt;
 
 static long iflen = -1L;                /* Input file length */
 
-static PID_T pid = 0;                   /* pid of child fork */
 static int fcount[2] = {0,0};           /* Number of files left in search */
 static int fcntsav[2] = {0,0};
 static int fcountstream[2] = {0,0};
@@ -488,6 +536,91 @@ static char guestpass[GUESTPASS_LEN] = "";
 #endif /* CK_LOGIN */
 
 _PROTOTYP(char * whoami, (void));
+
+#ifdef NT
+typedef BOOL (_stdcall *pGetDiskFreeSpaceEx_t)
+        ( LPCTSTR lpDirectoryName,                 // directory name
+          PULARGE_INTEGER lpFreeBytesAvailable,    // bytes available to caller
+          PULARGE_INTEGER lpTotalNumberOfBytes,    // bytes on disk
+          PULARGE_INTEGER lpTotalNumberOfFreeBytes // free bytes on disk
+          );
+typedef DWORD (WINAPI *p_GetLongPathNameA_t)(
+    LPCSTR lpFileName,
+    LPSTR lpBuffer,
+    DWORD cchBuffer
+    );
+typedef DWORD (WINAPI *p_GetShortPathNameA_t)(
+    LPCSTR lpszLongPath,
+    LPSTR lpszShortPath,
+    DWORD cchBuffer
+    );
+typedef BOOL (WINAPI * p_CopyFileExA_t)(
+        LPCSTR lpExistingFileName,
+        LPCSTR lpNewFileName,
+#if !defined(_MSC_VER) || _MSC_VER > 1010
+        LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
+#else
+          /* The Platform SDK included in Visual C++ 4.1
+           * and earlier doesn't include CopyFileExA so
+           * no defninition for LPPROGRESS_ROUTINE. We never
+           * pass a value other than NULL so its real type
+           * is probably irrelevant.*/
+        LPVOID lpProgressRoutine OPTIONAL,
+#endif
+        LPVOID lpData OPTIONAL,
+        LPBOOL pbCancel OPTIONAL,
+        DWORD dwCopyFlags);
+typedef BOOL (WINAPI * p_CreateHardLinkA_t)(LPCSTR lpFileName,
+        LPCSTR lpExistingFileName,
+        LPSECURITY_ATTRIBUTES lpSecurityAttributes
+);
+typedef BOOL (WINAPI * p_CreateEnvironmentBlock_t)(void **, HANDLE, BOOL);
+typedef BOOL (WINAPI * p_DestroyEnvironmentBlock_t)(void *);
+
+#ifndef PROFILEINFO
+#define PI_NOUI 1                       // Prevents displaying of profile error messages.
+#define PI_APPLYPOLICY 2                // Applies a Windows NT 4.0-style policy.
+
+typedef struct _PROFILEINFOA {
+    DWORD       dwSize;                 // Set to sizeof(PROFILEINFO) before calling
+    DWORD       dwFlags;                // See flags above
+    LPSTR       lpUserName;             // User name (required)
+    LPSTR       lpProfilePath;          // Roaming profile path (optional, can be NULL)
+    LPSTR       lpDefaultPath;          // Default user profile path (optional, can be NULL)
+    LPSTR       lpServerName;           // Validating domain controller name in netbios format (optional, can be NULL but group NT4 style policy won't be applied)
+    LPSTR       lpPolicyPath;           // Path to the NT4 style policy file (optional, can be NULL)
+    HANDLE      hProfile;               // Filled in by the function.  Registry key handle open to the root.
+} PROFILEINFOA, FAR * LPPROFILEINFOA;
+#define PROFILEINFO PROFILEINFOA
+#define LPPROFILEINFO LPPROFILEINFOA
+#endif /* PROFILEINFO */
+
+typedef BOOL (WINAPI * p_LoadUserProfileA_t)(HANDLE, PROFILEINFO *);
+typedef BOOL (WINAPI * p_UnloadUserProfileA_t)(HANDLE, HANDLE);
+typedef BOOL (WINAPI * p_DuplicateTokenEx_t)(HANDLE hExistingToken,
+        DWORD dwDesiredAccess,
+        LPSECURITY_ATTRIBUTES lpTokenAttributes,
+        SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+        TOKEN_TYPE TokenType,
+        PHANDLE phNewToken);
+
+#ifdef CK_LOGIN
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetUserGetInfo_t)(
+        LPWSTR, LPWSTR, DWORD, LPBYTE *);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetGetDCName_t)(
+        LPCWSTR, LPCWSTR, LPBYTE *);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetApiBufferFree_t)(
+        LPVOID );
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetUserGetLocalGroups_t)(
+        LPCWSTR, LPCWSTR, DWORD, DWORD, LPBYTE *,
+        DWORD, LPDWORD, LPDWORD);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetUserGetGroups_t)(
+        LPCWSTR, LPCWSTR, DWORD, LPBYTE *,
+        DWORD, LPDWORD, LPDWORD);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetGroupGetInfo_t)(
+        LPCWSTR, LPCWSTR, DWORD, LPBYTE);
+#endif /* CK_LOGIN */
+#endif
 
 /*  Z K S E L F  --  Kill Self: log out own job, if possible.  */
 
@@ -583,10 +716,10 @@ getfullname(name) char * name; {
 
 int
 zopeni(n,name) int n; char *name; {
-    int x, y;
+    int x;
 
     debug(F111,"zopeni name",name,n);
-    debug(F101,"zopeni fp","", (unsigned) fp[n]);
+    debug(F101,"zopeni fp","", (CK_OFF_T) fp[n]);
     if (chkfn(n) != 0) {
         debug(F110,"zopeni chkfn()","file is open",0);
         return(0);
@@ -877,7 +1010,7 @@ zclose(n) int n; {
         debug(F101,"zclose zclosf","",x);
         debug(F101,"zclose zclosf fp[n]","",fp[n]);
     } else {
-        if ((fp[n] != stdout) && (fp[n] != stdin))
+        if ((fp[n] != stdout) && (fp[n] != stdin) && (fp[n] != NULL))
           x = fclose(fp[n]);
         fp[n] = NULL;
 #ifdef CK_LABELED
@@ -1125,7 +1258,6 @@ ttwait(int fd, int secs) {
 */
 int
 zinfill() {
-    int x;
     extern int kactive;
 
     errno = 0;
@@ -1372,6 +1504,19 @@ zoutdump() {
     }
 #endif /* IKSD */
 
+    /* If an autodownload is underway and the user kills it with Ctrl+C, the
+     * SIGINT handler will run on the keyboard input thread and close ZOUTFILE
+     * without warning. We don't want that happening between checking if its
+     * open and trying to write to the file otherwise it results in a crash.
+     */
+    RequestZoutDumpMutex( SEM_INDEFINITE_WAIT );
+
+    if (fp[ZOFILE] == 0) {       /* File already closed. Fail. */
+        zoutcnt = 0;
+        ReleaseZoutDumpMutex();
+        return(-1);
+    }
+
 #ifndef COMMENT
     /*
       Frank Prindle suggested that replacing this fwrite() by an fflush()
@@ -1380,11 +1525,15 @@ zoutdump() {
 
       This appears to slow down NT.  So I changed it back.
     */
+
     x = fwrite(zoutbuffer, 1, zoutcnt, fp[ZOFILE]);
 #else /* COMMENT */
     fflush(fp[ZOFILE]);
     x = write(fileno(fp[ZOFILE]),zoutbuffer,zoutcnt)
 #endif /* COMMENT */
+
+    ReleaseZoutDumpMutex();
+
     if (x == zoutcnt) {
 #ifdef DEBUG
         if (deblog)                     /* Save a function call... */
@@ -1619,7 +1768,7 @@ zchko(name) char *name; {
 
 #ifdef NT
     {
-        /* We are only checking directory access at this point. 
+        /* We are only checking directory access at this point.
          * The file attribute READ_ONLY is meaningless for directories
          * in Windows.  So all we can do is see whether we can access
          * the directory information at all.  We can't use access()
@@ -1878,14 +2027,9 @@ zdskspace(int drive) {
     DWORD spc, bps, fc, c ;
     char rootpath[4] ;
     int gle;
-    BOOL (_stdcall *pGetDiskFreeSpaceEx)
-        ( LPCTSTR lpDirectoryName,                 // directory name
-          PULARGE_INTEGER lpFreeBytesAvailable,    // bytes available to caller
-          PULARGE_INTEGER lpTotalNumberOfBytes,    // bytes on disk
-          PULARGE_INTEGER lpTotalNumberOfFreeBytes // free bytes on disk
-          )=NULL;
+    pGetDiskFreeSpaceEx_t pGetDiskFreeSpaceEx=NULL;
     ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
-    (FARPROC) pGetDiskFreeSpaceEx = GetProcAddress( GetModuleHandle("kernel32.dll"),
+    pGetDiskFreeSpaceEx = (pGetDiskFreeSpaceEx_t)GetProcAddress( GetModuleHandle("kernel32.dll"),
                                           "GetDiskFreeSpaceExA");
 
     if (drive)
@@ -2082,8 +2226,12 @@ nzrtol(name,name2,fncnv,fnrpath,max)
         case '>':
         case ' ':                       /* And Space */
                 break;
+#ifdef COMMENT
+                /* Commented out to suppres unreachable code warning.
+                 * Not sure why this code isn't used - not needed? -- DG */
             *p = '_';                   /* To underscore */
             break;
+#endif /* COMMENT */
         default:
             *p = *name;
         }
@@ -2125,7 +2273,7 @@ zstrip(name,name2) char *name, **name2; {
     char *cp, *pp;
     int n = 0;
     debug(F110,"zstrip before",name,0);
-    if (!name) { *name2 = ""; return; }
+    if (!name || *name == '\0') { *name2 = ""; return; }
     pp = work;
     /* Strip disk letter and colon */
     if (isalpha(*name) && (*(name+1) == ':')) name += 2;
@@ -2276,7 +2424,6 @@ zchdir(dirnam) char *dirnam; {
     extern int nmac;                        /* Number of macros */
 #endif /* NOSPL */
     char hd[CKMAXPATH+1];
-    char *p;
     int len;
 
     debug(F110,"zchdir",dirnam,0);
@@ -2340,7 +2487,7 @@ zchdir(dirnam) char *dirnam; {
 #ifndef NOSPL
         if (nmac) {             /* Any macros defined? */
             int k;                /* Yes */
-            static on_cd = 0;
+            static int on_cd = 0;
             if ( !on_cd ) {
                 on_cd = 1;
                 k = mlook(mactab,"on_cd",nmac); /* Look this up */
@@ -2380,10 +2527,10 @@ zhome() {
         ckstrncpy(homedir,home,CKMAXPATH);
     } else {
 #ifdef NT
-        char * homedrive = (char *)GetHomeDrive();
-        char * homepath  = (char *)GetHomePath();
+        char * homedrive = GetHomeDrive();
+        char * homepath  = GetHomePath();
         char * profile   = getenv("USERPROFILE");
-        char * personal  = (char *)GetPersonal();
+        char * personal  = GetPersonal();
         if (homedrive && homepath)
             sprintf(homedir,"%s%s",homedrive,homepath);
         else if ( profile )
@@ -2396,7 +2543,7 @@ zhome() {
     }
 
 #ifdef NT
-    GetShortPathName(homedir,homedir,CKMAXPATH);
+    ckGetShortPathName(homedir,homedir,CKMAXPATH);
 #endif /* NT */
 
     /* we know have the directory, but need to make it consistent */
@@ -2449,7 +2596,6 @@ zgtdir() {
 int
 zxcmd(filnum,comand) int filnum; char *comand; {
     int out, rc;
-    int pipes[2];
 
     debug(F111,"zxcmd",comand,filnum);
     if (chkfn(filnum) < 0) return(-1);  /* Need a valid Kermit file number. */
@@ -2499,7 +2645,7 @@ zxcmd(filnum,comand) int filnum; char *comand; {
 
 int
 zclosf(filnum) int filnum; {
-    int wstat, out;
+    int out;
     debug(F101,"zclosf filnum","",filnum);
     out = (filnum == ZIFILE || filnum == ZRFILE) ? 0 : 1 ;
     debug(F101,"zclosf out","",out);
@@ -2530,25 +2676,21 @@ zclosf(filnum) int filnum; {
 
 #ifdef NT
 static HANDLE hKernel = INVALID_HANDLE_VALUE;
-static DWORD (WINAPI *p_GetLongPathNameA)(
-    LPCSTR lpFileName,
-    LPSTR lpBuffer,
-    DWORD cchBuffer
-    ) = NULL;
+static p_GetLongPathNameA_t p_GetLongPathNameA = NULL;
 
-DWORD 
+DWORD
 ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
 {
     if ( !p_GetLongPathNameA ) {
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
         if (hKernel != INVALID_HANDLE_VALUE)
-            (FARPROC) p_GetLongPathNameA =
-                GetProcAddress( hKernel, "GetLongPathNameA" );
+            p_GetLongPathNameA =
+                (p_GetLongPathNameA_t)GetProcAddress( hKernel, "GetLongPathNameA" );
     }
 
     if ( !p_GetLongPathNameA ) {
-        DWORD len, i;
+        DWORD len;
         if ( !lpFileName || !lpBuffer )
             return(0);
 
@@ -2560,6 +2702,208 @@ ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
         return(p_GetLongPathNameA(lpFileName,lpBuffer,cchBuffer));
     }
 }
+
+static p_GetShortPathNameA_t p_GetShortPathNameA = NULL;
+
+DWORD GetShortPathNameC(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer);
+
+DWORD ckGetShortPathName(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer) {
+    if ( !p_GetShortPathNameA ) {
+        if (hKernel == INVALID_HANDLE_VALUE)
+            hKernel = LoadLibrary("kernel32.dll");
+        if (hKernel != INVALID_HANDLE_VALUE)
+            p_GetShortPathNameA =
+                (p_GetShortPathNameA_t)GetProcAddress( hKernel, "GetShortPathNameA" );
+    }
+
+    if ( !p_GetShortPathNameA ) {
+#ifdef CKT_NT31
+        DWORD result;
+        debug(F111, "GetShortPathNameC lpszLongPath", lpszLongPath, 0);
+        result = (GetShortPathNameC(lpszLongPath, lpszShortPath, cchBuffer));
+        debug(F111, "GetShortPathNameC lpszShortPath", lpszShortPath, 0);
+        return result;
+#else
+        DWORD len;
+        if ( !lpszLongPath || !lpszShortPath )
+            return(0);
+
+        len = strlen(lpszLongPath);
+        if ( len + 1 <= cchBuffer )
+            ckstrncpy(lpszShortPath,lpszLongPath,cchBuffer);
+        return (len);
+#endif
+    } else {
+        return (p_GetShortPathNameA(lpszLongPath, lpszShortPath, cchBuffer));
+    }
+}
+
+#ifdef CKT_NT31
+/* Windows NT 3.1 doesn't have GetShortPathName implementation, so here is an
+ * equivalent function that uses only Win32 APIs available on NT 3.1 */
+DWORD GetShortPathNameC(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer) {
+    DWORD length = 0;
+    BOOL makeShortPath = TRUE;
+    BOOL firstIteration = TRUE;
+    BOOL pathContainsBackSlash = FALSE;
+    char* workingCopy;
+    char* longFileName;
+    char* pch;
+    char* p;
+    char separator[2] = "\\";
+    int longFileNameLen;
+
+    if (lpszShortPath == NULL || cchBuffer == 0) {
+        makeShortPath = FALSE;
+    }
+
+    debug(F111, "GetShortPathNameC", "lpszLongPath", lpszLongPath);
+    debug(F111, "GetShortPathNameC", "cchBuffer", cchBuffer);
+    debug(F111, "GetShortPathNameC", "makeShortPath", makeShortPath);
+
+    if (!lpszLongPath || lpszLongPath[0] == '\0') {
+        debug(F100, "GetShortPathNameC: no long path supplied", "", 0);
+        lpszShortPath[0] = '\0';
+        return 0;
+    }
+
+    longFileNameLen = strlen(lpszLongPath) + 1;
+
+    workingCopy = _strdup(lpszLongPath);
+    longFileName = malloc(longFileNameLen);
+    longFileName[0] = '\0';
+
+    if (makeShortPath) {
+        lpszShortPath[0] = '\0';
+    }
+
+    /* C-Kermit uses forward slash as a path separator so we've got to handle
+     * that. Windows 10 at least remembers which path elements were separated by
+     * '/' or '\' uses the same separator in the short path name
+     * (eg, 'foo12345678\bar12345678/baz12345678.txt' will come back as
+     * 'foo123~1\bar123~`/baz123~1.txt').
+     *
+     * Its pretty unlikely C-Kermit is ever intentionally mixing path
+     * separators, let alone actually ever cares about such mixing being
+     * preserved. It seems to generally prefer converting '\' to '/' and using
+     * unix-style separators internally. So instead of trying to replicate
+     * Windows' separator-preserving behaviour, we'll just convert the input to
+     * uniformly use '\' as a separator allowing us to just use strtok to split
+     * the string. On output we'll use '/' for all separators if a single '/'
+     * was detected in the input. That doesn't match Windows' behaviour but it
+     * should be good enough for C-Kermit when its running on NT 3.10.
+     * */
+    p = workingCopy;
+    while (*p) {			/* Change them back to \ */
+        if (*p == '\\') pathContainsBackSlash=TRUE;
+        if (*p == '/') {*p = '\\'; separator[0] = '/'; }
+        p++;
+    }
+    debug(F111, "GetShortPathNameC post conversion", "lpszLongPath", lpszLongPath);
+    debug(F111, "GetShortPathNameC post conversion", "pathContainsBackSlash", pathContainsBackSlash);
+    debug(F111, "GetShortPathNameC post conversion", "pathContainsForwardSlash", separator[0] == '/');
+
+    pch = strtok(workingCopy, "\\");
+    while (pch != NULL) {
+
+        /* Handle the drive letter if there is one */
+        if (strlen(pch) == 2 && pch[1] == ':' && firstIteration) {
+            /* Got the drive letter */
+            length += 2; /* Letter :  */
+
+            strncat(longFileName, pch, 2);
+
+            if (makeShortPath) {
+                if (length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at A", "length", length);
+                    makeShortPath = FALSE;
+                } else {
+                    strncat(lpszShortPath, pch, 2);
+                }
+            }
+        } else {
+            int len = strlen(pch);
+            int shortlen = 0;
+            char* shortFn;
+
+            HANDLE hResult;
+            WIN32_FIND_DATAA findFileData;
+
+            strncat(longFileName, "\\", 1);
+
+            strncat(longFileName,  pch, len);
+
+            if (strcmp(pch, "..") == 0) {
+                length += 2;
+                if (!firstIteration) length += 1;
+
+                if (makeShortPath && length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at B", "length", length);
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    if (!firstIteration) strncat(lpszShortPath, separator, 1);
+                    strncat(lpszShortPath, "..", 2);
+                }
+            } else if (strcmp(pch, ".") == 0) {
+                /*printf("Curlevel\n");*/
+                length += 1;
+                if (!firstIteration) length += 1;
+
+                if (makeShortPath && length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at C", "length", length);
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    if (!firstIteration) {
+                        strncat(lpszShortPath, separator, 1);
+                    }
+                    strncat(lpszShortPath, ".", 1);
+                }
+            } else {
+
+                hResult = FindFirstFileA(longFileName, &findFileData);
+                if (hResult == INVALID_HANDLE_VALUE) {
+                    debug(F110, "GetShortPathNameC failed to locate long path", longFileName, 0);
+                    lpszShortPath[0] = '\0';
+                    return 0;
+                }
+
+                shortFn = findFileData.cAlternateFileName;
+                shortlen = strlen(shortFn);
+                if (shortlen == 0) {
+                    shortFn = findFileData.cFileName;
+                    shortlen = strlen(shortFn);
+                }
+
+                length += 1 + len;
+
+                if (makeShortPath && length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at D", "length", length);
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    strncat(lpszShortPath, separator, 1);
+                    strncat(lpszShortPath, shortFn, shortlen);
+                }
+
+                FindClose(hResult);
+            }
+        }
+
+        pch = strtok(NULL, "\\");
+        firstIteration = FALSE;
+    }
+
+    free(workingCopy);
+    free(longFileName);
+
+    return length;
+}
+#endif /* CKT_NT31 */
 #endif /* NT */
 
 /*  Z X P A N D  --  Expand a wildcard string into an array of strings  */
@@ -2834,7 +3178,6 @@ os2findisdir(void) {
 
 int
 zxrewind() {
-    int i,j,len;
     CHAR * FileName=NULL;
 
     /* Cancel previous zxpand if necessary */
@@ -2895,7 +3238,7 @@ zxrewind() {
                     {
                         /* we have a directory that is not . or .. */
                         if (!os2findpush()) {
-                            fcntsav[zxpn] = fcount[zxpn] = 
+                            fcntsav[zxpn] = fcount[zxpn] =
                                 fcountstream[zxpn] =
                                 fcntstreamsav[zxpn] = -1;
                             return(fcount[zxpn]+1);
@@ -2919,7 +3262,7 @@ zxrewind() {
                 while (os2findnextfile()) {
                     if (os2findisdir()) {
                         if (!os2findpush()) {
-                            fcntsav[zxpn] = fcount[zxpn] = 
+                            fcntsav[zxpn] = fcount[zxpn] =
                                 fcountstream[zxpn] =
                                 fcntstreamsav[zxpn] = -1;
                             return(fcount[zxpn]+1);
@@ -2940,7 +3283,7 @@ zxrewind() {
         else
 #endif /* RECURSIVE */
         {
-            fcntsav[zxpn] = fcount[zxpn] = 
+            fcntsav[zxpn] = fcount[zxpn] =
                 fcountstream[zxpn] =
                     fcntstreamsav[zxpn] = -1;
             return(0);
@@ -3005,7 +3348,7 @@ nzxpand(CHAR * fn, int flags) {
     /* Initialize variables for expannsion */
     findlevel[zxpn] = 0;
     findeop[zxpn][0] = findpath[zxpn];
-    fcntsav[zxpn] = fcount[zxpn] = 
+    fcntsav[zxpn] = fcount[zxpn] =
         fcountstream[zxpn] =
             fcntstreamsav[zxpn] = 0;
     findpathwild[zxpn] = 0;
@@ -3201,7 +3544,7 @@ nzxpand(CHAR * fn, int flags) {
              (strcmp(".",FileName) && strcmp("..",FileName)) ))
         {
             if ( !findfspec2[zxpn][0] ||
-                 ckmatch(findfspec[zxpn], FileName, 0, 1) ) 
+                 ckmatch(findfspec[zxpn], FileName, 0, 1) )
             {
                 fcount[zxpn]++;
 #ifdef STREAMS
@@ -3278,7 +3621,7 @@ nzxpand(CHAR * fn, int flags) {
             if (os2findisdir() && strcmp(".",FileName) && strcmp("..",FileName))
             {
                 if (!os2findpush()) {
-                    fcntsav[zxpn] = fcount[zxpn] = 
+                    fcntsav[zxpn] = fcount[zxpn] =
                         fcountstream[zxpn] =
                             fcntstreamsav[zxpn] = 0;
                     return(fcount[zxpn]);
@@ -3297,7 +3640,7 @@ nzxpand(CHAR * fn, int flags) {
             while (os2findnextfile()) {
                 if (os2findisdir()) {
                     if (!os2findpush()) {
-                        fcntsav[zxpn] = fcount[zxpn] = 
+                        fcntsav[zxpn] = fcount[zxpn] =
                             fcountstream[zxpn] =
                                 fcntstreamsav[zxpn] = 0;
                         return(fcount[zxpn]);
@@ -3318,7 +3661,7 @@ nzxpand(CHAR * fn, int flags) {
     os2findclose();
 
     if (lasterror[zxpn] != ERROR_NO_MORE_FILES) {
-        fcntsav[zxpn] = fcount[zxpn] = 
+        fcntsav[zxpn] = fcount[zxpn] =
             fcountstream[zxpn] =
                 fcntstreamsav[zxpn] = 0;
         return(fcount[zxpn]);
@@ -3631,7 +3974,7 @@ znext(fn) char *fn; {
         char name8_3[CKMAXPATH+1];
         DWORD len;
 
-        len = GetShortPathName(fn,name8_3,CKMAXPATH+1);
+        len = ckGetShortPathName(fn,name8_3,CKMAXPATH+1);
         if ( len > 0 && len <= CKMAXPATH )
             ckstrncpy(fn,name8_3,CKMAXPATH+1);
     }
@@ -3689,7 +4032,7 @@ zchkspa(char *f, CK_OFF_T n)
   version number of "xxxx" is used.  Returns a pointer to the new name in
   argument s.
 
-  On systems which use 8.3 notation, or when SET MSKERMIT ... 
+  On systems which use 8.3 notation, or when SET MSKERMIT ...
   is used we borrow the technique used in MS-DOS Kermit:
   "The idea is to pad out the main name part (8 chars) with ascii zeros and
    then change the last chars successively to a 1, 2, etc. until
@@ -3794,13 +4137,13 @@ znewn(fn,s) char *fn, **s; {
         while (zp != xp+8) {
 			if ( zp == xp )
 				*zp++='X';
-            if ( zp < xp+7 ) 
+            if ( zp < xp+7 )
                 *zp++='0';
-            else 
+            else
                 *zp++='1';
         }
         strcpy(zp--,temp);                    /* Get the extension back */
-        
+
         while (1) {
             n = nzxpand(buf,0);                 /* Expand the resulting wild name */
             debug(F101,"znewn: matches","",n);
@@ -3980,22 +4323,7 @@ zcopy(source,destination) char *source, *destination; {
     int len;
 #ifdef NT
     BOOL bCancel = 0;
-    static BOOL (WINAPI * p_CopyFileExA)(LPCSTR lpExistingFileName,
-                                          LPCSTR lpNewFileName,
-#if _MSC_VER > 1000
-                                          LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
-#else
-                              /* The Platform SDK included in Visual C++ 4.0
-                               * and earlier doesn't include CopyFileExA so
-                               * no defninition for LPPROGRESS_ROUTINE. We never
-                               * pass a value other than NULL so its real type
-                               * is probably irrelevant.*/
-                                          LPVOID lpProgressRoutine OPTIONAL,
-#endif
-                                          LPVOID lpData OPTIONAL,
-                                          LPBOOL pbCancel OPTIONAL,
-                                          DWORD dwCopyFlags
-                                          )=NULL;
+    static p_CopyFileExA_t p_CopyFileExA=NULL;
 #endif /* NT */
 
     if (!source) source = "";
@@ -4074,8 +4402,8 @@ zcopy(source,destination) char *source, *destination; {
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
         if (hKernel != INVALID_HANDLE_VALUE)
-            (FARPROC) p_CopyFileExA =
-                GetProcAddress( hKernel, "CopyFileExA" );
+            p_CopyFileExA =
+                (p_CopyFileExA_t)GetProcAddress( hKernel, "CopyFileExA" );
     }
 
     if ( p_CopyFileExA ) {
@@ -4126,21 +4454,15 @@ zlink(source,destination) char *source, *destination; {
     char *p = NULL, *s;
     int x;
     int len;
-#ifdef NT
-    BOOL bCancel = 0;
-#endif /* NT */
-    static BOOL (WINAPI * p_CreateHardLinkA)(LPCSTR lpFileName,
-                                             LPCSTR lpExistingFileName,
-                                             LPSECURITY_ATTRIBUTES lpSecurityAttributes
-                                             )=NULL;
+    static p_CreateHardLinkA_t p_CreateHardLinkA=NULL;
     static HANDLE hKernel = INVALID_HANDLE_VALUE;
-    
+
     if ( !p_CreateHardLinkA ) {
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
         if (hKernel != INVALID_HANDLE_VALUE)
-            (FARPROC) p_CreateHardLinkA =
-                GetProcAddress( hKernel, "CreateHardLinkA" );
+            p_CreateHardLinkA =
+                (p_CreateHardLinkA_t)GetProcAddress( hKernel, "CreateHardLinkA" );
     }
 
     if ( !p_CreateHardLinkA )
@@ -4260,8 +4582,6 @@ static char gperms[2];
 
 #endif /* CK_GPERMS */
 
-static char lperms[24];
-
 #ifdef CK_PERMS
 static char xlperms[24];
 
@@ -4297,8 +4617,7 @@ zgperm(f) char *f; {
 
 int
 zsattr(xx) struct zattr *xx; {
-    long k; int x;
-    struct stat buf;
+    long k;
 
     k = iflen % 1024L;                  /* File length in K */
     if (k != 0L) k = 1L;
@@ -4437,7 +4756,17 @@ zstrdt(date,len) char * date; int len; {
   To do: adapt code from OS-9 Kermit's ck9fio.c zstime function, which
   is more flexible, allowing [yy]yymmdd[ hh:mm[:ss]].
 */
-    long tmx=0, days;
+#ifdef __WATCOMC__
+    time_t tmx=0;
+#else
+#ifdef NT
+    /* time_t is a 64bit value on Visual C++ 2005 and newer on 64bit windows. */
+    time_t tmx=0;
+#else /* NT */
+    long tmx=0;
+#endif /* NT */
+#endif
+    long days;
     int i, n, isleapyear;
                    /*       J  F  M  A   M   J   J   A   S   O   N   D   */
                    /*      31 28 31 30  31  30  31  31  30  31  30  31   */
@@ -4445,17 +4774,6 @@ zstrdt(date,len) char * date; int len; {
     int monthdays [13] = {  0,0,31,59,90,120,151,181,212,243,273,304,334 };
     char s[5];
     struct tm *time_stamp;
-
-#ifdef __WATCOMC__
-/* Watcom provides utimbuf instead of _utimbuf */
-struct utimbuf tp;
-#else
-#ifdef NT
-struct _utimbuf tp;
-#else /* NT */
-struct utimbuf tp;
-#endif /* NT */
-#endif /* __WATCOMC__
 
 #ifdef ANYBSD
     long timezone = 0L;
@@ -5148,9 +5466,9 @@ zsyscmd(s) char *s; {
 int
 _zshcmd(s,wait) char *s; int wait; {
 #ifndef NOPUSH
-    PID_T pid;
-    int rc;
+#ifndef KUI
     char title[80];
+#endif /* KUI */
 #ifdef NT
     SIGTYP (* savint)(int);
 #endif /* NT */
@@ -5229,7 +5547,7 @@ zshcmd(s) char *s; {
 */
 int
 iswild(filespec) char *filespec; {
-    char c; int x; char *p;
+    char c;
     int quo = 0;
 
     while ((c = *filespec++) != '\0') {
@@ -5271,12 +5589,12 @@ isdir(s) char *s; {
     }
 #ifdef NT
     attrs = GetFileAttributes(s);
-    
+
 /* Visual C++ 6 doesn't know about this */
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES -1
 #endif
-    
+
     if ( attrs == INVALID_FILE_ATTRIBUTES )
         return(0);
     return(attrs & FILE_ATTRIBUTE_DIRECTORY ? 1 : 0);
@@ -5313,7 +5631,7 @@ isdir(s) char *s; {
 int
 zmkdir(path) char *path; {
     char *xp, *tp, c;
-    int x, count = 0, i;
+    int x, count = 0;
 
     if (!path) path = "";
     if (!*path) return(-1);
@@ -5336,7 +5654,7 @@ zmkdir(path) char *path; {
     strcpy(tp,path);
 
     /* Fixup for UNC if necessary */
-    if ( !strncmp(tp,"//",2) || !strncmp(tp,"\\\\",2) ) { 
+    if ( !strncmp(tp,"//",2) || !strncmp(tp,"\\\\",2) ) {
         strcpy(tp,UNCname(tp));
 
         xp = &tp[2];                    /* */
@@ -5485,8 +5803,10 @@ zfseek(CK_OFF_T pos)
 
 struct zfnfp *
 zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
-    int x = 0, y = 0;
-    char * xp;
+    int y = 0;
+#ifdef OS2ONLY
+    int x = 0;
+#endif /* OS2ONLY */
     static struct zfnfp fnfp;
 
     if (!fname)
@@ -5548,9 +5868,7 @@ int
 zcmpfn(s1,s2) char * s1, * s2; {
     char buf1[CKMAXPATH+1];
     char buf2[CKMAXPATH+1];
-    char linkname[CKMAXPATH+1];
-    int x, rc = 0;
-    struct stat buf;
+    int rc = 0;
 
     if (!s1) s1 = "";
     if (!s2) s2 = "";
@@ -5688,36 +6006,14 @@ static DWORD PrimaryGroupId;
 CHAR * pReferenceDomainName = NULL;
 static CHAR * pPDCName = NULL;
 
-#ifndef PROFILEINFO
-#define PI_NOUI 1                       // Prevents displaying of profile error messages.
-#define PI_APPLYPOLICY 2                // Applies a Windows NT 4.0-style policy.
-
-typedef struct _PROFILEINFOA {
-    DWORD       dwSize;                 // Set to sizeof(PROFILEINFO) before calling
-    DWORD       dwFlags;                // See flags above
-    LPSTR       lpUserName;             // User name (required)
-    LPSTR       lpProfilePath;          // Roaming profile path (optional, can be NULL)
-    LPSTR       lpDefaultPath;          // Default user profile path (optional, can be NULL)
-    LPSTR       lpServerName;           // Validating domain controller name in netbios format (optional, can be NULL but group NT4 style policy won't be applied)
-    LPSTR       lpPolicyPath;           // Path to the NT4 style policy file (optional, can be NULL)
-    HANDLE      hProfile;               // Filled in by the function.  Registry key handle open to the root.
-} PROFILEINFOA, FAR * LPPROFILEINFOA;
-#define PROFILEINFO PROFILEINFOA
-#define LPPROFILEINFO LPPROFILEINFOA
-#endif /* PROFILEINFO */
 PROFILEINFO profinfo = { sizeof profinfo, 0, 0, 0, 0, 0, 0 };
 VOID      * pEnvBlock = NULL;
 static HINSTANCE hUserEnv=NULL, hAdvApi=NULL;
-static BOOL (WINAPI * p_CreateEnvironmentBlock)(void **, HANDLE, BOOL)=NULL;
-static BOOL (WINAPI * p_DestroyEnvironmentBlock)(void *)=NULL;
-static BOOL (WINAPI * p_LoadUserProfileA)(HANDLE, PROFILEINFO *)=NULL;
-static BOOL (WINAPI * p_UnloadUserProfileA)(HANDLE, HANDLE)=NULL;
-static BOOL (WINAPI * p_DuplicateTokenEx)(HANDLE hExistingToken,
-					   DWORD dwDesiredAccess,
-					   LPSECURITY_ATTRIBUTES lpTokenAttributes,
-					   SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-					   TOKEN_TYPE TokenType,
-					   PHANDLE phNewToken)=NULL;
+static p_CreateEnvironmentBlock_t p_CreateEnvironmentBlock=NULL;
+static p_DestroyEnvironmentBlock_t p_DestroyEnvironmentBlock=NULL;
+static p_LoadUserProfileA_t p_LoadUserProfileA=NULL;
+static p_UnloadUserProfileA_t p_UnloadUserProfileA=NULL;
+static p_DuplicateTokenEx_t p_DuplicateTokenEx=NULL;
 
 BOOL GetTextualSid(
     PSID pSid,            // binary Sid
@@ -5800,12 +6096,12 @@ BOOL GetTextualSid(
 #define MAXSIZE 4096
 #define gle (GetLastError())
 static BOOL getSids( TOKEN_PRIVILEGES **tokenPrivs, PSID *ownerSid, PSID *priGroupSid, TOKEN_GROUPS **tokenGroups, LUID *logonSessionId );
-static BOOL showToken( HANDLE ht );
+/*static BOOL showToken( HANDLE ht );
 static void showSid( int indent, PSID ps );
 static BOOL Sid2Text( PSID ps, char *buf, int bufSize );
-static BOOL IsLogonSid( PSID ps );
-static BOOL IsLocalSid( PSID ps );
-static BOOL IsInteractiveSid( PSID ps );
+static BOOL IsLogonSid( PSID ps );*/
+/*static BOOL IsLocalSid( PSID ps );        commented out as unused
+static BOOL IsInteractiveSid( PSID ps );*/
 static BOOL getPriv( const char *privName );
 
 HANDLE
@@ -5818,11 +6114,6 @@ CreateTokenForUser(char * szUsername, char * szDomain, PSID luserSid, PSID preGr
     LUID logonSessionId;
     TOKEN_PRIVILEGES *tokenPrivs;
     SID_IDENTIFIER_AUTHORITY NTsia = SECURITY_NT_AUTHORITY;
-    SID_IDENTIFIER_AUTHORITY worldsia = SECURITY_WORLD_SID_AUTHORITY;
-    char *domainName;
-    DWORD luserSidSize;
-    DWORD domainNameSize;
-    SID_NAME_USE luserSidType;
     // returned handle
     HANDLE tokenHandle = INVALID_HANDLE_VALUE;
     // permissions with which the handle is opened
@@ -5832,7 +6123,7 @@ CreateTokenForUser(char * szUsername, char * szDomain, PSID luserSid, PSID preGr
     SECURITY_QUALITY_OF_SERVICE sqos;
     LSA_OBJECT_ATTRIBUTES ObjAttr;
     TOKEN_TYPE tokenType;
-    LUID sessionLuid, serviceSessionLuid = { 0x3e7, 0 };
+    LUID sessionLuid; /*, serviceSessionLuid = { 0x3e7, 0 };*/
     FILETIME expirationTime;
     SID_AND_ATTRIBUTES tokenUser;
     PSID newOwnerSid, newPriGroupSid;
@@ -6123,7 +6414,7 @@ const char *formatTime( FILETIME *t )
 }
 
 
-
+/*
 BOOL
 showToken( HANDLE ht )
 {
@@ -6233,8 +6524,9 @@ showToken( HANDLE ht )
     free( ptg );
 
     return TRUE;
-}
+}*/
 
+#ifdef COMMENT
 void showSid( int indent, PSID ps )
 {
     char textSid[MAX_PATH], user[MAX_PATH], domain[MAX_PATH], buf[MAX_PATH];
@@ -6314,9 +6606,10 @@ void showSid( int indent, PSID ps )
         putchar( ' ' );
     fputs( buf, stdout );
 }
+#endif /* COMMENT */
 
 
-
+/* Commented out as unused
 BOOL IsLocalSid( PSID ps )
 {
     static PSID pComparisonSid = NULL;
@@ -6361,10 +6654,10 @@ BOOL IsLogonSid( PSID ps )
         return TRUE;
     else
         return FALSE;
-}
+}*/
 
 
-
+#ifdef COMMENT
 // nearly straight from the SDK
 BOOL Sid2Text( PSID ps, char *buf, int bufSize )
 {
@@ -6438,6 +6731,7 @@ BOOL Sid2Text( PSID ps, char *buf, int bufSize )
 
     return TRUE;
 }
+#endif /* COMMENT */
 
 BOOL
 getPriv( const char *privName )
@@ -6498,14 +6792,14 @@ zvuser(username) char *username; {
         if ( !hUserEnv )
             hUserEnv = LoadLibrary("userenv.dll");
         if ( hUserEnv ) {
-            (FARPROC) p_CreateEnvironmentBlock =
-                GetProcAddress( hUserEnv, "CreateEnvironmentBlock" );
-            (FARPROC) p_DestroyEnvironmentBlock =
-                GetProcAddress( hUserEnv, "DestroyEnvironmentBlock" );
-            (FARPROC) p_LoadUserProfileA =
-                GetProcAddress( hUserEnv, "LoadUserProfileA" );
-            (FARPROC) p_UnloadUserProfileA =
-                GetProcAddress( hUserEnv, "UnloadUserProfileA" );
+            p_CreateEnvironmentBlock =
+                (p_CreateEnvironmentBlock_t)GetProcAddress( hUserEnv, "CreateEnvironmentBlock" );
+            p_DestroyEnvironmentBlock =
+                (p_DestroyEnvironmentBlock_t)GetProcAddress( hUserEnv, "DestroyEnvironmentBlock" );
+            p_LoadUserProfileA =
+                (p_LoadUserProfileA_t)GetProcAddress( hUserEnv, "LoadUserProfileA" );
+            p_UnloadUserProfileA =
+                (p_UnloadUserProfileA_t)GetProcAddress( hUserEnv, "UnloadUserProfileA" );
         }
     }
 
@@ -6740,7 +7034,6 @@ zvpass(passwd) char *passwd; {
     int ntlm=0;
     char * uid, * pwd;
     char buf[4096];
-    char username[256];
 #ifdef IKSDB
     extern int ikdbopen;
     extern unsigned long mydbslot;
@@ -6860,8 +7153,8 @@ zvpass(passwd) char *passwd; {
 		    if ( !hAdvApi )
 			hAdvApi = LoadLibrary("advapi32.dll");
 		    if ( hAdvApi ) {
-			(FARPROC) p_DuplicateTokenEx =
-			    GetProcAddress( hAdvApi, "DuplicateTokenEx" );
+			p_DuplicateTokenEx =
+			    (p_DuplicateTokenEx_t)GetProcAddress( hAdvApi, "DuplicateTokenEx" );
 		    }
 		}
 
@@ -6870,7 +7163,7 @@ zvpass(passwd) char *passwd; {
                 foo = OpenThreadToken(hThread, TOKEN_ALL_ACCESS, FALSE, &hThreadToken );
                 debug(F111,"zvpass","OpenThreadToken()",foo ? 0 : GetLastError());
 		if ( p_DuplicateTokenEx ) {
-		    foo = p_DuplicateTokenEx(hThreadToken, MAXIMUM_ALLOWED, NULL, 
+		    foo = p_DuplicateTokenEx(hThreadToken, MAXIMUM_ALLOWED, NULL,
 					     SecurityImpersonation,
 					     TokenPrimary, &hLoggedOn);
 		    debug(F111,"zvpass","DuplicateTokenEx()",foo ? 0 : GetLastError());
@@ -7091,7 +7384,7 @@ zvpass(passwd) char *passwd; {
 
         ckstrncpy(homedir,HomeDir,CKMAXPATH+1);
 #ifdef NT
-        GetShortPathName(homedir,homedir,CKMAXPATH);
+        ckGetShortPathName(homedir,homedir,CKMAXPATH);
 #endif /* NT */
 
         /* we know have the directory, but need to make it consistent */
@@ -7181,7 +7474,7 @@ zvpass(passwd) char *passwd; {
 
 #ifdef IKSDB
     if (ikdbopen) {
-        char * p, * q;
+        char * p;
         int k;
         extern char dbrec[];
         extern unsigned long myflags, mydbslot;
@@ -7275,20 +7568,12 @@ zvlogout() {
 /* From Peter Runestig */
 
 static HINSTANCE hNetApi32=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetUserGetInfo)( LPWSTR, LPWSTR, DWORD, LPBYTE *)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetGetDCName)(LPCWSTR, LPCWSTR, LPBYTE *)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetApiBufferFree)( LPVOID ) = NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetUserGetLocalGroups)(LPCWSTR, LPCWSTR, DWORD, DWORD, LPBYTE *,
-                                             DWORD, LPDWORD, LPDWORD)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetUserGetGroups)(LPCWSTR, LPCWSTR, DWORD, LPBYTE *,
-                                             DWORD, LPDWORD, LPDWORD)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetGroupGetInfo)(LPCWSTR, LPCWSTR, DWORD, LPBYTE)=NULL;
+static p_NetUserGetInfo_t p_NetUserGetInfo=NULL;
+static p_NetGetDCName_t p_NetGetDCName=NULL;
+static p_NetApiBufferFree_t p_NetApiBufferFree = NULL;
+static p_NetUserGetLocalGroups_t p_NetUserGetLocalGroups=NULL;
+static p_NetUserGetGroups_t p_NetUserGetGroups=NULL;
+static p_NetGroupGetInfo_t p_NetGroupGetInfo=NULL;
 
 
 static int
@@ -7298,12 +7583,12 @@ LoadNetApi32()
         debug(F110,"LoadNetApi32","loading netapi32.dll",0);
         hNetApi32 = LoadLibrary( "netapi32.dll" );
         if ( hNetApi32 ) {
-            (FARPROC) p_NetUserGetInfo = GetProcAddress( hNetApi32, "NetUserGetInfo" );
-            (FARPROC) p_NetApiBufferFree = GetProcAddress( hNetApi32, "NetApiBufferFree" );
-            (FARPROC) p_NetGetDCName = GetProcAddress( hNetApi32, "NetGetDCName" );
-            (FARPROC) p_NetUserGetLocalGroups = GetProcAddress( hNetApi32, "NetUserGetLocalGroups" );
-            (FARPROC) p_NetUserGetGroups = GetProcAddress( hNetApi32, "NetUserGetGroups" );
-            (FARPROC) p_NetGroupGetInfo = GetProcAddress( hNetApi32, "NetGroupGetInfo" );
+            p_NetUserGetInfo = (p_NetUserGetInfo_t)GetProcAddress( hNetApi32, "NetUserGetInfo" );
+            p_NetApiBufferFree = (p_NetApiBufferFree_t)GetProcAddress( hNetApi32, "NetApiBufferFree" );
+            p_NetGetDCName = (p_NetGetDCName_t)GetProcAddress( hNetApi32, "NetGetDCName" );
+            p_NetUserGetLocalGroups = (p_NetUserGetLocalGroups_t)GetProcAddress( hNetApi32, "NetUserGetLocalGroups" );
+            p_NetUserGetGroups = (p_NetUserGetGroups_t)GetProcAddress( hNetApi32, "NetUserGetGroups" );
+            p_NetGroupGetInfo = (p_NetGroupGetInfo_t)GetProcAddress( hNetApi32, "NetGroupGetInfo" );
 
             if ( !p_NetUserGetInfo || !p_NetApiBufferFree || !p_NetGetDCName ||
                  !p_NetUserGetLocalGroups || !p_NetUserGetGroups || !p_NetGroupGetInfo )
@@ -7644,7 +7929,7 @@ cksyslog(n, m, s1, s2, s3) int n, m; char * s1, * s2, * s3; {
     extern int what, ikdbopen;
 #endif /* IKSDB */
     int level;
-    char * messages[5];
+    const char * messages[5];
 
 #ifdef IKSDB
     if (inserver && ikdbopen) {
@@ -7702,11 +7987,10 @@ zchdsk(c) int c; {
 }
 
 #ifdef NT
-long
+CK_OFF_T
 StreamSize(char * filename, char * streamname)
 {
     HANDLE hf ;
-    DWORD lasterror = 0 ;
     WIN32_STREAM_ID sid;
     DWORD dwStreamHeaderSize, dwRead, dw1, dw2;
     BOOL  bContinue;
@@ -7714,9 +7998,8 @@ StreamSize(char * filename, char * streamname)
     WCHAR wszStreamName[CKMAXPATH+1];
     WCHAR wszStat[CKMAXPATH+1];
     char  stream[CKMAXPATH+1];
-    int   i, diff;
     DWORD dwStreamId = 0xFFFFFFFF;
-    long  size = -1;
+    CK_OFF_T  size = -1;
 
     ckmakmsg(stream,CKMAXPATH+1,":",streamname,":$DATA",NULL);
     ANSIToUnicode(stream,wszStat,sizeof(wszStat));
@@ -7752,7 +8035,7 @@ StreamSize(char * filename, char * streamname)
                 UnicodeToANSI(wszStreamName,stream,sizeof(stream));
                 debug(F110,"StreamSize ntfs stream found",stream,0);
                 if (!_wcsicmp(wszStreamName,wszStat)) {
-                    size = (sid.Size.HighPart << 32) + sid.Size.LowPart;
+                    size = ((CK_OFF_T)sid.Size.HighPart << 32) + sid.Size.LowPart;
                     break;
                 }
             }
@@ -7858,7 +8141,7 @@ StreamCount(char * path, char * relpath, char * filename, char * pattern)
                 }
             } else {
                 if ( sid.dwStreamId == BACKUP_DATA &&
-                     (!pattern[0] || 
+                     (!pattern[0] ||
                       pattern[0] == ':' && pattern[1] == '*' && !pattern[2]) )  {
                     count++;
                 }
@@ -7930,7 +8213,7 @@ os2stat(char *path, struct stat *st) {
     debug(F111,"os2stat","rc",rc);
 #ifdef NT
     if ( stream_idx > 1 ) {
-        long size = StreamSize(local,&local[stream_idx+1]);
+        CK_OFF_T size = StreamSize(local,&local[stream_idx+1]);
         if ( size >= 0 )
             st->st_size = size;
         else

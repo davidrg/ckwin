@@ -23,6 +23,7 @@
 #include "ckuusr.h"
 #include "ckocon.h"
 #include "ckoi31.h"
+#include "ckcxla.h"
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -31,12 +32,11 @@ extern int  insertmode, tnlm ;
 extern int  escstate, debses, decscnm, tt_cursor ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern char termessage[] ;
 extern int autoscroll, protect ;
 extern struct _vtG G[4];
@@ -48,7 +48,11 @@ int i31_monitor = FALSE ;
 int i31_xprint  = 0;
 int i31_lta     = CK_CR;
 
-int
+void udkreset();   /* ckoco3.c */
+void doreset(int); /* ckoco3.c */
+void clrscreen(BYTE, CHAR); /* ckoco3.c */
+
+        int
 i31inc(void)
 {
     extern int pmask, cmask;
@@ -164,7 +168,7 @@ i31rdctrl( int m, int * pa1, int * pa2, int * pa3, int * pa4, int * op )
             p = pa4;
             break;
         }
-        if ( (*p & 0x60) == 0x20 ) {
+        if ( (p != NULL) && (*p & 0x60) == 0x20 ) {
             *op  = i31inc();
             if ( (*op) < 0 )
                 return(n);
@@ -177,7 +181,7 @@ i31rdctrl( int m, int * pa1, int * pa2, int * pa3, int * pa4, int * op )
 void
 i31ctrl( int ch )
 {
-    int i,j;
+    int i;
 
     if ( !cprint && xprint ) {
         switch ( ch ) {
@@ -380,11 +384,10 @@ i31ctrl( int ch )
 void
 i31ascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
+    int i,j,n;
     int ch2=0, ch3=0, pa=0, pa1=0, pa2=0, pa3=0, pa4=0, op=0;
     char response[32]="";
+    extern vscrn_t vscrn[];
 
     if ( escstate == ES_GOTESC )/* Process character as part of an escstate sequence */
     {
@@ -2055,7 +2058,7 @@ i31ascii( int ch )
                 if ( debses )
                     break;
                 VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                             marginbot - 1, 1, FALSE, NUL);
+                             vscrn_c_page_margin_bot(VTERM) - 1, 1, FALSE, NUL, FALSE);
                 break;
             case 'O':
                 /* 3101-2x and 3161 - Delete cursor line */
@@ -2064,10 +2067,11 @@ i31ascii( int ch )
                 VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'P': {
                 /* Insert Character Command */
@@ -2083,7 +2087,7 @@ i31ascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,

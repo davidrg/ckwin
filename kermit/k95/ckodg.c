@@ -32,6 +32,9 @@ extern int network, nettype, ttnproto, u_binary;
 #endif /* TCPSOCKET */
 #endif /* NETCONN */
 
+void doreset(int);              /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
 extern int  printon, aprint, uprint, cprint, xprint, seslog ;
@@ -39,13 +42,12 @@ extern int  insertmode, tnlm ;
 extern int  escstate, debses, decscnm, tt_cursor;
 extern int  tt_type, tt_type_mode, tt_type_vt52, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol, parity, cmask ;
 extern int  wy_monitor;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern int autoscroll, protect ;
 extern CHAR (*xls[MAXTCSETS+1][MAXFCSETS+1])(CHAR);  /* Character set xlate */
 extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(CHAR);  /* functions. */
@@ -240,7 +242,7 @@ dgint2loc( int n, char * arg1, char * arg2, char * arg3 )
 void
 dgctrl( int ch )
 {
-    int i,j;
+    int i;
 
 
     if ( !xprint ) {
@@ -539,10 +541,9 @@ dgctrl( int ch )
 void
 dgascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
+    int i;
     char arg1, arg2, arg3, arg4, arg5;
+    extern vscrn_t vscrn[];
 
     if ( escstate == ES_GOTESC )/* Process character as part of an escstate sequence */
     {
@@ -682,6 +683,7 @@ dgascii( int ch )
                         if ( !uprint && !xprint && !aprint && printon )
                             printeroff();
                         sendchar(ACK);
+                        break;
                     case '8':   /* VT220 AutoPrint on */
                         debug(F110,"Data General","Aprint On",0);
                         setaprint(TRUE);
@@ -853,7 +855,7 @@ dgascii( int ch )
                         break;
 
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( arg1 == 0 )
                         arg1 = 1 ;
                     else if ( arg1 > VscrnGetWidth(VTERM)-1 )
@@ -878,7 +880,7 @@ dgascii( int ch )
                         break;
 
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( arg1 == 0 )
                         arg1 = 1 ;
                     else if ( arg1 > VscrnGetWidth(VTERM)-1 )
@@ -1575,21 +1577,23 @@ dgascii( int ch )
                 debug(F110,"Data General 4xx","Scroll Up",0);
                 VscrnScroll( VTERM, 
                              UPWARD,
-                             margintop-1, 
+                             vscrn_c_page_margin_top(VTERM)-1,
                              wherex[VTERM]-1,
                              1,
-                             margintop == 1,
-                             SP);
+                             vscrn_c_page_margin_top(VTERM) == 1,
+                             SP,
+                             FALSE);
                 break; 
             case 'I':
                 debug(F110,"Data General 4xx","Scroll Down",0);
                 VscrnScroll( VTERM,
                              DOWNWARD,
                              wherex[VTERM]-1,
-                             marginbot-1,
+                             vscrn_c_page_margin_bot(VTERM)-1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'J':
                 debug(F110,"Data General 4xx","Insert Character",0);

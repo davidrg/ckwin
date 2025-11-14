@@ -8,19 +8,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <shellapi.h>
+#include <io.h>
 
 #include "resource.h"   // for all dlg template values
 
 // Visual C++ 6.0 for-loop scope bug workaround (_MSC_VER 1300 is Visual C++ 7 
 // which behaves properly)
-#if _MSC_VER < 1300
+#if defined(_MSC_VER) && _MSC_VER < 1300
 #define for if (0) {} else for
 #endif
+
+// Any compiler old enough to not have this will only be 32bits.
+#ifndef CK_HAVE_INTPTR_T
+#ifndef _INTPTR_T_DEFINED
+typedef int intptr_t;
+#define _INTPTR_T_DEFINED
+#endif /* _INTPTR_T_DEFINED */
+#endif /* CK_HAVE_INTPTR_T */
 
 // some useful functions
 
 char* newstr( char* );      // duplicate the passed string
-int GetGlobalID( void );    // return a unique id for CreateWindowEx
+intptr_t GetGlobalID( void );    // return a unique id for CreateWindowEx
 
 #define TRUE  1
 #define FALSE 0
@@ -31,11 +40,11 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
-const char KWinClassName[] = "KERMIT95:UI";
-
-const char CmdTitle[] = "K95 Command Window";
-const char TermTitle[] = "C-Kermit Terminal Window";
-const char CServerTitle[] = "K95 Client Server Window";
+/* These have been moved to ikui.cxx to remove unused variable warnings */
+extern const char KWinClassName[]; /* = "KERMIT95:UI";*/
+extern const char CmdTitle[]; /* = "K95 Command Window";*/
+extern const char TermTitle[]; /* = "C-Kermit Terminal Window";*/
+extern const char CServerTitle[]; /* = "K95 Client Server Window";*/
 
 const uint TERMINAL_WINDOW      = 1;
 const uint COMMAND_WINDOW       = 2;
@@ -47,6 +56,10 @@ const uint WM_GOTO_FILETRANSFER_WINDOW  = WM_USER + FILETRANSFER_WINDOW;
 const uint WM_REQUEST_CLOSE_KERMIT      = WM_USER + 10;
 const uint WM_CLOSE_KERMIT              = WM_USER + 11;
 
+// For emulation of WM_SIZING nad WM_EXITSIZEMOVE on Windows NT 3.x
+const uint WM_USER_SIZING               = WM_USER + 12;
+const uint WM_USER_EXITSIZEMOVE         = WM_USER + 13;
+
 typedef struct _K_CREATEINFO {
     const char* classname;      // class name
     const char* text;           // caption or text
@@ -56,7 +69,7 @@ typedef struct _K_CREATEINFO {
     int y;                      // y position
     int width;                  // window width
     int height;                 // window height
-    long objId;                 // ID or hmenu
+    intptr_t objId;             // ID or hmenu
 } K_CREATEINFO;
 
 // registry information

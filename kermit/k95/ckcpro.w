@@ -1,8 +1,30 @@
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 10.0.166, 23 Sep 2022";
+"C-Kermit Protocol Module 10.0.170, 21 Mar 2024";
 
 int kactive = 0;			/* Kermit protocol is active */
+/*
+  This file, ckcpro.w, is the source file for the Kermit protocol state table
+  switcher: ckcpro.c, which is created by running ckcpro.w through the "wart"
+  program via "make ckcpro.c", which converts the part enclosed in double
+  percent signs from Lex format to the C module called ckcpro.c.
 
+  In November 2022 this file was retired on the unwise assumption that the
+  Kermit protocol would never change again.
+
+  Starting with edit 10.0.168 of 29 January 2024, ckcpro.w is reinstated
+  because it proved impossible to make protocol changes or additions by
+  editing ckcpro.c directly when a few simple client/server fuctions were
+  needed: REMOTE CDUP and REMOTE STATUS.  The makefile has not changed
+  however, except for putting back "make wart" and "make ckcpro.c", so
+  ckcpro.w is not automatically converted by the 'wart' program as it was
+  before.
+
+  In short, if you want to change the protocol module (this file), you have to
+  build it by hand with:
+
+    make wart
+    make ckcpro.c
+*/
 #define PKTZEROHACK
 
 /* C K C P R O  -- C-Kermit Protocol Module, in Wart preprocessor notation. */
@@ -10,7 +32,7 @@ int kactive = 0;			/* Kermit protocol is active */
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022
+  Copyright (C) 1985, 2024
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -33,6 +55,7 @@ int kactive = 0;			/* Kermit protocol is active */
 #ifdef CK_AUTHENTICATION
 #include "ckuath.h"                     /* fdc 2021-12-17 */
 #endif /* CK_AUTHENTICATION */
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 /*
  Note -- This file may also be preprocessed by the UNIX Lex program, but
@@ -152,6 +175,9 @@ _PROTOTYP( int cmdsrc, (void) );
 #endif /* TCPSOCKET */
 
   extern int cxseen, czseen, server, srvdis, local, displa, bctu, bctr, bctl;
+#ifdef OS2
+  extern int ccseen;
+#endif /* OS2 */
   extern int bctf;
   extern int quiet, tsecs, parity, backgrd, nakstate, atcapu, wslotn, winlo;
   extern int wslots, success, xitsta, rprintf, discard, cdtimo, keep, fdispla;
@@ -915,6 +941,70 @@ a {
 #endif /* NOSERVER */
 }
 
+<generic>u {				/* Got REMOTE CDUP command */
+#ifndef NOSERVER
+#ifdef CKSYSLOG
+    if (ckxsyslog >= SYSLG_PR && ckxlogging)
+      cksyslog(SYSLG_PR, 1, "server", "REMOTE CDUP", (char *)srvcmd);
+#endif /* CKSYSLOG */
+    if (!ENABLED(en_cwd)) {
+	errpkt((CHAR *)"REMOTE CD disabled");
+	RESUME;
+    } else {
+	char * p = NULL;
+	char * s = NULL;        
+#ifdef VMS
+        s = "[-]";
+#else
+#ifdef datageneral
+        s = "^";
+#else
+        s = "..";
+#endif /* datageneral */
+#endif /* VMS */
+	x = cwd(s);                     /* Try to change directory */
+#ifdef IKSDB
+	if (ikdbopen) slotstate(what,"REMOTE CD", (char *)(srvcmd+2), "");
+#endif /* IKSDB */
+	if (!x) {			/* Failed */
+	    errpkt((CHAR *)"Can't change directory");
+	    RESUME;			/* Back to server command wait */
+	} else if (x == 2) {		/* User wants message */
+	    if (!ENABLED(en_typ)) {	/* Messages (REMOTE TYPE) disabled? */
+		errpkt((CHAR *)"REMOTE TYPE disabled");
+		RESUME;
+	    } else {			/* TYPE is enabled */
+		int i;
+		for (i = 0; i < 8; i++) {
+		    if (zchki(cdmsgfile[i]) > -1) {
+			break;
+		    }
+		}
+		binary = XYFT_T;	/* Use text mode for this. */
+		if (i < 8 && sndtype(cdmsgfile[i])) { /* Have readme file? */
+		    BEGIN ssinit;	/* OK */
+		} else {		/* not OK */
+		    p = zgtdir();
+		    if (!p) p = "";
+		    success = (*p) ? 1 : 0;
+		    ack1((CHAR *)p);	/* ACK with new directory name */
+		    success = 1;
+		    RESUME;		/* wait for next server command */
+		}
+	    }
+	} else {			/* User doesn't want message */
+	    p = zgtdir();
+	    if (!p) p = "";
+	    success = (*p) ? 1 : 0;
+	    ack1((CHAR *)p);
+	    success = 1;
+	    RESUME;			/* Wait for next server command */
+	}
+    }
+#endif /* NOSERVER */
+}
+
+
 <generic>A {				/* Got REMOTE PWD command */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
@@ -1117,6 +1207,24 @@ a {
 	BEGIN ssinit;			/* try to send it */
     } else {				/* If not ok, */
 	errpkt((CHAR *)"Can't send help"); /* send error message instead */
+	RESUME;				/* and return to server command wait */
+    }
+#endif /* NOSERVER */
+}
+
+<generic>Q {				/* REMOTE STATUS */
+#ifdef CKSYSLOG
+    if (ckxsyslog >= SYSLG_PR && ckxlogging)
+      cksyslog(SYSLG_PR, 1, "server", "REMOTE STATUS", NULL);
+#endif /* CKSYSLOG */
+#ifdef IKSDB
+    if (ikdbopen) slotstate(what,"REMOTE STATUS", "", "");
+#endif /* IKSDB */
+#ifndef NOSERVER
+    if (sndstatus()) {
+	BEGIN ssinit;			/* try to send it */
+    } else {				/* If not ok, */
+	errpkt((CHAR *)"Can't send status"); /* send error message instead */
 	RESUME;				/* and return to server command wait */
     }
 #endif /* NOSERVER */
@@ -1616,6 +1724,15 @@ _PROTOTYP(int sndwho,(char *));
 	} else
 #endif /* STREAMING */
 	  ack1(msg);
+#ifdef OS2
+    } else if (ccseen) {    /* K95 auto-download canceled with Ctrl+C */
+        timint = s_timint;
+        window(1);				/* Set window size back to 1... */
+        czseen = 1;
+        ccseen = 0;             /* We've seen and responded to the Ctrl+C */
+        x = clsof(1);			/* Close file */
+        return(success = 0);		/* Failed */
+#endif /* OS2 */
     } else {				/* No interruption */
 	int rc, qf;
 #ifndef NOSPL
@@ -1630,6 +1747,20 @@ _PROTOTYP(int sndwho,(char *));
 #else
 	rc = decode(rdatap, qf ? puttrm : putfil, 1);
 #endif /* CKTUNING */
+#ifdef OS2
+    if (ccseen) {
+        /* if the user canceled an autodownload with Ctrl+C, it could cause
+         * decode to fail due to the output file being closed by trap(). Just
+         * give up here - we're not supposed to send anything in response to
+         * Ctrl+C anyway. */
+        timint = s_timint;
+        window(1);				/* Set window size back to 1... */
+        czseen = 1;
+        ccseen = 0;             /* We've seen and responded to the Ctrl+C */
+        x = clsof(1);			/* Close file */
+        return(success = 0);		/* Failed */
+    }
+#endif /* OS2 */
 	if (rc < 0) {
 	    discard = (keep == 0 || (keep == SET_AUTO && binary != XYFT_T));
 	    errpkt((CHAR *)"Error writing data"); /* If failure, */
@@ -3481,7 +3612,12 @@ _PROTOTYP( int pxyz, (int) );
     1: Extended GET processed OK - wait for another.
 */
 static int
-sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
+#ifdef CK_ANSIC
+sgetinit(int reget, int xget)
+#else
+sgetinit(reget,xget) int reget, xget; 
+#endif /* CK_ANSIC */
+{	/* Server end of GET command */
     char * fs = NULL;			/* Pointer to filespec */
     int i, n, done = 0;
 #ifdef PIPESEND

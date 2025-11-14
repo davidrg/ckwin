@@ -52,6 +52,9 @@ char * ckcuni = "Unicode support 10.0.116, 23 Sep 2022";
 #include "ckucmd.h"
 #include "ckcxla.h"
 #include "ckuxla.h"
+#include "ckuusr.h"
+#include "ckcnet.h"                     /* struct sockaddr */
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef UNICODE
 

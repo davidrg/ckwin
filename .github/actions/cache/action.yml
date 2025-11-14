@@ -1,0 +1,32 @@
+name: cache-status
+description: 'Get cache status'
+
+inputs:
+  path:
+    description: 'list of path for cache'
+    default: ''
+  key:
+    description: 'cache key'
+    default: ''
+  nocache:
+    description: 'skip cache'
+    default: ''
+outputs:
+  cache-hit:
+    description: 'output cache-hit'
+    value: ${{steps.cachecmd.outputs.cache-hit}}
+runs:
+  using: composite
+  steps:
+    - name: Cache Optional Dependencies
+      if: inputs.nocache != 'true'
+      uses: actions/cache@v4
+      id: cachecmd
+      with:
+        path: ${{inputs.path}}
+        key: ${{inputs.key}}
+    - name: output value
+      if: inputs.nocache == 'true'
+      run: |
+        echo "steps.cachecmd.outputs.cache-hit=false" >> $GITHUB_OUTPUT
+      shell: bash

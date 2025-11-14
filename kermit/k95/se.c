@@ -1,6 +1,7 @@
 //SE.CPP
 #include <windows.h>
 #include <stdio.h>
+#include <io.h>
 /*
 typedef struct _SHELLEXECUTEINFO {    
     DWORD cbSize;     
@@ -27,6 +28,15 @@ BOOL ShellExecuteEx(LPSHELLEXECUTEINFO lpExecInfo);
 
 */
 
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
+typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
+typedef unsigned long DWORD_PTR;
+#define CK_HAVE_INTPTR_T
+#endif
+
 int 
 main( int argc, char * argv[] )
 {
@@ -35,8 +45,8 @@ main( int argc, char * argv[] )
                                     (argc > 3) ? argv[3] : NULL,
                                     SW_SHOW);
 
-    if ( ((DWORD) error) <= 32 ) {
-        switch ( (DWORD) error ) {
+    if ( (intptr_t)(error) <= 32 ) {
+        switch ( (intptr_t)error ) {
         case 0:	
             printf("The operating system is out of memory or resources.\n");
             break;

@@ -1,0 +1,123 @@
+//Microsoft Visual C++ generated resource script.
+//
+//#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+//#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+#include <winver.h>
+
+#include "cknver.h"
+
+#ifdef CKF_SSHDLL_VARIANT_G
+#define VARIANT " with Kerberos support"
+#define COMMENTS ". Includes Kerberos (GSSAPI) support. Requires MIT Kerberos" \
+                 " for Windows to be installed."
+#define SPECIAL "With Kerberos Support"
+#else
+#ifdef CKF_SSHDLL_VARIANT_GX
+#define VARIANT " for Windows XP/2003 with Kerberos Support"
+#define COMMENTS ", built for Windows XP and Server 2003. Includes Kerberos" \
+                 " (GSSAPI) support. Requires MIT Kerberos for Windows to be" \
+                 " installed."
+#define SPECIAL "For Windows XP/2003, with Kerberos Support"
+#else
+#ifdef CKF_SSHDLL_VARIANT_X
+#define VARIANT " for Windows XP/2003"
+#define COMMENTS ", built for Windows XP and Server 2003."
+#define SPECIAL "For Windows XP/2003"
+#else
+#define VARIANT ""
+#define COMMENTS ""
+#endif
+#endif
+#endif
+
+#ifndef K95_SPECIALBUILD_INFO
+#ifdef SPECIAL
+#define K95_SPECIALBUILD_INFO SPECIAL
+#define K95_FF_SPECIALBUILD VS_FF_SPECIALBUILD
+#endif /* SPECIAL */
+#endif /* K95_SPECIALBUILD_INFO */
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION RC_FILE_VERSION
+ PRODUCTVERSION RC_PROD_VERSION
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ FILEFLAGS (K95_FF_DEBUG | K95_FF_DEVBUILD | K95_FF_SPECIALBUILD | K95_FF_PRIVATEBUILD)
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "libssh SSH Backend for " K95_VERSION_PRODUCT_SHORT COMMENTS "\0"
+            VALUE "CompanyName", "The Kermit Project\0"
+            VALUE "FileDescription", "libssh SSH Backend" VARIANT "\0"
+            VALUE "FileVersion", RC_FILE_VERSION_STR
+            VALUE "InternalName", "k95ssh\0"
+            VALUE "LegalCopyright", "(C) Copyright 2022-" K95_VERSION_YEAR " David Goodwin\0"
+            VALUE "OriginalFilename", "k95ssh.dll\0"
+            VALUE "ProductName", K95_VERSION_PRODUCT "\0"
+            VALUE "ProductVersion", RC_PROD_VERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -1,0 +1,60 @@
+--- makefile.win.vc	2025-03-21 16:10:09.000000000 +1300
++++ Makefile.win.vc	2025-08-01 17:04:05.249364000 +1200
+@@ -34,6 +34,14 @@
+ MACH=x64
+ MMACH=AMD64
+ BITS=64
++!elseif $(TARGET_CPU) == "arm32"
++LARCH=w32
++BARCH=W32
++WARCH=win32
++BWARCH=WIN32
++MACH=arm
++MMACH=ARM
++BITS=32
+ !elseif $(TARGET_CPU) == "arm64"
+ LARCH=arm64
+ BARCH=WARM64
+@@ -269,7 +277,7 @@
+ #
+ .SUFFIXES:
+ 
+-all : how trexx.exe rexx.exe rexx.lib $(SHL_TARGETS) rxstack.exe rxqueue.exe threader.exe execiser.exe
++all : how rexx.exe rexx.lib $(SHL_TARGETS) rxstack.exe rxqueue.exe threader.exe execiser.exe
+ 
+ how:
+ 	echo nmake -f $(SRCDIR)\makefile.win.vc DEBUG=$(DEBUG) TRACEMEM=$(TRACEMEM) FLISTS=$(FLISTS) SOCKET=$(SOCKET) ^%1 ^%2 > rebuild.bat
+@@ -278,12 +286,6 @@
+ 
+ $(SRCDIR)/rexx.h : $(SRCDIR)/extern.h $(SRCDIR)/strengs.h $(SRCDIR)/defs.h $(SRCDIR)/regina_t.h $(SRCDIR)/mt.h
+ 
+-#
+-# trexx.exe is a temporary Rexx interpreter used to update version
+-# information in .rc files
+-trexx.exe : $(OFILES) rexx.obj nosaa.obj
+-   $(LD) /PDB:$*.pdb $(LINKOPT) /STACK:0x10000000 $(STATIC_LDFLAGS) /OUT:trexx.exe $(OFILES) rexx.obj nosaa.obj $(LIBS) $(WINSOCK)
+-
+ rexx.exe : $(OFILES) rexx.obj rexx$(LARCH)exe.obj nosaa.obj rexx.exe.mf
+    $(LD) /PDB:$*.pdb $(LINKOPT) /STACK:0x10000000 $(STATIC_LDFLAGS) /OUT:rexx.exe $(OFILES) rexx.obj rexx$(LARCH)exe.obj nosaa.obj $(LIBS) $(WINSOCK)
+ !if "$(HAVE_MT)" == "Y"
+@@ -826,15 +828,15 @@
+ # Rules for resource files and version details
+ # We use the temporary rexx executable; trexx.exe
+ #
+-.\reginadll.rc: trexx.exe $(SRCDIR)\regina.ver $(SRCDIR)\reginawindll.rc
++.\reginadll.rc: $(SRCDIR)\regina.ver $(SRCDIR)\reginawindll.rc
+    .\trexx $(COMMONSRCDIR)\fixrc.rexx $(SRCDIR)\reginawindll.rc $@ $(VERDOT) $(MACH) regina $(VERDATE)
+-.\reginaexe.rc: trexx.exe $(SRCDIR)\regina.ver $(SRCDIR)\reginawinexe.rc
++.\reginaexe.rc: $(SRCDIR)\regina.ver $(SRCDIR)\reginawinexe.rc
+    .\trexx $(COMMONSRCDIR)\fixrc.rexx $(SRCDIR)\reginawinexe.rc $@ $(VERDOT) $(MACH) regina $(VERDATE)
+-.\rxstackexe.rc: trexx.exe $(SRCDIR)\regina.ver $(SRCDIR)\rxstackwinexe.rc
++.\rxstackexe.rc: $(SRCDIR)\regina.ver $(SRCDIR)\rxstackwinexe.rc
+    .\trexx $(COMMONSRCDIR)\fixrc.rexx $(SRCDIR)\rxstackwinexe.rc $@ $(VERDOT) $(MACH) regina $(VERDATE)
+-.\rxqueueexe.rc: trexx.exe $(SRCDIR)\regina.ver $(SRCDIR)\rxqueuewinexe.rc
++.\rxqueueexe.rc: $(SRCDIR)\regina.ver $(SRCDIR)\rxqueuewinexe.rc
+    .\trexx $(COMMONSRCDIR)\fixrc.rexx $(SRCDIR)\rxqueuewinexe.rc $@ $(VERDOT) $(MACH) regina $(VERDATE)
+-.\rexxexe.rc: trexx.exe $(SRCDIR)\regina.ver $(SRCDIR)\rexxwinexe.rc
++.\rexxexe.rc: $(SRCDIR)\regina.ver $(SRCDIR)\rexxwinexe.rc
+    .\trexx $(COMMONSRCDIR)\fixrc.rexx $(SRCDIR)\rexxwinexe.rc $@ $(VERDOT) $(MACH) regina $(VERDATE)
+ 
+ #

@@ -16,6 +16,7 @@
 #include "ikextern.h"
 #include "ikcmd.h"
 
+int mlook( struct mtab [], char *, int );
 extern int local, xitwarn, ttyfd;
 extern char ttname[];			/* Communication device name */
 extern BYTE vmode;
@@ -127,8 +128,8 @@ extern char
   answerback[],
   sesfil[];
 
-extern unsigned char
-  colornormal, colorunderline, colorstatus,
+extern cell_video_attr_t
+  colornormal, colorunderline, colorstatus, colorblink, colorbold,
   colorhelp,   colorselect,    colorborder, coloritalic;
 
 extern int
@@ -146,11 +147,11 @@ extern int
   tt_arrow,
   tt_bell,
   tt_ctstmo,
-  tt_cols,
+  tt_cols[],
   tt_cursor,
-  tt_roll,
-  tt_rows,
-  tt_scrsize,
+  tt_roll[],
+  tt_rows[],
+  tt_scrsize[],
   tt_type,
   tt_type_mode,
   tt_updmode,
@@ -189,10 +190,10 @@ gstring(int n) {
 char *
 getVar(unsigned int idx) {
 
-    int flags = (idx & 0xf0000000) >> 28;
+    /*int flags = (idx & 0xf0000000) >> 28;
     int type  = (idx & 0x0f000000) >> 24;
     int group = (idx & 0x00ff0000) >> 16;
-    int index = (idx & 0x0000ffff);
+    int index = (idx & 0x0000ffff);*/
     char * s;
     int i;
 
@@ -301,47 +302,49 @@ getVar(unsigned int idx) {
             break;
 
         case TERM_COLOR_BORDER:
-            strcpy(buf,colors[colorborder & 0x0f]);
+            strcpy(buf,cell_video_attr_foreground_color_name(colorborder));
             break;
 
         case TERM_COLOR_CURSOR:
             break;
 
         case TERM_COLOR_HELP:
-            strcpy(buf,colors[colorhelp & 0x0f]);
+            strcpy(buf,cell_video_attr_foreground_color_name(colorhelp));
             strcat(buf,",");
-            strcat(buf,colors[colorhelp >> 4]);
+            strcat(buf,cell_video_attr_background_color_name(colorhelp));
             break;
 
         case TERM_COLOR_SELECTION:
-            strcpy(buf,colors[colorselect & 0x0f]);
+            strcpy(buf,cell_video_attr_foreground_color_name(colorselect));
             strcat(buf,",");
-            strcat(buf,colors[colorselect >> 4]);
+            strcat(buf,cell_video_attr_background_color_name(colorselect));
             break;
 
         case TERM_COLOR_STATUS:
-            strcpy(buf,colors[colorstatus & 0x0f]);
+            strcpy(buf,cell_video_attr_foreground_color_name(colorstatus));
             strcat(buf,",");
-            strcat(buf,colors[colorstatus >> 4]);
+            strcat(buf,cell_video_attr_background_color_name(colorstatus));
             break;
 
         case TERM_COLOR_TERM:
-            strcpy(buf,colors[colornormal & 0x0f]);
+            strcpy(buf,cell_video_attr_foreground_color_name(colornormal));
             strcat(buf,",");
-            strcat(buf,colors[colornormal >> 4]);
+            strcat(buf,cell_video_attr_background_color_name(colornormal));
             break;
 
         case TERM_COLOR_UNDERLINE:
-            strcpy(buf,colors[colorunderline & 0x0f]);
+            strcpy(buf,cell_video_attr_foreground_color_name(colorunderline));
             strcat(buf,",");
-            strcat(buf,colors[colorunderline >> 4]);
+            strcat(buf,cell_video_attr_background_color_name(colorunderline));
             break;
 
-       case TERM_COLOR_ITALIC:
-        strcpy(buf,colors[coloritalic & 0x0f]);
-        strcat(buf,",");
-        strcat(buf,colors[coloritalic >> 4]);
-        break;
+        case TERM_COLOR_ITALIC:
+            strcpy(buf,cell_video_attr_foreground_color_name(coloritalic));
+            strcat(buf,",");
+            strcat(buf,cell_video_attr_background_color_name(coloritalic));
+            break;
+
+        /* TODO: TERM_COLOR_BLINK */
 
         case TERM_CPLIST: {
             int cplist[8], cps;
@@ -396,7 +399,7 @@ getVar(unsigned int idx) {
             break;
 
         case TERM_HEIGHT:
-            _itoa( tt_rows, buf, 10 );
+            _itoa( tt_rows[vmode], buf, 10 );
             break;
 
         case TERM_ID:
@@ -437,7 +440,7 @@ getVar(unsigned int idx) {
             break;
 
         case TERM_SCRSIZE:
-            _itoa( tt_scrsize, buf, 10 );
+            _itoa( tt_scrsize[vmode], buf, 10 );
             break;
 
         case TERM_SESFIL:
@@ -465,7 +468,7 @@ getVar(unsigned int idx) {
             break;
 
         case TERM_WIDTH:
-            _itoa( tt_cols, buf, 10 );
+            _itoa( tt_cols[vmode], buf, 10 );
             break;
 
         case TERM_WRAP:

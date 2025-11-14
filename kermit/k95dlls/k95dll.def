@@ -1,0 +1,18 @@
+LIBRARY    k95dll.dll
+                                  
+EXPORTS                           
+  netopen
+  netclos
+  nettchk
+  netflui
+  netbreak
+  netinc
+  netxin
+  nettoc
+  nettol
+  ttvt
+  ttres
+  ttpkt
+  terminfo
+  version
+  errorstr

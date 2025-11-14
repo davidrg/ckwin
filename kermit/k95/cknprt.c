@@ -14,6 +14,10 @@
 HANDLE hPrinter=NULL;
 DWORD  dwJob=0;
 
+typedef BOOL (WINAPI * p_GetDefaultPrinter_t)( LPTSTR pszBuffer,   // printer name buffer
+LPDWORD pcchBuffer  // size of name buffer
+);
+
 int
 Win32PrtOpen( char * prtname )
 {
@@ -187,6 +191,7 @@ Win32PrtFile( char * filename, char * prtname )
     {
         EndDocPrinter( hPrinter );
         ClosePrinter( hPrinter );
+        CloseHandle( hFile );
         return FALSE;
     }
     // Inform the spooler that the document is ending
@@ -237,13 +242,12 @@ Win32EnumPrt( struct keytab ** pTable, struct keytab ** pTable2,
 {
     DWORD  dwBytesNeeded;
     DWORD  dwPrtRet2;
-    DWORD  dwMaxPrt;
     LPTSTR lpName = NULL;
     DWORD  dwEnumFlags = PRINTER_ENUM_LOCAL;
     DWORD  dwLevel = 2;
     LPPRINTER_INFO_1 pPrtInfo1=NULL;
     LPPRINTER_INFO_2 pPrtInfo2=NULL;
-    int i, n, rc ;
+    int i, rc ;
     CHAR   szDefault[256]="";
     int    iDefault = -1;
 
@@ -256,8 +260,8 @@ Win32EnumPrt( struct keytab ** pTable, struct keytab ** pTable2,
         if ( hWinSpool == INVALID_HANDLE_VALUE )
             hWinSpool = LoadLibrary("winspool.drv");
         if ( hWinSpool != INVALID_HANDLE_VALUE )
-            (FARPROC) p_GetDefaultPrinter =
-                GetProcAddress( hWinSpool, "GetDefaultPrinterA" );
+            p_GetDefaultPrinter =
+                (p_GetDefaultPrinter_t)GetProcAddress( hWinSpool, "GetDefaultPrinterA" );
     }
 
     if ( p_GetDefaultPrinter ) {

@@ -8,7 +8,7 @@
 #include "ikcmd.h"
 #include "ikextern.h"
 
-KFileStatus* filestatus = 0;    // global file status
+KFileStatus* filestatusdlg = 0;    // global file status
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -92,7 +92,7 @@ void Kui::start()
             case WM_SYSKEYUP:
                 {
 #ifndef COMMENT
-                con_event evt = mapkey(msg.wParam | KEY_ALT);
+                con_event evt = mapkey((UINT)msg.wParam | KEY_ALT);
                 if ( os2gks && (evt.type == error ) )
 #endif /* COMMENT */
                     TranslateMessage( (LPMSG) &msg );
@@ -120,7 +120,7 @@ void Kui::savePositions()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void Kui::setProperty( int propid, long param1, long param2 )
+void Kui::setProperty( int propid, intptr_t param1, intptr_t param2 )
 {
     switch( propid )
     {
@@ -152,7 +152,7 @@ void Kui::setProperty( int propid, long param1, long param2 )
             case CW_ERR:   /* Error message */
             case CW_MSG: { /* Info message */
                 char* c = newstr( (char*)param2 );
-                param2 = (long) c;
+                param2 = (intptr_t) c;
                 break;
             }
             }
@@ -186,7 +186,7 @@ void Kui::setProperty( int propid, long param1, long param2 )
         if( terminal ) {
             for ( int i=0; i<ntermfont; i++ ) {
                 if ( term_font[i].kwval == param1 ) {
-                    KFont * kfont = new KFont(term_font[i].kwd,param2);
+                    KFont * kfont = new KFont(term_font[i].kwd,(int)param2);
                     terminal->setKFont(kfont);
                     terminal->setFont( term_font[i].kwd, 
                                        kfont->getFontPointsH());
@@ -197,42 +197,33 @@ void Kui::setProperty( int propid, long param1, long param2 )
 
     case KUI_TERM_CMASK:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
             if ( param1 == 7 ) {
-                menu->setCheck(ID_ACTION_7BIT);
-                menu->unsetCheck(ID_ACTION_8BIT);
+                terminal->setMenuItemChecked(ID_ACTION_7BIT, TRUE);
+                terminal->setMenuItemChecked(ID_ACTION_8BIT, FALSE);
             } else if ( param1 == 8 ) {
-                menu->unsetCheck(ID_ACTION_7BIT);
-                menu->setCheck(ID_ACTION_8BIT);
+                terminal->setMenuItemChecked(ID_ACTION_7BIT, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_8BIT, TRUE);
             }
         }
         break;
 
     case KUI_TERM_AUTODOWNLOAD:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
 #ifdef COMMENT
-            if ( param1 )
-                menu->setCheck(ID_ACTION_AUTODOWNLOAD);
-            else
-                menu->unsetCheck(ID_ACTION_AUTODOWNLOAD);
+            terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD, param1)
 #else /* COMMENT */
             if ( param1 == 1 ) {
-                menu->setCheck(ID_ACTION_AUTODOWNLOAD_ON);
-                menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_OFF);
-                menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_ASK);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ON, TRUE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ASK, FALSE);
             } else if ( param1 == 2 ){
-                menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_ON);
-                menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_OFF);
-                menu->setCheck(ID_ACTION_AUTODOWNLOAD_ASK);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ON, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ASK, TRUE);
             } else {
-                menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_ON);
-                menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_OFF);
-                menu->setCheck(ID_ACTION_AUTODOWNLOAD_ASK);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ON, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ASK, TRUE);
             }
 #endif /* COMMENT */
         }
@@ -240,146 +231,94 @@ void Kui::setProperty( int propid, long param1, long param2 )
 
     case KUI_TERM_CAPTURE:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
-            if ( param1 )
-                menu->setCheck(ID_ACTION_CAPTURE);
-            else
-                menu->unsetCheck(ID_ACTION_CAPTURE);
+            terminal->setMenuItemChecked(ID_ACTION_CAPTURE, param1);
         }
         break;
 
     case KUI_TERM_PRINTERCOPY:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
-            if ( param1 )
-                menu->setCheck(ID_ACTION_PRINTERCOPY);
-            else
-                menu->unsetCheck(ID_ACTION_PRINTERCOPY);
+            terminal->setMenuItemChecked(ID_ACTION_PRINTERCOPY, param1);
         }
         break;
 
     case KUI_TERM_DEBUG:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
-            if ( param1 )
-                menu->setCheck(ID_ACTION_DEBUG);
-            else
-                menu->unsetCheck(ID_ACTION_DEBUG);
+            terminal->setMenuItemChecked(ID_ACTION_DEBUG, param1);
         }
         break;
 
     case KUI_TERM_PCTERM:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
-            if ( param1 )
-                menu->setCheck(ID_ACTION_PCTERM);
-            else
-                menu->unsetCheck(ID_ACTION_PCTERM);
+            terminal->setMenuItemChecked(ID_ACTION_PCTERM, param1);
         }
         break;
 
     case KUI_TERM_KEYCLICK:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
-            if ( param1 )
-                menu->setCheck(ID_ACTION_KEYCLICK);
-            else
-                menu->unsetCheck(ID_ACTION_KEYCLICK);
+            terminal->setMenuItemChecked(ID_ACTION_KEYCLICK, param1);
         }
         break;
 
     case KUI_TERM_RESIZE:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
             if ( param1 == 0 ) {
-                menu->unsetCheck(ID_ACTION_RESIZE_FONT);
-                menu->unsetCheck(ID_ACTION_RESIZE_DIMENSION);
+                terminal->setMenuItemChecked(ID_ACTION_RESIZE_FONT, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_RESIZE_DIMENSION, FALSE);
             } else if ( param1 == 1 ) {
-                menu->setCheck(ID_ACTION_RESIZE_FONT);
-                menu->unsetCheck(ID_ACTION_RESIZE_DIMENSION);
+                terminal->setMenuItemChecked(ID_ACTION_RESIZE_FONT, TRUE);
+                terminal->setMenuItemChecked(ID_ACTION_RESIZE_DIMENSION, FALSE);
             } else if ( param1 == 2 ){
-                menu->unsetCheck(ID_ACTION_RESIZE_FONT);
-                menu->setCheck(ID_ACTION_RESIZE_DIMENSION);
+                terminal->setMenuItemChecked(ID_ACTION_RESIZE_FONT, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_RESIZE_DIMENSION, TRUE);
             }
         }
         break;
 
     case KUI_TERM_URL_HIGHLIGHT:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
-            if ( param1 ) {
-                menu->setCheck(ID_ACTION_URL_HIGHLIGHT);
-            } else {
-                menu->unsetCheck(ID_ACTION_URL_HIGHLIGHT);
-            }
+            terminal->setMenuItemChecked(ID_ACTION_URL_HIGHLIGHT, param1);
         }
         break;
 
     case KUI_AUTO_LOCUS:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
             if ( param1 == 1 ) {
-                menu->setCheck(ID_ACTION_AUTO_LOCUS_ON);
-                menu->unsetCheck(ID_ACTION_AUTO_LOCUS_OFF);
-                menu->unsetCheck(ID_ACTION_AUTO_LOCUS_ASK);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ON, TRUE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ASK, FALSE);
             } else if ( param1 == 2 ){
-                menu->unsetCheck(ID_ACTION_AUTO_LOCUS_ON);
-                menu->unsetCheck(ID_ACTION_AUTO_LOCUS_OFF);
-                menu->setCheck(ID_ACTION_AUTO_LOCUS_ASK);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ON, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ASK, TRUE);
             } else {
-                menu->unsetCheck(ID_ACTION_AUTO_LOCUS_ON);
-                menu->unsetCheck(ID_ACTION_AUTO_LOCUS_OFF);
-                menu->setCheck(ID_ACTION_AUTO_LOCUS_ASK);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ON, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ASK, TRUE);
             }
         }
         break;
 
     case KUI_EXIT_WARNING:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
             if ( param1 == 1 ) {
-                menu->setCheck(ID_ACTION_WARNING_ON);
-                menu->unsetCheck(ID_ACTION_WARNING_OFF);
-                menu->unsetCheck(ID_ACTION_WARNING_ALWAYS);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_ON, TRUE);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_ALWAYS, FALSE);
             } else if ( param1 == 2 ){
-                menu->unsetCheck(ID_ACTION_WARNING_ON);
-                menu->unsetCheck(ID_ACTION_WARNING_OFF);
-                menu->setCheck(ID_ACTION_WARNING_ALWAYS);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_ON, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_ALWAYS, TRUE);
             } else {
-                menu->unsetCheck(ID_ACTION_WARNING_ON);
-                menu->unsetCheck(ID_ACTION_WARNING_OFF);
-                menu->setCheck(ID_ACTION_WARNING_ALWAYS);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_ON, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_OFF, FALSE);
+                terminal->setMenuItemChecked(ID_ACTION_WARNING_ALWAYS, TRUE);
             }
         }
         break;
 
     case KUI_GUI_DIALOGS:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
-            if ( !menu )
-                break;
-            if ( param1 )
-                menu->setCheck(ID_ACTION_GUI_DIALOGS);
-            else
-                menu->unsetCheck(ID_ACTION_GUI_DIALOGS);
+            terminal->setMenuItemChecked(ID_ACTION_GUI_DIALOGS, param1);
         }
         break;
 
@@ -396,6 +335,21 @@ void Kui::setProperty( int propid, long param1, long param2 )
                 terminal->disableToolbar();  // need to disable toolbar
         }
         break;
+    case KUI_GUI_TOOLBAR_VIS:
+        if ( terminal ) {
+            terminal->setToolbarVisible(param1);  // need to hide toolbar
+        }
+        break;
+    case KUI_GUI_STATBAR_VIS:
+        if ( terminal ) {
+            terminal->setStatusbarVisible(param1);  // need to hide statusbar
+        }
+        break;
+    case KUI_GUI_MENUBAR_VIS:
+        if ( terminal ) {
+            terminal->setMenubarVisible(param1);  // need to hide menubar
+        }
+        break;
 
     case KUI_GUI_MENUBAR:
         if ( terminal ) {
@@ -406,14 +360,10 @@ void Kui::setProperty( int propid, long param1, long param2 )
 
     case KUI_LOCUS:
         if ( terminal ) {
-            KMenu * menu = terminal->getMenu();
             KToolBar * toolbar = terminal->getToolbar();
-            if ( !menu && !toolbar )
-                break;
             if ( param1) {
                 terminal->setStatusText(STATUS_LOCUS,"Locus: Local");
-                if ( menu )
-                    menu->setCheck(ID_ACTION_LOCUS);
+                terminal->setMenuItemChecked(ID_ACTION_LOCUS, TRUE);
 #ifndef NOTOOLBAR
                 if ( toolbar )
                     SendMessage(toolbar->hwnd(),
@@ -422,8 +372,7 @@ void Kui::setProperty( int propid, long param1, long param2 )
 #endif
             } else {
                 terminal->setStatusText(STATUS_LOCUS,"Locus: Remote");
-                if ( menu )
-                    menu->unsetCheck(ID_ACTION_LOCUS);
+                terminal->setMenuItemChecked(ID_ACTION_LOCUS, FALSE);
 #ifndef NOTOOLBAR
                 if ( toolbar )
                     SendMessage(toolbar->hwnd(),
@@ -441,13 +390,22 @@ void Kui::setProperty( int propid, long param1, long param2 )
 }
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void Kui::getProperty( int propid, long param1, long param2 )
+int Kui::getProperty( int propid, void* out )
 {
+    switch (propid) {
+#ifndef NOTOOLBAR
+        case KUI_GUI_TOOLBAR_VIS:
+            return terminal->getToolbarVisible();
+#endif /* NOTOOLBAR */
+        default:
+            return 0;
+    }
+    return 0;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool Kui::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     KWin* win = kglob->hwndset->find( hwnd );
@@ -471,8 +429,18 @@ Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
     case WM_REQUEST_CLOSE_KERMIT:
         {
+            /* Calling hupok() from here will just hang forever if GUI Dialogs
+             * are disabled as it calls uq_ok which will try to get input from
+             * the user on VCMD, and if we're sitting here calling hupok() then
+             * we're not processing other events (like keyboard input) for the
+             * window. So as a workaround, just force GUI Dialogs on for the
+             * call to hupok(). */
+            int gui_dlg = gui_dialog;
+            gui_dialog = 1;
+
             // close down ckermit
             Bool hangupOK = hupok(0);
+            gui_dialog = gui_dlg;
             if( hangupOK ) {
                 if( terminal )
                     terminal->show( FALSE );
@@ -494,7 +462,7 @@ Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
     case WM_GOTO_FILETRANSFER_WINDOW:
         {
-            if( !filestatus && terminal ) {
+            if( !filestatusdlg && terminal ) {
                 // repost the first message that triggered the create
                 // because it gets discarded for some reason...
                 // probably DialogBox() in KFileStatus
@@ -503,13 +471,13 @@ Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                         , wParam, lParam );
 
                 terminal->show();
-                filestatus = new KFileStatus( kglob );
-                filestatus->createWin( terminal );
-                filestatus->show();
+                filestatusdlg = new KFileStatus( kglob );
+                filestatusdlg->createWin( terminal );
+                filestatusdlg->show();
                 break;
             }
 
-            filestatus->setProperty( wParam, lParam );
+            filestatusdlg->setProperty( (UINT)wParam, lParam );
 
             switch( wParam )
             {
