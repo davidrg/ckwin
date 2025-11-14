@@ -1368,7 +1368,7 @@ getTextHtml: procedure expose g. toc. badgeSet. settings. refSet. k95info.
 doTextHtmlWithChildren: procedure expose g. toc. badgeSet. settings. refSet. k95info.
     parse arg el, openTag, closeTag
 
-    result = openTag
+    result = ''
 
     child = getFirstChild(el)
     do while child <> ''
@@ -1377,7 +1377,15 @@ doTextHtmlWithChildren: procedure expose g. toc. badgeSet. settings. refSet. k95
         child = getNextSibling(child)
     end
 
-    result = result''closeTag
+    if openTag = '<tt>' then do
+        result = changestr("&lt;",result,"<")
+        result = changestr("&gt;",result,">")
+        result = changestr("&amp;",result,"&")
+        result = changestr('&quot;',result,'"')
+        result = changestr("&apos;",result,"'")
+    end
+
+    result = openTag''result''closeTag
 
     return result
 
