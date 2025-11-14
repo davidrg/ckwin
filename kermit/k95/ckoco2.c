@@ -2018,6 +2018,31 @@ VscrnScrollUp( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
 }
 
 /*---------------------------------------------------------------------------*/
+/* vtattrib_to_int                                          | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* Converts the vtattrib struct into a USHORT for storage in the vscreen
+ * buffer */
+USHORT vtattrib_to_int(vtattrib vta) {
+	USHORT attr;
+
+	attr = VT_CHAR_ATTR_NORMAL |
+                (vta.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
+                (vta.dim        ? VT_CHAR_ATTR_DIM       : 0) |
+                (vta.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
+                (vta.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
+                (vta.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
+                (vta.italic     ? VT_CHAR_ATTR_ITALIC    : 0) |
+                (vta.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
+                (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
+                (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
+                (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
+                (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
+                (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
+
+	return attr;
+}
+
+/*---------------------------------------------------------------------------*/
 /* VscrnWrtCell                                             | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
 USHORT
@@ -2048,19 +2073,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
     }
 
     line->cells[Col] = Cell ;
-    line->vt_char_attrs[Col] = VT_CHAR_ATTR_NORMAL |
-        (att.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
-        (att.dim        ? VT_CHAR_ATTR_DIM       : 0) |
-        (att.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
-        (att.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
-        (att.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
-        (att.italic     ? VT_CHAR_ATTR_ITALIC    : 0) |
-        (att.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
-        (att.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
-        (att.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
-        (att.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
-        (att.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
-        (att.wyseattr   ? WY_CHAR_ATTR         : 0) ;
+    line->vt_char_attrs[Col] = vtattrib_to_int(att);
     line->hyperlinks[Col] = att.hyperlink ? att.linkid : 0;
     return NO_ERROR ;
 }
@@ -2641,19 +2654,7 @@ VscrnSetVtCharAttr( BYTE vmode, SHORT x, SHORT y, vtattrib vta )
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    attr = VT_CHAR_ATTR_NORMAL |
-                (vta.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
-                (vta.dim        ? VT_CHAR_ATTR_DIM       : 0) |
-                (vta.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
-                (vta.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
-                (vta.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
-                (vta.italic     ? VT_CHAR_ATTR_ITALIC    : 0) | 
-                (vta.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
-                (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
-                (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
-                (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
-                (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
-                (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
+    attr = vtattrib_to_int(vta);
     line = VscrnGetLineFromTop(vmode,y,FALSE);
     line->vt_char_attrs[x] = attr;
     line->hyperlinks[x] = vta.linkid;

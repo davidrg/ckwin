@@ -1728,6 +1728,8 @@ _PROTOTYP(ULONG cell_video_attr_background_rgb, (cell_video_attr_t));
 _PROTOTYP(ULONG* palette_rgb_table, (int));
 _PROTOTYP(unsigned char palette_max_index, (int));
 
+_PROTOTYP(USHORT vtattrib_to_int,(vtattrib));
+
 typedef struct _hyperlink {
     int index;
     int type;

@@ -17366,6 +17366,60 @@ set_term_height(int rows) {
     }
 }
 
+/* Gets the VT525 Alternate Colour index to use when the terminal is in
+ * Alternate Color mode. */
+int get_alternate_color_index(USHORT vtattr) {
+    if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                (vtattr & VT_CHAR_ATTR_BLINK) &&
+                (vtattr & VT_CHAR_ATTR_REVERSE) &&
+                (vtattr & VT_CHAR_ATTR_BOLD))
+        return 15;
+    else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                (vtattr & VT_CHAR_ATTR_BLINK) &&
+                (vtattr & VT_CHAR_ATTR_REVERSE))
+        return 14;
+    else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                (vtattr & VT_CHAR_ATTR_BLINK) &&
+                (vtattr & VT_CHAR_ATTR_BOLD))
+        return 13;
+    else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                (vtattr & VT_CHAR_ATTR_REVERSE ) &&
+                (vtattr & VT_CHAR_ATTR_BOLD))
+        return 12;
+    else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                (vtattr & VT_CHAR_ATTR_REVERSE) &&
+                (vtattr & VT_CHAR_ATTR_BOLD))
+        return 11;
+    else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                (vtattr & VT_CHAR_ATTR_BLINK))
+        return 10;
+    else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                (vtattr & VT_CHAR_ATTR_REVERSE))
+        return 9;
+    else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                (vtattr & VT_CHAR_ATTR_REVERSE))
+        return 8;
+    else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                (vtattr & VT_CHAR_ATTR_BOLD))
+        return 7;
+    else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                (vtattr & VT_CHAR_ATTR_BOLD))
+        return 6;
+    else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
+                (vtattr & VT_CHAR_ATTR_BOLD))
+        return 5;
+    else if (vtattr & VT_CHAR_ATTR_BLINK)
+        return 4;
+    else if (vtattr & VT_CHAR_ATTR_UNDERLINE)
+        return 3;
+    else if (vtattr & VT_CHAR_ATTR_REVERSE)
+        return 2;
+    else if (vtattr & VT_CHAR_ATTR_BOLD)
+        return 1;
+
+	return 0;
+}
+
 cell_video_attr_t
 ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 {
@@ -17451,56 +17505,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
                color mode. This is really only here for VT525-compatibility.
              */
 
-            int idx;
-
-            if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                        (vtattr & VT_CHAR_ATTR_BLINK) &&
-                        (vtattr & VT_CHAR_ATTR_REVERSE) &&
-                        (vtattr & VT_CHAR_ATTR_BOLD))
-                idx = 15;
-            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                        (vtattr & VT_CHAR_ATTR_BLINK) &&
-                        (vtattr & VT_CHAR_ATTR_REVERSE))
-                idx = 14;
-            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                        (vtattr & VT_CHAR_ATTR_BLINK) &&
-                        (vtattr & VT_CHAR_ATTR_BOLD))
-                idx = 13;
-            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-                        (vtattr & VT_CHAR_ATTR_REVERSE ) &&
-                        (vtattr & VT_CHAR_ATTR_BOLD))
-                idx = 12;
-            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                        (vtattr & VT_CHAR_ATTR_REVERSE) &&
-                        (vtattr & VT_CHAR_ATTR_BOLD))
-                idx = 11;
-            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                        (vtattr & VT_CHAR_ATTR_BLINK))
-                idx = 10;
-            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-                        (vtattr & VT_CHAR_ATTR_REVERSE))
-                idx = 9;
-            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                        (vtattr & VT_CHAR_ATTR_REVERSE))
-                idx = 8;
-            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-                        (vtattr & VT_CHAR_ATTR_BOLD))
-                idx = 7;
-            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                        (vtattr & VT_CHAR_ATTR_BOLD))
-                idx = 6;
-            else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
-                        (vtattr & VT_CHAR_ATTR_BOLD))
-                idx = 5;
-            else if (vtattr & VT_CHAR_ATTR_BLINK)
-                idx = 4;
-            else if (vtattr & VT_CHAR_ATTR_UNDERLINE)
-                idx = 3;
-            else if (vtattr & VT_CHAR_ATTR_REVERSE)
-                idx = 2;
-            else if (vtattr & VT_CHAR_ATTR_BOLD)
-                idx = 1;
-            else idx = 0;
+            int idx = get_alternate_color_index(vtattr);
 
 #ifndef KUI
             /* In console builds, color indexes are passed straight to the
@@ -17510,10 +17515,8 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
              * converting from one palette to the other lets us handle the host
              * changing the contents of the palette.
              */
-            {
-                colorval = cell_video_attr_to_palette(CK_PALETTE_VT525_A,
+            colorval = cell_video_attr_to_palette(CK_PALETTE_VT525_A,
                     decatc_colors[idx]);
-            }
 #else
             /* In KUI builds, DECSTGLT switches to a compatible color palette
              * so everything just works even though the color indexes are
@@ -22592,15 +22595,37 @@ vtcsi(void)
                                         reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
 #else
                                         reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
-#endif 
+#endif
                                     }
                                 }
                             break;
                         default:
                             break;
-                        }
+                        } /* switch...*/
+					} /* for... */
+
+					if (ISVT525(tt_type_mode) && decstglt == DECSTGLT_ALTERNATE) {
+						/* The VT525 apparently assigns alternate colour palette
+						 * indicies to the default attribute after processing SGR
+						 * sequences when in Alternate Color Mode. It doesn't
+						 * actually *obey* colour attributes while in this mode,
+						 * but the effect should be visible in DECRQCRA and also
+						 * after switching out of Alternate Color Mode */
+						/* TODO: Confirm if this should happen on *all* SGR
+						 * 		 sequences, or just when, certain attribute are
+						 * 		 updated */
+						int idx = get_alternate_color_index(
+							vtattrib_to_int(attrib));
+#ifndef KUI
+            			attribute = cell_video_attr_to_palette(
+							CK_PALETTE_VT525_A, decatc_colors[idx]);
+#else
+
+            			attribute = decatc_colors[idx];
+#endif /* KUI */
+						reverseattribute = byteswapcolors(attribute);
 					}
-                }
+                } /* SGR */
                 break;
             case 'r':   /* Proprietary */
                 if ( ISH19(tt_type) ) {
