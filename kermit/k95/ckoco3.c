@@ -17374,6 +17374,36 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
     static USHORT _vtattr=0x00;
 	static int _decstglt=100;
 
+    if (decstglt == DECSTGLT_MONO) {
+#ifndef KUI
+        /* Non-KUI builds can't display colours from the VT525 Mono palette, so
+         * we need to convert to the nearest colour in current fixed palette */
+        colorattr = cell_video_attr_to_palette(CK_PALETTE_VT525_M, colorattr);
+#endif /* KUI */
+#ifdef CK_COLORS_24BIT
+        /* RGB colors don't use the palette, so switching palettes doesn't
+         * affect them. So we must affect them manually! */
+        if (!cell_video_attr_fg_is_indexed(colorattr)) {
+            int fg = nearest_palette_color_rgb(
+                CK_PALETTE_VT525_M,
+                cell_video_attr_fg_rgb_r(colorattr),
+                cell_video_attr_fg_rgb_g(colorattr),
+                cell_video_attr_fg_rgb_b(colorattr));
+
+            colorattr = cell_video_attr_set_fg_color(colorattr, fg);
+        }
+        if (!cell_video_attr_bg_is_indexed(colorattr)) {
+            int bg = nearest_palette_color_rgb(
+                CK_PALETTE_VT525_M,
+                cell_video_attr_bg_rgb_r(colorattr),
+                cell_video_attr_bg_rgb_g(colorattr),
+                cell_video_attr_bg_rgb_b(colorattr));
+
+            colorattr = cell_video_attr_set_bg_color(colorattr, bg);
+		}
+#endif /* CK_COLORS_24BIT */
+    }
+
     if (cell_video_attr_equal(_colorattr, colorattr)
            && vtattr == _vtattr && decstglt == _decstglt)
         goto done;
@@ -17381,14 +17411,6 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
     colorval = _colorattr = colorattr;
     _vtattr = vtattr;
 	_decstglt = decstglt;
-
-#ifndef KUI
-    if (decstglt == DECSTGLT_MONO) {
-        /* Non-KUI builds can't display colours from the VT525 Mono palette, so
-         * we need to convert to the nearest colour in current fixed palette */
-        colorval = cell_video_attr_to_palette(CK_PALETTE_VT525_M, colorval);
-    }
-#endif /* KUI */
 
     if (vtattr == VT_CHAR_ATTR_NORMAL && decstglt != DECSTGLT_ALTERNATE)
         goto done;
