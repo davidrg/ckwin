@@ -12,8 +12,8 @@
 <p>
 
 <big><big>K</big></big>ermit 95<b>:</b> Powerful, flexible, customizable,
-secure 32-bit communications software for Microsoft Windows, now in open source
-form.
+secure and now open source 64-bit and 32-bit communications software for
+Microsoft Windows and OS/2
 
 <p>
 <big>
@@ -112,16 +112,19 @@ last commercial release, 2.1.3, include:
 <li>PTYs are now supported on Windows 10 v1809 and newer</li>
 <li>Mouse Wheel support</li>
 <li>Terminal Mouse Reporting</li>
-<li>REXX is now supported on x86 and x86-64 Windows XP and newer as well as OS/2</li>
+<li>REXX is now supported on Windows 95 and NT 3.51 or newer as well as OS/2 on
+  all supported CPU architectures except for Itanium and AXP64</li>
 <li>Named Pipe connections are now supported on Windows as well as OS/2</li>
 <li>New modern SSH implementation based on libssh</li>
 <li>Support for the latest versions of OpenSSL and MIT Kerberos for Windows</li>
 <li>TLS SNI support in the http and telnet clients</li>
-<li>A number of new escape sequences are supported in the ANSI terminal
-  emulator to improve xterm and linux compatibility</li>
+<li>A large number of new escape sequences are supported in the ANSI terminal
+  emulator to improve xterm and linux compatibility including 24bit color,
+  bracketed paste, clipboard integration, and VT420 text macros</li>
 <li>The screen update interval is no longer fixed at 100ms in K95G - it can be
   changed with <tt>set terminal screen-update fast</tt></li>
 <li>New ADM5 terminal type</li>
+<li>New ADDS Regent 25 terminal type</li>
 <li>New K95 terminal type which aims for compatibility with modern terminal
   software developed for xterm-compatible terminals. See
   <a href="tt_k95.html">The K95 Terminal Type</a> for more information.</li>
@@ -130,8 +133,8 @@ last commercial release, 2.1.3, include:
 </ul>
 <p>
 
-Unfortunately some features have had to be removed from v3.0 due to changing
-  3rd party dependencies and licensing concerns:
+Unfortunately, some features have had to be removed from v3.0 due to changing
+  third party dependencies and licensing concerns:
 
 <p>
 <ul>
@@ -141,18 +144,17 @@ Unfortunately some features have had to be removed from v3.0 due to changing
     as OpenSSL and libssh no longer support these platforms.</li>
   <li>SSL/TLS is no longer supported on IBM OS/2 as the compiler now used,
     Open Watcom, is not compatible with OpenSSL</li>
-  <li>SRP and Kerberos IV support is no longer included as these 3rd-party
+  <li>SRP and Kerberos IV support is no longer included as these third-party
     libraries have been unmaintained for some years now.
   </li>
-  <li>SuperLAT and TES32 support is no longer included by default due to unclear
+  <li>SuperLAT and TES32 support are no longer included by default due to unclear
     header licensing. This may change in the future.
   </li>
 </ul>
-<p>As Kermit 95 is open-source now, if you <em>need</em> support for SRP,
-  Kerberos IV, SuperLAT or TES32 it is still possible to compile Kermit 95 with
-  these features by using an older compiler and supplying the now unmaintained
-  3rd-party libraries required to support them. Instructions for doing so are
-  included with the source code.
+<p>If you <em>need</em> support for SRP, Kerberos IV, SuperLAT or TES32, it is
+  still possible to compile Kermit 95 with these features by using an older
+  compiler and supplying the now unmaintained third-party libraries required to
+  support them. Instructions for doing so are included with the source code.
 
 <p>For a full list of everything that's changed since Kermit 95 2.1.3, consult
   the change log that you should have received with your copy of Kermit 95.
@@ -165,13 +167,13 @@ Unfortunately some features have had to be removed from v3.0 due to changing
 
 <h3><hr><a name="x3">3. SYSTEM REQUIREMENTS</a></h3>
 
-All you need to use Kermit 95 are:
+All you need to use Kermit 95 is:
 
 <ul>
 
 <li>Any 32bit or 64bit Windows compatible computer running any 32bit or 64bit
-  version of Windows except for Windows NT 3.1 or MIPS Windows NT 3.50, or a
-  PC running IBM OS/2 2.0 or later.
+  version of Windows (except for Windows NT 3.1), or a PC running IBM OS/2 2.0
+  or later.
 </li>
 
 <!--<li>An Intel-based or compatible PC running Microsoft Windows 95, 98, ME, NT-->
@@ -195,7 +197,6 @@ The following are not supported:
 
 <ul>
 <li>Windows NT 3.10</li>
-<li>MIPS Windows NT 3.50</li>
 <li>Alpha Windows NT 3.50 is console-mode only (no K95G)</li>
 <li>Win32s (Win32 on Windows 3.1x) due to lack of support for threading</li>
 <li>Windows CE and Pocket PC are not supported.
@@ -229,8 +230,8 @@ your Dialer database.
 
 Kermit 95 contains strong cryptography and its legality may vary from country
 to country. You may find the information at
-<a href="http://www.cryptolaw.org/">cryptolaw.org</a> useful but the Kermit
-Project can not vouch for its correctness.
+<a href="http://www.cryptolaw.org/">cryptolaw.org</a> useful, but the Kermit
+Project cannot vouch for its correctness.
 
 <p>
 
@@ -249,7 +250,7 @@ methods supported by Kermit 95.
 Current releases of Kermit 95 do not yet have an installation procedure.
 Beta releases are currently distributed as &quot;portable&quot; applications -
 just unzip the release to somewhere convenient and create a shortcut or
-run k95g.exe. Kermit 95 isn't specifically designed as a portable application
+run k95g.exe. Kermit 95 isn't specifically designed as a portable application,
 however, and it <em>will</em> create a few registry keys under
 <tt>\HKCU\Software\Kermit</tt> on first run.
 
@@ -259,7 +260,7 @@ however, and it <em>will</em> create a few registry keys under
 
 <p>
   There are no particular procedures <em>required</em> when upgrading from
-  Kermit 95 v2.1.3 but due to changes in the dialer it is advised you
+  Kermit 95 v2.1.3 but due to changes in the dialer, it is advised you
   take a backup of your dialer data files if you use the dialer. Otherwise, you
   should be able to run K95 2.1.3 and 3.0 side-by-side.
 </p>
@@ -274,7 +275,7 @@ however, and it <em>will</em> create a few registry keys under
 <h3><hr><a name="x6">6. UNINSTALLING KERMIT 95</a></h3>
 
 For the current release uninstalling is the reverse of installing. If you used
-the K95 Registry Tool (k95regtl.exe) to setup associations, etc, run it again
+the K95 Registry Tool (k95regtl.exe) to setup associations, etc., run it again
 to undo those things, then delete the K95 files you originally extracted from
 the release archive along with any shortcuts you created.
 
@@ -359,7 +360,7 @@ v2.1.3 if you need an older version for some reason.
 <h3><hr><a name="x8">8. RESOURCES</a></h3>
 
 <dl>
-<dt><a href="uck2epdf.html"><i>Using C-Kermit</i>, 2nd Edition</a>
+<dt><a href="uck2epdf.html"><i>Using C-Kermit</i>, second Edition</a>
 <dd>The user manual for C-Kermit and the technical reference manual for
 Kermit95 in PDF format.  This is <a href="https://kermitproject.org/booksonline.html">
     available from the Kermit Project Website
@@ -382,7 +383,7 @@ in the References section at the top your K95 manual.
 <dt><a href="k95faq.html"><i>The Kermit 95 FAQ</i></a>
 <dd>Frequently Asked Questions (and answers) about Kermit 95.
 If you have a question about Kermit 95, look here first.  Access the K95 FAQ
-via the link in the References section at the top your K95 manual.
+via the link in the References section at the top of your K95 manual.
 
 
 <p>
@@ -409,7 +410,7 @@ connection required.  Here are some points of interest:
 <p>
 <dl>
 <dt>The <a href="https://github.com/davidrg/ckwin/issues?q=is%3Aissue+label%3Abug+created%3A%3E%3D$!ver-date-iso$">
-  Github Issue Tracker</a></a></dt>
+  GitHub Issue Tracker</a></a></dt>
 <dd>Which lists bugs or other information discovered after this version of Kermit
 95 was released.
 <p>
@@ -432,7 +433,7 @@ other platforms.
 <tt>http://www.kermitproject.org/support.html</tt></a>
 <dd>The technical support page, explaining how to get technical support,
 and including some hints and tips to save you some time. For Kermit 95-specific
-    help, you can also try asking a question on Github at: <a href="https://github.com/davidrg/ckwin/discussions">https://github.com/davidrg/ckwin/discussions</a>
+    help, you can also try asking a question on GitHub at: <a href="https://github.com/davidrg/ckwin/discussions">https://github.com/davidrg/ckwin/discussions</a>
 <p>
 <dt><a href="https://kermitproject.org/scriptlib.html">
 <tt>https://kermitproject.org/scriptlib.html</tt></a>
@@ -498,7 +499,7 @@ As of version 1.1.21, Kermit 95 is installed just like any other Windows
 application.  Parts of it go into "Program Files", other parts into the All
 Users data area, and still others into the user's directory tree.  This is the
 Windows Way of installing applications.  The Windows directory paths are long
-and contain spaces, which tends to confuse text-based programs -- not just
+and contain spaces, which tends to confuse text-based programs—not just
 Kermit 95, but any program that has commands composed of fields
 separated by spaces.  For this reason Kermit 95 represents these directories
 by variables that expand into Windows "short names" such as
@@ -578,8 +579,8 @@ data)
 <li>The <tt>DIALINF.DAT</tt> Dialer database (factory predefined entries).
 <li>The <tt>DIALORG.DAT</tt> Dialer database
 (organizational predefined entries).
-<li>The following subdirectories containing data for all users at the site.
-The files in these directories are initially as distributed with K95, but
+<li>The following subdirectories contain data for all users at the site.
+The files in these directories are initially distributed with K95, but
 might be modified by the site administrator:
 <table>
 <tr>
@@ -614,7 +615,7 @@ might be modified by the site administrator:
 
 NOTE: On Windows NT, 2000, and XP, if the person installing Kermit 95
 does not have write access to the All Users tree (e.g. because Administrator
-privilege is lacking), all of the items listed above for the
+privilege is lacking), all the items listed above for the
 <tt>\v(common)</tt> tree are placed instead in the <tt>\v(appdata)</tt>
 tree (next item).  In Windows 95, 98, and ME, the <tt>\v(common)</tt> tree is
 always used as described above.
@@ -643,7 +644,7 @@ always used as described above.
 <td><tt>C:\WINDOWS\Profiles\<i>username</i>\My Documents\</tt>
 <tr>
 <td>NT/2000/XP:<tt>&nbsp;&nbsp;</tt>
-<td><tt><tt>C:\Documents and Settings\<i>username</i>\My Documents\</tt>
+<td><tt>C:\Documents and Settings\<i>username</i>\My Documents\</tt>
 <tr>
 <td>Symbolic Name:
 <td><tt>PERSONAL</tt>

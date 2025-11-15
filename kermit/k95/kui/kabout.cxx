@@ -87,7 +87,7 @@ Bool KAbout::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 #ifdef BETATEST
             _snprintf(version, VERSION_LEN, "Version %s %s.%s (C-Kermit %s)", K95_VERSION_MAJ_MIN_REV, ck_s_test, ck_s_tver, ck_s_ver);
 #else
-            _snprintf(version, VERSION_LEN, "Version %s (C-Kermit %s)", ck_s_xver, ck_s_ver);
+            _snprintf(version, VERSION_LEN, "Version %s (C-Kermit %s)", K95_VERSION_MAJ_MIN_REV, ck_s_ver);
 #endif
 
             SendDlgItemMessage(hWnd, IDC_VERSION, WM_SETTEXT, 0,

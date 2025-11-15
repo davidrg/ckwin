@@ -9010,6 +9010,7 @@ dosetssh() {
           int val;
           y = cmnum("SSH verbosity level, 0-7","2",10,&x,xxstring);
           success = setnum(&val,x,y,7);
+          if (success != 0) return success;
           return(success = ssh_set_iparam(SSH_IPARAM_VRB, val));
       }
 
@@ -11917,7 +11918,6 @@ case XYCARR:                            /* CARRIER-WATCH */
             return(success = 1);
 
           case SCMD_STA: {
-              extern int marginbot;
               if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
               if ((x = cmcfm()) < 0) return(x);
               if (y != tt_status[VCMD]) {

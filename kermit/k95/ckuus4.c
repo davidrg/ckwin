@@ -70,6 +70,7 @@ _PROTOTYP(int vmsttyfd, (void) );
 #include "ckodir.h" /* [jt] 2013/11/21 - for MAXPATHLEN */
 #include "ckoetc.h"
 int StartedFromDialer = 0;
+extern unsigned long srandThreadId;
 HWND hwndDialer = 0;
 LONG KermitDialerID = 0;
 #ifdef NT
@@ -359,6 +360,7 @@ int isjoin = 0;
 #ifdef CK_APC
 extern int apcactive;                   /* Nonzero = APC command was rec'd */
 extern int apcstatus;                   /* Are APC commands being processed? */
+extern int apccmd;                      /* Stay on command screen after APC? */
 #ifdef DCMDBUF
 extern char *apcbuf;                    /* APC command buffer */
 #else
@@ -1229,6 +1231,9 @@ struct keytab fnctab[] = {              /* Function names */
     { "substitute", FN_SUBST,0},        /* Substitute chars */
     { "substring",  FN_SUB,  0},        /* Extract substring from argument */
     { "tablelook",  FN_TLOOK,0},        /* Table lookup */
+#ifdef OS2
+    { "terminalchecksum", FN_TERMCKS,0},/* Terminal screen checksum */
+#endif /* OS2 */
     { "time",       FN_TIME, 0},        /* Free-format time to hh:mm:ss */
     { "tod2secs",   FN_NTIM, CM_INV},   /* Time-of-day-to-secs-since-midnite */
     { "todtosecs",  FN_NTIM, CM_INV},   /* Time-of-day-to-secs-since-midnite */
@@ -2360,6 +2365,7 @@ doconect(q,async) int q, async;
                          (apcactive == APC_REMOTE && apcstatus != APC_OFF))) {
             debug(F101,"doconect justone 3","",justone);
             if (mlook(mactab,"_apc_commands",nmac) == -1) {
+                apccmd = 0; /* So we can catch any CLEAR APC */
                 debug(F110,"doconect about to execute APC",apcbuf,0);
                 domac("_apc_commands",apcbuf,cmdstk[cmdlvl].ccflgs|CF_APC);
                 delmac("_apc_commands",1);
@@ -2369,7 +2375,8 @@ doconect(q,async) int q, async;
 #endif /* DEBUG */
             }
             debug(F101,"doconect apcactive after domac","",apcactive);
-            if (!apcactive) {               /* In case CLEAR APC was in APC */
+            if (!apcactive || apccmd) {     /* In case CLEAR APC was in APC */
+                apcactive = APC_INACTIVE;
                 debug(F101,"doconect quit APC loop: apcactive","",apcactive);
                 break;
             }
@@ -10008,7 +10015,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
                   goto fnend;
               }
           }
-          line = VscrnGetLineFromTop( VTERM, (USHORT) row );
+          line = VscrnGetLineFromTop( VTERM, (USHORT) row, TRUE );
           if (line != NULL) {
               if (bp[1] == NULL || bp[1][0] == '\0')
                 col = 0;
@@ -10291,7 +10298,26 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 #ifdef CK_SSL
         if (RAND_bytes((unsigned char *)&k,sizeof(k)) < 0)
 #endif /* CK_SSL */
+        {
+#ifdef NT
+            if (srandThreadId != GetCurrentThreadId()) {
+                /* The RNG was last seeded on a different thread, so may not
+                 * have been seeded on *this* thread. Better do it now to be
+                 * sure! The logic here is a copy of what ckcmai.c does. */
+                char stackdata[256];
+                unsigned int c = 1234, n;
+                /* try to make a random unsigned int to feed srand() */
+                c = time(NULL);                 /* Get current time */
+                c *= getpid();                  /* multiply it by our PID */
+                /* Referenced before set... DELIBERATELY */
+                for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
+                    c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
+                srand((unsigned int)c);
+                srandThreadId = GetCurrentThreadId();
+            }
+#endif /* NT */
           k = rand();
+        }
         x = 0;
         if (argn > 0) {
             if (!chknum(bp[0])) {
@@ -13201,6 +13227,27 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 	goto fnend;
     }
 #endif /* HAVE_LOCALE */
+
+#ifdef OS2
+    if (cx == FN_TERMCKS) {
+        int calculate_decrqcra_checksum(int, int, int, int, int, BOOL);
+
+        int top = -1, left = -1, bot = -1, right = -1, page = -1, checksum = 0;
+        if (argn > 0 && bp[0] && *bp[0] && chknum(bp[0])) top = atoi(bp[0]);
+        if (argn > 1 && bp[1] && *bp[1] && chknum(bp[1])) left = atoi(bp[1]);
+        if (argn > 2 && bp[2] && *bp[2] && chknum(bp[2])) bot = atoi(bp[2]);
+        if (argn > 3 && bp[3] && *bp[3] && chknum(bp[3])) right = atoi(bp[3]);
+        if (argn > 4 && bp[4] && *bp[4] && chknum(bp[4])) page = atoi(bp[4]);
+
+        checksum = calculate_decrqcra_checksum(
+            top, left, bot, right, page-1, FALSE);
+
+        _snprintf(fnval, FNVALL, "%d", checksum);
+        failed = 0;
+
+        goto fnend;
+    }
+#endif /* OS2 */
 
 /* Note: when adding new functions remember to update dohfunc in ckuus2.c. */
 

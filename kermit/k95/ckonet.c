@@ -1293,19 +1293,14 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #ifdef NETCMD
     if ( nettype == NET_CMD  || nettype == NET_PTY ) {
         char cmd_line[256];
-#ifdef OS2ONLY
         char *cmd_exe, *args;
         char *p;
-#endif
-#ifdef COMMENT
         int argslen;
-#endif /* COMMENT */
 
 #ifdef NT
         cmd_line[0] = '\0' ;
         /* Now create the child process. */
 
-#ifdef COMMENT
         cmd_exe = getenv("SHELL");
         if ( !cmd_exe )
             cmd_exe = getenv("COMSPEC");
@@ -1331,12 +1326,6 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             ckstrncat(args, name,argslen);
         }
         debug(F110,"os2_netopen NET_CMD args",args,0);
-#else
-        /* Just run the command directly rather than via the shell otherwise
-         * things can act up.
-         **/
-        ckstrncat(cmd_line, name, 256);
-#endif
 
 #ifdef NETPTY
         if (nettype == NET_PTY) {
@@ -1395,12 +1384,10 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                 debug(F101,"Stdout pipe creation failed\n","",0);
 
             /* Set a write handle to the pipe to be STDOUT. */
-            /* 20220706 DavidG - This only kind of works for the console version
-             * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
+
             if (! SetStdHandle(STD_OUTPUT_HANDLE, hChildStdoutWr) ||
                  ! SetStdHandle(STD_ERROR_HANDLE, hChildStdoutWr) )
                 debug(F100,"Redirecting STDOUT/STDERR failed","",0);
-            */
 
             /*
             * The steps for redirecting child's STDIN:
@@ -1418,15 +1405,10 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                 debug(F100,"Stdin pipe creation failed\n","",0);
 
             /* Set a read handle to the pipe to be STDIN. */
-            /* 20220706 DavidG - This only kind of works for the console version
-             * (cknker.exe/k95.exe) - its totally broken on the GUI version (k95g.exe)
             if (! SetStdHandle(STD_INPUT_HANDLE, hChildStdinRd))
                 debug(F100,"Redirecting Stdin failed","",0);
-            */
 
             /* Duplicate the write handle to the pipe so it is not inherited. */
-            /* 20220706 DavidG - This should probably be done with something like:
-             *      SetHandleInformation(hChildStdinWr, HANDLE_FLAG_INHERIT, 0) */
             fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStdinWr,
                                       GetCurrentProcess(), &hChildStdinWrDup, 0,
                                       FALSE,       /* not inherited */

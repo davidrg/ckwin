@@ -208,11 +208,11 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 char *newstxt[] = {
 #ifdef OS2
         "Welcome to Kermit 95 " K95_VERSION_MAJ_MIN_REV ", the Open-Source Successor",
-        "to Columbia Columbia University's Kermit 95 package."
+        "to Columbia Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
 " ",
-"THIS IS A PRERELEASE TEST VERSION NOT YES SUITABLE FOR PRODUCTION USE.",
+"THIS IS A PRERELEASE TEST VERSION NOT YET SUITABLE FOR PRODUCTION USE.",
 "FOR DETAILS, SEE http://www.kermitproject.org/ckw10beta.html",
 #endif /* BETATEST */
 
@@ -226,14 +226,29 @@ char *newstxt[] = {
 #ifdef OS2
 " . Source code! Kermit 95 is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
-" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0"
-" . Up-to-date fully exportable SSH v2 client",
-" . Up-to-date TLS support for http, ftp and telnet",
+" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0",
+#ifdef NT
+/* These features are currently Windows-only */
+" . Up-to-date fully exportable SSH v2 client (Windows XP or newer only)",
+" . Up-to-date TLS support for http, ftp and telnet (Windows XP or newer only)",
 " . PTY support on Windows 10 version 1809 and newer",
+" . Named Pipe connections",
 " . Now available as a 64bit application (x86-64, ARM64, Itanium)",
 " . Mouse wheel support, customizable with SET MOUSE WHEEL",
 "    (see HELP SET MOUSE for details)",
 " . X10, X11, URXVT and SGR mouse reporting",
+" . REXX script interface on Windows NT 3.51 and newer",
+" . 24-bit RGB color support and xterms 256-color mode",
+" . Screen update interval can be changed in K95G",
+" . The Toolbar, Statusbar and menubar can now be shown and hidden without ",
+"   restarting K95. When the menubar is off, a menu is available on the titlebar",
+#endif
+" . ADM5 and ADDS Regent 25 terminal emulations",
+" . Support for additional escape sequences from the VT420, VT520 and xterm",
+"   including OSC-52 clipboard integration, VT420 text macros and more",
+" . New K95 terminal type with its own terminfo entry",
+" . Half-screen scroll kverbs",
+" . Lots of bug fixes and other improvements",
 #endif /* OS2 */
 #ifndef OS2
 #ifdef COMMENT
@@ -279,8 +294,11 @@ char *newstxt[] = {
 " . https://www.kermitproject.org/ckbindex.html",
 "    Online index to C-Kermit documentation.",
 #ifdef OS2
+/* The manual has been updated for K95 v3.0, so we should link to that instead.
 " . https://kermitproject.org/k95manual/index.html",
-"    The Kermit 95 manual from 1995-2003.",
+"    The Kermit 95 manual from 1995-2003.",   */
+" . https://davidrg.github.io/ckwin/current/",
+"    The latest Kermit 95 manual.",
 #endif /* OS2 */
 " . https://www.kermitproject.org/ckututor.html",
 "    C-Kermit tutorial.",
@@ -1163,6 +1181,19 @@ static char *hmxxsave[] = {
 #ifdef OS2
 "    COMMAND SCROLLBACK   Saves the current command-screen scrollback buffer",
 "    TERMINAL SCROLLBACK  Saves the current terminal-screen scrollback buffer",
+"    TERMINAL SCREEN      Saves the current terminal-screen",
+#ifdef KUI
+" ",
+"  K95G has the additional ability to save the terminal screen as an image file",
+"  This can be done with the syntax: ",
+#ifdef CK_HAVE_GDIPLUS
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF, GIF, PNG } filename ",
+#else /* CK_HAVE_GDIPLUS */
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF } filename ",
+#endif  /* CK_HAVE_GDIPLUS */
+"  When saving as an image, a new file is always created. The EMF format does",
+"  not currently support saving double-height/double-wide lines",
+#endif /* KUI */
 #endif /* OS2 */
 ""
 };
@@ -3113,7 +3144,7 @@ static char * hmxxcle[] = {
 " ",
 "  ALARM            Clears any pending alarm (see SET ALARM).",
 #ifdef CK_APC
-"  APC-STATUS       Clears Application Program Command status.",
+"  APC              Clears Application Program Command status.",
 #endif /* CK_APC */
 #ifdef PATTERNS
 "  BINARY-PATTERNS  Clears the file binary-patterns list.",
@@ -7886,6 +7917,11 @@ static char *hxyterm[] = {
 "  Selects type type of terminal to emulate.  Type SET TERMINAL TYPE ? to",
 "  see a complete list.",
 " ",
+"SET TERMINAL ALTERNATE-BUFFER { ENABLED, DISABLED }",
+"  Enables or disables the escape sequence for switching to the alternate",
+"  terminal screen buffer. This setting can also be changed via an escape",
+"  sequence so setting it to disabled may not prevent its use entirely.",
+" ",
 "SET TERMINAL ANSWERBACK { OFF, ON }",
 "  Disables/enables the ENQ/Answerback sequence (Kermit version term-type).",
 " ",
@@ -8420,6 +8456,21 @@ static char *hxyterm[] = {
 "  TRANSMISSION BLOCKED conditions when pasting into the terminal window.",
 " ",
 
+"SET TERMINAL PAGE ACTIVE <page>",
+"  Moves the cursor to the specified page. If Page Cursor Coupling is enabled,",
+"  the display will move to that page also. The cursor is not sent to home.",
+" ",
+
+"SET TERMINAL PAGE COUNT <number>",
+"  Specifies the number of pages available, up to the maximum supported by the",
+"  currently selected terminal type.",
+" ",
+
+"SET TERMINAL PAGE CURSOR-COUPLING { ON, OFF}",
+"  Enables or disables Page Cursor Coupling. When enabled, moving the cursor",
+"  to another page moves the display to that page to keep the cursor visible.",
+" ",
+
 #ifdef PCTERM
 "SET TERMINAL PCTERM { ON, OFF }",
 "  Activates or deactivates the PCTERM terminal emulation keyboard mode.",
@@ -8512,6 +8563,13 @@ static char *hxyterm[] = {
 "  ON (default) means allow host control of colors; OFF means ignore host",
 "  escape sequences to set color.",
 " ",
+
+#ifdef OS2
+"SET TERMINAL SIZE <cols> <rows>",
+"  Sets the number of columns and rows in the terminal screen. This is",
+"  shorthand for SET TERMINAL WIDTH <cols>, SET TERMINAL HEIGHT <rows>",
+" ",
+#endif /* OS2 */
 
 "SET TERMINAL SNI-CH.CODE { ON, OFF }",
 "  This command controls the state of the CH.CODE key.  It is the equivalent",
@@ -12279,6 +12337,19 @@ represent.\n");
       case FN_MONNAME:                  /* fdc 12 November 2022 */
         hmsga(hmfmonname);              /* Literal string was too long */
         break;
+
+#ifdef OS2
+      case FN_TERMCKS:
+        printf("\\fterminalchecksum(n1,n2,n3,n4,n5)\n\
+  Returns a checksum of the terminal screen using the same algorithm as the\n\
+  DECRQCRA control sequence found on the DEC VT420 and VT520 terminals.\n\
+  n1 is the top line, n2 is the left column, n3 is the bottom line and n4 is\n\
+  the right column, and n5 is the page number. Unlike DECRQCRA, any margins \n\
+  set do not apply. All parameters are optional and default to a checksum of\n\
+  the entire page that is currently being displayed. All coordinates and page\n\
+  numbers start from 1.");
+        break;
+#endif /* OS2 */
 
       default:
         printf("Sorry, help not available for \"%s\"\n",cmdbuf);

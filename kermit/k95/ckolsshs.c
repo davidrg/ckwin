@@ -3691,6 +3691,8 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
         }
     }
 
+    debug(F100, "sshsubsys - out of ssh loop", NULL, 0);
+
     /* Free up all forwarded connections */
     if (ssh_forwarding_lock(client, 5000)) {
         ssh_forward_t *fwdNode = client->forwards;
@@ -3758,7 +3760,7 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
     WSACloseEvent(events[0]); /* Close the socket event created earlier */
     CloseHandle(events[1]); /* Close the keepalive timer */
     ssh_client_close(state, client, rc);
-    debug(F100, "sshsubsys - thread terminate", "", 0);
+    debug(F111, "sshsubsys - thread terminate", "rc", rc);
     return 0;
 }
 

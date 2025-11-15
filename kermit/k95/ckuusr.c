@@ -140,7 +140,7 @@ int type_intrp = 0;
 extern int tcp_avail;
 extern bool viewonly;
 extern int k95stdout;
-extern int tt_scroll;
+extern int tt_scroll, tt_scroll_usr;
 #ifndef NOTERM
 extern int tt_status[VNUM];
 #endif /* NOTERM */
@@ -404,7 +404,7 @@ extern int dialsta, dialatmo, dialcon, dialcq; /* DIAL status, etc. */
 #endif /* NODIAL */
 
 #ifdef CK_APC
-extern int apcactive, apcstatus;
+extern int apcactive, apcstatus, apccmd;
 #endif /* CK_APC */
 
 #ifndef NOPUSH
@@ -6735,7 +6735,22 @@ doclear() {
 #ifdef CK_APC
     if (x & CLR_APC) {
 	debug(F101,"Executing CLEAR APC","",apcactive);
-	apcactive = 0;
+#ifndef OS2
+	if (apcactive == APC_LOCAL ||
+		 (apcactive == APC_REMOTE && (apcstatus & APC_UNCH))) {
+		/* Clearing the APC status like this mid-APC is equivalent to being allowed to
+		 * do SET TERM APC UNCHECKED mid-APC. If Kermit doesn't think an APC is active,
+		 * it doesn't check if commands are safe to appear in an APC. Additionally, in
+		 * Kermit 95 1.1.21 and up forcing APC inactive like this mid-APC causes the
+         * parser to get stuck waiting forever for a semaphore that has already been
+		 * raised. To the user it looks like a crash. */
+		apcactive = APC_INACTIVE;
+	}
+#endif /* OS2 */
+	/* The documented purpose of this command is to cause Kermit to
+	 * remain on the command screen when the APC is finished.
+	 * This is a safer way to do it. */
+	apccmd = 1;
 	y = 0;
     }
 #endif /* CK_APC */
@@ -6827,11 +6842,11 @@ doclear() {
       case CLR_TRM:
 	 switch ( z ) {
 	  case CLR_C_ALL:
-	     if (VscrnGetBufferSize(VTERM) > 0 ) {
+	     if (VscrnGetBufferSize(VTERM, FALSE, TRUE) > 0 ) {
 		 VscrnScroll(VTERM, UPWARD, 0,
 			     VscrnGetHeight(VTERM)-(tt_status[VTERM]?2:1),
 			     VscrnGetHeight(VTERM) -
-			     (tt_status[VTERM]?1:0), TRUE, SP
+			     (tt_status[VTERM]?1:0), TRUE, SP, TRUE
 			     );
 		 cleartermscreen(VTERM);
 	     }
@@ -13403,7 +13418,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifdef OS2
     if (cx == XXNSCR) {
 	if ((z = cmcfm()) < 0) return(z);
-        tt_scroll = 0;
+        tt_scroll = tt_scroll_usr = 0;
         return(success = 1);
     }
 #endif /* OS2 */

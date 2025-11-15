@@ -81,6 +81,13 @@ public:
     void stopTimer();
     void startTimer();
 
+    BOOL renderToEmfFile(int vnum, char* filename);
+    BOOL renderToBmpFile(int vnum, char* filename);
+#ifdef CK_HAVE_GDIPLUS
+    BOOL renderToPngFile(int vnum, char* filename);
+    BOOL renderToGifFile(int vnum, char* filename);
+#endif /* CK_HAVE_GDIPLUS */
+
 private:    // this section is for performance
     uchar* workTemp;
     size_t workTempSize;
@@ -98,6 +105,17 @@ private:    // this section is for performance
     int hscrollpos;
 
     void ToggleCursor(HDC, LPRECT);
+
+    static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0);
+    HBITMAP renderToBitmap(int vnum, DWORD **outPixels);
+#ifdef CK_HAVE_GDIPLUS
+    BOOL renderToImageFile(int vnum, char* filename, const wchar_t* format);
+#endif /* CK_HAVE_GDIPLUS */
+
+    static size_t allocateClientPaintBuffers(
+        struct _K_CLIENT_PAINT* clientPaint,
+        long maxcells,
+        uchar** workTempOut);
 
     IKTerm* ikterm;
     BYTE clientID;

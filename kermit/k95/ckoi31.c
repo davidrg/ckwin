@@ -32,7 +32,7 @@ extern int  insertmode, tnlm ;
 extern int  escstate, debses, decscnm, tt_cursor ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
@@ -387,6 +387,7 @@ i31ascii( int ch )
     int i,j,n;
     int ch2=0, ch3=0, pa=0, pa1=0, pa2=0, pa3=0, pa4=0, op=0;
     char response[32]="";
+    extern vscrn_t vscrn[];
 
     if ( escstate == ES_GOTESC )/* Process character as part of an escstate sequence */
     {
@@ -2057,7 +2058,7 @@ i31ascii( int ch )
                 if ( debses )
                     break;
                 VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                             marginbot - 1, 1, FALSE, NUL);
+                             vscrn_c_page_margin_bot(VTERM) - 1, 1, FALSE, NUL, FALSE);
                 break;
             case 'O':
                 /* 3101-2x and 3161 - Delete cursor line */
@@ -2066,10 +2067,11 @@ i31ascii( int ch )
                 VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'P': {
                 /* Insert Character Command */

@@ -80,11 +80,17 @@ WIN32_VERSION=0x0500
 # for JumpLists
 CKF_JUMPLISTS=yes
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKMODERNSHELL
+
+# Visual C++ 2010 also can't target anything older than Windows XP, so its safe
+# to take a dependency on GDI+ by default.
+!if "$(CKF_GDIPLUS)" != "no"
+CKF_GDIPLUS=yes
+!endif
 !endif
 
-!if ($(MSC_VER) > 120)
+!if ($(MSC_VER) > 120) && "$(CKF_SHELLNOTIFY)" != "no"
 # Shell Notify requires Windows 2000 and Visual C++ 2002 (7.0) or newer
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY
+CKF_SHELLNOTIFY=yes
 !endif
 
 !if "$(CMP)" == "OWCL"
@@ -583,9 +589,27 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
 !endif
 !endif
 
+!if "$(CKF_DEVBUILD)" != "no"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DDEVBUILD
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DDEVBUILD
+
+# Force beta-test on for development test builds
+CKF_BETATEST=yes
+!endif
+
 # If beta-test mode hasn't been explicitly turned off then assume its on.
 !if "$(CKF_BETATEST)" != "no"
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DBETATEST
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DBETATEST
+!endif
+
+!if "$(CKB_COMMIT_SHA)" != ""
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCOMMIT_SHA="$(CKB_COMMIT_SHA)"
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCOMMIT_SHA="$(CKB_COMMIT_SHA)"
+!endif
+
+!if "$(CKB_BUILD_DESC)" != ""
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKB_BUILD_DESC="$(CKB_BUILD_DESC)"
 !endif
 
 !if "$(CKF_DEBUG)" == "no"
@@ -725,4 +749,26 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) REXX
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) REXX
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOREXX
+!endif
+
+# GDI+ is used for PNG and GIF image output (SAVE TERM SCREEN /FORMAT:png foo.png)
+# It ships with Windows XP and newer, but was available for Windows NT4/2000
+# and 98/ME. The redistributable for these platforms can be found here:
+# http://web.archive.org/web/20051028034316/http://download.microsoft.com/download/a/b/c/abc45517-97a0-4cee-a362-1957be2f24e1/gdiplus_dnld.exe
+# However, building K95 with GDI+ support means it won't run on Windows 95 or
+# NT 3.51, so its only enabled automatically when building for XP or newer.
+!if "$(CKF_GDIPLUS)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) GDI+
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_GDIPLUS
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) GDI+
+!endif
+
+# Shell notifications apparently need IE 5.01 installed to work. They're only
+# used at this time for notifications about OSC-52 clipboard read/write.
+!if "$(CKF_SHELLNOTIFY)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) ShellNotify
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY -D_WIN32_IE=0x0501
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) ShellNotify
 !endif

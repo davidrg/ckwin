@@ -14,7 +14,7 @@ REM These directories would normally go in: %ALLUSERSPROFILE%\Kermit 95
 REM if not exist dist\certs\NUL mkdir dist\certs
 REM if not exist dist\crls\NUL mkdir dist\crls
 if not exist dist\keymaps\NUL mkdir dist\keymaps
-REM if not exist dist\phones\NUL mkdir dist\phones
+if not exist dist\phones\NUL mkdir dist\phones
 if not exist dist\printer\NUL mkdir dist\printer
 if not exist dist\public\NUL mkdir dist\public
 if not exist dist\scripts\NUL mkdir dist\scripts
@@ -29,16 +29,33 @@ if exist dist\nullssh.pdb del dist\nullssh.pdb
 if exist k95ssh*.dll move k95ssh*.dll dist
 if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
+if not exist dist\k95g.exe del dist\k95g.manifest
 copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
 if exist dist\cknker.pdb ren dist\cknker.pdb k95.pdb
 ren dist\cknker.exe.manifest k95.exe.manifest
 if exist dist\cknker.exe.manifest del dist\cknker.exe.manifest
-REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
+
+REM Only include ctl3dins on platforms the dialer can actually run on
+if "%CKB_TARGET_ARCH%" == "x86" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "AMD64" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "PPC" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "MIPS" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "ALPHA" goto :dialerok
+REM Dialer can only run on x86 and x86-64. No point including ctl3dins for
+REM other platforms
+del dist\ctl3dins.exe
+:dialerok
+
+REM These compilers are used to target NT 3.10 and NT 3.50, which can't
+REM currently run the dialer regardless of CPU architecture 
+if "%CKB_MSC_VER%" == "80" del dist\ctl3dins.exe
+if "%CKB_MSC_VER%" == "90" del dist\ctl3dins.exe
+
 move dist\ckwart.exe .\
 move dist\telnet-old.* .\
 move dist\rlogin-old.* .\
-if "%CKF_SSH%" == "no" move dist\ssh.exe .\
+if "%CKF_SSH%" NEQ "yes" move dist\ssh.exe .\
 
 if "%CKF_XYZ%" == "no" goto :nop
 if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
@@ -132,8 +149,14 @@ cd ..
 :skipkm
 
 REM PHONES
-REM Contains dialing directories. All the files previously distributed here are
-REM completely obsolete - none of the dial-in BBS still exist 20+ years later.
+@echo Copy dialing directories...
+set CK_DIST_KEYMAPS=ckermit.kdd ckermit.knd
+REM All of the services previously listed are long gone now. What remains are
+REM empty files with a message to get in touch if you'd like to be listed.
+
+for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist\PHONES\
+copy phones-readme.txt dist\PHONES\readme.txt
+
 
 REM PRINTER directory
 REM originally contained:

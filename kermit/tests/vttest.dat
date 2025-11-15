@@ -1,0 +1,1585 @@
+#
+# This file records checksums for passing VTTEST results to make catching newly
+# introduced failures easier. A ! character can be placed in front of the
+# checksum if that test is failing, or the checksum can be recorded as 0. If
+# the pass/fail result for a test is unknown/unevaulated, either a ? character
+# can be placed in front of the checksum, or the checksum can be left out 
+# entirely. Comments are included in the output file and can include HTML.
+#
+1_1 0142A9
+1_2 01E731
+1_3 0115EC
+1_4 01B1EC
+1_5 0			# Currently failing - see ticket <a href="https://github.com/davidrg/ckwin/issues/172">#172</a>.
+1_6 0112F9
+2_1 011EE6
+2_2 010381
+2_3 024082
+2_4 019F64
+2_5 023A76
+2_6 019958
+2_7	0			# TODO: Soft scroll not supported by K95
+2_8	0			# TODO: Soft scroll not supported by K95
+2_9 FBBC
+2_10 01C727
+2_11 010F7A
+2_12 010BFD
+2_13 01BCC3
+2_14 01BD19
+2_15 100CEF
+# Test 3 - character sets - check on real terminal
+4_1 012ED4
+4_2 012E0B
+4_3 01CAE2
+4_4 01CA19
+4_5 1A1755
+4_6 0D82F3
+# Test 5 - keyboard LEDs - not covered by checksum
+# Test 6.1 - answerback
+6_1 0128F5		# This has the K95 version number in it, so checksum will change with each release 
+6_2 010E1F
+6_3 012569
+6_4 012A1B		# Includes extension list, so may change
+6_5 011516
+6_6 0103EA
+6_7 01394B
+7_1	0			# TODO: Currently failing
+7_2	?04D872		# TODO: Charsets - check against real terminal
+7_3 01426E
+8_1 0241D5
+8_2 011A5F
+8_3 01004B
+8_4 FE1F
+8_5 0209B8
+8_6 0162FC
+8_7 0116B8
+8_8 03B6C5
+8_9 01C873
+8_10 019E53
+8_11 019A1F
+8_12 037EA8
+8_13 026B50
+8_14 01B2B8
+# 9 - Bugs - not implemented
+# 10 - Reset - not implemented
+# Non VT100 tests - VT220:
+11_1_1_1_1 010273
+11_1_1_1_2 010716
+11_1_1_1_3 0100A8
+11_1_1_1_4 FEDC
+# 11_1_2_1				# This is a keyboard test (auto repeat on/off)
+11_1_2_2_1 FA14
+11_1_2_2_2 ?010277		# TODO: Cursor currently not rendered in images
+11_1_2_3 01CCFB
+11_1_2_4_1 012C61
+11_1_2_4_2 012D83
+11_1_2_4_3 012E4B
+11_1_3 012747
+11_2_2_1 0108E8
+11_2_2_2 010A74
+11_2_3_1_1 01DB23
+11_2_3_1_2 01DB23
+11_2_3_1_3 01DB23
+11_2_3_1_4 0308B5
+11_2_3_1_5 01D661
+11_2_3_2_1 01DA49
+11_2_3_2_2 01E44A
+11_2_3_2_3 02524C
+11_2_3_2_4 02CA4F
+11_2_3_2_5 03BA4C
+11_2_3_2_6 03BA5C
+11_2_3_2_7 FAEA
+11_2_5_2_2 010273
+11_2_5_2_3 0100A8
+11_2_5_2_4 FEDC
+11_2_5_2_5 0			# TODO: Currently failing - not supported by K95?
+11_2_5_2_6 0			# TODO: Currently failing - not supported by K95?
+11_2_5_2_7 0105DE
+11_2_5_3_1_7 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_1 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_2 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_3 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_4 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_5 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_6 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_7 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_3_1 01691A		# DECRPM ANSI - TODO: compare to real terminal
+11_2_5_3_3_2_1 0180ED	# DECRPM 1/2  - TODO: compare to real terminal
+11_2_5_3_3_2_2 015D8B   # DECRPM 2/2  - TODO: compare to real terminal
+11_2_5_3_4 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_5 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_6_1 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_6_2 010902		# TODO: check real terminal
+11_2_5_3_6_3 010703		# TODO: check real terminal
+11_2_5_3_6_4 010769		# TODO: check real terminal
+11_2_5_3_6_5 010716		# TODO: check real terminal
+11_2_5_3_6_6 01081E		# TODO: check real terminal
+11_2_5_3_6_7 01061D		# TODO: check real terminal
+11_2_5_3_6_8 0106DD		# TODO: check real terminal
+11_2_5_3_6_9 010915		# TODO: check real terminal
+11_2_5_3_6_10 0			# TODO: Currently failing - not supported by K95?
+11_2_5_3_6_11 0			# TODO: Currently failing - not supported by K95?
+11_2_5_4_2 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_1 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_2 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_3_0 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_3 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_3_1 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_4 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_3_2 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_5 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_3_3 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_6 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_3_4 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_7 0			# TODO: Currently failing - not supported by K95?
+11_2_5_5_4_8 0			# TODO: Currently failing - not supported by K95?
+11_2_5_6 010956
+11_2_6_2_1_1 01031F
+11_2_6_2_1_2 010CF0
+11_2_6_2_1_3 011ABA
+11_2_6_2_2_1 FE4D
+11_2_6_2_2_2 0100C7
+11_2_6_2_2_3 010341
+11_2_6_2_3_1 010152
+11_2_6_2_3_2 0103CC
+11_2_6_2_3_3 010646
+
+
+
+# VT420 Cursor movement tests - lots of combinations. Each test comes in
+# a colour and a No-Colour version. I don't have access to a VT525 to check if
+# the colour results are correct or not.
+#        DECOM    DECLRMM  T/BM  L/RM  Color
+11_3_2_7_disabled_disabled_reset_reset_no_color 010F3B
+11_3_2_8_disabled_disabled_reset_reset_no_color 01101D
+11_3_2_9_disabled_disabled_reset_reset_no_color 0149FE
+11_3_2_10_disabled_disabled_reset_reset_no_color 014B2F
+11_3_2_7_disabled_disabled_reset_reset_color
+11_3_2_8_disabled_disabled_reset_reset_color
+11_3_2_9_disabled_disabled_reset_reset_color
+11_3_2_10_disabled_disabled_reset_reset_color
+11_3_2_7_disabled_disabled_reset_left_half_no_color 010F3B
+11_3_2_8_disabled_disabled_reset_left_half_no_color 01101D
+11_3_2_9_disabled_disabled_reset_left_half_no_color 0149FE
+11_3_2_10_disabled_disabled_reset_left_half_no_color 014B2F
+11_3_2_7_disabled_disabled_reset_left_half_color
+11_3_2_8_disabled_disabled_reset_left_half_color
+11_3_2_9_disabled_disabled_reset_left_half_color
+11_3_2_10_disabled_disabled_reset_left_half_color
+11_3_2_7_disabled_disabled_reset_right_half_no_color 010F3B
+11_3_2_8_disabled_disabled_reset_right_half_no_color 01101D
+11_3_2_9_disabled_disabled_reset_right_half_no_color 0149FE
+11_3_2_10_disabled_disabled_reset_right_half_no_color 014B2F
+11_3_2_7_disabled_disabled_reset_right_half_color
+11_3_2_8_disabled_disabled_reset_right_half_color
+11_3_2_9_disabled_disabled_reset_right_half_color
+11_3_2_10_disabled_disabled_reset_right_half_color
+11_3_2_7_disabled_disabled_reset_middle_half_no_color 010F3B
+11_3_2_8_disabled_disabled_reset_middle_half_no_color 01101D
+11_3_2_9_disabled_disabled_reset_middle_half_no_color 0149FE
+11_3_2_10_disabled_disabled_reset_middle_half_no_color 014B2F
+11_3_2_7_disabled_disabled_reset_middle_half_color
+11_3_2_8_disabled_disabled_reset_middle_half_color
+11_3_2_9_disabled_disabled_reset_middle_half_color
+11_3_2_10_disabled_disabled_reset_middle_half_color
+11_3_2_7_disabled_disabled_top_half_reset_no_color 012DDB
+11_3_2_8_disabled_disabled_top_half_reset_no_color 012EBD
+11_3_2_9_disabled_disabled_top_half_reset_no_color 0131E4
+11_3_2_10_disabled_disabled_top_half_reset_no_color 0144AB
+11_3_2_7_disabled_disabled_top_half_reset_color
+11_3_2_8_disabled_disabled_top_half_reset_color
+11_3_2_9_disabled_disabled_top_half_reset_color
+11_3_2_10_disabled_disabled_top_half_reset_color
+11_3_2_7_disabled_disabled_top_half_left_half_no_color 012DDB
+11_3_2_8_disabled_disabled_top_half_left_half_no_color 012EBD
+11_3_2_9_disabled_disabled_top_half_left_half_no_color 0131E4
+11_3_2_10_disabled_disabled_top_half_left_half_no_color 0144AB
+11_3_2_7_disabled_disabled_top_half_left_half_color
+11_3_2_8_disabled_disabled_top_half_left_half_color
+11_3_2_9_disabled_disabled_top_half_left_half_color
+11_3_2_10_disabled_disabled_top_half_left_half_color
+11_3_2_7_disabled_disabled_top_half_right_half_no_color 012DDB
+11_3_2_8_disabled_disabled_top_half_right_half_no_color 012EBD
+11_3_2_9_disabled_disabled_top_half_right_half_no_color 0131E4
+11_3_2_10_disabled_disabled_top_half_right_half_no_color 0144AB
+11_3_2_7_disabled_disabled_top_half_right_half_color
+11_3_2_8_disabled_disabled_top_half_right_half_color
+11_3_2_9_disabled_disabled_top_half_right_half_color
+11_3_2_10_disabled_disabled_top_half_right_half_color
+11_3_2_7_disabled_disabled_top_half_middle_half_no_color 012DDB
+11_3_2_8_disabled_disabled_top_half_middle_half_no_color 012EBD
+11_3_2_9_disabled_disabled_top_half_middle_half_no_color 0131E4
+11_3_2_10_disabled_disabled_top_half_middle_half_no_color 0144AB
+11_3_2_7_disabled_disabled_top_half_middle_half_color
+11_3_2_8_disabled_disabled_top_half_middle_half_color
+11_3_2_9_disabled_disabled_top_half_middle_half_color
+11_3_2_10_disabled_disabled_top_half_middle_half_color
+11_3_2_7_disabled_disabled_bottom_half_reset_no_color 013F5B
+11_3_2_8_disabled_disabled_bottom_half_reset_no_color 01403D
+11_3_2_9_disabled_disabled_bottom_half_reset_no_color 0			# TODO: Currently broken
+11_3_2_10_disabled_disabled_bottom_half_reset_no_color 016DCF
+11_3_2_7_disabled_disabled_bottom_half_reset_color
+11_3_2_8_disabled_disabled_bottom_half_reset_color
+11_3_2_9_disabled_disabled_bottom_half_reset_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_bottom_half_reset_color
+11_3_2_7_disabled_disabled_bottom_half_left_half_no_color 013F5B
+11_3_2_8_disabled_disabled_bottom_half_left_half_no_color 01403D
+11_3_2_9_disabled_disabled_bottom_half_left_half_no_color 0 	# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_bottom_half_left_half_no_color 016DC
+11_3_2_7_disabled_disabled_bottom_half_left_half_color
+11_3_2_8_disabled_disabled_bottom_half_left_half_color
+11_3_2_9_disabled_disabled_bottom_half_left_half_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_bottom_half_left_half_color
+11_3_2_7_disabled_disabled_bottom_half_right_half_no_color 013F5B
+11_3_2_8_disabled_disabled_bottom_half_right_half_no_color 01403D
+11_3_2_9_disabled_disabled_bottom_half_right_half_no_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_bottom_half_right_half_no_color 016DCF
+11_3_2_7_disabled_disabled_bottom_half_right_half_color
+11_3_2_8_disabled_disabled_bottom_half_right_half_color
+11_3_2_9_disabled_disabled_bottom_half_right_half_color  0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_bottom_half_right_half_color
+11_3_2_7_disabled_disabled_bottom_half_middle_half_no_color 013F5B
+11_3_2_8_disabled_disabled_bottom_half_middle_half_no_color 01403D
+11_3_2_9_disabled_disabled_bottom_half_middle_half_no_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_bottom_half_middle_half_no_color 016DCF
+11_3_2_7_disabled_disabled_bottom_half_middle_half_color
+11_3_2_8_disabled_disabled_bottom_half_middle_half_color
+11_3_2_9_disabled_disabled_bottom_half_middle_half_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_bottom_half_middle_half_color
+11_3_2_7_disabled_disabled_middle_half_reset_no_color 01297B
+11_3_2_8_disabled_disabled_middle_half_reset_no_color 012A5D
+11_3_2_9_disabled_disabled_middle_half_reset_no_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_reset_no_color 016DCF
+11_3_2_7_disabled_disabled_middle_half_reset_color
+11_3_2_8_disabled_disabled_middle_half_reset_color
+11_3_2_9_disabled_disabled_middle_half_reset_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_reset_color
+11_3_2_7_disabled_disabled_middle_half_left_half_no_color 01297B
+11_3_2_8_disabled_disabled_middle_half_left_half_no_color 012A5D
+11_3_2_9_disabled_disabled_middle_half_left_half_no_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_left_half_no_color 016DCF
+11_3_2_7_disabled_disabled_middle_half_left_half_color
+11_3_2_8_disabled_disabled_middle_half_left_half_color
+11_3_2_9_disabled_disabled_middle_half_left_half_color  0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_left_half_color
+11_3_2_7_disabled_disabled_middle_half_right_half_no_color 01297B
+11_3_2_8_disabled_disabled_middle_half_right_half_no_color 012A5D
+11_3_2_9_disabled_disabled_middle_half_right_half_no_color  0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_right_half_no_color 016DCF
+11_3_2_7_disabled_disabled_middle_half_right_half_color
+11_3_2_8_disabled_disabled_middle_half_right_half_color
+11_3_2_9_disabled_disabled_middle_half_right_half_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_right_half_color
+11_3_2_7_disabled_disabled_middle_half_middle_half_no_color 01297B
+11_3_2_8_disabled_disabled_middle_half_middle_half_no_color 012A5D
+11_3_2_9_disabled_disabled_middle_half_middle_half_no_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_middle_half_no_color 016DCF
+11_3_2_7_disabled_disabled_middle_half_middle_half_color
+11_3_2_8_disabled_disabled_middle_half_middle_half_color
+11_3_2_9_disabled_disabled_middle_half_middle_half_color 0		# TODO: Currently broken (as above)
+11_3_2_10_disabled_disabled_middle_half_middle_half_color
+11_3_2_7_disabled_enabled_reset_reset_no_color 010F3B
+11_3_2_8_disabled_enabled_reset_reset_no_color 01101D
+11_3_2_9_disabled_enabled_reset_reset_no_color 0149FE
+11_3_2_10_disabled_enabled_reset_reset_no_color 014B2F
+11_3_2_7_disabled_enabled_reset_reset_color
+11_3_2_8_disabled_enabled_reset_reset_color
+11_3_2_9_disabled_enabled_reset_reset_color
+11_3_2_10_disabled_enabled_reset_reset_color
+11_3_2_7_disabled_enabled_reset_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_reset_no_color 012DDB
+11_3_2_8_disabled_enabled_top_half_reset_no_color 012EBD
+11_3_2_9_disabled_enabled_top_half_reset_no_color 0131E4
+11_3_2_10_disabled_enabled_top_half_reset_no_color 0144AB
+11_3_2_7_disabled_enabled_top_half_reset_color
+11_3_2_8_disabled_enabled_top_half_reset_color 0 # TODO: Failed (screenshot taken too soon?)
+11_3_2_10_disabled_enabled_top_half_reset_color
+11_3_2_7_disabled_enabled_top_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_left_half_color 0 		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_reset_no_color 013F5B
+11_3_2_8_disabled_enabled_bottom_half_reset_no_color 01403D
+11_3_2_9_disabled_enabled_bottom_half_reset_no_color 0		# TODO: Currently broken
+11_3_2_10_disabled_enabled_bottom_half_reset_no_color 016DCF
+11_3_2_7_disabled_enabled_bottom_half_reset_color
+11_3_2_8_disabled_enabled_bottom_half_reset_color
+11_3_2_9_disabled_enabled_bottom_half_reset_color 0		# TODO: Currently broken
+11_3_2_10_disabled_enabled_bottom_half_reset_color
+11_3_2_7_disabled_enabled_bottom_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_reset_no_color 01297B
+11_3_2_8_disabled_enabled_middle_half_reset_no_color 012A5D
+11_3_2_9_disabled_enabled_middle_half_reset_no_color 0		# TODO: Currently broken
+11_3_2_10_disabled_enabled_middle_half_reset_no_color 016DCF
+11_3_2_7_disabled_enabled_middle_half_reset_color
+11_3_2_8_disabled_enabled_middle_half_reset_color
+11_3_2_9_disabled_enabled_middle_half_reset_color 0		# TODO: Currently broken
+11_3_2_10_disabled_enabled_middle_half_reset_color
+11_3_2_7_disabled_enabled_middle_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_left_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_left_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_right_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_right_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_middle_half_no_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_middle_half_color 0	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_disabled_reset_reset_no_color 010F3B
+11_3_2_8_enabled_disabled_reset_reset_no_color 01101D
+11_3_2_9_enabled_disabled_reset_reset_no_color 0149FE
+11_3_2_10_enabled_disabled_reset_reset_no_color 014B2F
+11_3_2_7_enabled_disabled_reset_reset_color 
+11_3_2_8_enabled_disabled_reset_reset_color
+11_3_2_9_enabled_disabled_reset_reset_color 
+11_3_2_10_enabled_disabled_reset_reset_color 
+11_3_2_7_enabled_disabled_reset_left_half_no_color 010F3B
+11_3_2_8_enabled_disabled_reset_left_half_no_color 01101D
+11_3_2_9_enabled_disabled_reset_left_half_no_color 0149FE
+11_3_2_10_enabled_disabled_reset_left_half_no_color 014B2F
+11_3_2_7_enabled_disabled_reset_left_half_color 
+11_3_2_8_enabled_disabled_reset_left_half_color 
+11_3_2_9_enabled_disabled_reset_left_half_color 
+11_3_2_10_enabled_disabled_reset_left_half_color
+11_3_2_7_enabled_disabled_reset_right_half_no_color 010F3B
+11_3_2_8_enabled_disabled_reset_right_half_no_color 01101D
+11_3_2_9_enabled_disabled_reset_right_half_no_color 0149FE
+11_3_2_10_enabled_disabled_reset_right_half_no_color 014B2F
+11_3_2_7_enabled_disabled_reset_right_half_color 
+11_3_2_8_enabled_disabled_reset_right_half_color 
+11_3_2_9_enabled_disabled_reset_right_half_color 
+11_3_2_10_enabled_disabled_reset_right_half_color
+11_3_2_7_enabled_disabled_reset_middle_half_no_color 010F3B
+11_3_2_8_enabled_disabled_reset_middle_half_no_color 01101D
+11_3_2_9_enabled_disabled_reset_middle_half_no_color 0149FE
+11_3_2_10_enabled_disabled_reset_middle_half_no_color 014B2F
+11_3_2_7_enabled_disabled_reset_middle_half_color 
+11_3_2_8_enabled_disabled_reset_middle_half_color
+11_3_2_9_enabled_disabled_reset_middle_half_color 
+11_3_2_10_enabled_disabled_reset_middle_half_color 
+11_3_2_7_enabled_disabled_top_half_reset_no_color 012DDB
+11_3_2_8_enabled_disabled_top_half_reset_no_color 012EBD
+11_3_2_9_enabled_disabled_top_half_reset_no_color 01621A
+11_3_2_10_enabled_disabled_top_half_reset_no_color 01634B
+11_3_2_7_enabled_disabled_top_half_reset_color 
+11_3_2_8_enabled_disabled_top_half_reset_color 
+11_3_2_9_enabled_disabled_top_half_reset_color 
+11_3_2_10_enabled_disabled_top_half_reset_color 
+11_3_2_7_enabled_disabled_top_half_left_half_no_color 012DDB
+11_3_2_8_enabled_disabled_top_half_left_half_no_color 012EBD
+11_3_2_9_enabled_disabled_top_half_left_half_no_color 01621A
+11_3_2_10_enabled_disabled_top_half_left_half_no_color 01634B
+11_3_2_7_enabled_disabled_top_half_left_half_color
+11_3_2_8_enabled_disabled_top_half_left_half_color 
+11_3_2_9_enabled_disabled_top_half_left_half_color 
+11_3_2_10_enabled_disabled_top_half_left_half_color
+11_3_2_7_enabled_disabled_top_half_right_half_no_color 012DDB
+11_3_2_8_enabled_disabled_top_half_right_half_no_color 012EBD
+11_3_2_9_enabled_disabled_top_half_right_half_no_color 01621A
+11_3_2_10_enabled_disabled_top_half_right_half_no_color 01634B
+11_3_2_7_enabled_disabled_top_half_right_half_color 
+11_3_2_8_enabled_disabled_top_half_right_half_color 
+11_3_2_9_enabled_disabled_top_half_right_half_color
+11_3_2_10_enabled_disabled_top_half_right_half_color
+11_3_2_7_enabled_disabled_top_half_middle_half_no_color 012DDB
+11_3_2_8_enabled_disabled_top_half_middle_half_no_color 012EBD
+11_3_2_9_enabled_disabled_top_half_middle_half_no_color 01621A
+11_3_2_10_enabled_disabled_top_half_middle_half_no_color 01634B
+11_3_2_7_enabled_disabled_top_half_middle_half_color
+11_3_2_8_enabled_disabled_top_half_middle_half_color 
+11_3_2_9_enabled_disabled_top_half_middle_half_color
+11_3_2_10_enabled_disabled_top_half_middle_half_color 
+11_3_2_7_enabled_disabled_bottom_half_reset_no_color 013F5B
+11_3_2_8_enabled_disabled_bottom_half_reset_no_color 01403D
+11_3_2_9_enabled_disabled_bottom_half_reset_no_color 016D54
+11_3_2_10_enabled_disabled_bottom_half_reset_no_color 016DCF
+11_3_2_7_enabled_disabled_bottom_half_reset_color
+11_3_2_8_enabled_disabled_bottom_half_reset_color 
+11_3_2_9_enabled_disabled_bottom_half_reset_color 
+11_3_2_10_enabled_disabled_bottom_half_reset_color 
+11_3_2_7_enabled_disabled_bottom_half_left_half_no_color 013F5B
+11_3_2_8_enabled_disabled_bottom_half_left_half_no_color 01403D
+11_3_2_9_enabled_disabled_bottom_half_left_half_no_color 016D54
+11_3_2_10_enabled_disabled_bottom_half_left_half_no_color 016DCF
+11_3_2_7_enabled_disabled_bottom_half_left_half_color 
+11_3_2_8_enabled_disabled_bottom_half_left_half_color 
+11_3_2_9_enabled_disabled_bottom_half_left_half_color 
+11_3_2_10_enabled_disabled_bottom_half_left_half_color 
+11_3_2_7_enabled_disabled_bottom_half_right_half_no_color 013F5B
+11_3_2_8_enabled_disabled_bottom_half_right_half_no_color 01403D
+11_3_2_9_enabled_disabled_bottom_half_right_half_no_color 016D54
+11_3_2_10_enabled_disabled_bottom_half_right_half_no_color 016DCF
+11_3_2_7_enabled_disabled_bottom_half_right_half_color 
+11_3_2_8_enabled_disabled_bottom_half_right_half_color 
+11_3_2_9_enabled_disabled_bottom_half_right_half_color 
+11_3_2_10_enabled_disabled_bottom_half_right_half_color 
+11_3_2_7_enabled_disabled_bottom_half_middle_half_no_color 013F5B
+11_3_2_8_enabled_disabled_bottom_half_middle_half_no_color 01403D
+11_3_2_9_enabled_disabled_bottom_half_middle_half_no_color 016D54
+11_3_2_10_enabled_disabled_bottom_half_middle_half_no_color 016DCF
+11_3_2_7_enabled_disabled_bottom_half_middle_half_color 
+11_3_2_8_enabled_disabled_bottom_half_middle_half_color
+11_3_2_9_enabled_disabled_bottom_half_middle_half_color 
+11_3_2_10_enabled_disabled_bottom_half_middle_half_color
+11_3_2_7_enabled_disabled_middle_half_reset_no_color 01297B
+11_3_2_8_enabled_disabled_middle_half_reset_no_color 012A5D
+11_3_2_9_enabled_disabled_middle_half_reset_no_color 015E58
+11_3_2_10_enabled_disabled_middle_half_reset_no_color 016DCF
+11_3_2_7_enabled_disabled_middle_half_reset_color 
+11_3_2_8_enabled_disabled_middle_half_reset_color
+11_3_2_9_enabled_disabled_middle_half_reset_color 
+11_3_2_10_enabled_disabled_middle_half_reset_color 
+11_3_2_7_enabled_disabled_middle_half_left_half_no_color 01297B
+11_3_2_8_enabled_disabled_middle_half_left_half_no_color 012A5D
+11_3_2_9_enabled_disabled_middle_half_left_half_no_color 015E58
+11_3_2_10_enabled_disabled_middle_half_left_half_no_color 016DCF
+11_3_2_7_enabled_disabled_middle_half_left_half_color
+11_3_2_8_enabled_disabled_middle_half_left_half_color
+11_3_2_9_enabled_disabled_middle_half_left_half_color
+11_3_2_10_enabled_disabled_middle_half_left_half_color 
+11_3_2_7_enabled_disabled_middle_half_right_half_no_color 01297B
+11_3_2_8_enabled_disabled_middle_half_right_half_no_color 012A5D
+11_3_2_9_enabled_disabled_middle_half_right_half_no_color 015E58
+11_3_2_10_enabled_disabled_middle_half_right_half_no_color 016DCF
+11_3_2_7_enabled_disabled_middle_half_right_half_color 
+11_3_2_8_enabled_disabled_middle_half_right_half_color 
+11_3_2_9_enabled_disabled_middle_half_right_half_color
+11_3_2_10_enabled_disabled_middle_half_right_half_color 
+11_3_2_7_enabled_disabled_middle_half_middle_half_no_color 01297B
+11_3_2_8_enabled_disabled_middle_half_middle_half_no_color 012A5D
+11_3_2_9_enabled_disabled_middle_half_middle_half_no_color 015E58
+11_3_2_10_enabled_disabled_middle_half_middle_half_no_color 016DCF
+11_3_2_7_enabled_disabled_middle_half_middle_half_color
+11_3_2_8_enabled_disabled_middle_half_middle_half_color 
+11_3_2_9_enabled_disabled_middle_half_middle_half_color
+11_3_2_10_enabled_disabled_middle_half_middle_half_color 
+11_3_2_7_enabled_enabled_reset_reset_no_color 010F3B
+11_3_2_8_enabled_enabled_reset_reset_no_color 01101D
+11_3_2_9_enabled_enabled_reset_reset_no_color 0149FE
+11_3_2_10_enabled_enabled_reset_reset_no_color 014B2F
+11_3_2_7_enabled_enabled_reset_reset_color 
+11_3_2_8_enabled_enabled_reset_reset_color 
+11_3_2_9_enabled_enabled_reset_reset_color 
+11_3_2_10_enabled_enabled_reset_reset_color
+11_3_2_7_enabled_enabled_reset_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_reset_no_color 012DDB
+11_3_2_8_enabled_enabled_top_half_reset_no_color 012EBD
+11_3_2_9_enabled_enabled_top_half_reset_no_color 01621A
+11_3_2_10_enabled_enabled_top_half_reset_no_color 01634B
+11_3_2_7_enabled_enabled_top_half_reset_color
+11_3_2_8_enabled_enabled_top_half_reset_color 
+11_3_2_9_enabled_enabled_top_half_reset_color 
+11_3_2_10_enabled_enabled_top_half_reset_color
+11_3_2_7_enabled_enabled_top_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_reset_no_color 013F5B
+11_3_2_8_enabled_enabled_bottom_half_reset_no_color 01403D
+11_3_2_9_enabled_enabled_bottom_half_reset_no_color 016D54
+11_3_2_10_enabled_enabled_bottom_half_reset_no_color 016DCF
+11_3_2_7_enabled_enabled_bottom_half_reset_color 
+11_3_2_8_enabled_enabled_bottom_half_reset_color 
+11_3_2_9_enabled_enabled_bottom_half_reset_color 
+11_3_2_10_enabled_enabled_bottom_half_reset_color 
+11_3_2_7_enabled_enabled_bottom_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_reset_no_color 01297B
+11_3_2_8_enabled_enabled_middle_half_reset_no_color 012A5D
+11_3_2_9_enabled_enabled_middle_half_reset_no_color 015E58
+11_3_2_10_enabled_enabled_middle_half_reset_no_color 016DCF
+11_3_2_7_enabled_enabled_middle_half_reset_color
+11_3_2_8_enabled_enabled_middle_half_reset_color 
+11_3_2_9_enabled_enabled_middle_half_reset_color 
+11_3_2_10_enabled_enabled_middle_half_reset_color
+11_3_2_7_enabled_enabled_middle_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_left_half_no_color 0 	# DECLRMM not implemented by K95  - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_left_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_left_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_right_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_right_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_middle_half_no_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_middle_half_color 0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+
+
+# VT420 editing sequences - all permutations of margin settings and colour 
+11_3_3_6_off !0102E0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_6_on !0102E0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_7_reset 010838
+11_3_3_7_top 010832
+11_3_3_7_bottom 01089C
+11_3_3_7_middle 010848
+11_3_3_8_reset !01069E		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_8_left !01069E		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_8_right !01069E		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_8_middle !101069E	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_9_1_disabled_disabled_reset_reset_no_color !010A26
+11_3_3_9_2_disabled_disabled_reset_reset_no_color !010A0A
+11_3_3_10_1_disabled_disabled_reset_reset_no_color 015540
+11_3_3_10_2_disabled_disabled_reset_reset_no_color 010FBE
+11_3_3_10_3_disabled_disabled_reset_reset_no_color 015540
+11_3_3_10_4_disabled_disabled_reset_reset_no_color FE24
+11_3_3_11_1_disabled_disabled_reset_reset_no_color 015540
+11_3_3_11_2_disabled_disabled_reset_reset_no_color FE24
+11_3_3_11_3_disabled_disabled_reset_reset_no_color 015540
+11_3_3_11_4_disabled_disabled_reset_reset_no_color 010FBE
+11_3_3_12_1_disabled_disabled_reset_reset_no_color 010C4E
+11_3_3_12_2_disabled_disabled_reset_reset_no_color 0109C6
+11_3_3_13_disabled_disabled_reset_reset_no_color 019A82
+11_3_3_9_1_disabled_disabled_reset_reset_color 
+11_3_3_9_2_disabled_disabled_reset_reset_color
+11_3_3_10_1_disabled_disabled_reset_reset_color 
+11_3_3_10_2_disabled_disabled_reset_reset_color
+11_3_3_10_3_disabled_disabled_reset_reset_color
+11_3_3_10_4_disabled_disabled_reset_reset_color 
+11_3_3_11_1_disabled_disabled_reset_reset_color 
+11_3_3_11_2_disabled_disabled_reset_reset_color 
+11_3_3_11_3_disabled_disabled_reset_reset_color 
+11_3_3_11_4_disabled_disabled_reset_reset_color
+11_3_3_12_1_disabled_disabled_reset_reset_color
+11_3_3_12_2_disabled_disabled_reset_reset_color 
+11_3_3_13_disabled_disabled_reset_reset_color 
+11_3_3_9_1_disabled_disabled_reset_left_half_no_color !010A26
+11_3_3_9_2_disabled_disabled_reset_left_half_no_color !010A0A
+11_3_3_10_1_disabled_disabled_reset_left_half_no_color 015540
+11_3_3_10_2_disabled_disabled_reset_left_half_no_color 010FBE
+11_3_3_10_3_disabled_disabled_reset_left_half_no_color 015540
+11_3_3_10_4_disabled_disabled_reset_left_half_no_color FE24
+11_3_3_11_1_disabled_disabled_reset_left_half_no_color 015540
+11_3_3_11_2_disabled_disabled_reset_left_half_no_color FE24
+11_3_3_11_3_disabled_disabled_reset_left_half_no_color 015540
+11_3_3_11_4_disabled_disabled_reset_left_half_no_color 010FBE
+11_3_3_12_1_disabled_disabled_reset_left_half_no_color !010C0D
+11_3_3_12_2_disabled_disabled_reset_left_half_no_color 0109C6
+11_3_3_13_disabled_disabled_reset_left_half_no_color 019A82
+11_3_3_9_1_disabled_disabled_reset_left_half_color 
+11_3_3_9_2_disabled_disabled_reset_left_half_color
+11_3_3_10_1_disabled_disabled_reset_left_half_color
+11_3_3_10_2_disabled_disabled_reset_left_half_color 
+11_3_3_10_3_disabled_disabled_reset_left_half_color 
+11_3_3_10_4_disabled_disabled_reset_left_half_color 
+11_3_3_11_1_disabled_disabled_reset_left_half_color 
+11_3_3_11_2_disabled_disabled_reset_left_half_color
+11_3_3_11_3_disabled_disabled_reset_left_half_color
+11_3_3_11_4_disabled_disabled_reset_left_half_color 
+11_3_3_12_1_disabled_disabled_reset_left_half_color 
+11_3_3_12_2_disabled_disabled_reset_left_half_color 
+11_3_3_13_disabled_disabled_reset_left_half_color 
+11_3_3_9_1_disabled_disabled_reset_right_half_no_color !010A26
+11_3_3_9_2_disabled_disabled_reset_right_half_no_color !010A0A
+11_3_3_10_1_disabled_disabled_reset_right_half_no_color 015540
+11_3_3_10_2_disabled_disabled_reset_right_half_no_color 010FBE
+11_3_3_10_3_disabled_disabled_reset_right_half_no_color 015540
+11_3_3_10_4_disabled_disabled_reset_right_half_no_color FE24
+11_3_3_11_1_disabled_disabled_reset_right_half_no_color 015540
+11_3_3_11_2_disabled_disabled_reset_right_half_no_color FE24
+11_3_3_11_3_disabled_disabled_reset_right_half_no_color 015540
+11_3_3_11_4_disabled_disabled_reset_right_half_no_color 010FBE
+11_3_3_12_1_disabled_disabled_reset_right_half_no_color 010C4E
+11_3_3_12_2_disabled_disabled_reset_right_half_no_color 0109C6
+11_3_3_13_disabled_disabled_reset_right_half_no_color 019A82
+11_3_3_9_1_disabled_disabled_reset_right_half_color 
+11_3_3_9_2_disabled_disabled_reset_right_half_color 
+11_3_3_10_1_disabled_disabled_reset_right_half_color 
+11_3_3_10_2_disabled_disabled_reset_right_half_color 
+11_3_3_10_3_disabled_disabled_reset_right_half_color 
+11_3_3_10_4_disabled_disabled_reset_right_half_color
+11_3_3_11_1_disabled_disabled_reset_right_half_color 
+11_3_3_11_2_disabled_disabled_reset_right_half_color 
+11_3_3_11_3_disabled_disabled_reset_right_half_color
+11_3_3_11_4_disabled_disabled_reset_right_half_color 
+11_3_3_12_1_disabled_disabled_reset_right_half_color
+11_3_3_12_2_disabled_disabled_reset_right_half_color
+11_3_3_13_disabled_disabled_reset_right_half_color 
+11_3_3_9_1_disabled_disabled_reset_middle_half_no_color !010A26
+11_3_3_9_2_disabled_disabled_reset_middle_half_no_color !010A0A
+11_3_3_10_1_disabled_disabled_reset_middle_half_no_color 015540
+11_3_3_10_2_disabled_disabled_reset_middle_half_no_color 010FBE
+11_3_3_10_3_disabled_disabled_reset_middle_half_no_color 015540
+11_3_3_10_4_disabled_disabled_reset_middle_half_no_color FE24
+11_3_3_11_1_disabled_disabled_reset_middle_half_no_color 015540
+11_3_3_11_2_disabled_disabled_reset_middle_half_no_color FE24
+11_3_3_11_3_disabled_disabled_reset_middle_half_no_color 015540
+11_3_3_11_4_disabled_disabled_reset_middle_half_no_color 010FBE
+11_3_3_12_1_disabled_disabled_reset_middle_half_no_color 010C4E
+11_3_3_12_2_disabled_disabled_reset_middle_half_no_color 0109C6
+11_3_3_13_disabled_disabled_reset_middle_half_no_color 019A82
+11_3_3_9_1_disabled_disabled_reset_middle_half_color 
+11_3_3_9_2_disabled_disabled_reset_middle_half_color 
+11_3_3_10_1_disabled_disabled_reset_middle_half_color
+11_3_3_10_2_disabled_disabled_reset_middle_half_color
+11_3_3_10_3_disabled_disabled_reset_middle_half_color 
+11_3_3_10_4_disabled_disabled_reset_middle_half_color 
+11_3_3_11_1_disabled_disabled_reset_middle_half_color 
+11_3_3_11_2_disabled_disabled_reset_middle_half_color 
+11_3_3_11_3_disabled_disabled_reset_middle_half_color
+11_3_3_11_4_disabled_disabled_reset_middle_half_color
+11_3_3_12_1_disabled_disabled_reset_middle_half_color 
+11_3_3_12_2_disabled_disabled_reset_middle_half_color 
+11_3_3_13_disabled_disabled_reset_middle_half_color 
+11_3_3_9_1_disabled_disabled_top_half_reset_no_color !01237E
+11_3_3_9_2_disabled_disabled_top_half_reset_no_color !012362
+11_3_3_10_1_disabled_disabled_top_half_reset_no_color 01640C
+11_3_3_10_2_disabled_disabled_top_half_reset_no_color 014200
+11_3_3_10_3_disabled_disabled_top_half_reset_no_color !0157EA
+11_3_3_10_4_disabled_disabled_top_half_reset_no_color 01303C
+11_3_3_11_1_disabled_disabled_top_half_reset_no_color 01640C
+11_3_3_11_2_disabled_disabled_top_half_reset_no_color 012D8E
+11_3_3_11_3_disabled_disabled_top_half_reset_no_color !015962
+11_3_3_11_4_disabled_disabled_top_half_reset_no_color 014200
+11_3_3_12_1_disabled_disabled_top_half_reset_no_color 0124FE
+11_3_3_12_2_disabled_disabled_top_half_reset_no_color 0109BE
+11_3_3_13_disabled_disabled_top_half_reset_no_color 018424
+11_3_3_13_disabled_disabled_top_half_reset_no_color 018424
+11_3_3_9_1_disabled_disabled_top_half_reset_color 
+11_3_3_9_2_disabled_disabled_top_half_reset_color 
+11_3_3_10_1_disabled_disabled_top_half_reset_color 
+11_3_3_10_2_disabled_disabled_top_half_reset_color
+11_3_3_10_3_disabled_disabled_top_half_reset_color 
+11_3_3_10_4_disabled_disabled_top_half_reset_color
+11_3_3_11_1_disabled_disabled_top_half_reset_color 
+11_3_3_11_2_disabled_disabled_top_half_reset_color 
+11_3_3_11_3_disabled_disabled_top_half_reset_color 
+11_3_3_11_4_disabled_disabled_top_half_reset_color
+11_3_3_12_1_disabled_disabled_top_half_reset_color
+11_3_3_12_2_disabled_disabled_top_half_reset_color
+11_3_3_13_disabled_disabled_top_half_reset_color 
+11_3_3_9_1_disabled_disabled_top_half_left_half_no_color !01237E
+11_3_3_9_2_disabled_disabled_top_half_left_half_no_color !012362
+11_3_3_10_1_disabled_disabled_top_half_left_half_no_color 01640C
+11_3_3_10_2_disabled_disabled_top_half_left_half_no_color 014200
+11_3_3_10_3_disabled_disabled_top_half_left_half_no_color !0157EA
+11_3_3_10_4_disabled_disabled_top_half_left_half_no_color 01303C
+11_3_3_11_1_disabled_disabled_top_half_left_half_no_color 01640C
+11_3_3_11_2_disabled_disabled_top_half_left_half_no_color 012D8E
+11_3_3_11_3_disabled_disabled_top_half_left_half_no_color !015962
+11_3_3_11_4_disabled_disabled_top_half_left_half_no_color 014200
+11_3_3_12_1_disabled_disabled_top_half_left_half_no_color 01125D	# While the test says "letters a-l are on column 80", my VT520 as in this screen with letters b-t visible
+11_3_3_12_2_disabled_disabled_top_half_left_half_no_color 0109BE
+11_3_3_13_disabled_disabled_top_half_left_half_no_color 01844E
+11_3_3_9_1_disabled_disabled_top_half_left_half_color 
+11_3_3_9_2_disabled_disabled_top_half_left_half_color
+11_3_3_10_1_disabled_disabled_top_half_left_half_color 
+11_3_3_10_2_disabled_disabled_top_half_left_half_color 
+11_3_3_10_3_disabled_disabled_top_half_left_half_color 
+11_3_3_10_4_disabled_disabled_top_half_left_half_color 
+11_3_3_11_1_disabled_disabled_top_half_left_half_color 
+11_3_3_11_2_disabled_disabled_top_half_left_half_color 
+11_3_3_11_3_disabled_disabled_top_half_left_half_color 
+11_3_3_11_4_disabled_disabled_top_half_left_half_color 
+11_3_3_12_1_disabled_disabled_top_half_left_half_color
+11_3_3_12_2_disabled_disabled_top_half_left_half_color 
+11_3_3_13_disabled_disabled_top_half_left_half_color
+11_3_3_9_1_disabled_disabled_top_half_right_half_no_color !01237E
+11_3_3_9_2_disabled_disabled_top_half_right_half_no_color !012362
+11_3_3_10_1_disabled_disabled_top_half_right_half_no_color 01640C
+11_3_3_10_2_disabled_disabled_top_half_right_half_no_color 014200
+11_3_3_10_3_disabled_disabled_top_half_right_half_no_color !0157EA
+11_3_3_10_4_disabled_disabled_top_half_right_half_no_color 01303C
+11_3_3_11_1_disabled_disabled_top_half_right_half_no_color 01640C
+11_3_3_11_2_disabled_disabled_top_half_right_half_no_color 012D8E
+11_3_3_11_3_disabled_disabled_top_half_right_half_no_color !015962
+11_3_3_11_4_disabled_disabled_top_half_right_half_no_color 014200
+11_3_3_12_1_disabled_disabled_top_half_right_half_no_color 01241E
+11_3_3_12_2_disabled_disabled_top_half_right_half_no_color 0109BE
+11_3_3_13_disabled_disabled_top_half_right_half_no_color 018424
+11_3_3_9_1_disabled_disabled_top_half_right_half_color 
+11_3_3_9_2_disabled_disabled_top_half_right_half_color 
+11_3_3_10_1_disabled_disabled_top_half_right_half_color 
+11_3_3_10_2_disabled_disabled_top_half_right_half_color 
+11_3_3_10_3_disabled_disabled_top_half_right_half_color 
+11_3_3_10_4_disabled_disabled_top_half_right_half_color 
+11_3_3_11_1_disabled_disabled_top_half_right_half_color 
+11_3_3_11_2_disabled_disabled_top_half_right_half_color
+11_3_3_11_3_disabled_disabled_top_half_right_half_color 
+11_3_3_11_4_disabled_disabled_top_half_right_half_color 
+11_3_3_12_1_disabled_disabled_top_half_right_half_color
+11_3_3_12_2_disabled_disabled_top_half_right_half_color
+11_3_3_13_disabled_disabled_top_half_right_half_color 
+11_3_3_9_1_disabled_disabled_top_half_middle_half_no_color !01237E
+11_3_3_9_2_disabled_disabled_top_half_middle_half_no_color !012362
+11_3_3_10_1_disabled_disabled_top_half_middle_half_no_color 01640C
+11_3_3_10_2_disabled_disabled_top_half_middle_half_no_color 014200
+11_3_3_10_3_disabled_disabled_top_half_middle_half_no_color !0157EA
+11_3_3_10_4_disabled_disabled_top_half_middle_half_no_color 01303C
+11_3_3_11_1_disabled_disabled_top_half_middle_half_no_color 01640C
+11_3_3_11_2_disabled_disabled_top_half_middle_half_no_color 012D8E
+11_3_3_11_3_disabled_disabled_top_half_middle_half_no_color !015962
+11_3_3_11_4_disabled_disabled_top_half_middle_half_no_color 014200
+11_3_3_12_1_disabled_disabled_top_half_middle_half_no_color 011B5E
+11_3_3_12_2_disabled_disabled_top_half_middle_half_no_color 0109BE
+11_3_3_13_disabled_disabled_top_half_middle_half_no_color 018424
+11_3_3_9_1_disabled_disabled_top_half_middle_half_color 
+11_3_3_9_2_disabled_disabled_top_half_middle_half_color 
+11_3_3_10_1_disabled_disabled_top_half_middle_half_color 
+11_3_3_10_2_disabled_disabled_top_half_middle_half_color 
+11_3_3_10_3_disabled_disabled_top_half_middle_half_color 
+11_3_3_10_4_disabled_disabled_top_half_middle_half_color 
+11_3_3_11_1_disabled_disabled_top_half_middle_half_color 
+11_3_3_11_2_disabled_disabled_top_half_middle_half_color 
+11_3_3_11_3_disabled_disabled_top_half_middle_half_color 
+11_3_3_11_4_disabled_disabled_top_half_middle_half_color 
+11_3_3_12_1_disabled_disabled_top_half_middle_half_color 
+11_3_3_12_2_disabled_disabled_top_half_middle_half_color 
+11_3_3_13_disabled_disabled_top_half_middle_half_color
+11_3_3_9_1_disabled_disabled_bottom_half_reset_no_color !012E76
+11_3_3_9_2_disabled_disabled_bottom_half_reset_no_color !012D26
+11_3_3_10_1_disabled_disabled_bottom_half_reset_no_color 0162CC
+11_3_3_10_2_disabled_disabled_bottom_half_reset_no_color 013DA0
+11_3_3_10_3_disabled_disabled_bottom_half_reset_no_color !0156AA
+11_3_3_10_4_disabled_disabled_bottom_half_reset_no_color 012BDC
+11_3_3_11_1_disabled_disabled_bottom_half_reset_no_color 0162CC
+11_3_3_11_2_disabled_disabled_bottom_half_reset_no_color !012574
+11_3_3_11_3_disabled_disabled_bottom_half_reset_no_color !015516
+11_3_3_11_4_disabled_disabled_bottom_half_reset_no_color 013DA0
+11_3_3_12_1_disabled_disabled_bottom_half_reset_no_color 013740
+11_3_3_12_2_disabled_disabled_bottom_half_reset_no_color 01362C
+11_3_3_13_disabled_disabled_bottom_half_reset_no_color 01775C
+11_3_3_9_1_disabled_disabled_bottom_half_reset_color 
+11_3_3_9_2_disabled_disabled_bottom_half_reset_color 
+11_3_3_10_1_disabled_disabled_bottom_half_reset_color 
+11_3_3_10_2_disabled_disabled_bottom_half_reset_color 
+11_3_3_10_3_disabled_disabled_bottom_half_reset_color 
+11_3_3_10_4_disabled_disabled_bottom_half_reset_color 
+11_3_3_11_1_disabled_disabled_bottom_half_reset_color
+11_3_3_11_2_disabled_disabled_bottom_half_reset_color 
+11_3_3_11_3_disabled_disabled_bottom_half_reset_color 
+11_3_3_11_4_disabled_disabled_bottom_half_reset_color 
+11_3_3_12_1_disabled_disabled_bottom_half_reset_color
+11_3_3_12_2_disabled_disabled_bottom_half_reset_color 
+11_3_3_13_disabled_disabled_bottom_half_reset_color 
+11_3_3_9_1_disabled_disabled_bottom_half_left_half_no_color !012E76
+11_3_3_9_2_disabled_disabled_bottom_half_left_half_no_color !012D26
+11_3_3_10_1_disabled_disabled_bottom_half_left_half_no_color 0162CC
+11_3_3_10_2_disabled_disabled_bottom_half_left_half_no_color 013DA0
+11_3_3_10_3_disabled_disabled_bottom_half_left_half_no_color !0156AA
+11_3_3_10_4_disabled_disabled_bottom_half_left_half_no_color 012BDC
+11_3_3_11_1_disabled_disabled_bottom_half_left_half_no_color 0162CC
+11_3_3_11_2_disabled_disabled_bottom_half_left_half_no_color !012574
+11_3_3_11_3_disabled_disabled_bottom_half_left_half_no_color !015516
+11_3_3_11_4_disabled_disabled_bottom_half_left_half_no_color 013DA0
+11_3_3_12_1_disabled_disabled_bottom_half_left_half_no_color 0136FF
+11_3_3_12_2_disabled_disabled_bottom_half_left_half_no_color 01362C
+11_3_3_13_disabled_disabled_bottom_half_left_half_no_color 01775C
+11_3_3_9_1_disabled_disabled_bottom_half_left_half_color 
+11_3_3_9_2_disabled_disabled_bottom_half_left_half_color 
+11_3_3_10_1_disabled_disabled_bottom_half_left_half_color 
+11_3_3_10_2_disabled_disabled_bottom_half_left_half_color 
+11_3_3_10_3_disabled_disabled_bottom_half_left_half_color 
+11_3_3_10_4_disabled_disabled_bottom_half_left_half_color 
+11_3_3_11_1_disabled_disabled_bottom_half_left_half_color 
+11_3_3_11_2_disabled_disabled_bottom_half_left_half_color 
+11_3_3_11_3_disabled_disabled_bottom_half_left_half_color
+11_3_3_11_4_disabled_disabled_bottom_half_left_half_color 
+11_3_3_12_1_disabled_disabled_bottom_half_left_half_color 
+11_3_3_12_2_disabled_disabled_bottom_half_left_half_color
+11_3_3_13_disabled_disabled_bottom_half_left_half_color 
+11_3_3_9_1_disabled_disabled_bottom_half_right_half_no_color !012E76
+11_3_3_9_2_disabled_disabled_bottom_half_right_half_no_color !012D26
+11_3_3_10_1_disabled_disabled_bottom_half_right_half_no_color 0162CC
+11_3_3_10_2_disabled_disabled_bottom_half_right_half_no_color 013DA0
+11_3_3_10_3_disabled_disabled_bottom_half_right_half_no_color !0156AA
+11_3_3_10_4_disabled_disabled_bottom_half_right_half_no_color 012BDC
+11_3_3_11_1_disabled_disabled_bottom_half_right_half_no_color 0162CC
+11_3_3_11_2_disabled_disabled_bottom_half_right_half_no_color !012574
+11_3_3_11_3_disabled_disabled_bottom_half_right_half_no_color !015516
+11_3_3_11_4_disabled_disabled_bottom_half_right_half_no_color 013DA0
+11_3_3_12_1_disabled_disabled_bottom_half_right_half_no_color 013740
+11_3_3_12_2_disabled_disabled_bottom_half_right_half_no_color 01362C
+11_3_3_13_disabled_disabled_bottom_half_right_half_no_color 01775C
+11_3_3_9_1_disabled_disabled_bottom_half_right_half_color
+11_3_3_9_2_disabled_disabled_bottom_half_right_half_color 
+11_3_3_10_1_disabled_disabled_bottom_half_right_half_color 
+11_3_3_10_2_disabled_disabled_bottom_half_right_half_color 
+11_3_3_10_3_disabled_disabled_bottom_half_right_half_color 
+11_3_3_10_4_disabled_disabled_bottom_half_right_half_color 
+11_3_3_11_1_disabled_disabled_bottom_half_right_half_color 
+11_3_3_11_2_disabled_disabled_bottom_half_right_half_color 
+11_3_3_11_3_disabled_disabled_bottom_half_right_half_color 
+11_3_3_11_4_disabled_disabled_bottom_half_right_half_color 
+11_3_3_12_1_disabled_disabled_bottom_half_right_half_color 
+11_3_3_12_2_disabled_disabled_bottom_half_right_half_color 
+11_3_3_13_disabled_disabled_bottom_half_right_half_color
+11_3_3_9_1_disabled_disabled_bottom_half_middle_half_no_color !012E76
+11_3_3_9_2_disabled_disabled_bottom_half_middle_half_no_color !012D26
+11_3_3_10_1_disabled_disabled_bottom_half_middle_half_no_color 0162CC
+11_3_3_10_2_disabled_disabled_bottom_half_middle_half_no_color 013DA0
+11_3_3_10_3_disabled_disabled_bottom_half_middle_half_no_color !0156AA
+11_3_3_10_4_disabled_disabled_bottom_half_middle_half_no_color 012BDC
+11_3_3_11_1_disabled_disabled_bottom_half_middle_half_no_color 0162CC
+11_3_3_11_2_disabled_disabled_bottom_half_middle_half_no_color !012574
+11_3_3_11_3_disabled_disabled_bottom_half_middle_half_no_color !015516
+11_3_3_11_4_disabled_disabled_bottom_half_middle_half_no_color 013DA0
+11_3_3_12_1_disabled_disabled_bottom_half_middle_half_no_color 013740
+11_3_3_12_2_disabled_disabled_bottom_half_middle_half_no_color 01362C
+11_3_3_13_disabled_disabled_bottom_half_middle_half_no_color 01775C
+11_3_3_9_1_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_9_2_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_10_1_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_10_2_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_10_3_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_10_4_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_11_1_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_11_2_disabled_disabled_bottom_half_middle_half_color
+11_3_3_11_3_disabled_disabled_bottom_half_middle_half_color
+11_3_3_11_4_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_12_1_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_12_2_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_13_disabled_disabled_bottom_half_middle_half_color 
+11_3_3_9_1_disabled_disabled_middle_half_reset_no_color !011CB7
+11_3_3_9_2_disabled_disabled_middle_half_reset_no_color !011D6F
+11_3_3_10_1_disabled_disabled_middle_half_reset_no_color 0162CC
+11_3_3_10_2_disabled_disabled_middle_half_reset_no_color 013DA0
+11_3_3_10_3_disabled_disabled_middle_half_reset_no_color !0156AA
+11_3_3_10_4_disabled_disabled_middle_half_reset_no_color 012BDC
+11_3_3_11_1_disabled_disabled_middle_half_reset_no_color 0162CC
+11_3_3_11_2_disabled_disabled_middle_half_reset_no_color !012574
+11_3_3_11_3_disabled_disabled_middle_half_reset_no_color !015516
+11_3_3_11_4_disabled_disabled_middle_half_reset_no_color 013DA0
+11_3_3_12_1_disabled_disabled_middle_half_reset_no_color 011E95  # Despite what the test says, this matches the behaviour of my VT520
+11_3_3_12_2_disabled_disabled_middle_half_reset_no_color 0109C9
+11_3_3_13_disabled_disabled_middle_half_reset_no_color 018756
+11_3_3_9_1_disabled_disabled_middle_half_reset_color
+11_3_3_9_2_disabled_disabled_middle_half_reset_color 
+11_3_3_10_1_disabled_disabled_middle_half_reset_color 
+11_3_3_10_2_disabled_disabled_middle_half_reset_color 
+11_3_3_10_3_disabled_disabled_middle_half_reset_color 
+11_3_3_10_4_disabled_disabled_middle_half_reset_color 
+11_3_3_11_1_disabled_disabled_middle_half_reset_color 
+11_3_3_11_2_disabled_disabled_middle_half_reset_color 
+11_3_3_11_3_disabled_disabled_middle_half_reset_color 
+11_3_3_11_4_disabled_disabled_middle_half_reset_color 
+11_3_3_12_1_disabled_disabled_middle_half_reset_color 
+11_3_3_12_2_disabled_disabled_middle_half_reset_color
+11_3_3_13_disabled_disabled_middle_half_reset_color 
+11_3_3_9_1_disabled_disabled_middle_half_left_half_no_color !011CB7
+11_3_3_9_2_disabled_disabled_middle_half_left_half_no_color !011C9B
+11_3_3_10_1_disabled_disabled_middle_half_left_half_no_color 0162CC
+11_3_3_10_2_disabled_disabled_middle_half_left_half_no_color 013DA0
+11_3_3_10_3_disabled_disabled_middle_half_left_half_no_color !0156AA
+11_3_3_10_4_disabled_disabled_middle_half_left_half_no_color 012BDC
+11_3_3_11_1_disabled_disabled_middle_half_left_half_no_color 0162CC
+11_3_3_11_2_disabled_disabled_middle_half_left_half_no_color !012574
+11_3_3_11_3_disabled_disabled_middle_half_left_half_no_color !015516
+11_3_3_11_4_disabled_disabled_middle_half_left_half_no_color 013DA0
+11_3_3_12_1_disabled_disabled_middle_half_left_half_no_color 010E4E
+11_3_3_12_2_disabled_disabled_middle_half_left_half_no_color 0109C9
+11_3_3_13_disabled_disabled_middle_half_left_half_no_color 018756
+11_3_3_9_1_disabled_disabled_middle_half_left_half_color 
+11_3_3_9_2_disabled_disabled_middle_half_left_half_color 
+11_3_3_10_1_disabled_disabled_middle_half_left_half_color
+11_3_3_10_2_disabled_disabled_middle_half_left_half_color 
+11_3_3_10_3_disabled_disabled_middle_half_left_half_color
+11_3_3_10_4_disabled_disabled_middle_half_left_half_color 
+11_3_3_11_1_disabled_disabled_middle_half_left_half_color 
+11_3_3_11_2_disabled_disabled_middle_half_left_half_color 
+11_3_3_11_3_disabled_disabled_middle_half_left_half_color 
+11_3_3_11_4_disabled_disabled_middle_half_left_half_color 
+11_3_3_12_1_disabled_disabled_middle_half_left_half_color
+11_3_3_12_2_disabled_disabled_middle_half_left_half_color 
+11_3_3_13_disabled_disabled_middle_half_left_half_color 
+11_3_3_9_1_disabled_disabled_middle_half_right_half_no_color !011CB7
+11_3_3_9_2_disabled_disabled_middle_half_right_half_no_color !011EA3
+11_3_3_10_1_disabled_disabled_middle_half_right_half_no_color 0162CC
+11_3_3_10_2_disabled_disabled_middle_half_right_half_no_color 013DA0
+11_3_3_10_3_disabled_disabled_middle_half_right_half_no_color !0156AA
+11_3_3_10_4_disabled_disabled_middle_half_right_half_no_color !012BDC
+11_3_3_11_1_disabled_disabled_middle_half_right_half_no_color 0162CC
+11_3_3_11_2_disabled_disabled_middle_half_right_half_no_color !012574
+11_3_3_11_3_disabled_disabled_middle_half_right_half_no_color !015516
+11_3_3_11_4_disabled_disabled_middle_half_right_half_no_color 013DA0
+11_3_3_12_1_disabled_disabled_middle_half_right_half_no_color 011DD1
+11_3_3_12_2_disabled_disabled_middle_half_right_half_no_color 0109C9
+11_3_3_13_disabled_disabled_middle_half_right_half_no_color 018756
+11_3_3_9_1_disabled_disabled_middle_half_right_half_color 
+11_3_3_9_2_disabled_disabled_middle_half_right_half_color 
+11_3_3_10_1_disabled_disabled_middle_half_right_half_color 
+11_3_3_10_2_disabled_disabled_middle_half_right_half_color
+11_3_3_10_3_disabled_disabled_middle_half_right_half_color
+11_3_3_10_4_disabled_disabled_middle_half_right_half_color 
+11_3_3_11_1_disabled_disabled_middle_half_right_half_color
+11_3_3_11_2_disabled_disabled_middle_half_right_half_color
+11_3_3_11_3_disabled_disabled_middle_half_right_half_color
+11_3_3_11_4_disabled_disabled_middle_half_right_half_color 
+11_3_3_12_1_disabled_disabled_middle_half_right_half_color 
+11_3_3_12_2_disabled_disabled_middle_half_right_half_color
+11_3_3_13_disabled_disabled_middle_half_right_half_color 
+11_3_3_9_1_disabled_disabled_middle_half_middle_half_no_color !011CB7
+11_3_3_9_2_disabled_disabled_middle_half_middle_half_no_color !011E09
+11_3_3_10_1_disabled_disabled_middle_half_middle_half_no_color 0162CC
+11_3_3_10_2_disabled_disabled_middle_half_middle_half_no_color 013DA0
+11_3_3_10_3_disabled_disabled_middle_half_middle_half_no_color !0156AA
+11_3_3_10_4_disabled_disabled_middle_half_middle_half_no_color 012BDC
+11_3_3_11_1_disabled_disabled_middle_half_middle_half_no_color 0162CC
+11_3_3_11_2_disabled_disabled_middle_half_middle_half_no_color !012574
+11_3_3_11_3_disabled_disabled_middle_half_middle_half_no_color !015516
+11_3_3_11_4_disabled_disabled_middle_half_middle_half_no_color 013DA0
+11_3_3_12_1_disabled_disabled_middle_half_middle_half_no_color 011629
+11_3_3_12_2_disabled_disabled_middle_half_middle_half_no_color 0109C9
+11_3_3_13_disabled_disabled_middle_half_middle_half_no_color 018756
+11_3_3_9_1_disabled_disabled_middle_half_middle_half_color
+11_3_3_9_2_disabled_disabled_middle_half_middle_half_color 
+11_3_3_10_1_disabled_disabled_middle_half_middle_half_color 
+11_3_3_10_2_disabled_disabled_middle_half_middle_half_color 
+11_3_3_10_3_disabled_disabled_middle_half_middle_half_color 
+11_3_3_10_4_disabled_disabled_middle_half_middle_half_color 
+11_3_3_11_1_disabled_disabled_middle_half_middle_half_color
+11_3_3_11_2_disabled_disabled_middle_half_middle_half_color 
+11_3_3_11_3_disabled_disabled_middle_half_middle_half_color 
+11_3_3_11_4_disabled_disabled_middle_half_middle_half_color 
+11_3_3_12_1_disabled_disabled_middle_half_middle_half_color 
+11_3_3_12_2_disabled_disabled_middle_half_middle_half_color
+11_3_3_13_disabled_disabled_middle_half_middle_half_color
+11_3_3_9_1_disabled_enabled_reset_reset_no_color !010A26
+11_3_3_9_2_disabled_enabled_reset_reset_no_color !010A0A
+11_3_3_10_1_disabled_enabled_reset_reset_no_color 015540
+11_3_3_10_2_disabled_enabled_reset_reset_no_color 010FBE
+11_3_3_10_3_disabled_enabled_reset_reset_no_color 015540
+11_3_3_10_4_disabled_enabled_reset_reset_no_color FE24
+11_3_3_11_1_disabled_enabled_reset_reset_no_color 015540
+11_3_3_11_2_disabled_enabled_reset_reset_no_color FE24
+11_3_3_11_3_disabled_enabled_reset_reset_no_color 015540
+11_3_3_11_4_disabled_enabled_reset_reset_no_color 010FBE
+11_3_3_12_1_disabled_enabled_reset_reset_no_color 010C4E
+11_3_3_12_2_disabled_enabled_reset_reset_no_color 0109C6
+11_3_3_13_disabled_enabled_reset_reset_no_color 019A82
+11_3_3_9_1_disabled_enabled_reset_reset_color
+11_3_3_9_2_disabled_enabled_reset_reset_color 
+11_3_3_10_1_disabled_enabled_reset_reset_color 
+11_3_3_10_2_disabled_enabled_reset_reset_color
+11_3_3_10_3_disabled_enabled_reset_reset_color 
+11_3_3_10_4_disabled_enabled_reset_reset_color
+11_3_3_11_1_disabled_enabled_reset_reset_color 
+11_3_3_11_2_disabled_enabled_reset_reset_color 
+11_3_3_11_3_disabled_enabled_reset_reset_color
+11_3_3_11_4_disabled_enabled_reset_reset_color 
+11_3_3_12_1_disabled_enabled_reset_reset_color
+11_3_3_12_2_disabled_enabled_reset_reset_color 
+11_3_3_13_disabled_enabled_reset_reset_color 
+11_3_3_9_1_disabled_enabled_reset_left_half_no_color !011EEA	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_9_2_disabled_enabled_reset_left_half_no_color !0135CA	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_10_1_disabled_enabled_reset_left_half_no_color 0157A0
+11_3_3_10_2_disabled_enabled_reset_left_half_no_color !010596	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_10_3_disabled_enabled_reset_left_half_no_color !0127C4	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_10_4_disabled_enabled_reset_left_half_no_color !FD20	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_11_1_disabled_enabled_reset_left_half_no_color 0157A0
+11_3_3_11_2_disabled_enabled_reset_left_half_no_color !F7BC	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_11_3_disabled_enabled_reset_left_half_no_color !0125B2	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_11_4_disabled_enabled_reset_left_half_no_color !010596	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_12_1_disabled_enabled_reset_left_half_no_color !011785	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_12_2_disabled_enabled_reset_left_half_no_color !013586	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_13_disabled_enabled_reset_left_half_no_color !019A95	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_13_disabled_enabled_reset_left_half_no_color !019A95	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_9_1_disabled_enabled_reset_left_half_color 
+11_3_3_9_2_disabled_enabled_reset_left_half_color 
+11_3_3_10_1_disabled_enabled_reset_left_half_color 
+11_3_3_10_2_disabled_enabled_reset_left_half_color 
+11_3_3_10_3_disabled_enabled_reset_left_half_color
+11_3_3_10_4_disabled_enabled_reset_left_half_color
+11_3_3_11_1_disabled_enabled_reset_left_half_color
+11_3_3_11_2_disabled_enabled_reset_left_half_color 
+11_3_3_11_3_disabled_enabled_reset_left_half_color 
+11_3_3_11_4_disabled_enabled_reset_left_half_color
+11_3_3_12_1_disabled_enabled_reset_left_half_color
+11_3_3_12_2_disabled_enabled_reset_left_half_color
+11_3_3_13_disabled_enabled_reset_left_half_color
+11_3_3_9_1_disabled_enabled_reset_right_half_no_color !013A1D
+11_3_3_9_2_disabled_enabled_reset_right_half_no_color !012483
+11_3_3_10_1_disabled_enabled_reset_right_half_no_color 0157A0
+11_3_3_10_2_disabled_enabled_reset_right_half_no_color !010596
+11_3_3_10_3_disabled_enabled_reset_right_half_no_color !0127C4
+11_3_3_10_4_disabled_enabled_reset_right_half_no_color !FD20
+11_3_3_11_1_disabled_enabled_reset_right_half_no_color 0157A0
+11_3_3_11_2_disabled_enabled_reset_right_half_no_color !F7BC
+11_3_3_11_3_disabled_enabled_reset_right_half_no_color !0125B2
+11_3_3_11_4_disabled_enabled_reset_right_half_no_color !010596
+11_3_3_12_1_disabled_enabled_reset_right_half_no_color 0137CD
+11_3_3_12_2_disabled_enabled_reset_right_half_no_color 01359A
+11_3_3_13_disabled_enabled_reset_right_half_no_color !019A94
+11_3_3_9_1_disabled_enabled_reset_right_half_color
+11_3_3_9_2_disabled_enabled_reset_right_half_color 
+11_3_3_10_1_disabled_enabled_reset_right_half_color
+11_3_3_10_2_disabled_enabled_reset_right_half_color 
+11_3_3_10_3_disabled_enabled_reset_right_half_color 
+11_3_3_10_4_disabled_enabled_reset_right_half_color 
+11_3_3_11_1_disabled_enabled_reset_right_half_color 
+11_3_3_11_2_disabled_enabled_reset_right_half_color 
+11_3_3_11_3_disabled_enabled_reset_right_half_color 
+11_3_3_11_4_disabled_enabled_reset_right_half_color
+11_3_3_12_1_disabled_enabled_reset_right_half_color 
+11_3_3_12_2_disabled_enabled_reset_right_half_color 
+11_3_3_13_disabled_enabled_reset_right_half_color 
+11_3_3_9_1_disabled_enabled_reset_middle_half_no_color !0124BE
+11_3_3_9_2_disabled_enabled_reset_middle_half_no_color !01219B
+11_3_3_10_1_disabled_enabled_reset_middle_half_no_color 0157D4
+11_3_3_10_2_disabled_enabled_reset_middle_half_no_color !010596
+11_3_3_10_3_disabled_enabled_reset_middle_half_no_color 0157D4
+11_3_3_10_4_disabled_enabled_reset_middle_half_no_color !FD20
+11_3_3_11_1_disabled_enabled_reset_middle_half_no_color 0157D4
+11_3_3_11_2_disabled_enabled_reset_middle_half_no_color !F7BC
+11_3_3_11_3_disabled_enabled_reset_middle_half_no_color 0157D4
+11_3_3_11_4_disabled_enabled_reset_middle_half_no_color !010596
+11_3_3_12_1_disabled_enabled_reset_middle_half_no_color !0121EB
+11_3_3_12_2_disabled_enabled_reset_middle_half_no_color !013598
+11_3_3_13_disabled_enabled_reset_middle_half_no_color !019A99
+11_3_3_9_1_disabled_enabled_reset_middle_half_color
+11_3_3_9_2_disabled_enabled_reset_middle_half_color
+11_3_3_10_1_disabled_enabled_reset_middle_half_color 
+11_3_3_10_2_disabled_enabled_reset_middle_half_color 
+11_3_3_10_3_disabled_enabled_reset_middle_half_color
+11_3_3_10_4_disabled_enabled_reset_middle_half_color 
+11_3_3_11_1_disabled_enabled_reset_middle_half_color 
+11_3_3_11_2_disabled_enabled_reset_middle_half_color 
+11_3_3_11_3_disabled_enabled_reset_middle_half_color 
+11_3_3_11_4_disabled_enabled_reset_middle_half_color 
+11_3_3_12_1_disabled_enabled_reset_middle_half_color
+11_3_3_12_2_disabled_enabled_reset_middle_half_color 
+11_3_3_13_disabled_enabled_reset_middle_half_color 
+11_3_3_9_1_disabled_enabled_top_half_reset_no_color !01237E
+11_3_3_9_2_disabled_enabled_top_half_reset_no_color !012362
+11_3_3_10_1_disabled_enabled_top_half_reset_no_color 01640C
+11_3_3_10_2_disabled_enabled_top_half_reset_no_color 014200
+11_3_3_10_3_disabled_enabled_top_half_reset_no_color !0157EA
+11_3_3_10_4_disabled_enabled_top_half_reset_no_color 01303C
+11_3_3_11_1_disabled_enabled_top_half_reset_no_color 01640C
+11_3_3_11_2_disabled_enabled_top_half_reset_no_color 012D8E
+11_3_3_11_3_disabled_enabled_top_half_reset_no_color !015962
+11_3_3_11_4_disabled_enabled_top_half_reset_no_color 014200
+11_3_3_12_1_disabled_enabled_top_half_reset_no_color 0124FE
+11_3_3_12_2_disabled_enabled_top_half_reset_no_color 0109BE
+11_3_3_13_disabled_enabled_top_half_reset_no_color 018424
+11_3_3_9_1_disabled_enabled_top_half_reset_color 
+11_3_3_9_2_disabled_enabled_top_half_reset_color 
+11_3_3_10_1_disabled_enabled_top_half_reset_color
+11_3_3_10_2_disabled_enabled_top_half_reset_color
+11_3_3_10_3_disabled_enabled_top_half_reset_color
+11_3_3_10_4_disabled_enabled_top_half_reset_color 
+11_3_3_11_1_disabled_enabled_top_half_reset_color 
+11_3_3_11_2_disabled_enabled_top_half_reset_color 
+11_3_3_11_3_disabled_enabled_top_half_reset_color
+11_3_3_11_4_disabled_enabled_top_half_reset_color
+11_3_3_12_1_disabled_enabled_top_half_reset_color 
+11_3_3_12_2_disabled_enabled_top_half_reset_color
+11_3_3_13_disabled_enabled_top_half_reset_color 
+11_3_3_9_1_disabled_enabled_top_half_left_half_no_color !013062	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_9_2_disabled_enabled_top_half_left_half_no_color !013DA2	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_10_1_disabled_enabled_top_half_left_half_no_color 015F20	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_10_2_disabled_enabled_top_half_left_half_no_color !0137D8	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_10_3_disabled_enabled_top_half_left_half_no_color !014746	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_10_4_disabled_enabled_top_half_left_half_no_color !012F38	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_11_1_disabled_enabled_top_half_left_half_no_color 015F20	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_11_2_disabled_enabled_top_half_left_half_no_color !012C8A	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_11_3_disabled_enabled_top_half_left_half_no_color !01458A	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_11_4_disabled_enabled_top_half_left_half_no_color !0137D8	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_12_1_disabled_enabled_top_half_left_half_no_color !01281D	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_12_2_disabled_enabled_top_half_left_half_no_color !01357E	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_13_disabled_enabled_top_half_left_half_no_color 018430	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_9_1_disabled_enabled_top_half_left_half_color 
+11_3_3_9_2_disabled_enabled_top_half_left_half_color 
+11_3_3_10_1_disabled_enabled_top_half_left_half_color
+11_3_3_10_2_disabled_enabled_top_half_left_half_color 
+11_3_3_10_3_disabled_enabled_top_half_left_half_color
+11_3_3_10_4_disabled_enabled_top_half_left_half_color 
+11_3_3_11_1_disabled_enabled_top_half_left_half_color 
+11_3_3_11_2_disabled_enabled_top_half_left_half_color
+11_3_3_11_3_disabled_enabled_top_half_left_half_color
+11_3_3_11_4_disabled_enabled_top_half_left_half_color 
+11_3_3_12_1_disabled_enabled_top_half_left_half_color 
+11_3_3_12_2_disabled_enabled_top_half_left_half_color
+11_3_3_13_disabled_enabled_top_half_left_half_color 
+11_3_3_9_1_disabled_enabled_top_half_right_half_no_color !013A15
+11_3_3_9_2_disabled_enabled_top_half_right_half_no_color !012DAB
+11_3_3_10_1_disabled_enabled_top_half_right_half_no_color 015F20
+11_3_3_10_2_disabled_enabled_top_half_right_half_no_color !0137D8
+11_3_3_10_3_disabled_enabled_top_half_right_half_no_color !014746
+11_3_3_10_4_disabled_enabled_top_half_right_half_no_color !012F38
+11_3_3_11_1_disabled_enabled_top_half_right_half_no_color 015F20
+11_3_3_11_2_disabled_enabled_top_half_right_half_no_color !012C8A
+11_3_3_11_3_disabled_enabled_top_half_right_half_no_color !01458A
+11_3_3_11_4_disabled_enabled_top_half_right_half_no_color !0137D8
+11_3_3_12_1_disabled_enabled_top_half_right_half_no_color 013E1D
+11_3_3_12_2_disabled_enabled_top_half_right_half_no_color 013592
+11_3_3_13_disabled_enabled_top_half_right_half_no_color !01842F
+11_3_3_9_1_disabled_enabled_top_half_right_half_color 
+11_3_3_9_2_disabled_enabled_top_half_right_half_color 
+11_3_3_10_1_disabled_enabled_top_half_right_half_color 
+11_3_3_10_2_disabled_enabled_top_half_right_half_color
+11_3_3_10_3_disabled_enabled_top_half_right_half_color
+11_3_3_10_4_disabled_enabled_top_half_right_half_color 
+11_3_3_11_1_disabled_enabled_top_half_right_half_color 
+11_3_3_11_2_disabled_enabled_top_half_right_half_color 
+11_3_3_11_3_disabled_enabled_top_half_right_half_color 
+11_3_3_11_4_disabled_enabled_top_half_right_half_color 
+11_3_3_12_1_disabled_enabled_top_half_right_half_color 
+11_3_3_12_2_disabled_enabled_top_half_right_half_color 
+11_3_3_13_disabled_enabled_top_half_right_half_color 
+11_3_3_9_1_disabled_enabled_top_half_middle_half_no_color !012D06
+11_3_3_9_2_disabled_enabled_top_half_middle_half_no_color !012A53
+11_3_3_10_1_disabled_enabled_top_half_middle_half_no_color 015F20
+11_3_3_10_2_disabled_enabled_top_half_middle_half_no_color !0137D8
+11_3_3_10_3_disabled_enabled_top_half_middle_half_no_color !014746
+11_3_3_10_4_disabled_enabled_top_half_middle_half_no_color !012F38
+11_3_3_11_1_disabled_enabled_top_half_middle_half_no_color 015F20
+11_3_3_11_2_disabled_enabled_top_half_middle_half_no_color !012C8A
+11_3_3_11_3_disabled_enabled_top_half_middle_half_no_color !01458A
+11_3_3_11_4_disabled_enabled_top_half_middle_half_no_color !0137D8
+11_3_3_12_1_disabled_enabled_top_half_middle_half_no_color !0130FB
+11_3_3_12_2_disabled_enabled_top_half_middle_half_no_color !013590
+11_3_3_13_disabled_enabled_top_half_middle_half_no_color !018434
+11_3_3_9_1_disabled_enabled_top_half_middle_half_color 
+11_3_3_9_2_disabled_enabled_top_half_middle_half_color
+11_3_3_10_1_disabled_enabled_top_half_middle_half_color 
+11_3_3_10_2_disabled_enabled_top_half_middle_half_color
+11_3_3_10_3_disabled_enabled_top_half_middle_half_color 
+11_3_3_10_4_disabled_enabled_top_half_middle_half_color
+11_3_3_11_1_disabled_enabled_top_half_middle_half_color
+11_3_3_11_2_disabled_enabled_top_half_middle_half_color 
+11_3_3_11_3_disabled_enabled_top_half_middle_half_color 
+11_3_3_11_4_disabled_enabled_top_half_middle_half_color 
+11_3_3_12_1_disabled_enabled_top_half_middle_half_color 
+11_3_3_12_2_disabled_enabled_top_half_middle_half_color 
+11_3_3_13_disabled_enabled_top_half_middle_half_color
+11_3_3_9_1_disabled_enabled_bottom_half_reset_no_color !012E76
+11_3_3_9_2_disabled_enabled_bottom_half_reset_no_color !012D26
+11_3_3_10_1_disabled_enabled_bottom_half_reset_no_color 0162CC
+11_3_3_10_2_disabled_enabled_bottom_half_reset_no_color 013DA0
+11_3_3_10_3_disabled_enabled_bottom_half_reset_no_color !0156AA
+11_3_3_10_4_disabled_enabled_bottom_half_reset_no_color 012BDC
+11_3_3_11_1_disabled_enabled_bottom_half_reset_no_color 0162CC
+11_3_3_11_2_disabled_enabled_bottom_half_reset_no_color !012574
+11_3_3_11_3_disabled_enabled_bottom_half_reset_no_color !015516
+11_3_3_11_4_disabled_enabled_bottom_half_reset_no_color 013DA0
+11_3_3_12_1_disabled_enabled_bottom_half_reset_no_color 013740
+11_3_3_12_2_disabled_enabled_bottom_half_reset_no_color 01362C
+11_3_3_13_disabled_enabled_bottom_half_reset_no_color 01775C
+11_3_3_9_1_disabled_enabled_bottom_half_reset_color 
+11_3_3_9_2_disabled_enabled_bottom_half_reset_color 
+11_3_3_10_1_disabled_enabled_bottom_half_reset_color 
+11_3_3_10_2_disabled_enabled_bottom_half_reset_color 
+11_3_3_10_3_disabled_enabled_bottom_half_reset_color 
+11_3_3_10_4_disabled_enabled_bottom_half_reset_color 
+11_3_3_11_1_disabled_enabled_bottom_half_reset_color 
+11_3_3_11_2_disabled_enabled_bottom_half_reset_color 
+11_3_3_11_3_disabled_enabled_bottom_half_reset_color 
+11_3_3_11_4_disabled_enabled_bottom_half_reset_color
+11_3_3_12_1_disabled_enabled_bottom_half_reset_color 
+11_3_3_12_2_disabled_enabled_bottom_half_reset_color 
+11_3_3_13_disabled_enabled_bottom_half_reset_color 
+11_3_3_9_1_disabled_enabled_bottom_half_left_half_no_color !013983
+11_3_3_9_2_disabled_enabled_bottom_half_left_half_no_color !014020
+11_3_3_10_1_disabled_enabled_bottom_half_left_half_no_color 015E80
+11_3_3_10_2_disabled_enabled_bottom_half_left_half_no_color !013378
+11_3_3_10_3_disabled_enabled_bottom_half_left_half_no_color !014476
+11_3_3_10_4_disabled_enabled_bottom_half_left_half_no_color !012AD8
+11_3_3_11_1_disabled_enabled_bottom_half_left_half_no_color 015E80
+11_3_3_11_2_disabled_enabled_bottom_half_left_half_no_color !012574
+11_3_3_11_3_disabled_enabled_bottom_half_left_half_no_color !0140B2
+11_3_3_11_4_disabled_enabled_bottom_half_left_half_no_color 013378
+11_3_3_12_1_disabled_enabled_bottom_half_left_half_no_color !013B23
+11_3_3_12_2_disabled_enabled_bottom_half_left_half_no_color !0149DC
+11_3_3_13_disabled_enabled_bottom_half_left_half_no_color !017764
+11_3_3_9_1_disabled_enabled_bottom_half_left_half_color
+11_3_3_9_2_disabled_enabled_bottom_half_left_half_color
+11_3_3_10_1_disabled_enabled_bottom_half_left_half_color 
+11_3_3_10_2_disabled_enabled_bottom_half_left_half_color 
+11_3_3_10_3_disabled_enabled_bottom_half_left_half_color 
+11_3_3_10_4_disabled_enabled_bottom_half_left_half_color 
+11_3_3_11_1_disabled_enabled_bottom_half_left_half_color
+11_3_3_11_2_disabled_enabled_bottom_half_left_half_color 
+11_3_3_11_3_disabled_enabled_bottom_half_left_half_color 
+11_3_3_11_4_disabled_enabled_bottom_half_left_half_color 
+11_3_3_12_1_disabled_enabled_bottom_half_left_half_color 
+11_3_3_12_2_disabled_enabled_bottom_half_left_half_color 
+11_3_3_13_disabled_enabled_bottom_half_left_half_color
+11_3_3_9_1_disabled_enabled_bottom_half_right_half_no_color !0141B6
+11_3_3_10_1_disabled_enabled_bottom_half_right_half_no_color 015E80
+11_3_3_10_2_disabled_enabled_bottom_half_right_half_no_color !013378
+11_3_3_10_3_disabled_enabled_bottom_half_right_half_no_color !014476
+11_3_3_10_4_disabled_enabled_bottom_half_right_half_no_color !012AD8
+11_3_3_11_1_disabled_enabled_bottom_half_right_half_no_color 015E80
+11_3_3_11_2_disabled_enabled_bottom_half_right_half_no_color !012574
+11_3_3_11_3_disabled_enabled_bottom_half_right_half_no_color !0140B2
+11_3_3_11_4_disabled_enabled_bottom_half_right_half_no_color !013378
+11_3_3_12_1_disabled_enabled_bottom_half_right_half_no_color 014AAF
+11_3_3_12_2_disabled_enabled_bottom_half_right_half_no_color 0149F0
+11_3_3_13_disabled_enabled_bottom_half_right_half_no_color !017763
+11_3_3_9_1_disabled_enabled_bottom_half_right_half_color 
+11_3_3_9_2_disabled_enabled_bottom_half_right_half_color
+11_3_3_10_1_disabled_enabled_bottom_half_right_half_color 
+11_3_3_10_2_disabled_enabled_bottom_half_right_half_color 
+11_3_3_10_3_disabled_enabled_bottom_half_right_half_color
+11_3_3_10_4_disabled_enabled_bottom_half_right_half_color
+11_3_3_11_1_disabled_enabled_bottom_half_right_half_color
+11_3_3_11_2_disabled_enabled_bottom_half_right_half_color
+11_3_3_11_3_disabled_enabled_bottom_half_right_half_color 
+11_3_3_11_4_disabled_enabled_bottom_half_right_half_color
+11_3_3_12_1_disabled_enabled_bottom_half_right_half_color 
+11_3_3_12_2_disabled_enabled_bottom_half_right_half_color
+11_3_3_13_disabled_enabled_bottom_half_right_half_color 
+11_3_3_9_1_disabled_enabled_bottom_half_middle_half_no_color !013956
+11_3_3_9_2_disabled_enabled_bottom_half_middle_half_no_color !013BC4
+11_3_3_10_1_disabled_enabled_bottom_half_middle_half_no_color 015E80
+11_3_3_10_2_disabled_enabled_bottom_half_middle_half_no_color !013378
+11_3_3_10_3_disabled_enabled_bottom_half_middle_half_no_color !014476
+11_3_3_10_4_disabled_enabled_bottom_half_middle_half_no_color !012AD8
+11_3_3_11_1_disabled_enabled_bottom_half_middle_half_no_color 015E80
+11_3_3_11_2_disabled_enabled_bottom_half_middle_half_no_color !012574
+11_3_3_11_3_disabled_enabled_bottom_half_middle_half_no_color !0140B2
+11_3_3_11_4_disabled_enabled_bottom_half_middle_half_no_color !013378
+11_3_3_12_1_disabled_enabled_bottom_half_middle_half_no_color !0141ED
+11_3_3_12_2_disabled_enabled_bottom_half_middle_half_no_color !0149EE
+11_3_3_13_disabled_enabled_bottom_half_middle_half_no_color !017768
+11_3_3_9_1_disabled_enabled_bottom_half_middle_half_color
+11_3_3_9_2_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_10_1_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_10_2_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_10_3_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_10_4_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_11_1_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_11_2_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_11_3_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_11_4_disabled_enabled_bottom_half_middle_half_color 
+11_3_3_12_1_disabled_enabled_bottom_half_middle_half_color
+11_3_3_12_2_disabled_enabled_bottom_half_middle_half_color
+11_3_3_13_disabled_enabled_bottom_half_middle_half_color
+11_3_3_9_1_disabled_enabled_middle_half_reset_no_color !011CB7
+11_3_3_9_2_disabled_enabled_middle_half_reset_no_color !011D6F
+11_3_3_10_1_disabled_enabled_middle_half_reset_no_color 0162CC
+11_3_3_10_2_disabled_enabled_middle_half_reset_no_color 013DA0
+11_3_3_10_3_disabled_enabled_middle_half_reset_no_color !0156AA
+11_3_3_10_4_disabled_enabled_middle_half_reset_no_color 012BDC
+11_3_3_11_1_disabled_enabled_middle_half_reset_no_color 0162CC
+11_3_3_11_2_disabled_enabled_middle_half_reset_no_color !012574
+11_3_3_11_3_disabled_enabled_middle_half_reset_no_color !015516
+11_3_3_11_4_disabled_enabled_middle_half_reset_no_color 013DA0
+11_3_3_12_1_disabled_enabled_middle_half_reset_no_color 011E95
+11_3_3_12_2_disabled_enabled_middle_half_reset_no_color 0109C9
+11_3_3_13_disabled_enabled_middle_half_reset_no_color 018756
+11_3_3_9_1_disabled_enabled_middle_half_reset_color
+11_3_3_9_2_disabled_enabled_middle_half_reset_color 
+11_3_3_10_1_disabled_enabled_middle_half_reset_color 
+11_3_3_10_2_disabled_enabled_middle_half_reset_color 
+11_3_3_10_3_disabled_enabled_middle_half_reset_color 
+11_3_3_10_4_disabled_enabled_middle_half_reset_color 
+11_3_3_11_1_disabled_enabled_middle_half_reset_color 
+11_3_3_11_2_disabled_enabled_middle_half_reset_color 
+11_3_3_11_3_disabled_enabled_middle_half_reset_color 
+11_3_3_11_4_disabled_enabled_middle_half_reset_color 
+11_3_3_12_1_disabled_enabled_middle_half_reset_color 
+11_3_3_12_2_disabled_enabled_middle_half_reset_color 
+11_3_3_13_disabled_enabled_middle_half_reset_color 
+11_3_3_9_1_disabled_enabled_middle_half_left_half_no_color !011E96
+11_3_3_9_2_disabled_enabled_middle_half_left_half_no_color !013633
+11_3_3_10_1_disabled_enabled_middle_half_left_half_no_color 015E80
+11_3_3_10_2_disabled_enabled_middle_half_left_half_no_color !013378
+11_3_3_10_3_disabled_enabled_middle_half_left_half_no_color !014476
+11_3_3_10_4_disabled_enabled_middle_half_left_half_no_color !012AD8
+11_3_3_11_1_disabled_enabled_middle_half_left_half_no_color 015E80
+11_3_3_11_2_disabled_enabled_middle_half_left_half_no_color !012574
+11_3_3_11_3_disabled_enabled_middle_half_left_half_no_color !0140B2
+11_3_3_11_4_disabled_enabled_middle_half_left_half_no_color !013378
+11_3_3_12_1_disabled_enabled_middle_half_left_half_no_color !012622
+11_3_3_12_2_disabled_enabled_middle_half_left_half_no_color !013589
+11_3_3_13_disabled_enabled_middle_half_left_half_no_color !018763
+11_3_3_9_1_disabled_enabled_middle_half_left_half_color
+11_3_3_9_2_disabled_enabled_middle_half_left_half_color 
+11_3_3_10_1_disabled_enabled_middle_half_left_half_color 
+11_3_3_10_2_disabled_enabled_middle_half_left_half_color
+11_3_3_10_3_disabled_enabled_middle_half_left_half_color 
+11_3_3_10_4_disabled_enabled_middle_half_left_half_color 
+11_3_3_11_1_disabled_enabled_middle_half_left_half_color
+11_3_3_11_2_disabled_enabled_middle_half_left_half_color
+11_3_3_11_3_disabled_enabled_middle_half_left_half_color
+11_3_3_11_4_disabled_enabled_middle_half_left_half_color 
+11_3_3_12_1_disabled_enabled_middle_half_left_half_color
+11_3_3_12_2_disabled_enabled_middle_half_left_half_color
+11_3_3_13_disabled_enabled_middle_half_left_half_color
+11_3_3_9_1_disabled_enabled_middle_half_right_half_no_color !013A20
+11_3_3_9_2_disabled_enabled_middle_half_right_half_no_color !012C74
+11_3_3_10_1_disabled_enabled_middle_half_right_half_no_color 015E80
+11_3_3_10_2_disabled_enabled_middle_half_right_half_no_color !013378
+11_3_3_10_3_disabled_enabled_middle_half_right_half_no_color !014476
+11_3_3_10_4_disabled_enabled_middle_half_right_half_no_color !012AD8
+11_3_3_11_1_disabled_enabled_middle_half_right_half_no_color 015E80
+11_3_3_11_2_disabled_enabled_middle_half_right_half_no_color !012574
+11_3_3_11_3_disabled_enabled_middle_half_right_half_no_color !0140B2
+11_3_3_11_4_disabled_enabled_middle_half_right_half_no_color !013378
+11_3_3_12_1_disabled_enabled_middle_half_right_half_no_color 013A0E
+11_3_3_12_2_disabled_enabled_middle_half_right_half_no_color 01359D
+11_3_3_13_disabled_enabled_middle_half_right_half_no_color !018762
+11_3_3_9_1_disabled_enabled_middle_half_right_half_color
+11_3_3_9_2_disabled_enabled_middle_half_right_half_color 
+11_3_3_10_1_disabled_enabled_middle_half_right_half_color
+11_3_3_10_2_disabled_enabled_middle_half_right_half_color 
+11_3_3_10_3_disabled_enabled_middle_half_right_half_color 
+11_3_3_10_4_disabled_enabled_middle_half_right_half_color 
+11_3_3_11_1_disabled_enabled_middle_half_right_half_color 
+11_3_3_11_2_disabled_enabled_middle_half_right_half_color
+11_3_3_11_3_disabled_enabled_middle_half_right_half_color 
+11_3_3_11_4_disabled_enabled_middle_half_right_half_color
+11_3_3_12_1_disabled_enabled_middle_half_right_half_color
+11_3_3_12_2_disabled_enabled_middle_half_right_half_color 
+11_3_3_13_disabled_enabled_middle_half_right_half_color
+11_3_3_9_1_disabled_enabled_middle_half_middle_half_no_color !012BF9
+11_3_3_9_2_disabled_enabled_middle_half_middle_half_no_color !01292A
+11_3_3_10_1_disabled_enabled_middle_half_middle_half_no_color 015E80
+11_3_3_10_2_disabled_enabled_middle_half_middle_half_no_color !013378
+11_3_3_10_3_disabled_enabled_middle_half_middle_half_no_color !014476
+11_3_3_10_4_disabled_enabled_middle_half_middle_half_no_color !012AD8
+11_3_3_11_1_disabled_enabled_middle_half_middle_half_no_color 015E80
+11_3_3_11_2_disabled_enabled_middle_half_middle_half_no_color !012574
+11_3_3_11_3_disabled_enabled_middle_half_middle_half_no_color !0140B2
+11_3_3_11_4_disabled_enabled_middle_half_middle_half_no_color !013378
+11_3_3_12_1_disabled_enabled_middle_half_middle_half_no_color 012BD4
+11_3_3_12_1_disabled_enabled_middle_half_middle_half_no_color !012BD4
+11_3_3_12_2_disabled_enabled_middle_half_middle_half_no_color !01359B
+11_3_3_13_disabled_enabled_middle_half_middle_half_no_color !018767
+11_3_3_9_1_disabled_enabled_middle_half_middle_half_color
+11_3_3_9_2_disabled_enabled_middle_half_middle_half_color
+11_3_3_10_1_disabled_enabled_middle_half_middle_half_color
+11_3_3_10_2_disabled_enabled_middle_half_middle_half_color
+11_3_3_10_3_disabled_enabled_middle_half_middle_half_color
+11_3_3_10_4_disabled_enabled_middle_half_middle_half_color
+11_3_3_11_1_disabled_enabled_middle_half_middle_half_color 
+11_3_3_11_2_disabled_enabled_middle_half_middle_half_color 
+11_3_3_11_3_disabled_enabled_middle_half_middle_half_color 
+11_3_3_11_4_disabled_enabled_middle_half_middle_half_color
+11_3_3_12_1_disabled_enabled_middle_half_middle_half_color 
+11_3_3_12_2_disabled_enabled_middle_half_middle_half_color 
+11_3_3_13_disabled_enabled_middle_half_middle_half_color
+
+
+# TODO: Second half of test_11_3_3_v420_editing_sequences
+# Plus:
+# 	test_11_3_6_v420_rectangular_operations  # This one says "should not work"
+#	test_11_3_7_vt420_reporting_functions
+#	test_11_3_8_v420_screen_display
+#	test_11_4_2_v520_cursor_movement
+#	test_11_4_5_vt520_reporting_functions
+#	test_11_4_6_v520_screen_display
+#	test_11_5_ecma48_cursor_movement
+#	test_11_6_ecma48_colors
+#	test_11_7_ecma48_misc
+#
+# Probably not worth doing the rest until DECLRMM is done, as its absence is
+# causing *a lot* of failures.
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+
+
+11_3_7_3_9 !018B2D # K95 doesn't currently store the original received character, or the character set it was converted from so can't undo the conversion for the checksum calculation

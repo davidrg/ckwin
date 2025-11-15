@@ -1065,8 +1065,11 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_VTNT    42       /*    Microsoft NT Virtual Terminal */
 #define     TT_REGENT25 43      /*    ADDS Regent 25 (ADDS25) */
 #define     TT_MAX   TT_REGENT25
+#define     TT_VT330   94   /*    DEC VT-330 (mono graphics) */
+#define     TT_VT340   95   /*    DEC VT-340 (color graphics) */
 #define     TT_VT420   96	/*    DEC VT-420 */
-#define     TT_VT520   97	/*    DEC VT-520/525 */
+#define     TT_VT520   97	/*    DEC VT-520 */
+#define     TT_VT525   98   /*    DEC VT-525 */
 #define     TT_XTERM   98   /*    XTerm */
 #define     TT_TEK40   99	/*    Tektronix 401x */
 /* Other ADDS Regent terminals - not currently emulated */
@@ -1076,6 +1079,7 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_REGENT60 103     /* ADDS Regent 60  */
 #define     TT_REGENT100 104    /* ADDS Regent 100 */
 #define     TT_REGENT200 105    /* ADDS Regent 200 */
+
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
 #define     TT_KBM_RUSSIAN TT_MAX+3
@@ -1116,6 +1120,7 @@ struct stringint {			/* String and (wide) integer */
 #define ISVT525(x) (ISVT320(x))
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
+#define ISVT330(x) (FALSE)
 #endif /* COMMENT */
 #define ISVT320(x) (x >= TT_VT320 && x <= TT_K95)
 #define ISVT220(x) (x >= TT_VT220 && x <= TT_K95 || \
@@ -1327,7 +1332,19 @@ struct stringint {			/* String and (wide) integer */
 #define   XYTIACT   63  /* SET TERM IDLE-ACTION  */
 #define   XYTLSP    64  /* SET TERM LINE-SPACING */
 #define   XYTLFD    65	/* SET TERM LF-DISPLAY   */
+#ifdef OS2
 #define   XYTCLP    66  /* SET TERM CLIPBOARD-ACCESS */
+#define   XYTSIZE   67  /* SET TERM SIZE */
+#define   XYTALTBUF 68  /* SET TERM ALTERNATE-BUFFER */
+#define     AB_ENABLED 0
+#define     AB_DISABLED 1
+#define     AB_INACTIVE 2  /* Force the terminal out of the alternate screen buffer */
+#define     AB_ACTIVE 3    /* Force the terminal into the alternate screen buffer */
+#define   XYTPAGE   69  /* SET TERM PAGE */
+#define     P_PCCM    0
+#define     P_COUNT   1
+#define     P_ACTIVE  2
+#endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */
 #define XYSERV 35	/* Server parameters  */
@@ -2678,6 +2695,10 @@ struct stringint {			/* String and (wide) integer */
 #define FN_DAYNAME 170			/* Day name according to locale */
 #define FN_MONNAME 171			/* Month name according to locale */
 
+#ifdef OS2
+#define FN_TERMCKS 172          /* Checksum of the terminal screen */
+#endif /* OS2 */
+
 #endif /* NOSPL */
 
 /* Time Units */
@@ -2737,6 +2758,16 @@ struct stringint {			/* String and (wide) integer */
 #define XSKEY   0			/* Key map file */
 #define XSCMD   1                       /* Command mode */
 #define XSTERM  2                       /* Terminal mode */
+#ifdef KUI
+#define XSTERM_FMT 0
+
+#define XSTERM_FMT_TEXT 0
+#define XSTERM_FMT_EMF  1
+#define XSTERM_FMT_BMP  2
+#define XSTERM_FMT_PNG  3
+#define XSTERM_FMT_GIF  4
+
+#endif
 #endif /* NOICP */
 
 #ifndef NODIAL

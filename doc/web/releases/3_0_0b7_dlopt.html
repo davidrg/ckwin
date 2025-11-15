@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Kermit 95 3.0.0 Beta 7 Download Picker</title>
+  <link rel="stylesheet" href="../k95.css">
+  <style>
+    li.osopt {
+      list-style-type: none;
+    }
+    li.winveropt {
+      list-style-type: none;
+    }
+    li.cpuopt {
+      list-style-type: none;
+    }
+  </style>
+</head>
+<body>
+<h1 id="top">
+  <img src="../images/k95green.gif" alt="Vintage K95 logo"/>
+  <img src="../images/icon-64.jpg" alt="Kermit Project logo"/>
+  Kermit 95 3.0.0 Beta 7 Download Picker</h1>
+<hr>
+<p>
+Use the form below to find an appropriate Kermit 95 download for the version of
+  Windows (or OS/2) you're running. Or if you'd rather, you can
+  <a href="3_0_0b7_dl.html">see all 14 download options at once.</a>
+</p>
+
+<p>Not all options have all features. In particular:</p>
+<ul>
+  <li>SSH and SSL/TLS require Windows XP SP3 or newer and an x86 or ARM processor.
+    Itanium systems get SSL/TLS only.
+  </li>
+  <li>Kerberos authentication and REXX scripting require Windows XP SP3 or
+    newer and an x86 processor</li>
+  <li>Pathworks LAT/CTERM is only available on systems running
+    Windows Server 2003 or older with an Alpha or 32bit x86 CPU, and IBM OS/2.
+  </li>
+</ul>
+
+<h4>Operating System</h4>
+<p>What Operating System are you running?</p>
+<ul>
+  <li class="osopt"><input type="radio" value="win" name="os" onclick="on_os()"/>Microsoft Windows</li>
+  <li class="osopt"><input type="radio" value="os2" name="os" onclick="on_os()"/>IBM OS/2 2.0 or newer</li>
+</ul>
+<div id="winver" style="display:none">
+  <h4>Windows Version</h4>
+  <p>What version of Windows are you running?</p>
+  <ul>
+    <li class="winveropt"><input type="radio" value="modern" name="osver" onclick="on_osver()"/>Windows XP SP3 or newer (including Windows Vista/7/RT/8/8.1/10/11)</li>
+    <li class="winveropt"><input type="radio" value="nt5" name="osver" onclick="on_osver()"/>Windows 2000 or Windows XP pre-SP3</li>
+    <li class="winveropt"><input type="radio" value="9x" name="osver" onclick="on_osver()" />Windows 95/98/ME</li>
+    <li class="winveropt"><input type="radio" value="nt4sp6" name="osver" onclick="on_osver()"/>Windows NT 4.0 SP6</li>
+    <li class="winveropt"><input type="radio" value="nt40" name="osver" onclick="on_osver()"/>Windows NT 4.0 pre-SP6</li>
+    <li class="winveropt"><input type="radio" value="nt351" name="osver" onclick="on_osver()"/>Windows NT 3.51</li>
+    <li class="winveropt"><input type="radio" value="nt350" name="osver" onclick="on_osver()"/>Windows NT 3.50</li>
+    <li class="winveropt"><input type="radio" value="axp64" name="osver" onclick="on_osver()"/><em>Unreleased</em> 64bit Windows builds for DEC Alpha</li>
+  </ul>
+</div>
+<div id="cpu_options" style="display:none;">
+  <h4>CPU Architecture</h4>
+  <p>What kind of CPU does your computer have?</p>
+  <ul>
+    <li class="cpuopt" data-osver="modern"><input type="radio" value="x86-64" name="arch" onclick="on_cpu()"/>64bit x86 (Intel/AMD)</li>
+    <li class="cpuopt" data-osver="modern"><input type="radio" value="arm64" name="arch" onclick="on_cpu()"/>64bit ARM (Microsoft SV1, Qualcomm, etc)</li>
+    <li class="cpuopt" data-osver="modern nt5 nt4sp6 nt40 nt351 nt350"><input type="radio" value="x86-32" name="arch" onclick="on_cpu()"/>32bit x86 (Intel, AMD)</li>
+    <li class="cpuopt" data-osver="modern"><input type="radio" value="arm32" name="arch" onclick="on_cpu()"/>32bit ARM (Microsoft Surface RT or similar)</li>
+    <li class="cpuopt" data-osver="modern nt5"><input type="radio" value="ia64" name="arch" onclick="on_cpu()"/>Intel Itanium</li>
+    <li class="cpuopt" data-osver="nt5 nt4sp6 nt40 nt351 nt350"><input type="radio" value="axp" name="arch" onclick="on_cpu()"/>DEC Alpha</li>
+    <li class="cpuopt" data-osver="nt40 nt351 nt350"><input type="radio" value="mips" name="arch" onclick="on_cpu()"/>MIPS</li>
+    <li class="cpuopt" data-osver="nt40 nt351"><input type="radio" value="ppc" name="arch" onclick="on_cpu()"/>PowerPC</li>
+  </ul>
+</div>
+<div id="dl_options" style="display:none">
+  <h4>Download</h4>
+  <p>
+    This should be the correct download for your system:
+  </p>
+  <ul>
+
+    <!-- ZIP Files -->
+    <li class="dlopt" data-arch="x86-32" data-osver="modern">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-x86.zip">
+        k95-3.0.0beta7-x86.zip</a> - ZIP file (x86, for Windows XP SP3+).
+    </li>
+    <li class="dlopt" data-arch="x86-64" data-osver="modern">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-x86-64.zip">
+        k95-3.0.0beta7-x86-64.zip</a> - ZIP file (x86-64, for Windows XP SP3+).
+    </li>
+    <li class="dlopt" data-arch="arm32" data-osver="modern">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-arm32.zip">
+        k95-3.0.0beta7-arm32.zip</a> - ZIP file (arm32, for Windows RT, 10 and 11 Pre-24H2).
+    </li>
+    <li class="dlopt" data-arch="arm64" data-osver="modern">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-arm64.zip">
+        k95-3.0.0beta7-arm64.zip</a> - ZIP file (arm64, Windows 10 or newer).
+    </li>
+    <li class="dlopt" data-arch="ia64" data-osver="modern nt5">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-ia64.zip">
+        k95-3.0.0beta7-ia64.zip</a> - ZIP file (Itanium)
+    </li>
+    <li class="dlopt" data-arch="x86-32" data-osver="nt40 nt351 nt4sp6 nt5 9x">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-vintage.zip">
+        k95-3.0.0beta7-vintage.zip</a> - ZIP file (x86, for vintage Windows).
+    </li>
+    <li class="dlopt" data-arch="axp" data-osver="nt40 nt351 nt4sp6 nt5">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-axp.zip">
+        k95-3.0.0beta7-axp.zip</a> - ZIP file (Windows NT 3.51/4.0 and Windows 2000 for DEC Alpha)
+    </li>
+    <li class="dlopt" data-arch="ppc" data-osver="nt40 nt351">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-ppc.zip">
+        k95-3.0.0beta7-ppc.zip</a> - ZIP file (Windows NT 3.51/4.0 for PowerPC)
+    </li>
+    <li class="dlopt" data-arch="mips" data-osver="nt40 nt351">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-mips.zip">
+        k95-3.0.0beta7-mips.zip</a> - ZIP file (Windows NT 3.51/4.0 for MIPS)
+    </li>
+    <li class="dlopt" data-arch="x86-32" data-osver="nt350">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-nt350.zip">
+        k95-3.0.0beta7-nt350.zip</a> - ZIP file (Windows NT 3.50 for x86 PCs)
+    </li>
+    <li class="dlopt" data-arch="axp" data-osver="nt350">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-axp-nt350.zip">
+        k95-3.0.0beta7-axp-nt350.zip</a> - ZIP file (Windows NT 3.50 for DEC Alpha)
+    </li>
+    <li class="dlopt" data-arch="mips" data-osver="nt350">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-mips-nt350.zip">
+        k95-3.0.0beta7-mips-nt350.zip</a> - ZIP file (Windows NT 3.50 for MIPS)
+    </li>
+    <li class="dlopt" data-arch="axp64" data-osver="axp64">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k95-3.0.0beta7-axp64.zip">
+        k95-3.0.0beta7-axp64.zip</a> - ZIP file (64bit Windows for DEC Alpha)
+    </li>
+    <li class="dlopt" data-arch="x86-32" data-osver="os2">
+      <a href="https://github.com/davidrg/ckwin/releases/download/3.0.0beta7/k2-3.0.0beta7.zip">
+        k2-3.0.0beta7.zip</a> - Installer for 32bit OS/2
+    </li>
+
+    <!-- Visual C++ Redistributable. Alpha/MIPS/PPC and NT 3.50 builds have the
+      Visual C++ libraries bundled, so these are only required for modern Windows
+      and vintage x86 builds.
+     -->
+    <li class="dlopt" data-arch="x86-32" data-osver="modern">
+      You may also need to install one of:
+      <ul>
+        <li><a href="https://aka.ms/vs/17/release/vc_redist.x86.exe">Visual C++ Redistributable for Windows 7 or newer</a></li>
+        <li><a href="https://ftp.zx.net.nz/pub/dev/redist/vcpp/2019_16.7/VC_redist.x86.exe">Visual C++ Redistributable for Windows XP SP3 and Windows Vista</a></li>
+      </ul>
+    </li>
+    <li class="dlopt" data-arch="x86-64" data-osver="modern">
+      You may also need to install one of:
+      <ul>
+        <li><a href="https://aka.ms/vs/17/release/vc_redist.x64.exe">Visual C++ Redistributable for Windows 7 or newer</a></li>
+        <li><a href="https://ftp.zx.net.nz/pub/dev/redist/vcpp/2019_16.7/VC_redist.x64.exe">Visual C++ Redistributable for Windows XP SP3 and Windows Vista</a></li>
+      </ul>
+    </li>
+    <li class="dlopt" data-arch="arm64" data-osver="modern">
+      You may also need to install the <a href="https://aka.ms/vs/17/release/vc_redist.arm64.exe">Visual C++ Redistributable</a>
+    </li>
+    <li class="dlopt" data-arch="arm32" data-osver="modern">
+      You may also need to install the <a href="https://download.microsoft.com/download/0/2/5/02596cd9-63cd-4c90-8e13-073ff0fe7fb5/vc_redist.arm.exe">Visual C++ Redistributable</a>
+    </li>
+    <li class="dlopt" data-arch="x86-32" data-osver="nt40 nt351 nt4sp6 nt5 9x">
+      You may also need to install the <a href="https://ftp.zx.net.nz/pub/dev/redist/vcpp/6sp6/vcredist.exe">Visual C++ Redistributable</a>
+    </li>
+
+  </ul>
+  <p class="dlopt" data-arch="x86-32 x86-64" data-osver="modern">
+    This version of Kermit 95 is compatible with
+    <a href="https://web.mit.edu/kerberos/kfw-4.1/kfw-4.1.html">
+      MIT Kerberos for Windows v4.1</a>
+  </p>
+  <p class="dlopt" data-arch="arm32" data-osver="modern">
+    Note: For Windows RT, Windows 10, or Windows 11 pre-24H2. Windows RT devices
+    must be "jailbroken" first. ARM versions of Kermit 95 do not currently
+    include Kerberos/GSSAPI support.
+  </p>
+  <p class="dlopt" data-arch="axp64" data-osver="axp64">
+    Note: 64bit Microsoft Windows for the DEC Alpha was never publicly distributed
+    by Microsoft in any form, and Kermit 95 has received only limited testing on
+    this platform.
+  </p>
+  <p class="dlopt" data-arch="ia64" data-osver="modern nt5">
+    Note: The Kermit Project does not have access to any Intel Itanium systems
+    so builds for this platform are not regularly tested. Additionally,
+    Kermit 95 for Intel Itanium systems does not currently include SSH support.
+    If you notice something broken, <em>please report it!</em>
+  </p>
+  <p  class="dlopt" data-arch="x86-32" data-osver="os2">
+    Optional TCP/IP support requires IBM TCP/IP v2.0 or newer, or IBM Internet Connection (dialup). Extract to a temporary location and run setup.exe to install.
+    Kermit 95 for OS/2 does not include SSH, SSL/TLS or Kerberos support at this time.
+  </p>
+  <p class="dlopt" data-arch="x86-32 x86-64 axp mips ppc" data-osver="modern nt40 nt351 nt4sp6 nt5 9x">
+    If you get an error about ctl3d32.dll, run <tt>ctl3dins.exe</tt> to install it.
+  </p>
+</div>
+<hr>
+<script language="JavaScript">
+  function get_os() {
+    return document.querySelector('input[name="os"]:checked').value;
+  }
+  function get_osver() {
+    var os = get_os();
+    if (os === "os2") return "os2";
+    if (os === "*") return "*";
+    return document.querySelector('input[name="osver"]:checked').value;
+  }
+  function get_cpu() {
+    var osver = get_osver();
+    if (osver === "9x" || osver === "os2") return "x86-32";
+    if (osver === "axp64") return "axp64";
+    if (osver === "*") return "*";
+    if (document.querySelector('input[name="arch"]:checked') !== null) {
+      return document.querySelector('input[name="arch"]:checked').value;
+    }
+    return "none";
+  }
+  function reset_cpu() {
+    document.getElementById("dl_options").style.display = "none";
+    if (document.querySelector('input[name="arch"]:checked') !== null) {
+      document.querySelector('input[name="arch"]:checked').checked = false;
+    }
+  }
+  function on_os() {
+    document.getElementById("winver").style.display = "none";
+    document.getElementById("cpu_options").style.display = "none";
+    document.getElementById("dl_options").style.display = "none";
+    reset_cpu();
+
+    if (document.querySelector('input[name="osver"]:checked') !== null) {
+      document.querySelector('input[name="osver"]:checked').checked = false;
+    }
+
+    if (get_os() === "win") {
+      document.getElementById("winver").style.display = "block";
+    } else {
+      on_cpu();
+    }
+  }
+  function on_osver() {
+    var os_ver = get_osver();
+
+    reset_cpu();
+
+    var cpu_options = document.getElementById("cpu_options");
+    var options = cpu_options.getElementsByClassName("cpuopt");
+    cpu_options.style.display = "none";
+    for (var opt of options) {
+      if (opt.dataset.osver.includes(os_ver) || os_ver === "*") {
+        opt.style.display = "block";
+        cpu_options.style.display = "block";
+      } else {
+        opt.style.display = "none";
+      }
+    }
+    on_cpu()
+  }
+  function on_cpu() {
+    var dl_options = document.getElementById("dl_options");
+    var os_ver = get_osver();
+    var cpu = get_cpu();
+
+    var options = dl_options.getElementsByClassName("dlopt");
+    for (var opt of options) {
+      if ((opt.dataset.arch.includes(cpu) || cpu === "*") &&
+              (opt.dataset.osver.includes(os_ver) || os_ver === "*")) {
+        opt.style.display = "block";
+        dl_options.style.display = "block";
+      } else {
+        opt.style.display = "none";
+      }
+    }
+  }
+</script>
+</body>
+</html>

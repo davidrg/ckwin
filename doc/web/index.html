@@ -2,20 +2,26 @@
 <head>
     <meta charset="utf-8">
     <title>Kermit 95</title>
+    <link rel="stylesheet" href="k95.css">
 </head>
 <body>
-<h1 id="top"><img src="images/k95green.gif"/> <img src="images/icon-64.jpg" width="32"/> Kermit 95</h1>
+<h1 id="top">
+    <img src="images/k95green.gif" alt="Vintage K95 logo"/>
+    <img src="images/icon-64.jpg" alt="Kermit Project logo"/>
+    Kermit 95
+</h1>
 <hr>
 <p>
-    Kermit 95 is a free scriptable terminal emulator and file transfer utility
-    for <a href="screenshots.html">nearly all</a> 32bit and 64bit releases of
-    Microsoft Windows, as well as 32bit IBM OS/2. Kermit 95 is the official
-    Windows and OS/2 port of C-Kermit
-    <a href="https://kermitproject.org/ckw10beta.html">from the Kermit Project</a>
+    Kermit 95 is a <a href="https://github.com/davidrg/ckwin/">
+    free and open source</a> scriptable terminal emulator and file
+    transfer utility for <a href="screenshots.html">nearly all</a> 32bit and
+    64bit releases of Microsoft Windows, as well as 32bit IBM OS/2. Kermit 95
+    is the official Windows and OS/2 port of C-Kermit
+    <a href="https://kermitproject.org/ckw10beta.html">from the Kermit Project</a>.
 </p>
 
 <p>
-    The latest <a href="#nature">stable</a> release is: 3.0 Beta 7 (27 January 2025).
+    The latest <a href="#nature">stable</a> release is: <a href="releases/3_0_0b7.html">3.0 Beta 7</a> (27 January 2025).
     <a href="https://github.com/davidrg/ckwin/releases/tag/3.0.0beta7">Download it here</a>.
 </p>
 
@@ -34,23 +40,35 @@
 
 <h2 id="highlights">Highlights</h2>
 <ul>
-    <li>Dozens of terminal emulation options</li>
-    <li>Full keyboard remapping</li>
-    <li>Connect via SSH†, Serial, Modem (TAPI or Direct), Named Pipe, Telnet,
-        Secure Telnet (TLS, Kerberos)†, rlogin, and PTY. Additionally,
-        NetBIOS is supported on OS/2</li>
-    <li>LAT and CTERM supported with DEC/Compaq/HP Pathworks32</li>
-    <li>RFC2217 Serial-over-telnet support</li>
+    <li><a href="current/termtype.html">Dozens of terminal emulation options</a></li>
+    <li><a href="current/#keymap">Full keyboard remapping</a></li>
+    <li>Connect via <a href="current/sshclien.html">SSH</a>†,
+        Serial,
+        Modem (<a href="current/tapi.html">TAPI</a> or Direct),
+        <a href="current/namepipe.html">Named Pipe</a>,
+        <a href="current/telnet.html">Telnet</a>,
+        Secure Telnet (TLS, Kerberos)†,
+        rlogin, and PTY. Additionally,
+        <a href="current/os2k95.html#os2net">NetBIOS is supported on OS/2</a>
+            <!-- TODO: in beta 8, change to os2k95.html#netbios -->
+    </li>
+    <li><a href="current/dec.html">LAT and CTERM supported with DEC/Compaq/HP
+        Pathworks32</a></li>
+    <li><a href="https://kermitproject.org/ckermit80.html#x14">
+        RFC2217 Serial-over-telnet support</a></li>
     <li>Supports Windows <em>natively</em> on x86, x86-64, ARM32, ARM64, Alpha,
         MIPS, PowerPC, and Itanium CPUs</li>
     <li>Runs as a <em>native</em> multithreaded 32-bit OS/2 application</li>
     <li>Full-featured Kermit protocol implementation including server mode and
         IKSD (based on C-Kermit)</li>
-    <li>Built-in X/Y/Z-MODEM support</li>
-    <li>Scriptable FTP(s)† and HTTP(s)† clients</li>
+    <li><a href="current/#c8proto">Built-in X/Y/Z-MODEM support</a></li>
+    <li>Scriptable
+        <a href="https://kermitproject.org/ckermit80.html#ftp">FTP(s)</a>† and
+        <a href="https://kermitproject.org/ckermit80.html#x2.2">HTTP(s)</a>†
+        clients</li>
     <li>Scriptable via its own scripting language (shared with
         <a href="https://www.kermitproject.org/ckermit.html">C-Kermit</a>) and
-        REXX*</li>
+        <a href="current/rexx.html">REXX</a>*</li>
     <li>Can listen for incoming telnet or modem connections for file transfer and
         scripting (eg, the included
         <a href="https://www.kermitproject.org/k95host.html">Host Mode</a> scripts)</li>
@@ -62,6 +80,11 @@
 <p>* REXX scripting currently requires Windows XP SP3 or newer and an x86 or
     x86-64 CPU, or IBM OS/2. The next release will include REXX support on more
     Windows releases and CPU architectures.
+</p>
+
+<p>A <a href="https://github.com/davidrg/ckwin/wiki/Feature-Comparison">
+    Feature Comparison</a> with some other terminal emulators/SSH clients is
+    available on the GitHub wiki
 </p>
 
 <h2 id="doc">Documentation</h2>
