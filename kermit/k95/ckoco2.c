@@ -149,6 +149,11 @@ int os2settitle(char *, int);   /* ckotio.c */
 /*---------------------------------------------------------------------------*/
 /* ReadCellStr                                                               */
 /*---------------------------------------------------------------------------*/
+/* In practice this is only ever used for one thing: during startup to set the
+ * command screen colour to the existing console screen colour. The only other
+ * reference is reversescreen but only when ONETERMUPD is not defined, which
+ * probably hasn't been the case since the mid 90s.
+ */
 USHORT
 ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
 {
@@ -5261,7 +5266,9 @@ os2ResetFont( void )
 /*---------------------------------------------------------------------------*/
 void
 killcursor( BYTE vmode ) {
-#ifndef KUI
+#ifdef KUI
+    cursoron[vmode] = FALSE;
+#else
     CK_CURSORINFO crsr_info;
     debug(F100,"killcursor","",0);
     if (!cursoron[vmode])                       /* It's already off */
@@ -5280,7 +5287,9 @@ killcursor( BYTE vmode ) {
 /*---------------------------------------------------------------------------*/
 void
 newcursor( BYTE vmode ) {
-#ifndef KUI
+#ifdef KUI
+    cursoron[vmode] = TRUE;
+#else KUI
     CK_CURSORINFO vci;
 
     debug(F100,"newcursor","",0);
