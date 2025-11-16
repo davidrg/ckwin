@@ -109,6 +109,9 @@ private:    // this section is for performance
 
     void ToggleCursor(HDC, LPRECT);
 
+    static void drawRuledLines(
+        HDC hdc, HPEN pen, int cells, KFont* font, RECT rect,
+        BOOL rlTop, BOOL rlBottom, BOOL rlLeft, BOOL rlRight);
     static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0);
     HBITMAP renderToBitmap(int vnum, DWORD **outPixels);
 #ifdef CK_HAVE_GDIPLUS

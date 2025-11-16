@@ -1018,53 +1018,8 @@ void KClient::writeMe()
 			&rect, 0, 0, 0 );
         }
 
-        // DECterm Ruled Lines
-        // These are drawn on the inside of the cell boundary.
-        if (rlTop || rlBottom || rlLeft || rlRight) {
-            HPEN oldPen = (HPEN)SelectObject( hdc(), ruledLinePen );
-
-            // Top ruled line along the extent of this string. Offsets are to
-            // account for the offsets on the vertical lines
-            if (rlTop) {
-                // Line from [rect.left, rect.top] to [rect.right, rect.top]
-                MoveToEx(hdc(), rect.left , rect.top, NULL);
-                LineTo(hdc(), rect.right, rect.top);
-            }
-
-            // Bottom ruled line along the extent of this string
-            if (rlBottom) {
-                // Line from [rect.left, rect.bottom] to [rect.right, rect.bottom]
-                MoveToEx(hdc(), rect.left , rect.bottom-1, NULL);
-                LineTo(hdc(), rect.right, rect.bottom-1);
-            }
-
-            // Vertical ruled lines on the left/right borders of cells.
-            if (rlLeft || rlRight) {
-                for (int i = 0; i < kws->length; i++) {
-                    //int left = rect.left + 1 + i * font->getFontW();
-                    //int right = left + font->getFontW() -1;
-
-                    int left = rect.left + i * font->getFontW();
-                    int right = left + font->getFontW() - 1;
-
-                    if (rlLeft) {
-                        // Line on the left cell border. DECterm draws this one inside
-                        // the cell causing left and right borders to double up in to
-                        // a thicker line
-                        MoveToEx(hdc(), left, rect.top, NULL);
-                        LineTo(hdc(), left, rect.bottom);
-                    }
-
-                    if (rlRight) {
-                        // Line on the right cell border
-                        MoveToEx(hdc(), right, rect.top, NULL);
-                        LineTo(hdc(), right, rect.bottom);
-                    }
-                }
-            }
-
-            SelectObject(hdc(), oldPen);
-        }
+        drawRuledLines(hdc(), ruledLinePen, kws->length, font, rect,
+                       rlTop, rlBottom, rlLeft, rlRight);
     }
 
     for( i = 0; i < thi; i++ )
@@ -1174,6 +1129,56 @@ void KClient::writeMe()
     }
 }
 
+                        /*        ruledLinePen \        /kws->length */
+void KClient::drawRuledLines(HDC hdc, HPEN pen, int cells, KFont* font,
+            RECT rect, BOOL rlTop, BOOL rlBottom, BOOL rlLeft, BOOL rlRight) {
+    if (rlTop || rlBottom || rlLeft || rlRight) {
+        HPEN oldPen = (HPEN)SelectObject( hdc, pen );
+
+        // Top ruled line along the extent of this string. Offsets are to
+        // account for the offsets on the vertical lines
+        if (rlTop) {
+            // Line from [rect.left, rect.top] to [rect.right, rect.top]
+            MoveToEx(hdc, rect.left , rect.top, NULL);
+            LineTo(hdc, rect.right, rect.top);
+        }
+
+        // Bottom ruled line along the extent of this string
+        if (rlBottom) {
+            // Line from [rect.left, rect.bottom] to [rect.right, rect.bottom]
+            MoveToEx(hdc, rect.left , rect.bottom-1, NULL);
+            LineTo(hdc, rect.right, rect.bottom-1);
+        }
+
+        // Vertical ruled lines on the left/right borders of cells.
+        if (rlLeft || rlRight) {
+            for (int i = 0; i < cells; i++) {
+                //int left = rect.left + 1 + i * font->getFontW();
+                //int right = left + font->getFontW() -1;
+
+                int left = rect.left + i * font->getFontW();
+                int right = left + font->getFontW() - 1;
+
+                if (rlLeft) {
+                    // Line on the left cell border. DECterm draws this one inside
+                    // the cell causing left and right borders to double up in to
+                    // a thicker line
+                    MoveToEx(hdc, left, rect.top, NULL);
+                    LineTo(hdc, left, rect.bottom);
+                }
+
+                if (rlRight) {
+                    // Line on the right cell border
+                    MoveToEx(hdc, right, rect.top, NULL);
+                    LineTo(hdc, right, rect.bottom);
+                }
+            }
+        }
+
+        SelectObject(hdc, oldPen);
+    }
+}
+
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -1226,6 +1231,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     cell_video_attr_t* attrBuffer = clientPaint.attrBuffer;
     ushort* effectBuffer          = clientPaint.effectBuffer;
     ushort* lineAttr              = clientPaint.lineAttr;
+	char* cellAttrBuffer		  = clientPaint.cellAttrBuffer;
 
     K_WORK_STORE *workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
@@ -1248,10 +1254,13 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
     ushort effect = ushort(-1);
+	char cellAttr = 0;
     for( i = 0; i < totlen; i++ )
     {
         xpos = i % twid;
-        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) || effectBuffer[i] != effect )
+        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr)
+					|| effectBuffer[i] != effect
+					|| cellAttrBuffer[i] != cellAttr )
         {
             kws = &(workStore[wc]);
 
@@ -1263,6 +1272,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                 workStore[wc-1].length = i - workStore[wc-1].offset;
             attr = kws->attr = attrBuffer[i];
             effect = kws->effect = effectBuffer[i];
+			cellAttr = kws->cellAttr = cellAttrBuffer[i];
             wc++;
         }
     }
@@ -1278,7 +1288,9 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     RECT rect;
     cell_video_attr_t prevAttr = cell_video_attr_init_vio_attribute(255);
     ushort prevEffect = uchar(-1);
+    char prevCellAttr = 0;
     BOOL blink;
+	Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
     for( i = 0; i < wc; i++ )
     {
         kws = &(workStore[i]);
@@ -1369,6 +1381,15 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                 font->setItalic( hdc );
         }
 
+		if (prevCellAttr != kws->cellAttr ) {
+            prevCellAttr = kws->cellAttr;
+
+            rlLeft = prevCellAttr & CA_ATTR_LEFT_BORDER;
+            rlTop = prevCellAttr & CA_ATTR_TOP_BORDER;
+            rlRight = prevCellAttr & CA_ATTR_RIGHT_BORDER;
+            rlBottom = prevCellAttr & CA_ATTR_BOTTOM_BORDER;
+        }
+
         rect.left = kws->x;
         rect.top = kws->y;
         rect.right = rect.left + kws->length * font->getFontW();
@@ -1387,6 +1408,11 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                      (wchar_t*) &(textBuffer[ kws->offset ]),
                      kws->length,
                      (int*)&interSpace );
+
+        HPEN ruledLinePen = (HPEN) GetStockObject( WHITE_PEN );
+        drawRuledLines(hdc, ruledLinePen, kws->length, font, rect,
+                        rlTop, rlBottom, rlLeft, rlRight);
+        DeleteObject(ruledLinePen);
     }
 
     // Stretch the contents of any double-height or double-wide lines to
