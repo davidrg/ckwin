@@ -69,16 +69,23 @@ settings.output_file = ""            /* Comes from the XML file */
 /* show-refs attribute - include references column on table-type outputs */
 settings.show_refs = 0
 
-/* Which terminals should be included in the term-ctlseqs comparison tables.
+settings.show_termsupp = 0
+
+/* Show not-implemented entries? */
+settings.show_not_implemented = 0
+
+/* Show sections covering control sequences as a table */
+settings.as_table = 0
+
+/* Which terminals should be included in the terminal comparison tables.
  * These live in the xml document.
  */
-settings.compare_terminals = ''
-settings.include_terminals = ''
+settings.terminals = ''             /* columns */
+settings.include_terminals = ''     /* No columns */
 
 /* Filtering for the to-do output - these are stored in the XML document.
  * Additional filtering is included in the "todoOutputFilter" procedure
  * further down. */
-settings.todo_terminals = ''
 settings.todo_ids = ''
 settings.todo_mnemonics = ''
 
@@ -649,15 +656,32 @@ produceOutputs: procedure expose g. toc. badgeSet. settings. refSet. k95info.
                     style = ""
                     script = ""
                     settings.title = docTitle
-                    if hasAttribute(outChild, "title") then settings.title = getAttribute(outChild, "title")
+                    settings.show_not_implemented = 0
+                    settings.as_table = 0
+                    settings.show_refs = 0
+                    settings.show_termsupp = 0
+                    settings.compare_terminals = ""
+                    settings.include_terminals = ""
+                    settings.todo_ids = ""
+                    settings.todo_mnemonics = ""
+                    settings.terminals = ""
 
-                    if hasAttribute(outChild, "todo-terminals") then settings.todo_terminals = getAttribute(outChild, "todo-terminals")
+                    if hasAttribute(outChild, "title") then settings.title = getAttribute(outChild, "title")
+                    if hasAttribute(outChild, "terminals") then settings.terminals = getAttribute(outChild, "terminals")
                     if hasAttribute(outChild, "todo-mnemonics") then settings.todo_mnemonics = getAttribute(outChild, "todo-mnemonics")
                     if hasAttribute(outChild, "todo-ids") then settings.todo_ids = getAttribute(outChild, "todo-ids")
-                    if hasAttribute(outChild, "compare") then settings.compare_terminals = getAttribute(outChild, "compare")
                     if hasAttribute(outChild, "include") then settings.include_terminals = getAttribute(outChild, "include")
                     if hasAttribute(outChild, "show-refs") then do
                         if getAttribute(outChild, "show-refs") = "true" then settings.show_refs = 1
+                    end
+                    if hasAttribute(outChild, "show-termsupp") then do
+                        if getAttribute(outChild, "show-termsupp") = "true" then settings.show_termsupp = 1
+                    end
+                    if hasAttribute(outChild, "as-table") then do
+                        if getAttribute(outChild, "as-table") = "true" then settings.as_table = 1
+                    end
+                    if hasAttribute(outChild, "show-not-implemented") then do
+                        if getAttribute(outChild, "show-not-implemented") = "true" then settings.show_not_implemented = 1
                     end
 
                     htmlChild = getFirstChild(outChild)
@@ -922,6 +946,7 @@ getSectionSupportedTerminals: procedure expose g. refSet.
             /* scoansi goes by just "sco" in the termsupp tags. Xterm goes by
              * both xt and xterm */
             termsupp = changestr("sco",termsupp,"scoansi")
+            termsupp = changestr("xterm",termsupp,"xt")
             termsupp = changestr("xt",termsupp,"xterm")
             /* TODO: Store synonyms in the document alongside the badge definitions. */
 
@@ -959,6 +984,21 @@ getSectionSupportedTerminals: procedure expose g. refSet.
      end
 
     return terminals
+
+/* Get the series a control sequence section belongs to */
+getSectionSeries: procedure expose g. refSet.
+    parse arg el
+
+    child = getFirstChild(el)
+    do while child <> ''
+        name = getName(child)
+        if name = 'termsupp' then do
+            return getAttribute(child, "series")
+        end
+        child = getNextSibling(child)
+    end
+
+    return 'unknown'
 
 parameterToString: procedure expose g. settings.
     parse arg el,html
@@ -1328,7 +1368,7 @@ getTextHtml: procedure expose g. toc. badgeSet. settings. refSet. k95info.
 doTextHtmlWithChildren: procedure expose g. toc. badgeSet. settings. refSet. k95info.
     parse arg el, openTag, closeTag
 
-    result = openTag
+    result = ''
 
     child = getFirstChild(el)
     do while child <> ''
@@ -1337,7 +1377,15 @@ doTextHtmlWithChildren: procedure expose g. toc. badgeSet. settings. refSet. k95
         child = getNextSibling(child)
     end
 
-    result = result''closeTag
+    if openTag = '<tt>' then do
+        result = changestr("&lt;",result,"<")
+        result = changestr("&gt;",result,">")
+        result = changestr("&amp;",result,"&")
+        result = changestr('&quot;',result,'"')
+        result = changestr("&apos;",result,"'")
+    end
+
+    result = openTag''result''closeTag
 
     return result
 
@@ -1559,7 +1607,7 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
     is_implemented = 1
     if hasAttribute(el, "not-implemented") then is_implemented = 0
 
-    if is_implemented = 0 & docType <> 'term-ctlseqs' & docType <> 'todo' then return
+    if is_implemented = 0 & settings.show_not_implemented = 0 then return
 
     todo = 0
     if hasAttribute(el, "todo") then todo = 1
@@ -1585,11 +1633,15 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
 
     todo_id_allowed = 0
 
+    if settings.show_termsupp = 1 | docType = 'term-ctlseqs' | docType = 'todo' then do
+        supported_terminals = getSectionSupportedTerminals(el)
+    end
+
     if docType = 'term-ctlseqs' | docType = 'todo' then do
         /* Output a generic title if none is present for a parameter */
         if title = '' & role = 'parameter' then title = 'Parameter'
 
-        badges = getSectionSupportedTerminals(el)
+        badges = supported_terminals
 
         sectionBadges = getSectionBadges(el)
         /* TODO: If there are no specific badges applied, then perhaps we
@@ -1692,7 +1744,7 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
             if wordpos(badge, compareBadges) <> 0 then do
                 if wordpos(badge, hiddenBadges) == 0 then do
                     td_classes = badge
-                    if docType = 'term-ctlseqs' | docType = 'todo' then do
+                    if docType = 'term-ctlseqs'  | docType = 'todo' then do
                         td_classes = td_classes' show-badge'
                     end
 
@@ -1724,6 +1776,12 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
                 end
             end
         end
+    end
+
+    if settings.show_termsupp then do
+        series = getSectionSeries(el)
+        call outputHtml indentlevel,'<td class="sec_series">' series '</td>'
+        call outputHtml indentlevel,'<td class="sec_termsupp">' supported_terminals '</td>'
     end
 
     /* References column */
@@ -1783,8 +1841,12 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
     call outputHtml indentLevel,'<th>Mnemonic</th>'
     call outputHtml indentLevel,'<th>Control Sequence</th>'
 
-    if docType = 'term-ctlseqs' then badgeNames = settings.compare_terminals
-    else if docType = 'todo' then badgeNames = settings.todo_terminals
+    if settings.terminals <> '' then do
+        badgeNames = ''
+        if settings.terminals <> '-none-' then do
+            badgeNames = settings.terminals
+        end
+    end
     else badgeNames = badgeSet.badgeNames
 
     allowedBadges = badgeNames " " settings.include_terminals
@@ -1804,6 +1866,11 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
                 column_totals.badge.implemented = 0
             end
         end
+    end
+
+    if settings.show_termsupp then do
+        call outputHtml indentlevel,'<th class="sec_series">Series</th>'
+        call outputHtml indentlevel,'<th class="sec_termsupp">Supported By</th>'
     end
 
     /* References column */
@@ -1851,6 +1918,8 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
                 end
             end
         end
+
+        if settings.show_termsupp = 1 then call outputHtml indentLevel, '<td></td><td></td>'
 
         if references = 1 then call outputHtml indentLevel, '<td></td>'
     end
@@ -2036,10 +2105,7 @@ doSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
     else if docType = 'ctlseq-table' then required_format = "html:ctlseq-table"
     else if docType = 'term-ctlseqs' then required_format = "html:term-ctlseqs"
     else if docType = 'todo' then required_format = 'html:todo'
-
-    if docType = 'ctlseq-table' | docType = 'term-ctlseqs' | docType = 'todo' then do
-        ctlseq_table_layout = 1
-    end
+    else if docType = 'all-ctlseqs' then required_format = "html:all-ctlseqs"
 
     /* Section can have:
         id | title | ctlseq | toc | groups | badges | exclude-badges |
@@ -2063,7 +2129,7 @@ doSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
      * their headings). So any section that isn't explicitly marked for the
      * html:ctlseq-table or html:term-ctlseqs format and has no ctlseq sections
      * in it can be ignored entirely */
-    if ctlseq_table_layout = 1 & output_content = 0 then do
+    if settings.as_table = 1 & output_content = 0 then do
         if sectionHasCtlseqChildren(el) = 0 then return
     end
     else if docType = 'document' & output_content = 0 then return
@@ -2106,7 +2172,7 @@ doSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
         sectionLevel = sectionLevel - 1
     end
 
-    if ctlseq_table_layout = 1 & (role = 'ctlseq' | role = 'ctlchar') then do
+    if settings.as_table = 1 & (role = 'ctlseq' | role = 'ctlchar') then do
         /* For the table-layout doc types these are output as
            table rows rather than sections */
         return
@@ -2292,7 +2358,7 @@ doSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
     end
 
     /* Lastly, produce a table of control sequences for any in this section */
-    if ctlseq_table_layout = 1 & has_ctlseq_children = 1 then do
+    if settings.as_table = 1 & has_ctlseq_children = 1 then do
         call ctlseqTableSectionHTML el, sectionLevel, indentLevel, linkFile, hiddenBadges, docType
     end
 

@@ -116,7 +116,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <!ELEMENT termsupp EMPTY>
         <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print|wz|dtc) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lj250|lg06) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -153,14 +153,16 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ELEMENT script (#PCDATA)>
         <!ELEMENT html (style?|script?)>
         <!ATTLIST html filename CDATA #REQUIRED>
-        <!ATTLIST html type (document|outline|ctlseq-table|term-ctlseqs|todo) #REQUIRED>
+        <!ATTLIST html type (document|outline|ctlseq-table|term-ctlseqs|all-ctlseqs|todo) #REQUIRED>
         <!ATTLIST html title CDATA #IMPLIED>
-        <!ATTLIST html todo-terminals CDATA #IMPLIED>  <!-- for "todo" type only -->
+        <!ATTLIST html terminals CDATA #IMPLIED>
         <!ATTLIST html todo-ids CDATA #IMPLIED>  <!-- for "todo" type only -->
         <!ATTLIST html todo-mnemonics CDATA #IMPLIED>  <!-- for "todo" type only -->
-        <!ATTLIST html compare CDATA #IMPLIED> <!-- for "term-ctlseqs" type only -->
         <!ATTLIST html include CDATA #IMPLIED> <!-- for "term-ctlseqs" type only -->
         <!ATTLIST html show-refs (true|false) "false"> <!-- for table outputs only -->
+        <!ATTLIST html as-table (true|false) "false"> <!-- as table output -->
+        <!ATTLIST html show-not-implemented (true|false) "false">
+        <!ATTLIST html show-termsupp (true|false) "false"> <!-- for table outputs only -->
 
         <!ELEMENT outputs (html)*>
 
@@ -378,7 +380,19 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                            control sequences)
     -->
 
-    <!-- TODO  - Add reference links for everything in the designate character
+    <!-- TODO  - Merge the three mode sections into one
+               - Replace the <ctlseq> element with:
+                 - An <escseq> element for those that don't start with CSI
+                 - A <param> element for describing parameters
+                 - A new more structured <ctlseq> element which would have no
+                    body and the following attributes:
+                        - leading-character (one of <=>?  or nothing)
+                        - parameter list type (fixed/variable)
+                        - parameter kind - numeric, selective (if the two can be
+                            mixed then this might have to become a parameter list)
+                        - Intermediate characters
+                        - final character
+               - Add reference links for everything in the designate character
                  set tables
                - Add reference links to and any new escape sequences found in:
                    - The VT320 manual: EK-VT320-RM manual (if/when it turns up online)
@@ -388,6 +402,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                         Documented here: http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html
                         Terminal support tags have been added, references have not
                         as that document lacks anchors
+                   - Non-control-sequences in ECMA-48
+                   - Anything interesting here: https://bjh21.me.uk/all-escapes/all-escapes.xhtml
                - Consider moving VT52/H19 content into its own section
                    - Pro: - makes it easier to read
                           - xterms documentation does this
@@ -876,7 +892,8 @@ DECTSR		462
           This is the "full" document detailing all the control sequences
           *implemented* by Kermit 95.
          -->
-        <html type="document" filename="ctlseqs.html">
+        <html type="document" filename="ctlseqs.html"
+              show-not-implemented="true">
             <style>
                 h2 { border-bottom: solid 2px; }
                 h3 { border-bottom: solid 1px; }
@@ -978,7 +995,8 @@ DECTSR		462
           included in full in the outline document
         -->
         <html type="outline" filename="outline.html"
-              title="Kermit 95 Control Sequences (Outline)">
+              title="Kermit 95 Control Sequences (Outline)"
+              show-not-implemented="true">
             <style>
                 h3 {
                     margin-left: 2em;
@@ -1080,7 +1098,8 @@ DECTSR		462
         -->
         <!-- TODO: rename to termtype-ctlseqs.html -->
         <html type="ctlseq-table" filename="tt-ctlseqs.html"
-              title="Kermit 95 Control Sequences by Terminal Type">
+              title="Kermit 95 Control Sequences by Terminal Type"
+              as-table="true">
             <style>
                 table {
                     border-collapse: collapse;
@@ -1119,9 +1138,11 @@ DECTSR		462
 
         <html type="term-ctlseqs" filename="term-ctlseqs.html"
               title="Control Sequences by Terminal"
-              compare="vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty"
+              terminals="vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty"
               include="vws vt320 vt330 decterm vt1000"
-              show-refs="true">
+              show-not-implemented="true"
+              show-refs="true"
+              as-table="true">
             <!--
                 compare attribute: terminals that get columns in the table
                 include attribute: Also include rows for any escape sequences
@@ -1195,14 +1216,17 @@ DECTSR		462
             </style>
         </html>
 
-        <!-- For testing: a variant that includes everything but without the
+        <!--  a variant that includes everything but without the
             comparison columns. Like the outline document, but in table form
-            and including not-implemented stuff.
-        <html type="term-ctlseqs" filename="all-ctlseqs.html"
+            and including all not-implemented stuff. -->
+        <html type="all-ctlseqs" filename="all-ctlseqs.html"
               title="All Known Control Sequences"
-              compare=""
+              terminals="-none-"
               include="*"
-              show-refs="true">
+              show-termsupp="false"
+              show-refs="true"
+              show-not-implemented="true"
+              as-table="true">
             <style>
                 table {
                 border-collapse: collapse;
@@ -1233,10 +1257,12 @@ DECTSR		462
                 border-right: 1px solid black;
                 }
                 td.sec_references {
-                white-space: nowrap;
-                background-color: gray;
+                    white-space: nowrap;
                 }
-                th.sec_references {
+                td.sec_termsupp {
+                    white-space: nowrap;
+                }
+                thead {
                 background-color: gray;
                 }
                 thead tr {
@@ -1268,7 +1294,7 @@ DECTSR		462
                 }
 
             </style>
-        </html>-->
+        </html>
 
         <!-- The todo-* attributes filter what is included in todo.html. A
              control sequence or parameter must be marked for one of the listed
@@ -1282,8 +1308,10 @@ DECTSR		462
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL XTPUSHCOLORS XTPOPCOLORS XTREPORTCOLORS"
-              todo-terminals="vt220 vt420 vt525 k95 xterm tt putty wt"
-              show-refs="true">
+              terminals="vt220 vt420 vt525 k95 xterm tt putty wt"
+              show-refs="true"
+              show-not-implemented="true"
+              as-table="true">
             <style>
                 table {
                 border-collapse: collapse;
@@ -1572,6 +1600,39 @@ DECTSR		462
 
     </section>
 
+    <section role="text" formats="html:all-ctlseqs">
+        <p>
+            <b>Kermit 95 Release:</b> <k95info val="version-full"/><br/>
+            <b>Build Date:</b> <k95info val="version-date"/>
+        </p>
+        <p>
+            This document doesn't <em>really</em> attempt to list
+            <em>All Known Control Sequences</em>, nor does it aim to &mdash; that
+            would be a large job indeed. But the XML document from which
+            <a href="ctlseqs.html">Kermit 95's Control Sequences Documentation</a>
+            is generated does contain basic information on a great many
+            additional control sequences. Many of these are unlikely ever to be
+            supported by Kermit 95 for one reason or another, but it's still
+            useful to know they exist. Hence, this document.
+        </p>
+        <p>
+            The criteria for inclusion here is similar to the criteria for
+            inclusion in Kermit 95 itself: It exists now, and it is
+            not likely to change in some breaking way in the future. Either it
+            shipped in some hardware, or the terminal emulators that currently
+            support it have an apparent commitment to backwards compatibility
+            and are wide-spread enough to discourage other terminal emulators
+            from being incompatible.
+        </p>
+        <p>
+            Rows highlighted in yellow indicate control sequences (or parameters)
+            not supported by any of Kermit 95s emulations. Features that <em>are</em>
+            supported by Kermit 95 have links to documentation describing
+            Kermit 95s implementation of that feature.
+        </p>
+
+    </section>
+
     <section role="text">
         <p>
             <b>Kermit 95 Release:</b> <k95info val="version-full"/><br/>
@@ -1689,7 +1750,7 @@ DECTSR		462
     <index/>
 
     <section role="text"
-             formats="html:document html:outline html:ctlseq-table html:term-ctlseqs html:todo"
+             formats="html:document html:outline html:ctlseq-table html:term-ctlseqs html:todo html:all-ctlseqs"
              hide-groups="ishp iswyse isdg200 istvi"
              hide-badges="qnx ibm31 vc4404 adm3a adm5 hzl1500 vc4404 vtnt xterm tek40">
         <!-- ANSI-compatible, VT52 and H19 emulations -->
@@ -2495,7 +2556,7 @@ DECTSR		462
         <section role="ctlseq" id="decbar" not-implemented="true" todo="true"
                  mnemonic="DECBAR" ctlseq="ESC % SP 0" title="Start Bar Code">
             <termsupp first="la30" series="print" additional=""/>
-            <ref src="dps:108"/>
+            <ref src="dap:109"/>
         </section>
         <section role="ctlseq" id="dectcs" not-implemented="true" todo="true"
                  mnemonic="DECTCS" ctlseq="ESC % 0" title="Exit NAPLPS">
@@ -2519,13 +2580,13 @@ DECTSR		462
         </section>
         <section role="ctlseq" id="socs" mnemonic="SOCS" title="Select Other Coding System"
                  not-implemented="true" todo="true">
-            <ref src="dps:170"/>
+            <ref src="dap:170"/>
             <p>Select IBM Proprinter emulation mode</p>
         </section>
-        <section role="ctlseq" id="sdc" ctlseq="ESC % @" title="Select default character set">
+        <section role="ctlseq" id="sdc" mnemonic="ROCS" ctlseq="ESC % @" title="Select default character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
             <termsupp first="xterm" series="xt" additional="putty wt"/>
-            <ref src="dps:160"/>
+            <ref src="dap:160"/>
             <p>Return to ISO 2002 mode</p>
         </section>
         <section role="ctlseq" id="sutf8" ctlseq="ESC % G" title="Select UTF-8 character set">
@@ -3899,10 +3960,16 @@ DECTSR		462
                     an impact on macro storage space used. If a number of
                     repetitions is not specified, then the repetition count is 1.
                     The end of the overall macro definition terminates any
-                    macro sequences. Any non-numeric characters between the <tt>!</tt>
-                    and the <tt>;</tt> (eg, <tt>!5x;</tt>
+                    macro sequences.
                 </p>
-
+                <p>
+                    Any non-numeric characters between the <tt>!</tt>
+                    and the <tt>;</tt> (eg, <tt>!5x;</tt>) are counted as an error
+                    and the macro is discarded. When emulating a VT420 (rather
+                    than VT5xx or the K95 terminal type), extra semicolons not
+                    associated with a repetition will also cause the macro to
+                    be discarded.
+                </p>
                 <p>
                     The only characters allowed inside the Hex encoded macro
                     definition are 0-9, A-F, and the characters '!' and ';' for
@@ -4080,7 +4147,7 @@ DECTSR		462
                  not-implemented="true" todo="true">
             <ctlseq>DCS <param-single/> &quot; { D...D ST</ctlseq>
             <termsupp first="ln03" series="print" additional=""/>
-            <ref src="dps:123"/>
+            <ref src="dap:123"/>
         </section>-->
 
         <section role="ctlseq" id="declans" mnemonic="DECLANS"
@@ -4625,6 +4692,65 @@ DCS $ q 3 , } ST</pre>
     </section>
     <section toc="true" role="text" id="s_csi"  formats="html:document"
              title="Functions using CSI, ordered by the final character(s)">
+
+        <p>
+            The format for Control Sequences introduced by CSI is specified by
+            ECMA-48 section 5.4. For convenience, a quick summary is included
+            here.
+        </p>
+
+        <p>
+            The format of a Control Sequence is <tt><cc>CSI</cc> P...P I...I F</tt>
+            where <tt>P...P</tt> is the parameter string, <tt>I...I</tt> is
+            zero or more intermediate characters, and <tt>F</tt> is the final
+            character.
+        </p>
+
+        <p>
+            The parameter string consists of only the characters
+            <tt>0123456789:;&lt;=&gt;?</tt> (digits, colon, semicolon, less than,
+            equals, greater than and question mark). The format of parameter
+            strings starting with <tt>&lt;=&gt;?</tt> is not specified by ECMA-48
+            - these are for private/experimental use. The standard does
+            <em>not</em> say that it affects the interpretation of the
+            intermediate bytes - a control sequence with the final character
+            <tt>h</tt> and no intermediate characters would be Set Mode
+            regardless of what character appeared at the start of the parameter
+            string.
+        </p>
+        <p>If the Parameter String does <em>not</em> start with one of <tt>&lt;=&gt;?</tt>
+            then it consists of parameter substrings (groups of digits and the colon
+            character) separated by the semicolon character. Parameter substrings
+            can be empty, and leading zeros can be omitted if it wouldn't leave
+            the parameter substring empty. The semicolon is used as a separator
+            within parameter substrings with the meaning left up to the control
+            sequence; EMCA-48 provides using it as a replacement for the decimal
+            point in fractional numbers as an example use case (eg, representing
+            4.3 as 4:3) but no control sequences specified by ECMA-48 use it for
+            anything.
+        </p>
+        <p>
+            For any given control sequence the number of parameters may either
+            be fixed or variable. For
+            control sequences taking variable parameter of parameters the order
+            of parameters is not significant. ECMA-48 does not specify an upper
+            limit for the number of parameters, but Kermit 95 does: 22.
+        </p>
+        <p>
+            Intermediate characters can be any combination of <tt>!"#$%&amp;'()*+,-./</tt>
+            and the Space character. ECMA-48 does not require there be
+            only zero or one intermediate characters, but it considers it
+            unlikely that more than one would be required.
+        </p>
+        <p>
+            And the final character is an ASCII character in the range <tt>@</tt> through
+            <tt>~</tt> (04/00 through 07/14, or character codes 64 through 126 decimal
+            inclusive). ECMA-48 does not assign meaning to final characters in
+            the range <tt>p</tt> through <tt>~</tt> (character codes 112
+            through 126) and reserves these for private/experimental control
+            sequences.
+        </p>
+
         <!--
             ansiext: CSI =
             zdsext: CSI >
@@ -4745,6 +4871,11 @@ DCS $ q 3 , } ST</pre>
                 Wrapping is not canceled.
             </p>
         </section>
+        <section role="ctlseq" mnemonic="GSM" title="Graphic Size Modification"
+                not-implemented="true" todo="true">
+            <ref src="e48:59"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP B</ctlseq>
+        </section>
         <section role="ctlseq" id="sbp" title="Set Beep Frequency and Duration"
                  mnemonic="SBP" groups="isansi">
             <ctlseq>CSI = <param-single/> ; <param-single/> B</ctlseq>
@@ -4786,6 +4917,11 @@ DCS $ q 3 , } ST</pre>
             <p>Cursor Right <param-single/> times (default = 1) staying on the
             same line.</p>
         </section>
+        <section role="ctlseq" mnemonic="GSS" title="Graphic Size Selection"
+                 not-implemented="true" todo="true">
+            <ref src="e48:59"/>
+            <ctlseq>CSI <param-single/> SP C</ctlseq>
+        </section>
         <section role="ctlseq" ctlseq="CSI = C" title="Close Virtual Window" badges="ba80" not-implemented="true">
             <p>Close Virtual Window</p>
         </section>
@@ -4819,6 +4955,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> D</ctlseq>
             <p>Cursor left <param-single/> characters</p>
         </section>
+        <section role="ctlseq" mnemonic="FNT" title="Font Selection"
+                 not-implemented="true" todo="true">
+            <ref src="e48:58"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP D</ctlseq>
+        </section>
         <section role="ctlseq" id="sbi" mnemonic="SBI"
                  title="Turn on/off background colour intensity (ANSI)" groups="isansi">
             <ctlseq>CSI = <param-single/> D</ctlseq>
@@ -4851,6 +4992,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> E</ctlseq>
             <p>Cursor next line <param-single/> times (default = 1)</p>
         </section>
+        <section role="ctlseq" mnemonic="TSS" title="Thin Space Specification"
+                 not-implemented="true" todo="true">
+            <ref src="e48:87"/>
+            <ctlseq>CSI <param-single/> SP E</ctlseq>
+        </section>
         <section role="ctlseq" id="ba80-wsrr" ctlseq="CSI = E" title="Window Status Request (BA80)" badges="ba80">
             <p>Window Status Request</p>
         </section>
@@ -4875,6 +5021,11 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> F</ctlseq>
             <p>Cursor previous line <param-single/> times (default = 1)</p>
+        </section>
+        <section role="ctlseq" mnemonic="JFY" title="Justify"
+                 not-implemented="true" todo="true">
+            <ref src="e48:62"/>
+            <ctlseq>CSI <param-multi/> SP F</ctlseq>
         </section>
         <section role="ctlseq" id="aix-rsl" ctlseq="CSI ? F" title="Return from status line (AIXTERM)" badges="aixterm">
             <p>Return from status line</p>
@@ -4913,6 +5064,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> G</ctlseq>
             <p>Move cursor to column <param-single/></p>
         </section>
+        <section role="ctlseq" mnemonic="SPI" title="Spacing Increment"
+                 not-implemented="true" todo="true">
+            <ref src="e48:81"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP G</ctlseq>
+        </section>
         <section role="ctlseq" id="snb" title="Set Normal Background Color (ANSI)"
                  mnemonic="SNB" groups="isansi" badges="qansi">
             <ctlseq>CSI = <param-single/> G</ctlseq>
@@ -4941,6 +5097,11 @@ DCS $ q 3 , } ST</pre>
                 If DECSASD is set to the status line, it is reset to terminal.
             </p>
         </section>
+        <section role="ctlseq" mnemonic="QUAD" title="QUAD"
+                 not-implemented="true" todo="true">
+            <ref src="e48:69"/>
+            <ctlseq>CSI <param-multi/> SP H</ctlseq>
+        </section>
 
         <section role="ctlseq" id="hft-hsl" ctlseq="CSI ? H" title="Hide status line" groups="ishft">
             <p>Hide status line</p>
@@ -4962,6 +5123,11 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt wt"/>
             <ctlseq>CSI <param-single/> I</ctlseq>
             <p>Cursor Horizontal Tab <param-single/> tab stops</p>
+        </section>
+        <section role="ctlseq" mnemonic="SSU" title="Select Size Unit"
+                 not-implemented="true" todo="true">
+            <ref src="e48:83"/>
+            <ctlseq>CSI <param-single/> SP I</ctlseq>
         </section>
         <section role="ctlseq" id="ba80-input" ctlseq="CSI = I" title="Input (BA80)" badges="ba80" not-implemented="true">
             <p>Input</p>
@@ -5236,6 +5402,11 @@ DCS $ q 3 , } ST</pre>
                     </p>
                 </section>
             </section>
+        </section>
+        <section role="ctlseq" mnemonic="PFS" title="Page Format Selection"
+                 not-implemented="true" todo="true">
+            <ref src="e48:66"/>
+            <ctlseq>CSI <param-single/> SP J</ctlseq>
         </section>
         <section role="ctlseq" id="decsed" mnemonic="DECSED" title="Selective Erase in Display" >
             <ref src="070:417"/>
@@ -5560,6 +5731,11 @@ DCS $ q 3 , } ST</pre>
                 </section>
             </section>
         </section>
+        <section role="ctlseq" mnemonic="SHS" title="Select Character Spacing"
+                 not-implemented="true" todo="true">
+            <ref src="e48:77"/>
+            <ctlseq>CSI <param-single/> SP K</ctlseq>
+        </section>
         <section role="ctlseq" id="ba80-rfkl" ctlseq="CSI = K" title="Begin reading function key labels (BA80)" badges="ba80">
             <p>Begin reading function key labels</p>
         </section>
@@ -5646,6 +5822,11 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> L</ctlseq>
             <p>Insert <param-single/> lines.</p>
+        </section>
+        <section role="ctlseq" mnemonic="SVS" title="Select Line Spacing"
+                 not-implemented="true" todo="true">
+            <ref src="e48:85"/>
+            <ctlseq>CSI <param-single/> SP L</ctlseq>
         </section>
         <section role="ctlseq" id="ansi-fe" title="Fill mode on (ANSI)" groups="isansi" exclude-badges="scoansi">
             <ctlseq>CSI = <param-single/> L</ctlseq>
@@ -5765,6 +5946,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> M</ctlseq>
             <p>Delete <param-single/> lines.</p>
         </section>
+        <section role="ctlseq" mnemonic="IGS" title="Identify Graphic Subrepertoire"
+                 not-implemented="true" todo="true">
+            <ref src="e48:61"/>
+            <ctlseq>CSI <param-single/> SP M</ctlseq>
+        </section>
         <section role="ctlseq" id="ba80-sl" ctlseq="CSI = M" title="Go to status line (BA80)" badges="ba80">
             <p>Go to status line</p>
         </section>
@@ -5834,6 +6020,11 @@ DCS $ q 3 , } ST</pre>
                 </section>
             </section>
         </section>
+        <section role="ctlseq" mnemonic="IDCS" title="Identify Device Control String"
+                 not-implemented="true" todo="true">
+            <ref src="e48:61"/>
+            <ctlseq>CSI <param-single/> SP O</ctlseq>
+        </section>
         <section role="ctlseq" id="ba80-ovw" title="Open Virtual Window (BA80)" badges="ba80" not-implemented="true">
             <ctlseq>CSI = O Pa Pn1[:Pn2][;Pa Pn1[:Pn2]][...] O</ctlseq>
             <p>Open virtual window. Parameters are the dimensions, location
@@ -5871,6 +6062,7 @@ DCS $ q 3 , } ST</pre>
                  title="Page Position Absolute"
                  groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> SP P</ctlseq>
+            <ref src="e48:67"/>
             <ref src="070:336"/>
             <ref src="vt340:124"/>
             <ref src="vt420:160"/>
@@ -5925,6 +6117,7 @@ DCS $ q 3 , } ST</pre>
                  title="Page Position Relative"
                  groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> SP Q</ctlseq>
+            <ref src="e48:67"/>
             <ref src="070:337"/>
             <ref src="vt340:125"/>
             <ref src="vt420:161"/>
@@ -5991,6 +6184,7 @@ DCS $ q 3 , } ST</pre>
                  title="Page Position Backward"
                  groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> SP R</ctlseq>
+            <ref src="e48:67"/>
             <ref src="070:338"/>
             <ref src="vt340:124"/>
             <ref src="vt420:160"/>
@@ -6069,6 +6263,11 @@ DCS $ q 3 , } ST</pre>
                 Scrolls the characters up <param-single/> lines.
             </p>
         </section>
+        <section role="ctlseq" mnemonic="SPD" title="Select Presentation Directions"
+                 not-implemented="true" todo="true">
+            <ref src="e48:80"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP S</ctlseq>
+        </section>
         <section role="ctlseq" id="aixterm-sl" ctlseq="CSI ? S" title="Show status line" badges="aixterm">
             <p>Show status line</p>
         </section>
@@ -6137,6 +6336,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps;Ps;Ps-T.208C"/>
             <termsupp first="xterm" series="xt" additional=""/>
         </section>
+        <section role="ctlseq" mnemonic="DTA" title="Dimension Text Area"
+                 not-implemented="true" todo="true">
+            <ref src="e48:54"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP T</ctlseq>
+        </section>
         <section role="ctlseq" id="xtrmtitle" mnemonic="XTRMTITLE"
                  title="Reset title mode features to defaults"
                  not-implemented="true" todo="true">
@@ -6157,6 +6361,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="np" mnemonic="NP" title="Next Page"
                  groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> U</ctlseq>
+            <ref src="e48:65"/>
             <ref src="070:332"/>
             <ref src="vt340:123"/>
             <ref src="vt420:158"/>
@@ -6175,11 +6380,17 @@ DCS $ q 3 , } ST</pre>
                 Not available while on the alternate screen.
             </p>
         </section>
+        <section role="ctlseq" mnemonic="SLH" title="Set Line Home"
+                 not-implemented="true" todo="true">
+            <ref src="e48:78"/>
+            <ctlseq>CSI <param-single/> SP U</ctlseq>
+        </section>
 
         <!-- ######################### V ######################### -->
         <section role="ctlseq" id="pp" mnemonic="PP" title="Preceding Page"
                  groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> V</ctlseq>
+            <ref src="e48:65"/>
             <ref src="070:334"/>
             <ref src="vt340:123"/>
             <ref src="vt420:159"/>
@@ -6225,6 +6436,11 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
         </section>
+        <section role="ctlseq" mnemonic="SLL" title="Set Line Limit"
+                 not-implemented="true" todo="true">
+            <ref src="e48:78"/>
+            <ctlseq>CSI <param-single/> SP V</ctlseq>
+        </section>
 
         <!-- ######################### W ######################### -->
         <section role="ctlseq" id="hft-ctc" mnemonic="CTC" title="Cursor Tab Stop Control"  groups="ishft" badges="linux aaa">
@@ -6232,6 +6448,12 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:126"/>
             <ctlseq>CSI <param-single/> W</ctlseq>
             <p>Cursor Tab Stop Control</p>
+        </section>
+        <section role="ctlseq" mnemonic="FNK" title="Function Key"
+                 not-implemented="true" todo="true">
+            <ref src="e48:58"/>
+            <ctlseq>CSI <param-single/> SP W</ctlseq>
+            <!-- terminal to host -->
         </section>
 
         <section role="ctlseq" id="decst8c" mnemonic="DECST8C"
@@ -6259,12 +6481,22 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> X</ctlseq>
             <p>Erase <param-single/> characters</p>
         </section>
+        <section role="ctlseq" mnemonic="SPQR" title="Select Print Quality and Rapidity"
+                 not-implemented="true" todo="true">
+            <ref src="e48:82"/>
+            <ctlseq>CSI <param-single/> SP X</ctlseq>
+        </section>
 
         <!-- ######################### Y ######################### -->
         <section role="ctlseq" id="hft-cvt" mnemonic="CVT" ctlseq="CSI Y"
                  title="Cursor Vertical Tab" not-implemented="true" groups="ishft">
             <ref src="e48:51"/>
             <p>Cursor Vertical Tab</p>
+        </section>
+        <section role="ctlseq" mnemonic="SEF" title="Sheet Eject and Feed"
+                 not-implemented="true" todo="true">
+            <ref src="e48:74"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP Y</ctlseq>
         </section>
 
         <!-- ######################### Z ######################### -->
@@ -6279,6 +6511,11 @@ DCS $ q 3 , } ST</pre>
                 Moves active cursor position back <param-single/> tab stops.
             </p>
         </section>
+        <section role="ctlseq" mnemonic="PEC" title="Presentation Expand or Contract"
+                 not-implemented="true" todo="true">
+            <ref src="e48:65"/>
+            <ctlseq>CSI <param-single/> SP Z</ctlseq>
+        </section>
         <section role="ctlseq" id="ansi-rc" ctlseq="CSI = Z" title="Reset colors (ANSI)" groups="isansi">
             <p>Reset colours</p>
         </section>
@@ -6286,18 +6523,37 @@ DCS $ q 3 , } ST</pre>
 
         <!-- ######################### [ ######################### -->
         <section role="ctlseq" not-implemented="true" groups="ishft"
-                 id="srs" title="Select Reversed String">
+                 mnemonic="SRS" id="srs" title="Select Reversed String">
             <ctlseq>CSI <param-single/> [</ctlseq>
+            <ref src="e48:83"/>
             <p>
                 Ps=0 is End Push,
                 Ps=1 is Start Push.
             </p>
         </section>
+        <section role="ctlseq" mnemonic="SSW" title="Set Space Width"
+                 not-implemented="true" todo="true">
+            <ref src="e48:84"/>
+            <ctlseq>CSI <param-single/> SP [</ctlseq>
+        </section>
+
+        <!-- ######################### \ ######################### -->
+        <section role="ctlseq" not-implemented="true" todo="true"
+                 mnemonic="PTX" id="ptx" title="Parallel Texts">
+            <ctlseq>CSI <param-single/> \</ctlseq>
+            <ref src="e48:67"/>
+        </section>
+        <section role="ctlseq" mnemonic="SACS" title="Set Additional Character Separation"
+                 not-implemented="true" todo="true">
+            <ref src="e48:70"/>
+            <ctlseq>CSI <param-single/> SP \</ctlseq>
+        </section>
 
         <!-- ######################### ] ######################### -->
-        <section role="ctlseq" not-implemented="true" groups="ishft"
+        <section role="ctlseq" not-implemented="true" groups="ishft" mnemonic="SDS"
                  id="sapv" title="Select Alternate Presentation Variant">
             <ctlseq>CSI <param-multi/> ]</ctlseq>
+            <ref src="e48:73"/>
             <p>
                 Select Alternate Presentation Variant (BIDI, Arabic
                 numeric shapes, Hindi numeric shapes, symmetric swapping mode for
@@ -6379,6 +6635,11 @@ DCS $ q 3 , } ST</pre>
                 </section>
             </section>
         </section>
+        <section role="ctlseq" mnemonic="SAPV" title="select Alternative Presentation Variants"
+                 not-implemented="true" todo="true">
+            <ref src="e48:71"/>
+            <ctlseq>CSI <param-multi/> SP ]</ctlseq>
+        </section>
 
         <!-- ######################### ^ ######################### -->
         <section role="ctlseq" id="sd2" mnemonic="SD" title="Scroll Down">
@@ -6391,10 +6652,28 @@ DCS $ q 3 , } ST</pre>
                 use <a href="#sd">CSI <param-single/> T</a>
             </p>
         </section>
+        <section role="ctlseq" id="simd" mnemonic="SIMD" not-implemented="true"
+                 todo="true" title="Select Implicit Movement Direction">
+            <ctlseq>CSI <param-single/> ^</ctlseq>
+            <ref src="e48:77"/>
+        </section>
+        <section role="ctlseq" mnemonic="STAB" title="Selective Tabulation"
+                 not-implemented="true" todo="true">
+            <ref src="e48:85"/>
+            <ctlseq>CSI <param-single/> SP ^</ctlseq>
+        </section>
+
+        <!-- ######################### _ ######################### -->
+        <section role="ctlseq" mnemonic="GCC" title="Graphic Character Combination"
+                 not-implemented="true" todo="true">
+            <ref src="e48:58"/>
+            <ctlseq>CSI <param-single/> SP _</ctlseq>
+        </section>
 
         <!-- ######################### ` ######################### -->
         <section role="ctlseq" id="hpa" mnemonic="HPA" title="Horizontal Position Absolute">
             <ctlseq>CSI <param-single/> `</ctlseq>
+            <ref src="e48:59"/>
             <ref src="wy370:119"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-%60.1CCB"/>
             <ref src="vt510:HPA.html"/>
@@ -6403,6 +6682,11 @@ DCS $ q 3 , } ST</pre>
             <p>
                 Moves active position to column <param-single/>.
             </p>
+        </section>
+        <section role="ctlseq" mnemonic="TATE" title="Tabulation Aligned Trailing Edge"
+                 not-implemented="true" todo="true">
+            <ref src="e48:86"/>
+            <ctlseq>CSI <param-single/> SP `</ctlseq>
         </section>
 
 
@@ -6420,6 +6704,11 @@ DCS $ q 3 , } ST</pre>
                 <param-single/> characters to the right.
             </p>
         </section>
+        <section role="ctlseq" mnemonic="TALE" title="Tabulation Aligned Leading Edge"
+                 not-implemented="true" todo="true">
+            <ref src="e48:86"/>
+            <ctlseq>CSI <param-single/> SP a</ctlseq>
+        </section>
 
         <!-- ######################### b ######################### -->
         <section role="ctlseq" id="rep" mnemonic="REP" title="Repeat" badges="qansi xterm k95">
@@ -6432,6 +6721,11 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="RCH" mnemonic="RCH" title="Repeat character" badges="scoansi aaa">
             <ctlseq>CSI <param-single symbol="Pc"/> ; <param-single symbol="Pn"/> b </ctlseq>
             <p>Repeat character <param-single symbol="Pc"/> <param-single symbol="Pn"/> times.</p>
+        </section>
+        <section role="ctlseq" mnemonic="TAC" title="Tabulation Aligned Centred"
+                 not-implemented="true" todo="true">
+            <ref src="e48:86"/>
+            <ctlseq>CSI <param-single/> SP b</ctlseq>
         </section>
 
         <!-- ######################### c ######################### -->
@@ -6752,6 +7046,11 @@ DCS $ q 3 , } ST</pre>
                 with <tt><cc>CSI</cc> ? 6 c</tt>
             </p>
         </section>
+        <section role="ctlseq" mnemonic="TCC" title="Tabulation Centred on Character"
+                 not-implemented="true" todo="true">
+            <ref src="e48:87"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP c</ctlseq>
+        </section>
         <section role="ctlseq" id="da3" mnemonic="DA3" title="Tertiary Device Attributes" groups="isvt220">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-=-Ps-c.1D0D"/>
             <ref src="070:230"/>
@@ -6871,6 +7170,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> d</ctlseq>
             <p>Vertical Position Absolute: Moves active position to row <param-single/></p>
         </section>
+        <section role="ctlseq" mnemonic="TSR" title="Tabulation Stop Remove"
+                 not-implemented="true" todo="true">
+            <ref src="e48:87"/>
+            <ctlseq>CSI <param-single/> SP d</ctlseq>
+        </section>
 
         <!-- ######################### e ######################### -->
         <section role="ctlseq" id="vpr" mnemonic="VPR" title="Vertical Position Relative">
@@ -6884,6 +7188,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> e</ctlseq>
             <p>Vertical Position Relative—moves active position <param-single/>
                 rows down</p>
+        </section>
+        <section role="ctlseq" mnemonic="SCO" title="Select Character Orientation"
+                 not-implemented="true" todo="true">
+            <ref src="e48:72"/>
+            <ctlseq>CSI <param-single/> SP e</ctlseq>
         </section>
 
         <!-- ######################### f ######################### -->
@@ -6906,6 +7215,11 @@ DCS $ q 3 , } ST</pre>
             <p badges="s97801">
                 If DECSASD is set to the status line, it is reset to terminal.
             </p>
+        </section>
+        <section role="ctlseq" mnemonic="SRCS" title="Set reduced Character Separation"
+                 not-implemented="true" todo="true">
+            <ref src="e48:82"/>
+            <ctlseq>CSI <param-single/> SP f</ctlseq>
         </section>
 
         <!-- ######################### g ######################### -->
@@ -6973,6 +7287,11 @@ DCS $ q 3 , } ST</pre>
             </section>
 
         </section>
+        <section role="ctlseq" mnemonic="SCS" title="Set Character Spacing"
+                 not-implemented="true" todo="true">
+            <ref src="e48:73"/>
+            <ctlseq>CSI <param-single/> SP g</ctlseq>
+        </section>
         <section role="ctlseq" id="prc" mnemonic="PRC" title="Display character in G2 (ANSI)" groups="isansi">
             <ctlseq>CSI = <param-single/> g</ctlseq>
             <termsupp series="sco" first="sco"/>
@@ -7000,6 +7319,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="gatm" mnemonic="GATM" title="Guarded Area Transfer Mode"
                      not-implemented="true" todo="true" >
                 <ctlseq><param-single/> = 1</ctlseq>
+                <ref src="e48:79"/>
                 <ref src="vt132:86"/>
                 <ref src="vt340:155"/>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
@@ -7061,6 +7381,11 @@ DCS $ q 3 , } ST</pre>
                     Enable insert mode
                 </p>
             </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="SRTM"
+                     title="Status Report Transfer Mode">
+                <ctlseq><param-single/> = 5</ctlseq>
+                <ref src="e48:79"/>
+            </section>
             <section role="parameter" badges="scoansi" id="sm-6-sco" title="Relative Origin">
                 <ctlseq><param-single/> = 6</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
@@ -7074,10 +7399,36 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340 vt510"/>
             </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="VEM"
+                     title="Line Editing Mode">
+                <ctlseq><param-single/> = 7</ctlseq>
+                <ref src="e48:79"/>
+            </section>
             <section role="parameter" badges="scoansi" id="sm-7" title="Auto Wrap Mode">
                 <ctlseq><param-single/> = 7</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
                 <p>Enables auto wrap mode</p>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="BDSM"
+                     title="Bi-Directional Support Mode">
+                <ctlseq><param-single/> = 8</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="DCSM"
+                     title="Device Component Select Mode">
+                <ctlseq><param-single/> = 9</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="HEM"
+                     title="Character Editing Mode">
+                <ctlseq><param-single/> = 10</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="PUM"
+                     title="Positioning Unit Mode">
+                <ctlseq><param-single/> = 11</ctlseq>
+                <ref src="e48:79"/>
+                <p>Deprecated in ECMA-48 5th edition</p>
             </section>
             <section role="parameter" mnemonic="SRM" id="sm-12"
                      title="Send Receive ON">
@@ -7096,15 +7447,22 @@ DCS $ q 3 , } ST</pre>
                 <p badges="scoansi">Ignored</p>
             </section>
             <section role="parameter" mnemonic="FEAM" not-implemented="true" id="sm-13"
-                     title="Control execution off">
+                     title="Format Effector Action Mode">
+                <ref src="e48:79"/>
                 <ref src="wy370:33"/>
                 <ctlseq><param-single/> = 13</ctlseq>
                 <p>display control codes</p>
                 <p badges="scoansi">Ignored</p>
             </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="FETM"
+                     title="Format Effector Transfer Mode">
+                <ctlseq><param-single/> = 14</ctlseq>
+                <ref src="e48:79"/>
+            </section>
             <section role="parameter" mnemonic="MATM" id="sm-15" todo="true"
                      title="Multiple Area Transfer Mode" not-implemented="true">
                 <ctlseq><param-single/> = 15</ctlseq>
+                <ref src="e48:79"/>
                 <ref src="vt340:157"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
             </section>
@@ -7121,11 +7479,25 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" mnemonic="SATM" id="sm-17" todo="true"
                      title="Selected Area Transfer Mode" not-implemented="true">
                 <ctlseq><param-single/> = 17</ctlseq>
+                <ref src="e48:79"/>
                 <ref src="vt340:156"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
             </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="TSM"
+                     title="Tabulation Stop Mode">
+                <ctlseq><param-single/> = 18</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="EBM"
+                     title="Formerly: Editing Boundary Mode">
+                <ctlseq><param-single/> = 19?</ctlseq>
+                <ref src="e48:79"/>
+                <p>Deprecated in ECMA-48 4th edition, removed in 5th.</p>
+            </section>
             <section role="parameter" mnemonic="LNM" id="sm-20" title="Line Feed / new line mode">
                 <ctlseq><param-single/> = 20</ctlseq>
+                <ref src="e48:79"/>
+                <ref src="e48:102"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-h:Ps-=-2-0.1E53"/>
                 <ref src="070:312"/>
                 <ref src="vt100:LNM"/>
@@ -7141,7 +7513,20 @@ DCS $ q 3 , } ST</pre>
                     (equivalent to <tt>set terminal cr-display crlf</tt> and
                     <tt>set terminal newline on</tt>
                 </p>
+                <p>This mode was deprecated in ECMA-48 4th edition and removed
+                    in the 5th edition.</p>
                 <p badges="scoansi">Ignored</p>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="GRCM"
+                     title="Graphic Rendition Combination">
+                <ctlseq><param-single/> = 21</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="ZDM"
+                     title="Zero Default Mode">
+                <ctlseq><param-single/> = 22</ctlseq>
+                <ref src="e48:79"/>
+                <p>Deprecated in ECMA-48 5th edition</p>
             </section>
             <section role="parameter" badges="scoansi" id="sm-25" title="Cursor On">
                 <ctlseq><param-single/> = 25</ctlseq>
@@ -7262,6 +7647,11 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="sco" series="sco" additional=""/>
                 <p>Turns on the cursor</p>
             </section>
+        </section>
+        <section role="ctlseq" mnemonic="SLS" title="Set Line Spacing"
+                 not-implemented="true" todo="true">
+            <ref src="e48:78"/>
+            <ctlseq>CSI <param-single/> SP h</ctlseq>
         </section>
         <section role="ctlseq" id="decsm" mnemonic="DECSET" title="DEC Private Mode Set">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h.1D0E"/>
@@ -7631,7 +8021,7 @@ DCS $ q 3 , } ST</pre>
                      title="Carriage Return/New Line Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 40</ctlseq>
-                <ref src="dps:112"/>
+                <ref src="dap:112"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" title="XTERM - Allow 80 - 132 Mode">
@@ -7643,7 +8033,7 @@ DCS $ q 3 , } ST</pre>
                      title="Unidirectional Print Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 41</ctlseq>
-                <ref src="dps:145"/>
+                <ref src="dap:145"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" title="XTERM - more(1) fix">
@@ -8658,8 +9048,15 @@ DCS $ q 3 , } ST</pre>
                     Prints the page that has the cursor.
                 </p>
             </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Initiate transfer from a primary auxiliary device">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <ref src="e48:64"/>
+            </section>
+
             <section role="parameter" id="mc-2" title="Transmit Screen">
                 <ctlseq><param-single/> = 2</ctlseq>
+                <ref src="e48:64"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:342"/>
                 <ref src="wy370:131"/>
@@ -8677,6 +9074,11 @@ DCS $ q 3 , } ST</pre>
                     on the screen is transmitted to the host. If send-data is off, it sends
                     space characters instead. Attributes are not sent.
                 </p>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Initiate transfer from a secondary auxiliary device">
+                <ctlseq><param-single/> = 3</ctlseq>
+                <ref src="e48:64"/>
             </section>
             <section role="parameter" id="mc-4" title="Turn off Printer Controller (Transparent Print)">
                 <ctlseq><param-single/> = 4</ctlseq>
@@ -8706,22 +9108,24 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt putty"/>
                 <p>Sends every character received to the configured printer</p>
             </section>
-            <section role="parameter" id="mc-6wy" not-implemented="true"
+            <section role="parameter" id="mc-6" not-implemented="true"
                      title="Disable printer port receive" todo="true">
                 <ctlseq><param-single/> = 6</ctlseq>
+                <ref src="e48:64"/>
                 <ref src="wy370:131"/>
             </section>
-            <section role="parameter" id="mc-7wy" not-implemented="true"
+            <section role="parameter" id="mc-7" not-implemented="true"
                      title="Enable printer port receive" todo="true">
                 <ctlseq><param-single/> = 7</ctlseq>
+                <ref src="e48:64"/>
                 <ref src="wy370:131"/>
             </section>
-            <section role="parameter" id="mc-6" title="Turn off screen display">
+            <section role="parameter" id="mc-6dec" title="Turn off screen display">
                 <ctlseq><param-single/> = 6</ctlseq>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:343"/>
             </section>
-            <section role="parameter" id="mc-7" title="Turn on screen display">
+            <section role="parameter" id="mc-7dec" title="Turn on screen display">
                 <ctlseq><param-single/> = 7</ctlseq>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:343"/>
@@ -8891,6 +9295,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="e48:59"/>
             <termsupp first="ansi" series="vt" additional="tt"/>
         </section>
+        <section role="ctlseq" mnemonic="SCP" title="Select Character Path"
+                 not-implemented="true" todo="true">
+            <ref src="e48:72"/>
+            <ctlseq>CSI <param-single/> ; <param-single/> SP k</ctlseq>
+        </section>
 
         <!-- ######################### l ######################### -->
         <section role="ctlseq" id="ilu" title="Insert line up">
@@ -8915,6 +9324,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="r-gatm" mnemonic="GATM" title="Guarded Area Transfer Mode"
                      not-implemented="true" todo="true" >
                 <ctlseq><param-single/> = 1</ctlseq>
+                <ref src="e48:79"/>
                 <ref src="vt132:86"/>
                 <ref src="vt340:155"/>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
@@ -8979,6 +9389,11 @@ DCS $ q 3 , } ST</pre>
                     Turn off insert mode
                 </p>
             </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="SRTM"
+                     title="Status Report Transfer Mode">
+                <ctlseq><param-single/> = 5</ctlseq>
+                <ref src="e48:79"/>
+            </section>
             <section role="parameter" badges="scoansi" id="rm-6-sco"
                      title="Absolute Origin">
                 <ctlseq><param-single/> = 6</ctlseq>
@@ -8994,11 +9409,37 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
                 <p>Erasure mode reset</p>
             </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="VEM"
+                     title="Line Editing Mode">
+                <ctlseq><param-single/> = 7</ctlseq>
+                <ref src="e48:79"/>
+            </section>
             <section role="parameter" badges="scoansi" id="rm-7"
                      title="Auto Wrap">
                 <ctlseq><param-single/> = 7</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
                 <p>Turns off auto-wrap</p>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="BDSM"
+                     title="Bi-Directional Support Mode">
+                <ctlseq><param-single/> = 8</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="DCSM"
+                     title="Device Component Select Mode">
+                <ctlseq><param-single/> = 9</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="HEM"
+                     title="Character Editing Mode">
+                <ctlseq><param-single/> = 10</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="PUM"
+                     title="Positioning Unit Mode">
+                <ctlseq><param-single/> = 11</ctlseq>
+                <ref src="e48:79"/>
+                <p>Deprecated in ECMA-48 5th edition</p>
             </section>
             <section role="parameter" mnemonic="SRM" id="rm-12"
                      title="Send Receive Off">
@@ -9017,16 +9458,23 @@ DCS $ q 3 , } ST</pre>
                 <p badges="scoansi">Ignored</p>
             </section>
             <section role="parameter" not-implemented="true" id="rm-13"
-                     mnemonic="FEAM" title="Control execution on">
+                     mnemonic="FEAM" title="Format Effector Action Mode">
+                <ref src="e48:79"/>
                 <ctlseq><param-single/> = 13</ctlseq>
                 <ref src="e48:56"/>
                 <ref src="wy370:26"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <p badges="scoansi">Ignored</p>
             </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="FETM"
+                     title="Format Effector Transfer Mode">
+                <ctlseq><param-single/> = 14</ctlseq>
+                <ref src="e48:79"/>
+            </section>
             <section role="parameter" mnemonic="MATM" id="rm-15" todo="true"
                      title="Multiple Area Transfer Mode" not-implemented="true">
                 <ctlseq><param-single/> = 15</ctlseq>
+                <ref src="e48:79"/>
                 <ref src="vt340:157"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
             </section>
@@ -9044,12 +9492,26 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" mnemonic="SATM" id="rm-17" todo="true"
                      title="Selected Area Transfer Mode" not-implemented="true">
                 <ctlseq><param-single/> = 17</ctlseq>
+                <ref src="e48:79"/>
                 <ref src="vt340:156"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="TSM"
+                     title="Tabulation Stop Mode">
+                <ctlseq><param-single/> = 18</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="EBM"
+                     title="Formerly: Editing Boundary Mode">
+                <ctlseq><param-single/> = 19?</ctlseq>
+                <ref src="e48:79"/>
+                <p>Deprecated in ECMA-48 4th edition, removed in 5th.</p>
             </section>
             <section role="parameter" mnemonic="LNM" id="rm-20"
                      title="linefeed / newline mode">
                 <ctlseq><param-single/> = 20</ctlseq>
+                <ref src="e48:79"/>
+                <ref src="e48:102"/>
                 <ref src="070:312"/>
                 <ref src="wy370:26"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-l:Ps-=-2-0.1E57"/>
@@ -9062,7 +9524,20 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:340"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
                 <p>Turns off terminal new line and display crlf</p>
+                <p>This mode was deprecated in ECMA-48 4th edition and removed
+                    in the 5th edition.</p>
                 <p badges="scoansi">Ignored</p>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="GRCM"
+                     title="Graphic Rendition Combination">
+                <ctlseq><param-single/> = 21</ctlseq>
+                <ref src="e48:79"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true" mnemonic="ZDM"
+                     title="Zero Default Mode">
+                <ctlseq><param-single/> = 22</ctlseq>
+                <ref src="e48:79"/>
+                <p>Deprecated in ECMA-48 5th edition</p>
             </section>
             <section role="parameter" title="Cursor off" id="rm-25">
                 <ctlseq><param-single/> = 25</ctlseq>
@@ -9541,7 +10016,7 @@ DCS $ q 3 , } ST</pre>
                      title="Carriage Return/New Line Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 40</ctlseq>
-                <ref src="dps:112"/>
+                <ref src="dap:112"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-40"
@@ -9554,7 +10029,7 @@ DCS $ q 3 , } ST</pre>
                      title="Unidirectional Print Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 41</ctlseq>
-                <ref src="dps:145"/>
+                <ref src="dap:145"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-41"
@@ -10769,7 +11244,8 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgr-10-19" title="Select Font"
                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 10-19</ctlseq>
-                <ref src="dps:169"/>
+                <ref src="e48:75"/>
+                <ref src="dap:169"/>
                 <p>
                     DEC Printers - select a font
                 </p>
@@ -10871,6 +11347,11 @@ DCS $ q 3 , } ST</pre>
                     </p>
                 </section>
             </section>
+            <section role="parameter" id="sgr-20" title="Fraktur (Gothic)"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 20</ctlseq>
+                <ref src="e48:75"/>
+            </section>
             <section role="parameter" id="sgr-21" title="Set Normal Intensity">
                 <ctlseq><param-single/> = 21</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
@@ -10943,6 +11424,12 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
                 <p>Turns off the blink attribute</p>
                 <!-- in dtterm, this turns off inverse video (it treats blink as a synonym for inverse video) -->
+            </section>
+            <section role="parameter" id="sgr-26" not-implemented="true" todo="true"
+                     title="Proportional Spacing">
+                <ctlseq><param-single/> = 26</ctlseq>
+                <ref src="e48:75"/>
+                <p>Reserved for proportional spacing as specified in CCITT Recommendation T.61</p>
             </section>
             <section role="parameter" id="sgr-26-blink-on"
                      badges="scoansi" title="Turn on Blink">
@@ -11025,7 +11512,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
-                <section role="parameter" id="sgr-33" title="Set Brown Foreground">
+                <section role="parameter" id="sgr-33" title="Set Yellow Foreground">
                     <ctlseq><param-single/> = 33</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-3.1E5C"/>
@@ -11033,7 +11520,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vws:111"/>
                     <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
-                    <!-- VWS calls this Yellow -->
+                    <p>Kermit 95 calls this color brown</p>
                 </section>
                 <section role="parameter" id="sgr-34" title="Set Blue Foreground">
                     <ctlseq><param-single/> = 34</ctlseq>
@@ -11130,6 +11617,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 38 : 2 : <param-single symbol="Pi"/> :
                     <param-single symbol="Pr"/> : <param-single symbol="Pg"/> :
                     <param-single symbol="Pb"/></ctlseq>
+                <ref src="e48:76"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-8-colon-2-colon-Pi-colon-Pr-colon-Pg-colon-Pb.2DC0"/>
                 <termsupp first="xterm" series="xt" additional="tt wt"/>
                 <p>
@@ -11150,6 +11638,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgr-38-ic" mnemonic=""
                      title="Set foreground to indexed color">
                 <ctlseq><param-single/> = 38 : 5 : <param-single/></ctlseq>
+                <ref src="e48:76"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-8-colon-5-colon-Ps.2443"/>
                 <termsupp first="xterm" series="xt" additional="tt wt"/>
                 <p>
@@ -11274,7 +11763,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
-                <section role="parameter" id="sgr-43" title="Set Brown Background">
+                <section role="parameter" id="sgr-43" title="Set Yellow Background">
                     <ctlseq><param-single/> = 43</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-3.1E5D"/>
@@ -11282,7 +11771,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vws:112"/>
                     <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
-                    <!-- VWS calls this Yellow -->
+                    <p>Kermit 95 calls this color brown</p>
                 </section>
                 <section role="parameter" id="sgr-44" title="Set Blue Background">
                     <ctlseq><param-single/> = 44</ctlseq>
@@ -11349,6 +11838,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 48 : 2 : <param-single symbol="Pi"/> :
                     <param-single symbol="Pr"/> : <param-single symbol="Pg"/> :
                     <param-single symbol="Pb"/> </ctlseq>
+                <ref src="e48:76"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-8-colon-2-colon-Pi-colon-Pr-colon-Pg-colon-Pb.2DC1"/>
                 <termsupp first="xterm" series="xt" additional="tt wt"/>
                 <p>
@@ -11369,6 +11859,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgr-48-ic" mnemonic=""
                      title="Set background to indexed color">
                 <ctlseq><param-single/> = 48 : 5 : <param-single/></ctlseq>
+                <ref src="e48:76"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-8-colon-5-colon-Ps.2444"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <p>
@@ -11460,6 +11951,11 @@ DCS $ q 3 , } ST</pre>
                         /* blanks/NULs; clear attributes". */
                 -->
             </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Turn off proportional spacing">
+                <ctlseq><param-single/> = 50</ctlseq>
+                <ref src="e48:76"/>
+            </section>
             <section role="parameter" not-implemented="true" badges="scoansi" title="Reset to the original color pair">
                 <ctlseq><param-single/> = 50</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
@@ -11471,6 +11967,11 @@ DCS $ q 3 , } ST</pre>
                         set the current attribute according to the current mode
                         and the current values for reverse, normal or graphics
                         -->
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Framed">
+                <ctlseq><param-single/> = 51</ctlseq>
+                <ref src="e48:76"/>
             </section>
             <section role="parameter" not-implemented="true" badges="scoansi" title="Ignored">
                 <ctlseq><param-single/> = 51</ctlseq>
@@ -11484,16 +11985,44 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
 
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Encircled">
+                <ctlseq><param-single/> = 52</ctlseq>
+                <ref src="e48:76"/>
+            </section>
             <section role="parameter" title="Overline On" not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 53</ctlseq>
-                <ref src="dps:166"/>
-                <termsupp first="wz" series="wz" additional="wt"/>
+                <ref src="e48:76"/>
+                <ref src="dap:166"/>
+                <termsupp first="wz" series="ansi" additional="wt"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Not framed or encircled">
+                <ctlseq><param-single/> = 54</ctlseq>
+                <ref src="e48:76"/>
             </section>
 
             <section role="parameter" title="Overline Off" not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 55</ctlseq>
-                <ref src="dps:166"/>
-                <termsupp first="wz" series="wz" additional="wt"/>
+                <ref src="e48:76"/>
+                <ref src="dap:166"/>
+                <termsupp first="wz" series="ansi" additional="wt"/>
+            </section>
+
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Reserved for future standardisation">
+                <ctlseq><param-single/> = 56</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Reserved for future standardisation">
+                <ctlseq><param-single/> = 57</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Reserved for future standardisation">
+                <ctlseq><param-single/> = 58</ctlseq>
+                <ref src="e48:76"/>
             </section>
 
             <section role="parameter" title="Set Underline Color" not-implemented="true" todo="true">
@@ -11501,9 +12030,46 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="wz" series="wz" additional="wt"/>
             </section>
 
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Reserved for future standardisation">
+                <ctlseq><param-single/> = 59</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+
             <section role="parameter" title="Set Underline Color to Default" not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 59</ctlseq>
                 <termsupp first="wz" series="wz" additional="wt"/>
+            </section>
+
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Ideogram underline or right side line">
+                <ctlseq><param-single/> = 60</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Ideogram double underline or double line on the right side">
+                <ctlseq><param-single/> = 61</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Ideogram overline or left side line">
+                <ctlseq><param-single/> = 62</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Ideogram double overline or double line on the left side">
+                <ctlseq><param-single/> = 63</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Ideogram stress marking">
+                <ctlseq><param-single/> = 64</ctlseq>
+                <ref src="e48:76"/>
+            </section>
+            <section role="parameter" not-implemented="true" todo="true"
+                     title="Cancels ideogram rendition (parameters 60-64)">
+                <ctlseq><param-single/> = 65</ctlseq>
+                <ref src="e48:76"/>
             </section>
 
             <section role="parameter" title="Vertical Align Super Script" not-implemented="true" todo="true">
@@ -11667,12 +12233,12 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="dec-sgr" mnemonic="SGR" title="Select Graphic Rendition (DEC Private)"
             not-implemented="true" todo="true">
             <ctlseq>CSI ? <param-multi/> m </ctlseq>
-            <ref src="dps:166"/>
+            <ref src="dap:166"/>
             <p>DEC Private Character Attributes - these are used by DEC printers.</p>
             <section role="parameter" id="sgrp-0" title="Turn off all private attributes"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 0</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <p>
                     Deprecated - use <a href="#sgr-0">SGR-0</a> instead.
                 </p>
@@ -11680,28 +12246,28 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgrp-4" title="Turn on superscript, turn off subscript"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 4</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
             </section>
             <section role="parameter" id="sgrp-5" title="Turn on subscript, turn off superscript"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 5</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
             </section>
             <section role="parameter" id="sgrp-6" title="Turn on overline"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 6</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <p>Deprecated - use <a href="sgr-53">SGR-53</a> instead</p>
             </section>
             <section role="parameter" id="sgrp-24" title="Turn off superscript and subscript"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 24</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
             </section>
             <section role="parameter" id="sgrp-26" title="Turn off overline"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 26</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <p>Deprecated - use <a href="sgr-55">SGR-55</a> instead</p>
             </section>
         </section> <!-- End DEC SGR -->
@@ -11805,10 +12371,17 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:324"/>
                 <ref src="vt52x:328"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
-                <p>If the request was <tt><cc>CSI</cc> ? 6 n</tt>, transmits the cursor
-                    position to the host. Response is:
-                    <tt><cc>CSI</cc> x ; y ; p R</tt> where x and y are the cursor coordinates,
-                    and p is the page.
+                <p>If the request was <tt><cc>CSI</cc> ? 6 n</tt>, transmits
+                    the cursor position including page number to the host.
+                    Response is:
+                    <tt><cc>CSI</cc> ? x ; y ; p R</tt> where x and y are the
+                    cursor coordinates, and p is the page.
+                </p>
+                <p>
+                    Note that the VT340, VT420, VT510 and VT520 manuals all leave
+                    the <tt>?</tt> character out of the response - this is an
+                    error in the documentation. DEC STD-070 gives the correct
+                    behavior which has been confirmed against a real terminal.
                 </p>
                 <!-- Pages 103-104, VT220 manual -->
                 <!-- TODO: XTERM responds with CSI ? x ; y R -->
@@ -11965,6 +12538,7 @@ DCS $ q 3 , } ST</pre>
         <!-- ######################### o ######################### -->
         <section role="ctlseq" ctlseq="CSI o" badges="aaa" not-implemented="true"
                  mnemonic="DAQ" id="daq" title="Define Area Qualification">
+            <ref src="e48:51"/>
         </section>
         <section role="ctlseq" badges="scoansi" id="tmp" mnemonic="TMP"
                  title="Transmit Margin Position">
@@ -15709,13 +16283,24 @@ DCS $ q 3 , } ST</pre>
                 and <tt><param-single symbol="Pt"/> ;
                 <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                 <param-single symbol="Pr"/></tt> is the rectangle to calculate
-                the checksum for. Only available if send-data is enabled
-                (<tt>set terminal send-data on</tt>).
+                the checksum for. Coordinates are affected by origin mode
+                (<a href="#decom">DECOM</a>). Only available if send-data is
+                enabled (<tt>set terminal send-data on</tt>) - if it is disabled
+                (the default), this control sequence is ignored.
             </p>
             <p>
                 If the terminal is on the XTerm Alternate Screen, then the
                 page is ignored and DECRQCRA operates only on the alternate
                 screen.
+            </p>
+            <p>
+                The response is <tt><cc>DCS</cc> <em>Pi</em> ! ~ D...D <cc>ST</cc></tt>
+                where <em>Pi</em> is the request ID, and D...D is a string of
+                four hexadecimal digits indicating the checksum.
+            </p>
+            <p>
+                You can also compute a checksum using the same algorithm with
+                the K95 function <tt>\fterminalchecksum()</tt>.
             </p>
         </section>
         <section role="ctlseq" id="decpkfmr" mnemonic="DECPKFMR"
@@ -16070,13 +16655,9 @@ DCS $ q 3 , } ST</pre>
             <ref src="vws:108"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 v510 putty"/>
             <p>
-                The parameter <param-single/>
-                is required and specifies the new width of the terminal. Supplying 0, which
-                <em>should</em> set the width to 80 columns, actually results in the terminal
-                being set to the maximum width (512 columns on modern Windows, 256 on
-                vintage windows and OS/2) - this is a bug.
-                <!-- TODO: Ps should be optional (sets to 80 columns), and Ps=0
-                             should also set to 80 columns-->
+                The parameter <param-single/> specifies the new width of the
+                terminal. If no width is specified, or the width specified is
+                less than 80, then the terminal will be set to 80 columns.
             </p>
             <section style="group" role="group">
                 <section title="80 columns" id="decscpp-0" role="parameter">

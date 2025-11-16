@@ -6873,6 +6873,116 @@ decdwl_escape(bool dwlflag) {
     }
 }
 
+int
+calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOOL obey_margins) {
+    int checksum=0;
+    int x, y, height, width, max_page;
+
+    height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
+    width = VscrnGetWidth(VTERM);
+    max_page = term_max_page(VTERM);
+
+    if (top < 1) top = 1;
+    if (left < 1) left = 1;
+    if (bot < 1) bot = height;
+    if (right < 1) right = width;
+    if (page < 1) page = 0;
+    else page = page - 1;
+
+    if (obey_margins) {
+        if (top < vscrn_page_margin_top(VTERM,page)) top = vscrn_page_margin_top(VTERM,page);
+        if (top > vscrn_page_margin_bot(VTERM,page) + 1) top = vscrn_page_margin_bot(VTERM,page) + 1;
+        if (left < vscrn_page_margin_left(VTERM,page)) left = vscrn_page_margin_left(VTERM,page);
+        if (left > vscrn_page_margin_right(VTERM,page) + 1) left = vscrn_page_margin_right(VTERM,page) + 1;
+        if (bot < vscrn_page_margin_top(VTERM,page)) bot = vscrn_page_margin_top(VTERM,page);
+        if (bot > vscrn_page_margin_bot(VTERM,page)) bot = vscrn_page_margin_bot(VTERM,page);
+        if (right < vscrn_page_margin_left(VTERM,page)) right = vscrn_page_margin_left(VTERM,page);
+        if (right > vscrn_page_margin_right(VTERM,page)) right = vscrn_page_margin_right(VTERM,page);
+    } else {
+        if (bot > height) bot = height;
+        if (top > bot) top = 1;
+        if (right > width) right = width;
+        if (left > right) left = 1;
+    }
+
+    if (page > max_page) page = max_page;
+
+    debug(F111, "DECRQCRA", "top", top);
+    debug(F111, "DECRQCRA", "left", left);
+    debug(F111, "DECRQCRA", "bot", bot);
+    debug(F111, "DECRQCRA", "right", right);
+    debug(F111, "DECRQCRA", "page", page);
+
+    for ( y=top-1; y<bot; y++ ) {
+        videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
+        for ( x=left-1; x<right; x++ ) {
+            unsigned short c, a;
+            unsigned char cellattr, fgcoloridx = 0, bgcoloridx = 0;
+
+            c = line->cells[x].c;
+            a = line->vt_char_attrs[x];
+
+            /* These return 0 for RGB colors */
+            fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
+            bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
+
+            /* Xterm implements the following behaviour to
+             * supposedly match what the VT525 does (I don't
+             * have access to a VT525 to confirm the
+             * behaviour myself): If the current background
+             * color is the default and the current foreground
+             * is *not* the default, then ignore the bold attribute
+             * if its set.
+             */
+            if (a & VT_CHAR_ATTR_BOLD) {
+                  unsigned char df_fg, df_bg;
+                  df_fg = cell_video_attr_foreground(defaultattribute);
+                  df_bg = cell_video_attr_background(defaultattribute);
+                  if (df_bg == bgcoloridx && df_fg != fgcoloridx) {
+                      checksum -= 0x80;
+                  }
+            }
+
+            if (fgcoloridx < 16) {
+                fgcoloridx = sgrindex[fgcoloridx%8];
+            } else {
+                /* FG color index is outside the range of
+                 * valid values for the VT525. */
+                fgcoloridx = 0;
+            }
+
+            if (bgcoloridx < 16) {
+                bgcoloridx = sgrindex[bgcoloridx%8];
+            } else {
+                /* BG color index is outside the range of
+                 * valid values for the VT525. */
+                bgcoloridx = 0;
+            }
+
+            debug(F111, "DECRQCRA iteration", "x", x);
+            debug(F111, "DECRQCRA iteration", "y", y);
+            debug(F111, "DECRQCRA iteration", "c", c);
+            debug(F111, "DECRQCRA iteration", "checksum", checksum);
+
+            checksum += c;
+
+            debug(F111, "DECRQCRA iteration", "checksum+c", checksum);
+
+            if (a & VT_CHAR_ATTR_PROTECTED) checksum += 0x04;
+            if (a & VT_CHAR_ATTR_INVISIBLE) checksum += 0x08;
+            if (a & VT_CHAR_ATTR_UNDERLINE) checksum += 0x10;
+            if (a & VT_CHAR_ATTR_REVERSE) checksum += 0x20;
+            if (a & VT_CHAR_ATTR_BLINK) checksum += 0x40;
+            if (a & VT_CHAR_ATTR_BOLD) checksum += 0x80;
+            /*checksum += bgcoloridx;
+            checksum += fgcoloridx * 0x10;*/
+            debug(F111, "DECRQCRA iteration", "checksum+attrs", checksum);
+        }
+    }
+    debug(F111, "DECRQCRA", "checksum", checksum);
+    return checksum;
+}
+
 void
 udkreset( void )
 {
@@ -14717,16 +14827,8 @@ dodcs( void )
 							char* mac = 0;
 							char* p = 0;
 							int repeat_count = 1;
+							int in_repetition = 0;
 							char hex[3] = "  ";
-
-							/* Ensure a semicolon appears at the end so that
-							 * repeat sequences are terminated properly */
-							if (apcbuf[apclength - 1] != ';' &&
-								apclength < apcbuflen) {
-
-								apcbuf[apclength++] = ';';
-								apcbuf[apclength++] = '\0';
-							}
 
 							/* validate the string and compute size when
 						     * repetitions are expanded */
@@ -14759,8 +14861,20 @@ dodcs( void )
 										repeat_count = 1;
 									}
 
+									in_repetition = 1;
+
 									continue;
 								} else if (achar == ';') {
+									/* The VT420 rejects macro definitions that
+									 * contain unexpected semicolons not
+									 * associated with a repetition, while the
+									 * VT520 just throws them away */
+									if (!ISVT520(tt_type_mode) &&  in_repetition == 0) {
+										debug(F101, "DECDMAC unexpected semicolon at position", "", dcsnext);
+										expanded_length = -1;
+										break;
+									}
+									in_repetition = 0;
 									repeat_count = 1;
 									achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
 									continue;
@@ -14799,6 +14913,15 @@ dodcs( void )
 							memset(mac, 0, expanded_length + 1);
 							dcsnext = macstart;
 							p = mac;
+
+						    /* Ensure a semicolon appears at the end so that
+							 * repeat sequences are terminated properly */
+							if (apcbuf[apclength - 1] != ';' &&
+								apclength < apcbuflen) {
+
+								apcbuf[apclength++] = ';';
+								apcbuf[apclength++] = '\0';
+							}
 
 							/* Expand the macro! */
 							repeat_count = 1;
@@ -17212,6 +17335,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
     static cell_video_attr_t colorval = cell_video_attr_init_vio_attribute(0x00);
     static cell_video_attr_t _colorattr = cell_video_attr_init_vio_attribute(0x00);
     static USHORT _vtattr=0x00;
+	static int _decstglt=100;
 
     /* We've been asked to be monochrome (or monochrome plus
      * attributes-as-color). Rather than forcing everything to black and white,
@@ -17224,11 +17348,12 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
         else colorattr = colornormal;
     }
 
-    if ( cell_video_attr_equal(_colorattr, colorattr) && vtattr == _vtattr )
+    if ( cell_video_attr_equal(_colorattr, colorattr) && vtattr == _vtattr && decstglt == _decstglt )
         goto done;
 
     colorval = _colorattr = colorattr;
     _vtattr = vtattr;
+	_decstglt = decstglt;
 
     if (vtattr == VT_CHAR_ATTR_NORMAL)
         goto done;
@@ -17734,6 +17859,21 @@ vtcsi(void)
                 /* DECSSDT - Select Status Line Type */
                 setdecssdt( SSDT_BLANK );
                 break;
+            case '|':   /* DECSCPP */
+                tt_cols[VTERM] = 80;
+                VscrnSetWidth( VTERM, 80);
+#ifdef TCPSOCKET
+                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
+                    tn_snaws();
+#ifdef RLOGCODE
+                    rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+                    ssh_snaws();
+#endif /* SSHBUILTIN */
+                }
+#endif /* TCPSOCKET */
+                break;
             }
             break;
         case 'S':
@@ -17909,6 +18049,7 @@ vtcsi(void)
                     break;
                 case '|':
                     /* DECSCPP - Set Columns Per Page */
+                    if (pn[1] < 80) pn[1] = 80;
                     tt_cols[VTERM] = pn[1];
                     VscrnSetWidth( VTERM, pn[1]);
 #ifdef TCPSOCKET
@@ -18708,7 +18849,6 @@ vtcsi(void)
                         int checksum=0, pid=1;
                         int top, left, bot, right, page, max_page;
                         int row, col;
-                        int x, y;
                         char buf[20];
 
                         if (k < 3) pn[3] = 1;
@@ -18717,21 +18857,22 @@ vtcsi(void)
                         if (k < 6) pn[6] = VscrnGetWidth(VTERM);
                         k = 6;
 
-                        /*checksum &= 0xffff;*/
                         pid = pn[1];
                         page = pn[2];
-                        top = pn[3] + (vscrn_c_page_margin_top(VTERM) > 1 ? vscrn_c_page_margin_top(VTERM) : 0);
-                        left = pn[4] + (vscrn_c_page_margin_left(VTERM) > 1 ? vscrn_c_page_margin_left(VTERM) : 0);
-                        bot = pn[5];
-                        right = pn[6];
 
                         max_page = term_max_page(VTERM);
-						if (page < 0) page = 0;
+						if (page < 1) page = 1;
 						if (page > max_page) page = max_page;
 
                         if (on_alternate_buffer(VTERM)) {
                             page = ALTERNATE_BUFFER_PAGE(VTERM);
                         }
+
+                        /*checksum &= 0xffff;*/
+                        top = pn[3] + (vscrn_page_margin_top(VTERM,page) > 1 ? vscrn_page_margin_top(VTERM,page) : 0);
+                        left = pn[4] + (vscrn_page_margin_left(VTERM,page) > 1 ? vscrn_page_margin_left(VTERM,page) : 0);
+                        bot = pn[5];
+                        right = pn[6];
 
                         debug(F111, "DECRQCRA", "pid", pid);
                         debug(F111, "DECRQCRA", "init-top", pn[3]);
@@ -18739,102 +18880,20 @@ vtcsi(void)
                         debug(F111, "DECRQCRA", "init-bot", pn[5]);
                         debug(F111, "DECRQCRA", "init-right", pn[6]);
 
+                        debug(F111, "DECRQCRA", "margintop", vscrn_page_margin_top(VTERM,page));
+                        debug(F111, "DECRQCRA", "marginleft", vscrn_page_margin_left(VTERM,page));
+                        debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
+                        debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
 
-                        debug(F111, "DECRQCRA", "margintop", vscrn_c_page_margin_top(VTERM));
-                        debug(F111, "DECRQCRA", "marginleft", vscrn_c_page_margin_left(VTERM));
-                        debug(F111, "DECRQCRA", "marginbot", vscrn_c_page_margin_bot(VTERM));
-                        debug(F111, "DECRQCRA", "marginright", vscrn_c_page_margin_right(VTERM));
+                        checksum = calculate_decrqcra_checksum(
+                            top, left, bot, right, page, TRUE);
 
-                        if (top < vscrn_c_page_margin_top(VTERM)) top = vscrn_c_page_margin_top(VTERM);
-                        if (top > vscrn_c_page_margin_bot(VTERM) + 1) top = vscrn_c_page_margin_bot(VTERM) + 1;
-                        if (left < vscrn_c_page_margin_left(VTERM)) left = vscrn_c_page_margin_left(VTERM);
-                        if (left > vscrn_c_page_margin_right(VTERM) + 1) left = vscrn_c_page_margin_right(VTERM) + 1;
-                        if (bot < vscrn_c_page_margin_top(VTERM)) bot = vscrn_c_page_margin_top(VTERM);
-                        if (bot > vscrn_c_page_margin_bot(VTERM)) bot = vscrn_c_page_margin_bot(VTERM);
-                        if (right < vscrn_c_page_margin_left(VTERM)) right = vscrn_c_page_margin_left(VTERM);
-                        if (right > vscrn_c_page_margin_right(VTERM)) right = vscrn_c_page_margin_right(VTERM);
-
-
-                        debug(F111, "DECRQCRA", "top", top);
-                        debug(F111, "DECRQCRA", "left", left);
-                        debug(F111, "DECRQCRA", "bot", bot);
-                        debug(F111, "DECRQCRA", "right", right);
-
-                        for ( y=top-1; y<bot; y++ ) {
-                            videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
-                            for ( x=left-1; x<right; x++ ) {
-                                unsigned short c, a;
-                                unsigned char cellattr, fgcoloridx = 0, bgcoloridx = 0;
-
-                                c = line->cells[x].c;
-                                a = line->vt_char_attrs[x];
-
-                                /* These return 0 for RGB colors */
-                                fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
-                                bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
-
-                                /* Xterm implements the following behaviour to
-                                 * supposedly match what the VT525 does (I don't
-                                 * have access to a VT525 to confirm the
-                                 * behaviour myself): If the current background
-                                 * color is the default and the current foreground
-                                 * is *not* the default, then ignore the bold attribute
-                                 * if its set.
-                                 */
-                                if (a & VT_CHAR_ATTR_BOLD) {
-                                      unsigned char df_fg, df_bg;
-                                      df_fg = cell_video_attr_foreground(defaultattribute);
-                                      df_bg = cell_video_attr_background(defaultattribute);
-                                      if (df_bg == bgcoloridx && df_fg != fgcoloridx) {
-                                          checksum -= 0x80;
-                                      }
-                                }
-
-                                if (fgcoloridx < 16) {
-                                    fgcoloridx = sgrindex[fgcoloridx%8];
-                                } else {
-                                    /* FG color index is outside the range of
-                                     * valid values for the VT525. */
-                                    fgcoloridx = 0;
-                                }
-
-                                if (bgcoloridx < 16) {
-                                    bgcoloridx = sgrindex[bgcoloridx%8];
-                                } else {
-                                    /* BG color index is outside the range of
-                                     * valid values for the VT525. */
-                                    bgcoloridx = 0;
-                                }
-
-                                debug(F111, "DECRQCRA iteration", "x", x);
-                                debug(F111, "DECRQCRA iteration", "y", y);
-                                debug(F111, "DECRQCRA iteration", "c", c);
-                                debug(F111, "DECRQCRA iteration", "checksum", checksum);
-
-                                checksum += c;
-
-                                debug(F111, "DECRQCRA iteration", "checksum+c", checksum);
-
-                                if (a & VT_CHAR_ATTR_PROTECTED) checksum += 0x04;
-                                if (a & VT_CHAR_ATTR_INVISIBLE) checksum += 0x08;
-                                if (a & VT_CHAR_ATTR_UNDERLINE) checksum += 0x10;
-                                if (a & VT_CHAR_ATTR_REVERSE) checksum += 0x20;
-                                if (a & VT_CHAR_ATTR_BLINK) checksum += 0x40;
-                                if (a & VT_CHAR_ATTR_BOLD) checksum += 0x80;
-                                /*checksum += bgcoloridx;
-                                checksum += fgcoloridx * 0x10;*/
-                                debug(F111, "DECRQCRA iteration", "checksum+attrs", checksum);
-                            }
+                        if (send_c1) {
+                            sprintf(buf, "\033P%d!~%04X%c", pid, checksum,_ST8);
+                        } else {
+                            sprintf(buf, "\033P%d!~%04X\033\\", pid, checksum);
                         }
-                        debug(F111, "DECRQCRA", "checksum", checksum);
-
-						/* TODO: Use sendescseq and ST below if send_c1.
-								Note that sendescseq buffer may need enlarging */
-                        sprintf(buf, "\033P%d!~%04X\033\\", pid, checksum);
-
-                        // TODO: Call sendesqseq instead (and check for any other places
-                        //       where we should be doing this but aren't)
-                        sendchars(buf, strlen(buf));
+                        sendescseq(buf);
                     }
 
                     break;
@@ -20945,7 +21004,7 @@ vtcsi(void)
                     position * pos = VscrnGetCurPos(VTERM);
                     if (private)
                         sprintf(tempstr,
-                                "[%d;%d;%dR",
+                                "[?%d;%d;%dR",
                                 pos->y+1,
                                 pos->x+1,
                                 pos->p+1
@@ -20959,6 +21018,9 @@ vtcsi(void)
                     break;
                 }
 #ifdef COMMENT
+				/* My VT520 doesn't respond to either of these, and I don't see
+					them in any DEC documentation. I wonder what terminal they
+					were for?  -DG */
                 case 7:
                     if ( private ) {
                         /* Request Time ("HH:MM:SS"<CR>) */

@@ -2258,6 +2258,26 @@ struct keytab anbktab[] = {             /* For any command that needs */
 };
 int nansbk = (sizeof(anbktab) / sizeof(struct keytab));
 
+#ifdef KUI
+struct keytab savtermopttab[] = {
+    { "/format",    XSTERM_FMT, CM_ARG },
+};
+int nsavtermopttab = (sizeof(savtermopttab) / sizeof(struct keytab));
+
+struct keytab savtermfmttab[] = {  /* SAVE TERM SCREEN /FORMAT:xxx */
+    { "bitmap",  XSTERM_FMT_BMP,     CM_INV },
+    { "bmp",     XSTERM_FMT_BMP,     0 },
+    { "emf",     XSTERM_FMT_EMF,     0 },
+#ifdef CK_HAVE_GDIPLUS
+    /* These formats rely on GDI+ for encoding */
+    { "gif",     XSTERM_FMT_GIF,     0 },
+    { "png",     XSTERM_FMT_PNG,     0 },
+#endif /* CK_HAVE_GDIPLUS */
+    { "text",    XSTERM_FMT_TEXT,    0 },
+};
+int nsavtermfmttab = (sizeof(savtermfmttab) / sizeof(struct keytab));
+#endif
+
 int win95_popup = 1;
 #ifdef NT
 #ifdef KUI
@@ -12663,7 +12683,7 @@ z_out(channel,s,length,flags) int channel, flags, length; char * s;
 #endif /* DEBUG */
     if (!z_inited)                      /* File i/o inited? */
       return(z_error = FX_NOP);
-    if (channel >= z_maxchan)           /* Channel in range? */
+    if (channel >= z_maxchan || channel < 0)   /* Channel in range? */
       return(z_error = FX_CHN);
     if (!z_file[channel])
       return(z_error = FX_NOP);
@@ -14601,7 +14621,7 @@ savkeys(name,disp) char * name; int disp;
 #ifdef OS2
 #ifndef NOLOCAL
 static struct keytab trmtrmopt[] = {
-    { "screen",     SV_SCRN, CM_INV },  /* For future save-as-image feature */
+    { "screen",     SV_SCRN, 0 },
     { "scrollback", SV_SCRL, 0 }
 };
 #endif /* NOLOCAL */
@@ -14639,6 +14659,11 @@ dosave(xx) int xx;
 #ifdef ZFNQFP
     struct zfnfp * fnp;
 #endif /* ZFNQFP */
+#ifdef OS2
+#ifdef KUI
+    int format = XSTERM_FMT_TEXT;
+#endif /* KUI */
+#endif /* OS2 */
 
 #ifndef NOSETKEY
     if (xx == XSKEY) {                  /* SAVE KEYMAP.. */
@@ -14658,11 +14683,136 @@ dosave(xx) int xx;
             break;
 #ifdef OS2
 #ifndef NOLOCAL
+
           case XSTERM:                  /* SAVE TERMINAL.. */
+          {
+#ifdef KUI
+            struct FDB of, sw;
+#endif /* KUI */
+
             if ((y = cmkey(trmtrmopt,2,
                            "What to save","scrollback",xxstring)) < 0)
               return(y);
-            break;
+#ifdef KUI
+            if (y == SV_SCRL) break;
+
+            /* From here on we're saving the terminal screen. For the terminal
+             * screen we have the option of saving in multiple image formats
+             * in addition to text. This relies on GDI (or even GDI+ on newer
+             * versions of Windows) so its KUI-only.
+             */
+
+            /* Collect a filename, optionally with a format switch... */
+            cmfdbi(&sw,
+                _CMKEY,		/* fcode */
+                "Filename, or switch", /* hlpmsg */
+                "",		/* default */
+                "",		/* addtl string data */
+                nsavtermopttab,	/* addtl numeric data 1: tbl size */
+                4,			    /* addtl numeric data 2: 4 = cmswi */
+                xxstring,		/* Processing function */
+                savtermopttab,	/* Keyword table */
+                &of		        /* Pointer to next FDB */
+                );
+	        cmfdbi(&of,		/* 2nd FDB - output file */
+		        _CMOFI,		/* output file */
+		        "",		    /* hlpmsg */
+		        "",		    /* default */
+		        "",		    /* addtl string data */
+		        0,			/* addtl numeric data 1 */
+		        0,			/* addtl numeric data 2 */
+		        xxstring,
+		        NULL,
+		        NULL
+		     );
+
+            while (1) {
+		      x = cmfdb(&sw);
+		      if (x == -3) break;
+		      if (x < 0) return(x);
+		      if (cmresult.fcode != _CMKEY) break;
+		      if (!cmgbrk()) {
+		          printf("?This switch requires an argument\n");
+		          return(-9);
+		      }
+              switch (cmresult.nresult) {
+		        case XSTERM_FMT:	/* /FORMAT:keyword */
+		          if ((y = cmkey(savtermfmttab,nsavtermfmttab,"", "text",xxstring)) < 0)
+			          return(y);
+		          format = y;
+		          break;
+		      }
+            } /* while.. */
+
+            if (cmresult.fcode == _CMOFI) { /* Filename */
+              if (cmresult.sresult) {
+                ckstrncpy(line,cmresult.sresult,LINBUFSIZ);
+                if (zfnqfp(line,TMPBUFSIZ,tmpbuf)) {
+                  ckstrncpy(line,tmpbuf,LINBUFSIZ);
+                }
+		      }
+	        }
+
+            switch(format) {
+            case XSTERM_FMT_TEXT:
+                {
+                    /* Get NEW/APPEND disposition */
+                    if ((z = cmkey(disptb,2,"Disposition","new",xxstring)) < 0)
+                      return(z);
+
+                    disp = z;
+                    if ((x = cmcfm()) < 0)              /* Get confirmation */
+                      return(x);
+
+                    return(success = savscrbk(VTERM,line[0] ? line : NULL,disp,TRUE));
+
+                }
+                break;
+            case XSTERM_FMT_EMF:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToEmfFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+            case XSTERM_FMT_BMP:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToBmpFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+#ifdef CK_HAVE_GDIPLUS
+            case XSTERM_FMT_PNG:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToPngFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+            case XSTERM_FMT_GIF:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToGifFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+#endif /* CK_HAVE_GDIPLUS */
+            }
+
+
+            return -9;
+#endif /* KUI */
+          }
+          break;
 #endif /* NOLOCAL */
 #endif /* OS2 */
         }

@@ -1231,6 +1231,9 @@ struct keytab fnctab[] = {              /* Function names */
     { "substitute", FN_SUBST,0},        /* Substitute chars */
     { "substring",  FN_SUB,  0},        /* Extract substring from argument */
     { "tablelook",  FN_TLOOK,0},        /* Table lookup */
+#ifdef OS2
+    { "terminalchecksum", FN_TERMCKS,0},/* Terminal screen checksum */
+#endif /* OS2 */
     { "time",       FN_TIME, 0},        /* Free-format time to hh:mm:ss */
     { "tod2secs",   FN_NTIM, CM_INV},   /* Time-of-day-to-secs-since-midnite */
     { "todtosecs",  FN_NTIM, CM_INV},   /* Time-of-day-to-secs-since-midnite */
@@ -13224,6 +13227,27 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 	goto fnend;
     }
 #endif /* HAVE_LOCALE */
+
+#ifdef OS2
+    if (cx == FN_TERMCKS) {
+        int calculate_decrqcra_checksum(int, int, int, int, int, BOOL);
+
+        int top = -1, left = -1, bot = -1, right = -1, page = -1, checksum = 0;
+        if (argn > 0 && bp[0] && *bp[0] && chknum(bp[0])) top = atoi(bp[0]);
+        if (argn > 1 && bp[1] && *bp[1] && chknum(bp[1])) left = atoi(bp[1]);
+        if (argn > 2 && bp[2] && *bp[2] && chknum(bp[2])) bot = atoi(bp[2]);
+        if (argn > 3 && bp[3] && *bp[3] && chknum(bp[3])) right = atoi(bp[3]);
+        if (argn > 4 && bp[4] && *bp[4] && chknum(bp[4])) page = atoi(bp[4]);
+
+        checksum = calculate_decrqcra_checksum(
+            top, left, bot, right, page-1, FALSE);
+
+        _snprintf(fnval, FNVALL, "%d", checksum);
+        failed = 0;
+
+        goto fnend;
+    }
+#endif /* OS2 */
 
 /* Note: when adding new functions remember to update dohfunc in ckuus2.c. */
 

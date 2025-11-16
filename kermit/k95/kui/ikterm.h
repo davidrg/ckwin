@@ -30,6 +30,8 @@ public:
     IKTerm( BYTE whichbuffer, K_CLIENT_PAINT* );
     ~IKTerm();
     BOOL getDrawInfo();
+    BOOL getDrawInfo(BYTE vscrn_number);
+
     BOOL newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UINT sysKey );
     BOOL keyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown );
     BOOL virtkeyEvent( UINT virtkey, LONG lKeyData, UINT keyDown );
