@@ -103,7 +103,9 @@ _PROTOTYP( APIRET ResetConKbdHandlerThreadSem, (void) ) ;
 _PROTOTYP( APIRET CloseConKbdHandlerThreadSem, ( void ) ) ;
 
 _PROTOTYP( APIRET CreateTermScrnUpdThreadSem, (BOOL) ) ;
+#ifndef KUI
 _PROTOTYP( APIRET PostTermScrnUpdThreadSem, (void) ) ;
+#endif /* ! KUI */
 _PROTOTYP( APIRET WaitTermScrnUpdThreadSem, (unsigned long) ) ;
 _PROTOTYP( APIRET WaitAndResetTermScrnUpdThreadSem, (unsigned long) ) ;
 _PROTOTYP( APIRET ResetTermScrnUpdThreadSem, (void) ) ;
@@ -151,11 +153,15 @@ _PROTOTYP( APIRET WaitAndResetVscrnDirtySem, (int, unsigned long) ) ;
 _PROTOTYP( APIRET ResetVscrnDirtySem, (int) ) ;
 _PROTOTYP( APIRET CloseVscrnDirtySem, ( void ) ) ;
 
+#ifndef KUI
 _PROTOTYP( APIRET CreateVscrnTimerSem, (BOOL) ) ;
+#endif /* ! KUI */
 _PROTOTYP( APIRET PostVscrnTimerSem, (int) ) ;
 _PROTOTYP( APIRET WaitVscrnTimerSem, (int,unsigned long) ) ;
 _PROTOTYP( APIRET WaitAndResetVscrnTimerSem, (int,unsigned long) ) ;
+#ifndef KUI
 _PROTOTYP( APIRET ResetVscrnTimerSem, (int) ) ;
+#endif /* ! KUI */
 _PROTOTYP( APIRET CloseVscrnTimerSem, ( void ) ) ;
 
 _PROTOTYP( APIRET CreateKeyStrokeMutex, (BOOL) ) ;
@@ -206,12 +212,14 @@ _PROTOTYP( APIRET CloseDebugMutex, (void) ) ;
 _PROTOTYP( APIRET StartAlarmTimer, (unsigned long) ) ;
 _PROTOTYP( APIRET StopAlarmTimer, (void) ) ;
 
+#ifndef KUI
 _PROTOTYP( APIRET StartVscrnTimer, (unsigned long) ) ;
 _PROTOTYP( APIRET StopVscrnTimer, (void) ) ;
 
 _PROTOTYP( APIRET CreateVscrnMuxWait, ( int ) );
 _PROTOTYP( APIRET WaitVscrnMuxWait, ( int, unsigned long ) ) ;
 _PROTOTYP( APIRET CloseVscrnMuxWait, ( int ) ) ;
+#endif /* ! KUI */
 
 _PROTOTYP( APIRET ResetThreadPrty, (void) ) ;
 _PROTOTYP( APIRET SetThreadPrty, ( int, int ) ) ;

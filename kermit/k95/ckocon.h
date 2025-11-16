@@ -1494,10 +1494,14 @@ _PROTOTYP( int  vt_macro_in, (void) );
 _PROTOTYP( void savescreen, (ascreen *,int,int) ) ;
 _PROTOTYP( int restorescreen, (ascreen *) ) ;
 _PROTOTYP( void reverserange, (SHORT, SHORT, SHORT, SHORT) ) ;
+#ifndef KUI
 _PROTOTYP( USHORT ReadCellStr, ( viocell *, PUSHORT, USHORT, USHORT ) );
+#endif
 _PROTOTYP( USHORT WrtCellStr, ( viocell *, USHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT ReadCharStr, ( viocell *, PUSHORT, USHORT, USHORT ) );
+#ifndef ONETERMUPD
 _PROTOTYP( USHORT WrtCharStrAtt, ( PCH, USHORT, USHORT, USHORT, cell_video_attr_t* ) );
+#endif /* ONETERMUPD */
 #ifndef KUI
 _PROTOTYP( USHORT WrtNCell, ( viocell, USHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT GetMode, ( PCK_VIDEOMODEINFO ) );
