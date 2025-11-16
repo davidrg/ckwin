@@ -141,7 +141,9 @@ void vt100key(int);             /* ckoco3.c */
 VOID learnkeyb(con_event, int); /* ckoco3.c */
 int os2settitle(char *, int);   /* ckotio.c */
 int ttgcwsz();                  /* ckocon.c */
+#ifndef KUI
 void VscrnForceFullUpdate();    /* ckoco2.c */
+#endif /* KUI */
 
 /*
  *
@@ -441,7 +443,9 @@ RestoreTermMode(void) {
 #endif /* KUI */
     vmode = VTERM ;
     VscrnIsDirty(omode);
+#ifndef KUI
     VscrnForceFullUpdate();
+#endif /* KUI */
     VscrnIsDirty(VTERM);
 }
 
@@ -496,7 +500,9 @@ RestoreCmdMode() {
    /* the physical cursor     */
     vmode = VCMD ;
     VscrnIsDirty(omode);
+#ifndef KUI
     VscrnForceFullUpdate();
+#endif /* KUI */
     VscrnIsDirty(VCMD);
 }
 #endif /* NOLOCAL */
@@ -672,14 +678,18 @@ bleep(short int type) {
                 flipscrnflag[VTERM] = FALSE ;
             else
                 flipscrnflag[VTERM] = TRUE ;
+#ifndef KUI
             VscrnForceFullUpdate();
+#endif /* KUI */
             VscrnIsDirty(VTERM);
             msleep(250);                        /* for 250 msec */
             if ( flipscrnflag[VTERM] )          /* Flash the screen */
                 flipscrnflag[VTERM] = FALSE ;
             else
                 flipscrnflag[VTERM] = TRUE ;
+#ifndef KUI
             VscrnForceFullUpdate();
+#endif /* KUI */
             VscrnIsDirty(VTERM);
         }
         else {                                  /* in command mode */
@@ -688,7 +698,9 @@ bleep(short int type) {
             else
                 flipscrnflag[VCMD] = TRUE ;
             /* reversescreen(VTERM); */         /* Flash the screen */
+#ifndef KUI
             VscrnForceFullUpdate();
+#endif /* KUI */
             VscrnIsDirty(VCMD);
             msleep(250);                        /* for 250 msec */
             if ( flipscrnflag[VCMD] )           /* Flash the screen */
@@ -696,7 +708,9 @@ bleep(short int type) {
             else
                 flipscrnflag[VCMD] = TRUE ;
             /* reversescreen(VTERM); */         /* Flash the screen */
+#ifndef KUI
             VscrnForceFullUpdate();
+#endif /* KUI */
             VscrnIsDirty(VCMD);
         }
         return;

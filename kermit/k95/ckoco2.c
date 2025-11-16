@@ -145,6 +145,10 @@ int pwidth, pheight;            /* Physical screen width, height */
 int ttgcwsz();                  /* ckocon.c */
 int os2settitle(char *, int);   /* ckotio.c */
 
+/* ===========================================================================
+ * Begin Console-mode-only (non-KUI) functions
+ * ===========================================================================*/
+
 #ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* ReadCellStr                                                               */
@@ -285,14 +289,12 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
     return VioReadCellStr( (PCH) CellStr, Length, Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-#endif /* KUI */
 
-#ifndef KUI
+
 /*---------------------------------------------------------------------------*/
 /* WrtCellStr                                                                */
 /*---------------------------------------------------------------------------*/
 #ifdef NT
-#ifndef KUI
 USHORT
 OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
@@ -422,14 +424,12 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
     }
     return(0);
 }
-#endif /* KUI */
 #endif /* NT */
 
 USHORT
 WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
 #ifdef NT
-#ifndef KUI
     static CHAR_INFO *lpBuffer = NULL;  // pointer to buffer with data to write
     static COORD dwBufferSize  = {0,0}; // column-row size of source buffer
     COORD dwBufferCoord = {0,0};        // upper-left cell to write from
@@ -519,13 +519,10 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         rc = 2 ;
     }
    return(0);
-#endif /* KUI */
 #else /* NT */
    return VioWrtCellStr( (PCH) CellStr, Length*sizeof(viocell), Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-#endif /* ! KUI */
-
 
 
 /* WrtCellStrDiff
@@ -543,7 +540,6 @@ VscrnForceFullUpdate(void)
     os2settitle(NULL,1);                /* Force a Title update */
 }
 
-#ifndef KUI
 USHORT
 WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
                 USHORT Height, USHORT Width )
@@ -629,9 +625,8 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
     return rc ;
 
 }
-#endif /* ! KUI */
 
-#ifndef KUI
+
 /*---------------------------------------------------------------------------*/
 /* WrtNCell                                                                  */
 /*---------------------------------------------------------------------------*/
@@ -770,7 +765,6 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
    return VioWrtNCell( (PCH) &Cell, Times, Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-#endif /* KUI */
 
 #ifndef ONETERMUPD
 /*---------------------------------------------------------------------------*/
@@ -781,7 +775,6 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
                       cell_video_attr_t* Attr )
 {
 #ifdef NT
-#ifndef KUI
     static LPWSTR wchars = NULL;
     static LPTSTR tchars = NULL ;
     static LPWORD attrs = NULL ;
@@ -908,14 +901,12 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         rc = 2 ;
     }
     return rc ;
-#endif /* KUI */
 #else /* NT */
    return VioWrtCharStrAtt( CharStr, Length, Row, Column, Attr, VioHandle ) ;
 #endif /* NT */
 }
 #endif /* ! ONETERMUPD */
 
-#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* GetMode                                                                   */
 /*   Determines:                                                             */
@@ -1323,9 +1314,7 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
     ReleaseScreenMutex() ;
     return rc ;
 }
-#endif /* KUI */
 
-#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* GetCurPos                                                                 */
 /*---------------------------------------------------------------------------*/
@@ -1355,9 +1344,7 @@ USHORT GetCurPos( PUSHORT Row, PUSHORT Column )
     return VioGetCurPos( Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-#endif /* !KUI */
 
-#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* SetCurPos                                                                 */
 /*---------------------------------------------------------------------------*/
@@ -1384,9 +1371,7 @@ USHORT SetCurPos( USHORT Row, USHORT Column )
    return VioSetCurPos( Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-#endif /* ! KUI */
 
-#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* GetCurType                                                                */
 /*---------------------------------------------------------------------------*/
@@ -1464,7 +1449,11 @@ USHORT SetCurType( PCK_CURSORINFO CursorData )
 #endif /* NT */
     return rc ;
 }
+
 #endif /* !KUI */
+/* ===========================================================================
+ * End   Console-mode-only (non-KUI) functions
+ * ===========================================================================*/
 
 BOOL
 IsOS2FullScreen( void )

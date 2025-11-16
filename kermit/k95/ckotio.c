@@ -273,7 +273,9 @@ void doreset(int);      /* ckoco3.c */
 #endif /* NOTERM */
 
 #ifndef NOLOCAL
+#ifndef KUI
 void VscrnForceFullUpdate();    /* ckoco2.c */
+#endif /* KUI */
 int ttgcwsz();                  /* ckocon.c */
 #endif /* NOLOCAL */
 
@@ -2388,7 +2390,11 @@ sysinit() {
 #endif /* NT */
 
 #ifndef NOLOCAL
+#ifdef KUI
+    os2settitle(NULL,1);                /* Force a Title update */
+#else
     VscrnForceFullUpdate();             /* Just in case command screen did not write */
+#endif /* KUI */
 #endif /* NOLOCAL */
     SysInited = 1;
 	debug(F100,"sysinit complete","",0);
