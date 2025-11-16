@@ -109,6 +109,8 @@ private:    // this section is for performance
 
     void ToggleCursor(HDC, LPRECT);
 
+    static void SetWorkStoreRect(RECT* rect, _K_WORK_STORE* kws, KFont *font,
+        int terminalCellsWide, int terminalCellsHigh, int margin);
     static void drawRuledLines(
         HDC hdc, HPEN pen, int cells, KFont* font, RECT rect,
         BOOL rlTop, BOOL rlBottom, BOOL rlLeft, BOOL rlRight);
