@@ -1693,6 +1693,13 @@ get_gui_resize_mode(void)
     return KuiGetTerminalResizeMode();
 }
 
+void
+gui_flash_window(void)
+{
+    /* FlashWindow is available starting with NT 3.1 */
+    FlashWindow(getHwndKUI(), TRUE);
+}
+
 #ifndef NORICHEDIT
 static HWND hwndRichEdit = INVALID_HANDLE_VALUE;
 static HWND hwndTextDlg  = INVALID_HANDLE_VALUE;

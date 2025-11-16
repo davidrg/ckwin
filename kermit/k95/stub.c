@@ -17,9 +17,13 @@
 #ifdef __WATCOMC__
 #ifndef _P_WAIT
 #define _P_WAIT P_WAIT
-#endif
+#endif /* _P_WAIT */
 #define _spawnl spawnl
-#endif
+#else /* __WATCOMC__ */
+#ifndef spawnv
+#define spawnv _spawnv
+#endif /* spawnv */
+#endif /* __WATCOMC__ */
 
 char k95path[512];
 

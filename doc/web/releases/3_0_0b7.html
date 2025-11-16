@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Kermit 95 3.0.0 Beta 7</title>
+    <link rel="stylesheet" href="../k95.css">
+</head>
+<body>
+<h1 id="top">
+    <img src="../images/k95green.gif" alt="Vintage K95 logo"/>
+    <img src="../images/icon-64.jpg" alt="Kermit Project logo"/>
+    Kermit 95 3.0.0 Beta 7</h1>
+<hr>
+<p>Links: <a href="https://kermitproject.org/ckw10beta.html">K95 3.0.0 Beta 7 on kermitproject.org</a> |
+    <a href="https://github.com/davidrg/ckwin/releases/tag/3.0.0beta7">GitHub Release Page</a></p>
+
+<p>
+    This is the seventh beta of the new open source Kermit 95 for nearly all
+    32bit and 64bit Windows, and 32bit IBM OS/2! It brings a large number of
+    new features, bug fixes and other improvements plus
+</p>
+
+<p>
+    Contents:
+    <a href="#breaking">Breaking Changes</a> |
+    <a href="#new_features">New Features</a> |
+    <a href="#enhancements">Minor Enhancements and other changes</a> |
+    <a href="#fixed_bugs">Fixed bugs</a> |
+    <a href="#src_changes">Other Source Changes</a> |
+    <a href="#issues">Known Issues</a> |
+    <a href="#bugs">Reporting Bugs</a>
+</p>
+
+
+<h2 id="breaking">Breaking Changes</h2>
+<p><b>WARNING: This release changes a few default settings and paths!</b> In particular,
+    the change to the location for storing SSH-related files (known hosts, private
+    keys, etc) may require a one-off change to your k95custom.ini if you are
+    upgrading from a previous C-Kermit for Windows Beta release. See the sections
+    below before upgrading and if you have any questions, feel free to ask in
+    GitHub Discussions or email
+    <a href="mailto:ckw@kermitproject.org">ckw@kermitproject.org</a>.
+</p>
+
+<h3>Things to be aware of when upgrading</h3>
+<ul>
+    <li>Kermit 95 no longer opens COM1 by default. If you previously depended on
+        this, you'll need to add <tt>set port com1</tt> to your k95custom.ini</li>
+    <li>The mouse wheel now scrolls half a screen at time, rather than one line at
+        a time. If you'd prefer to retain the old default, put the following in
+        your k95custom.ini:
+        <pre>
+	set mouse wheel up none \Kupone
+	set mouse wheel down none \Kdnone
+	</pre>
+</ul>
+
+<h3>The Default SSH Directory has Changed!</h3>
+<p>The default SSH directory in beta 7 has changed from <tt>\v(home).ssh</tt>
+    back to <tt>\v(appdata)ssh</tt>, the location used by Kermit 95 2.1.3 and
+    earlier. This means Kermit 95 may not find your known hosts file, or your
+    identity (public key authentication) files after upgrading to beta 7.
+
+<p>If you'd prefer to keep these files in <tt>\v(home).ssh</tt>, the same location used
+    by OpenSSH on modern versions of windows, add the command set <tt>ssh directory
+        \v(home).ssh</tt> to your k95custom.ini
+
+<h2 id="download">Download</h2>
+<p>
+    This release includes <em>14 download options</em> covering everything from
+    Windows NT 3.50 to Windows 11 on all CPU architectures, plus Windows 95/98/ME
+    and 32bit OS/2. To make finding the right version for your system
+    easier, you can use the <a href="3_0_0b7_dlopt.html">Download Picker</a>,
+    or you can browse the
+    <a href="3_0_0b7_dl.html">list of all download options</a>.
+</p>
+
+<h2 id="new_features">New Features</h2>
+<ul>
+    <li>SSH Port forwarding (tunneling) is now supported again in both
+        the Direct/Local and Reverse/Remote forms. You can add forwards before
+        establishing a connection with <tt>SSH ADD { local, remote }</tt> and remove all
+        forwards of a given type with <tt>SSH CLEAR { local, remote }</tt>. As in past releases
+        of Kermit 95, these commands don't have any effect on an already established SSH
+        connection - this may be changed in the future.</li>
+    <li>New command to allow removing individual port forwards (<tt>SSH REMOVE
+        { local, remote }</tt>) - previously Kermit 95 only had commands to remove <em>all</em>
+        forwarded ports of a given type.</li>
+    <li>X11 forwarding is back. Turn on with <tt>SET SSH X11 ON</tt>, and set your display
+        with <tt>SET TELNET ENV DISPLAY</tt></li>
+    <li>The SSH backend has been moved into a DLL. On startup, K95 attempts to
+        load the backend DLL provided the <tt>-#2</tt> command line argument has not been
+        supplied. If no SSH backend gets loaded, you can load one manually with the new
+        <tt>ssh load</tt> command. This allows K95 to load the appropriate backend automatically
+        based on operating system (Windows XP or not) and presence of MIT Kerberos for
+        Windows. This removes the need to manually shuffle around ssh.dll variants, and
+        also means that alternative SSH backends not based on libssh can now be supported
+        should anyone want to build one, opening the door to SSH on vintage windows or
+        OS/2 systems.</li>
+    <li>SSH is now supported on 32bit ARM devices (Windows RT) for the first time</li>
+    <li>Initial very limited SSH agent support has been added. Libssh is currently the
+        limiting factor here and SSH agent support in K95 likely won't get much better
+        without significant improvements to libssh in this area. See the SSH Readme
+        for more details.</li>
+    <li>REXX support has been extended to x86 systems running Windows XP or newer. This
+        was previously an OS/2-only feature. You can now run REXX scripts and commands
+        from the K95 command mode with the <tt>rexx</tt> command, and REXX scripts run from
+        K95 can execute any Kermit 95 command by enclosing the K95 command in single
+        quotes (eg, <tt>'set parity none'</tt>). For full details, see the REXX section of
+        the K95 manual: https://kermitproject.org/k95manual/os2k95.html#os2rexx. The
+        REXX implementation is the current Regina REXX release. regutil.dll is included
+        but note that the Console I/O Routines it provides are not currently compatible
+        with K95. The rexxre.dll external function package is also included providing
+        support for POSIX regular expressions.</li>
+    <li>New command to turn the menubar on or off: <tt>set gui menubar visible { on, off }</tt>
+        When the menubar is turned off in this way (rather than with the command line
+        parameter), important menu items are moved on to the system/control/window menu
+        (right-click on the title bar for the actions menu and a few other things):<br>
+        <img alt="k95-sysmenu" src="images/sysmenu.gif" /></li>
+    <li>New command to turn the toolbar on or off: <tt>set gui toolbar visible { on, off }</tt></li>
+    <li>New command to turn the statusbar on or off: <tt>set gui statusbar { on, off }</tt></li>
+    <li>New screen scroll kverbs:</li>
+    <li><tt>\Kuphscn</tt> - Scroll up half a screen</li>
+    <li><tt>\Kdnhscn</tt> - Scroll down half a screen</li>
+    <li>IBM OS/2 support is back! It should work on IBM OS/2 2.0 or newer with
+        optional TCP/IP support provided by IBM TCP/IP 2.0 or newer. No SSH or
+        Presentation Manager GUI as in past Kermit/2 releases. Additionally:</li>
+    <li>No PC/TCP 1.2 or IBM TCP/IP 1.2.1 support (no SDK license; the DLLs from
+        K95 2.1.2 should work if you need it)</li>
+    <li>No dialer yet (crashes when built with Open Watcom)</li>
+    <li>No SSL/TLS support (can't be built with Open Watcom)</li>
+    <li>No legacy telnet encryption (no longer useful, but may return in a future
+        release anyway)</li>
+    <li>Reimplemented the three checkboxes in the Dialers GUI settings page for the
+        menu bar, toolbar and status bar. These options were new in Kermit 95 2.1.3
+        but were not present in previous open source releases of the dialer as it's
+        based on code from K95 2.1.2. Any dialer entries edited with the dialer from
+        C-Kermit for Windows betas 4-6, or Kermit 95 2.1.2 or older, will have these
+        checkboxes default to ON. Entries last edited with the K95 2.1.3 dialer will
+        have these three settings preserved. Turning off the GUI bars in this way does
+        so via command line arguments rather than the new <tt>set gui</tt> commands so they
+        can't be turned back on with the new <tt>set gui</tt> commands.</li>
+    <li>Added support xterms Bracketed Paste feature</li>
+    <li>Most of the users guide has been revised for this release and is now included
+        as part of the release. The <em>Kermit Security Reference</em> and sections dealing
+        with installing and uninstalling kermit 95 are still waiting to be overhauled.</li>
+</ul>
+<h2 id="enhancements">Minor Enhancements and other changes</h2>
+<ul>
+    <li>All executables (<em>.exe, </em>.dll) now have proper versioninfo resources</li>
+    <li>Upgraded to OpenSSL 3.4 which fixes a number of bugs and security issues and
+        will receive security fixes until October 2026. </li>
+    <li>K95G no longer opens COM1 by default. If you still want this behaviour, add
+        <tt>set port com1</tt> to your k95custom.ini</li>
+    <li>The command <tt>set gui toolbar off</tt> has been renamed to
+        <tt>set gui toolbar disabled</tt> to better describe what it actually does and to
+        make room for new commands to turn it on and off. The previous syntax
+        (<tt>set gui toolbar { off, on }</tt>) is still accepted for compatibility with
+        existing scripts. <tt>set gui toolbar on</tt> still does nothing as it always has
+        (disabling the toolbar is a session lockdown feature)</li>
+    <li>The command <tt>set gui menubar off</tt> has been renamed to
+        <tt>set gui menubar disabled</tt> to better describe what it actually does and to
+        make room for new commands to turn it on and off. The previous syntax
+        (<tt>set gui menubar { off, on }</tt>) is still accepted for compatibility with
+        existing scripts. <tt>set gui menubar on</tt> still does nothing as it always has
+        (disabling the menubar is a session lockdown feature)</li>
+    <li>Implemented the <tt>set ssh identity-file</tt> command</li>
+    <li>Added new command <tt>set ssh directory</tt> which allows you to set the default
+        location where K95 looks for user known hosts and identity files.</li>
+    <li>The default SSH directory has changed from <tt>\v(home).ssh</tt> back to
+        <tt>\v(appdata)ssh</tt></li>
+    <li>The <tt>ssh key</tt> commands will now default to opening or saving keys in the
+        SSH directory.</li>
+    <li>The <tt>skermit</tt> command now has help text</li>
+    <li>The default mouse wheel configuration has changed:</li>
+    <li>Wheel up/down now scrolls up/down half a screen (like PuTTY) rather than a
+        single line. This provides better much speed than a line at a time with
+        better usability than a screen at a time.</li>
+    <li>Shift+Wheel up/down now scrolls up/down one line</li>
+    <li>Improve exit time when the console version (k95.exe) is just being run to show
+        usage information (<tt>k95.exe -h</tt> or <tt>k95.exe --help</tt>). Previously K95 would
+        pause for about 5 seconds after printing usage information before returning
+        you to the shell.</li>
+    <li>Fixed the <tt>telnet.exe</tt> and <tt>rlogin.exe</tt> stubs - these now behave as in K95<br />
+        2.1.3</li>
+    <li>Added the <tt>ssh.exe</tt>, <tt>ftp.exe</tt> and <tt>http.exe</tt> stubs that were included in
+        K95 2.1.3 </li>
+    <li><tt>iksdnt.exe</tt> is now included.</li>
+</ul>
+<h2 id="fixed_bugs">Fixed bugs</h2>
+<ul>
+    <li>Fix <tt>fopen</tt> causing a crash. This issue seems to have come in some recent
+        version of the Microsoft C Runtime.</li>
+    <li>Fix hitting backspace in an empty search-in-buffer crashing</li>
+    <li>Fix <tt>pty dir</tt> (or trying to run anything else that isn't a valid program)
+        causing a crash</li>
+    <li>Fixed POTS modem support not being available on NT 3.50</li>
+    <li>Fixed OpenSSL libraries not being included in the ARM32 distribution</li>
+    <li>Fixed \Kexit (Alt+x by default) not updating the state of the associated
+        toolbar button</li>
+    <li>Fix the SSH global known hosts file not being set to something sensible
+        on windows. It's now set to the value used by past Kermit 95 releases by
+        default: <tt>\v(common)ssh\known_hosts2</tt></li>
+    <li>Fixed generation of 4096 RSA SSH keys</li>
+    <li>Fixed stdout parameter not working correctly</li>
+    <li>Fixed a pair of issues in the OS/2 NetBIOS implementation which has likely
+        been totally broken since Kermit 95 v1.1.17:</li>
+    <li><tt>SET HOST</tt> doing nothing for NetBIOS connections</li>
+    <li>NetBIOS name not being correctly padded when making a connection to
+        a NetBIOS Server</li>
+    <li>Fixed emacs turning off mouse reporting when started</li>
+    <li>Fixed K95G hanging when closing the window or using File-&gt;Exit with when
+        a connection is active and GUI dialogs are turned off</li>
+    <li>Fixed K95 bug 797: Dialer generated connection scripts will no longer include
+        <tt>SET LOGIN PROMPT</tt> or <tt>SET LOGIN PASSWORD</tt> commands if those fields do not
+        have a value as this broke the use of the standard login.ksc script.</li>
+    <li>Fixed K95 bug 770: When editing an FTP entry in the dialer the general settings
+        page doesn't load the port number causing it to be cleared on save.</li>
+    <li>Fixed <tt>TYPE</tt> command error "The /HEIGHT switch is not supported without /GUI"
+        when the <tt>/HEIGHT</tt> switch has not been supplied.</li>
+</ul>
+
+<h2 id="src_changes">Other Source Changes</h2>
+<ul>
+    <li>Fixed a selection of build warnings, and improved compatibility with the
+        Open Watcom compiler.</li>
+</ul>
+
+
+<h2 id="issues">Known Issues</h2>
+<ul>
+    <li>32bit x86 K95 may crash on 64bit systems that have the 64bit version of
+        MIT Kerberos for Windows installed. Use the 64bit version of K95 instead
+        if you experience this problem (or install the 32bit version of KFW)</li>
+    <li>When launching the dialer you may get an error about ctl3d32.dll - if
+        you do, run ctl3dins.exe to install it</li>
+    <li>The dialer may fail to start on some systems</li>
+    <li>On the original retail release of Windows 95 (possibly all versions of
+        Windows 95), the GUI version of C-Kermit constantly steals focus and
+        performs poorly. The solution at this time is to run the console version,
+        k95.exe</li>
+    <li>The dialer is not currently available on Windows NT 3.50 - this may be
+        corrected in a future release</li>
+    <li>Networking is broken on Windows NT 3.10 - this <em>may</em> be corrected
+        in a future release.</li>
+</ul>
+<p>
+    Other known bugs can be found in the <a href="https://github.com/davidrg/ckwin/issues?q=is%3Aissue+is%3Aopen+label%3Abug+-label%3A%22OS%2F2%22">K95 issue tracker on GitHub</a>.
+</p>
+
+<h2 id="bugs">Reporting Bugs</h2>
+<p>
+    If you think you've found a bug in K95 you can either send an email to
+    <a href="mailto:ckw@kermitproject.org">ckw@kermitproject.org</a> or you can
+    log it directly in the <a href="https://github.com/davidrg/ckwin/issues">
+    K95 Issue Tracker on GitHub</a>
+</p>
+<hr>
+</body>
+</html>

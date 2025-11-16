@@ -2,7 +2,7 @@
 extern "C" {
 #include "ikui.h"
 extern enum markmodes markmodeflag[] ;
-extern videobuffer vscrn[VNUM]; /* = {0,0,0,0,0,0,{0,0},0,-1,-1}; */
+extern vscrn_t vscrn[VNUM]; /* = {0,0,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0}; */
 extern int inecho;          /* do we echo script INPUT output? */
 extern int updmode ;
 extern int priority ;
@@ -12,6 +12,7 @@ extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor, scrninitialized[], ttyfd, viewonly, carrier, network,
            tt_scrsize[], tt_modechg, pheight, pwidth, tt_status[], screenon, 
            decssdt, tt_url_hilite, tt_url_hilite_attr, tt_type_mode, ttnum;
+extern bool decssdt_override;
 extern TID tidTermScrnUpd ;
 extern cell_video_attr_t     colorstatus;
 extern cell_video_attr_t     colorselect;
@@ -79,9 +80,13 @@ IKTerm::~IKTerm()
 #define URLMINCNT 4096
 #define EXCLUSIVE 1
 
-BOOL IKTerm::getDrawInfo()
+BOOL IKTerm::getDrawInfo() {
+    return getDrawInfo( vmode );
+}
+
+BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
 {
-	vnum = vmode;
+	vnum = vscrn_number;
 #ifdef EXCLUSIVE
     /* Wait for exclusive access to the screen */
     if ( RequestVscrnMutex( vnum, 200 ) ) {
@@ -100,7 +105,8 @@ BOOL IKTerm::getDrawInfo()
     incnt = 0;
 
     vbuf = &(vscrn[vnum]);
-    if ( vbuf->lines == NULL ) {
+    vscrn_page_t *page = &vscrn_view_page(vnum);
+    if ( !vscrn_view_page_valid(vnum) ) {
         ReleaseVscrnMutex(vnum) ;
         return FALSE;
     }
@@ -147,9 +153,9 @@ BOOL IKTerm::getDrawInfo()
 #endif /* NEW_EXCLUSIVE */
             /* Get the next line */
             if (!scrollflag[vnum])
-                line = &vbuf->lines[(vbuf->top+y)%vbuf->linecount] ;
+                line = &page->lines[(page->top+y)%page->linecount] ;
             else
-                line = &vbuf->lines[(vbuf->scrolltop+y)%vbuf->linecount] ;
+                line = &page->lines[(page->scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -207,8 +213,8 @@ BOOL IKTerm::getDrawInfo()
                 }
 
 #ifdef VSCRN_DEBUG
-                debug(F101,"OUCH!","",(scrollflag?(vbuf->scrolltop+y)
-                                    :(vbuf->top+y))%vbuf->linecount);
+                debug(F101,"OUCH!","",(scrollflag?(page->scrolltop+y)
+                                    :(page->top+y))%page->linecount);
 #endif /* VSCRN_DEBUG */
             }
 
@@ -246,7 +252,7 @@ BOOL IKTerm::getDrawInfo()
             if ( RequestVscrnMutex( vnum, -1 ) )
                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
-            line = &vbuf->lines[(vbuf->scrolltop+y)%vbuf->linecount] ;
+            line = &page->lines[(page->scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -255,7 +261,7 @@ BOOL IKTerm::getDrawInfo()
 
             if (line->cells)
             {
-                if ( VscrnIsLineMarked(vnum,vbuf->scrolltop+y) )
+                if ( VscrnIsLineMarked(vnum,page->scrolltop+y) )
                 {
                     for ( x = 0 ; x < xs ; x++ )
                     {
@@ -351,10 +357,11 @@ BOOL IKTerm::getDrawInfo()
 
     /* Status Line Display */
     if ( vnum == VTERM && tt_status[vnum] && decssdt != SSDT_BLANK ||
-         vnum != VTERM && tt_status[vnum])
+         vnum != VTERM && tt_status[vnum] || decssdt_override)
     {
-        if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1) {
-            line = &vscrn[VSTATUS].lines[0] ;
+        if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1
+                  && !decssdt_override && !scrollflag[vnum]) {
+            line = &vscrn_view_page(VSTATUS).lines[0] ;
             for ( x = 0 ; x < xs ; x++ ) {
                 textBuffer[c+x] = line->cells[x].c;
                 attrBuffer[c+x] = ComputeColorFromAttr(vnum,
@@ -386,12 +393,14 @@ BOOL IKTerm::getDrawInfo()
 
     getCursorPos();
 
-    kcp->beg = vbuf->beg;
-    kcp->top = vbuf->top;
-    kcp->scrolltop = vbuf->scrolltop;
-    kcp->end = vbuf->end;
+    kcp->beg = page->beg;
+    kcp->top = page->top;
+    kcp->scrolltop = page->scrolltop;
+    kcp->end = page->end;
     kcp->maxWidth = maxWidth;
     kcp->len = c;
+    kcp->page = vscrn[vnum].view_page;
+    kcp->page_length = page->linecount;
     return TRUE;
 }
 
@@ -405,23 +414,36 @@ BOOL IKTerm::getCursorPos()
         return FALSE;
 
     vbuf = &(vscrn[vnum]);
+    vscrn_page_t *page = &vscrn_view_page(vmode);
 
     char buf[30];
-    ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
-              ckitoa(vbuf->cursor.y+1),NULL);
+    if (vscrn[vnum].cursor.p == 0) {
+        ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
+                  ckitoa(vbuf->cursor.y+1),NULL);
+    } else if (!on_alternate_buffer(vnum)) {
+        ckmakxmsg(buf,30,ckitoa(vscrn[vnum].cursor.p+1),"(",
+                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+                  NULL,NULL,NULL,NULL,NULL,NULL);
+    } else { /* cursor is on the alternate screen */
+        ckmakxmsg(buf,30,"A(",
+                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+                  NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+    }
     KuiSetTerminalStatusText(STATUS_CURPOS, buf);
 
     /* only calculated an offset if Roll mode is INSERT */
     if( scrollstatus[vnum] && tt_roll[vnum] && markmodeflag[vnum] == notmarking ) {
-        cursor_offset = (vbuf->top + vbuf->linecount - vbuf->scrolltop)
-                        % vbuf->linecount;
+        cursor_offset = (page->top + page->linecount - page->scrolltop)
+                        % page->linecount;
     }
     else {
         cursor_offset = 0;
     }
 
-    ys = VscrnGetHeight( vnum );
-    if( !cursorena[vnum] || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0) ) {
+    ys = VscrnGetHeightEx( vnum, FALSE );
+    if( (!cursorena[vnum] || !cursor_on_visible_page(vnum)
+            || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0))
+            && markmodeflag[vnum] == notmarking ) {
         kcp->cursorVisible = FALSE;
     }
     else {

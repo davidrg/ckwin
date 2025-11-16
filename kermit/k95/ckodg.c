@@ -42,7 +42,7 @@ extern int  insertmode, tnlm ;
 extern int  escstate, debses, decscnm, tt_cursor;
 extern int  tt_type, tt_type_mode, tt_type_vt52, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol, parity, cmask ;
 extern int  wy_monitor;
 extern char answerback[], htab[] ;
@@ -543,6 +543,7 @@ dgascii( int ch )
 {
     int i;
     char arg1, arg2, arg3, arg4, arg5;
+    extern vscrn_t vscrn[];
 
     if ( escstate == ES_GOTESC )/* Process character as part of an escstate sequence */
     {
@@ -1576,21 +1577,23 @@ dgascii( int ch )
                 debug(F110,"Data General 4xx","Scroll Up",0);
                 VscrnScroll( VTERM, 
                              UPWARD,
-                             margintop-1, 
+                             vscrn_c_page_margin_top(VTERM)-1,
                              wherex[VTERM]-1,
                              1,
-                             margintop == 1,
-                             SP);
+                             vscrn_c_page_margin_top(VTERM) == 1,
+                             SP,
+                             FALSE);
                 break; 
             case 'I':
                 debug(F110,"Data General 4xx","Scroll Down",0);
                 VscrnScroll( VTERM,
                              DOWNWARD,
                              wherex[VTERM]-1,
-                             marginbot-1,
+                             vscrn_c_page_margin_bot(VTERM)-1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'J':
                 debug(F110,"Data General 4xx","Insert Character",0);

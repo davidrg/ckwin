@@ -191,6 +191,7 @@ Win32PrtFile( char * filename, char * prtname )
     {
         EndDocPrinter( hPrinter );
         ClosePrinter( hPrinter );
+        CloseHandle( hFile );
         return FALSE;
     }
     // Inform the spooler that the document is ending

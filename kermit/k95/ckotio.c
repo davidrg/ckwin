@@ -199,6 +199,7 @@ static char *ckxrev = "32-bit";
 /* Regina REXX wants to typedef char to CHAR, but we already do that */
 #define CHAR_TYPEDEFED
 #define USHORT_TYPEDEFED
+#define ULONG_TYPEDEFED
 #endif
 
 #define  INCL_REXXSAA
@@ -6253,6 +6254,19 @@ ttinc(int timo) {
     int tt, tr, interval;
 #endif /* NT */
     int t ;
+#ifndef NOTERM
+    extern bool vt_macro_invocation;  /* ckoco3.c */
+    extern int tt_type_mode;
+
+    /* VT level 4 text macros: If a macro has being invoked, get the next
+     * character from there rather than the communication line. */
+    if (ISVT420(tt_type_mode) && vt_macro_invocation) {
+        int c = vt_macro_in();
+        if (c > 0) {
+            return c;
+        }
+    }
+#endif /* NOTERM */
 
     m = (ttprty) ? 0177 : 0377;         /* Parity stripping mask. */
 
@@ -9194,6 +9208,11 @@ ttruncmd(char * cmd)
 
       memset( &startinfo, 0, sizeof(STARTUPINFO) ) ;
       startinfo.cb = sizeof(STARTUPINFO) ;
+      startinfo.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+      startinfo.wShowWindow = SW_HIDE;
+      startinfo.hStdInput = hChildStdinRd;
+      startinfo.hStdOutput = hChildStdoutWr;
+      startinfo.hStdError = hChildStdoutWr;
 
       fSuccess = CreateProcess( NULL,       /* application name */
                      cmd_line,              /* command line */
@@ -9225,9 +9244,6 @@ ttruncmd(char * cmd)
             return(0);
         }
 
-        CloseHandle(procinfo.hProcess);
-        CloseHandle(procinfo.hThread);
-
         exitcode = STILL_ACTIVE;
         _beginthread( ttruncmd2, 65536, (void *)hChildStdoutRd );
         do {
@@ -9256,6 +9272,8 @@ ttruncmd(char * cmd)
         if ( exitcode == STILL_ACTIVE )
             exitcode = 128;
 
+        pexitstat = exitcode;
+
         /* Close the pipe handle so the child stops reading. */
         CloseHandle(hChildStdoutRd);    hChildStdoutRd = NULL;
         CloseHandle(hChildStdoutWr);    hChildStdoutWr = NULL;
@@ -9265,7 +9283,6 @@ ttruncmd(char * cmd)
         CloseHandle( procinfo.hProcess ) ;
         CloseHandle( procinfo.hThread ) ;
 
-        pexitstat = exitcode;
         return 1; /* DWORD is unsigned : (exitcode>=0 ? 1 : 0); */
     }
     return 0;   /* Should never be reached */

@@ -63,6 +63,7 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 
 #ifdef OS2
 #include "ckoetc.h"
+#include "ckover.h"
 #ifndef NT
 #define INCL_NOPM
 #define INCL_VIO /* Needed for ckocon.h */
@@ -291,8 +292,8 @@ char * ikprompt = "\\v(dir) IKSD>";
 #ifdef UNIX
 /* Note: parens, not brackets, because of ISO646 */
 /* Collapse long paths using ~ notation if in home directory tree */
-char * ckprompt = "(\\freplace(\\v(dir),\\fpathname(\\v(home)),~/)) C-Kermit>";
-char * ikprompt = "(\\freplace(\\v(dir),\\fpathname(\\v(home)),~/)) IKSD>";
+char * ckprompt = "(\\fsubstr(\\freplace(X\\v(dir),X\\fpathname(\\v(home)),X~/),2)) C-Kermit>";
+char * ikprompt = "(\\fsubstr(\\freplace(X\\v(dir),X\\fpathname(\\v(home)),X~/),2)) IKSD>";
 #else
 /* Default prompt for other platforms */
 char * ckprompt = "(\\v(dir)) C-Kermit>"; /* Default prompt for others */
@@ -357,7 +358,7 @@ extern int ntermfont, tt_font, tt_font_size;
 extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
     colorreverse, colorcmd, coloritalic, colorblink, colorbold, colordim,
-	colorcursor;
+	colorcursor, colorcrossedout;
 extern cell_video_attr_t savedcolorselect, savedcolorcursor;
 extern int priority;
 extern struct keytab prtytab[];
@@ -851,6 +852,7 @@ int timelimit = 0, asktimer = 0;        /* Timers for time-limited commands */
 #ifdef CK_APC                           /* Application Program Command (APC) */
 int apcactive = APC_INACTIVE;
 int apcstatus = APC_OFF;                /* OFF by default everywhere */
+int apccmd = 0;                         /* Remain on command screen after APC? */
 #ifdef DCMDBUF
 char *apcbuf;
 #else
@@ -5657,6 +5659,9 @@ shover() {
     printf("\nVersions:\n %s\n",versio);
     printf(" Numeric: %ld\n",vernum);
 #ifdef OS2
+#ifdef K95_COMMIT_SHA
+    printf(" Commit: %s\n", K95_COMMIT_SHA);
+#endif /* K95_COMMIT_SHA */
     printf(" Operating System: %s\n", ckxsystem);
 #else /* OS2 */
     printf(" Built for: %s\n", ckxsys);
@@ -6120,9 +6125,13 @@ shotrm() {
     int lines = 0;
     extern int colorpalette;
 #ifdef KUI
+    extern int tt_bell_flash;
+#endif /* KUI */
+#ifdef KUI
     extern CKFLOAT tt_linespacing[];
     extern int tt_cursor_blink;
 #endif /* KUI */
+   char bell[64] = "";
 #ifdef PCFONTS
     int i;
     char *font;
@@ -6171,9 +6180,18 @@ shotrm() {
            (tt_type >= 0 && tt_type <= max_tt) ?
            tt_info[tt_type].x_name :
            "unknown" );
-    if (tt_type >= 0 && tt_type <= max_tt)
-      if (strlen(tt_info[tt_type].x_id))
-        printf("  %13s: <ESC>%s","ID",tt_info[tt_type].x_id);
+    if ((tt_type >= 0 && tt_type <= max_tt) && strlen(tt_info[tt_type].x_id)) {
+      char idbuf[100] = "";
+      strcat(idbuf, tt_info[tt_type].x_id);
+      if (ISK95(tt_type) && tt_clipboard_write >= CLIPBOARD_ALLOW) {
+        idbuf[strlen(idbuf)-1] = '\0';
+        strcat(idbuf, ";52c");
+      }
+      if (strlen(tt_info[tt_type].x_id) <= 23)
+        printf("  %13s: <ESC>%s","ID", idbuf);
+      else
+        printf("\n %19s: <ESC>%s","ID", idbuf);
+    }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf(" %19s: %-13s  %13s: %-15s\n","Echo",
@@ -6222,21 +6240,26 @@ shotrm() {
            showoff(tt_answer),"response",answerback);
     switch (tt_bell) {
       case XYB_NONE:
-        s = "none";
+        ckstrncat(bell,"none",64);
         break;
       case XYB_VIS:
-        s= "visible";
+        ckstrncat(bell,"visible",64);
         break;
       case XYB_AUD | XYB_BEEP:
-        s="beep";
+        ckstrncat(bell,"beep",64);
         break;
       case XYB_AUD | XYB_SYS:
-        s="system sounds";
+        ckstrncat(bell,"system sounds",64);
         break;
       default:
-        s="(unknown)";
+        ckstrncat(bell,"(unknown)",64);
     }
-    printf(" %19s: %-13s  %13s: %-15s\n","Bell",s,
+#ifdef KUI
+    if (tt_bell_flash) {
+      ckstrncat(bell,", flash",64);
+    }
+#endif /* KUI */
+    printf(" %19s: %-21s  %5s: %-15s\n","Bell",bell,
            "Wrap",showoff(tt_wrap));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf(" %19s: %-13s  %13s: %-15s\n","Autopage",showoff(wy_autopage),
@@ -6471,6 +6494,7 @@ shotrm() {
 		VscrnWrtCharStrAtt(VCMD, "status",    6, row, 41, &colorstatus );
         VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 49, &colornormal );
         VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 58, &colorunderline );
+        VscrnWrtCharStrAtt(VCMD, "crossed-out", 11, row, 68, &colorcrossedout );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6482,7 +6506,8 @@ shotrm() {
 		print_color("%-8s", TRUE, savedcolorselect);
 		print_color("%-8s", TRUE, colorstatus);
         print_color("%-9s", TRUE, colornormal);
-        print_color("%-8s", TRUE, colorunderline);
+        print_color("%-10s", TRUE, colorunderline);
+        print_color("%-8s", TRUE, colorcrossedout);
 
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6495,18 +6520,21 @@ shotrm() {
 		print_color("%-8s", FALSE, savedcolorselect);
 		print_color("%-8s", FALSE, colorstatus);
         print_color("%-9s", FALSE, colornormal);
-        print_color("%-8s", FALSE, colorunderline);
+        print_color("%-10s", FALSE, colorunderline);
+        print_color("%-8s", FALSE, colorcrossedout);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     {
-        extern int trueblink, truedim, truebold, truereverse, trueunderline, trueitalic;
+        extern int trueblink, truedim, truebold, truereverse, trueunderline,
+                    trueitalic, truecrossedout;
         extern int blink_is_color, bold_is_color, dim_is_color, use_blink_attr,
 				   use_bold_attr;
 		extern int savedtruereverse, savedtrueunderline, savedtruedim,
-					savedtruebold, savedtrueitalic, savedtrueblink;
+					savedtruebold, savedtrueitalic, savedtrueblink,
+                    savedtruecrossedout;
 
 		/* The saved values are initialised to the same values as the non-saved
 		 * variants, and *only* updated by the "SET TERM ATTR" command, where
@@ -6523,9 +6551,10 @@ shotrm() {
 			trueitalic?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-        printf("             reverse: %-3s  underline: %-3s\n",
+        printf("             reverse: %-3s  underline: %-3s  crossed-out: %-3s\n",
                 savedtruereverse?"on":"off",
-                savedtrueunderline?"on":"off");
+                savedtrueunderline?"on":"off",
+                savedtruecrossedout?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {

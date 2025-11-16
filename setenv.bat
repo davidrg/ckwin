@@ -171,19 +171,16 @@ goto :bits32
 
 :axp64
 REM Alpha AXP Windows 2000/XP - 64bits
-REM TODO: Check
 set CKB_TARGET_ARCH=ALPHA64
 goto :bits64
 
 :mips
 REM MIPS Windows NT - 32bits
-REM TODO: Check
 set CKB_TARGET_ARCH=MIPS
 goto :bits32
 
 :ppc
 REM PowerPC Windows NT - 32bits
-REM TODO: Check
 set CKB_TARGET_ARCH=PPC
 goto :bits32
 
@@ -717,6 +714,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
+set CKF_XYZ=unsupported
 set CKB_STATIC_CRT_NT=yes
 set CKB_NT_COMPATIBLE=yes
 goto :cvcdone
@@ -911,6 +909,9 @@ goto :check_zinc16
 REM Compiler detection finished. If Zinc is supported for this compiler,
 REM go set it up.
 echo Compiler: %CK_COMPILER_NAME%
+
+if "%CKB_TARGET_ARCH%" NEQ "x86" set CKB_9X_COMPATIBLE=no
+
 if "%ZINCBUILD%" == "" echo Can not setup Zinc for this compiler
 if "%ZINCBUILD%" NEQ "" goto :check_zinc
 

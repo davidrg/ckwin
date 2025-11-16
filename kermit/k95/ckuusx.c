@@ -6588,10 +6588,10 @@ clear() {
 #endif /* ONETERMUPD*/
     move(0,0);
 #ifdef ONETERMUPD
-    if (VscrnGetBufferSize(VCMD) > 0) {
+    if (VscrnGetBufferSize(VCMD, FALSE, TRUE) > 0) {
         VscrnScroll(VCMD, UPWARD, 0,
                     VscrnGetHeight(VCMD)-(1),
-                    VscrnGetHeight(VCMD)-(0), TRUE, CHR_SP);
+                    VscrnGetHeight(VCMD)-(0), TRUE, CHR_SP, TRUE);
         cleartermscreen(VCMD);
     }
 #else

@@ -10,7 +10,7 @@ log living in the [Whats New in 3.0](whats-new.md) document. When the final
 release of v3.0 eventually happens, the details about the various v3.0 
 eventually be moved elsewhere, with the full v3.0 change log taking their place.
 
-## Kermit 95 v3.0 beta 8 - Date TBD, likely late 2025
+## Kermit 95 v3.0 beta 8 - Date TBD, likely early 2026
 
 This release comes with *significant* changes to the way Kermit 95 handles
 color. While every effort has been made to ensure there are no unexpected
@@ -19,6 +19,26 @@ behaviour changes to applications and terminal emulations not using more than
 missed. If you notice any unexpected color changes from beta 7 in applications 
 and terminal emulations that *do not* use the new 256-color/24-bit color modes,
 *please log a bug* so it can be fixed!
+
+### Default character set for the Linux Console Terminal emulation has changed
+
+In past releases, Kermit 95 used ASCII for the remote character set when
+emulating the linux console terminal (the drop-down may have said latin-1 but
+this was a bug). As most linux distributions and other terminal emulators 
+switched to UTF-8 by default well over a decade ago, Kermit 95 now does the same
+starting with 3.0 Beta 8
+
+If this causes problems, you can restore the previous default character set
+by placing the following macro in your k95custom.ini file which will be executed
+whenever you switch to the linux terminal type:
+```
+def tt_linux {
+	set term remote dec-special G3
+	set term remote latin1 G2
+	set term remote latin1 G1
+	set term remote ascii G0
+}
+```
 
 ### A New Terminal Type: K95
 This release of Kermit 95 includes a new "K95" terminal type which aims for
@@ -111,6 +131,31 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    left unimplemented are the interlaced video mode, and the confidence tests
    neither of which can be reasonably supported by an emulator.
  - New experimental ADDS Regent 25 emulation
+ - New SET BELL option to flash the window title and task bar button in addition
+   to any visible/audible bell setting.
+ - Synchronized Output mode
+ - Crossed-out character attribute
+ - VT420 text macros
+ - REXX support has been extended to all Windows systems except for: NT 3.50 or
+   older, and 64bit Windows systems with an Alpha or Itanium CPU. Newly
+   supported includes: Windows 95/98/ME, Windows NT 3.51/4.0/2000 on 
+   x86/Alpha/MIPS/PowerPC, and Windows 8/10/11 on 32bit and 64bit ARM.
+ - Xterm alternate screen (K95 terminal type only). Can be disabled with the
+   new command `SET TERMINAL ALTERNATE-BUFFER DISABLED`
+ - VT330/VT420 page memory - available to the K95 terminal type and (until a
+   VT420 emulation is added) the VT320 terminal type. 
+   [DECCRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccra) and
+   [DECRQCRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqcra) can now
+   work across pages, while [DECRQDE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqde)
+   and [DECXCPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-decxcpr)
+   now include page information
+ - K95G can now save the terminal screen as an image rather than plain text.
+   For example, `SAVE TERMINAL SCREEN /FORMAT:PNG screenshot.png`. The following
+   output formats are available:
+   - Windows Bitmap (.bmp)
+   - Windows Enhanced Metafile (.emf)
+   - PNG (Windows XP+ only)
+   - GIF (Windows XP+ only)
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -139,12 +184,23 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    (`--xpos`, `--ypos`) and in the `SET GUI WINDOW POSITION` command. Negative
    coordinates may be required in multi-monitor setups to place the window on
    a display to the left of or above of the primary display.
+ - New SET TERMINAL SIZE command allowing both width and height to be set in one
+   go.
+ - Release builds should now include the Git commit SHA they were built from in
+   the `SHOW VERSIONS` output going forward
+ - The linux console terminal emulation now uses the UTF-8 character set by
+   default as most linux distributions moved to UTF-8 long ago now. 
+ - Upgrade OpenSSL to 3.5.4
+ - Improved terminal throughput for SSH connections by around seven times, which
+   helps when you accidentally cat a large log file.
+ - Doubled maximum terminal lines to 256 in K95G on modern systems
+ - Added a new function, `\fterminalchecksum`, which produces a checksum of the
+   terminal screen using the same algorithm as DECRQCRA. Parameters allow you
+   to specify a region of a particular page to calculate a checksum off. If
+   parameters are left off it calculates the checksum of the entire page on
+   screen. Unlike DECRQCRA, it is not bound by page margins.
+   
  
-### Bug fixes
- - Fixed an inssue introduced in beta 7 which could cause SSH connections made
-   via the dialer to cause K95 to crash
- - Fixed a typo on the `help screen` output (was SCRSTR, should be SCRNSTR)
-
 ### New terminal control sequences
 > [!NOTE]
 > Until Kermit 95 gets a VT525 terminal type option, control sequences marked
@@ -212,7 +268,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [OSC-117: Reset text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-117)
    - [OSC-19: Change text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-19)
    - [OSC-119: Reset text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-119)
-   - [OSC-52: Manipulate selection data](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-52)
+   - [OSC-52: Manipulate selection data](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-52).
+     When clipboard writing is enabled, support is indicated via DA1 for the K95 terminal type. 
  - A few VT525 control sequences _based on documented behaviour_; there may be
    differences from the real thing (donations of a VT525 accepted!):
    - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decstglt): 
@@ -241,11 +298,40 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - DECSM/DECRM/DECRQM modes
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
+   - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
+   - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
+   - [1043](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-raise-window): Due to windows limitations, same behavior as above
+   - [1046](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-ena-altbuf): Enable switching to/from alternate screen buffer
+   - [1047](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-use-altbuf): Switch to alternate screen
+   - [1048](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-1048): Save cursor as with DECSC
+   - [1049](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-1049): Switch to alternate screen saving and clearing
+   - [2026](https://davidrg.github.io/ckwin/dev/ctlseqs.html#bsu): Synchronized Output Mode (K95 terminal type only)
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
+ - [XTWINOPS Refresh Window](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtwinops-refresh)
+ - [SGR-9](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-9-co): Crossed-out character attribute (all terminal types except QANSI)
+ - VT420 text macros: 
+   [DECDMAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdmac),
+   [DECINVM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decinvm),
+   [DECMSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-msr),
+   [DECCKSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccksr)
+ - VT330/VT420 paging - marked as available for VT420 (and so, temporarily, VT320):
+   - [NP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#np) - Next Page
+   - [PP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#pp) - Previous Page
+   - [PPA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppa) - Page Position Absolute
+   - [PPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppr) - Page Position Relative
+   - [PPB](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppb) - Page Position Backward
+   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Session Page Memory Allocation
+   - [DECMC-10](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-10) - Print Composed Main Display
+   - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
+   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages
+   - [DECSNLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsnls) - Set number of lines per screen
 
 ### Fixed Bugs
+ - Fixed an issue introduced in beta 7 which could cause SSH connections made
+   via the dialer to cause K95 to crash
+ - Fixed a typo on the `help screen` output (was SCRSTR, should be SCRNSTR)
  - Fixed a potential memory leak in the status line display. Cov-462304.
  - Fix control flow issue which could cause a DECRQM to do both the DECRQM
    and a Delete lines. Cov-462454.
@@ -258,6 +344,57 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    K95 will now do the same, using unicode character 0x2426 for VT220 and up.
    Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
    (K95 bug 815).
+ - Fixed a bug in the previous release that caused the backspace key to not work
+   correctly for some "SET SSH" commands
+ - Fixed `CLEAR APC` preventing execution of further commands in the APC sequence,
+   access to the kermit prompt or the ability to switch back to the terminal. This
+   bug first appeared in Kermit 95 v1.1.21. (K95 bug 837).
+ - Fixed `CLEAR APC` defeating all safeguards around APC commands allowing a
+   malicious host to switch APC processing to UNCHECKED. This bug first appeared
+   in or prior to Kermit 95 v1.1.15. (K95 bug 838).
+ - Fixed an error in the `help clear` output: the command is CLEAR APC, not 
+   CLEAR APC-STATUS. This error first appeared in K95 1.1.19.
+ - Fixed connect command not reconnecting disconnected SSH sessions
+ - Fixed certain menu items not being disabled when they should be if they
+   appear in the system menu rather than menubar
+ - Fixed a bug where the random number generator would not be initialized on the
+   thread that runs the command screen resulting in `\frandom()` producing the
+   same sequence every time. This only affected builds without SSL support
+   (those targeting Windows versions older than XP), as when OpenSSL is 
+   available its random number generator is used instead.
+ - Fixed two bugs in the REDIRECT command, both of which were previously fixed
+   in the PIPE command:
+   - Fixed Kermit 95 not detecting when the subprocess ends
+   - Fixed I/O not being redirected in K95G
+ - Fixed a whole host of problems with the host-writable status line:
+   - The K95G window no longer tries to resize to the dimensions of the status
+     line (80x1) when the cursor is moved there via DECSASD
+   - K95G should no longer crash if the host tries to write to the status line
+     shortly after moving the cursor there
+   - You can now resize the terminal while the cursor is in the status line, and
+     doing so no longer breaks the host-writable status line.
+   - Text-mode popups now work when the cursor is in the status line
+   - The cursor no longer vanishes while the host is in the status line in K95G
+   - Fixed mark mode when the cursor is in the status line
+   - Fixed setting and going to bookmarks while the cursor is in the status line
+   - Fixed viewing the scrollback while the cursor is in the status line
+   - Fixed searching the scrollback when the cursor is in the status line
+   - Indicator status line is now shown during scrollback for host-writable status line
+ - The status line is now temporarily shown by enlarging the K95G window when 
+   searching or using bookmarks if it is currently off. 
+ - Fixed turning the status line on after making a connection (or resetting the
+   terminal) giving a black empty status line rather than the indicator status
+   line you were likely. This issue was particularly noticeable with the linux
+   terminal type which has the status line off by default.
+ - Fixed an issue in the dialer which could cause it to crash if the path was
+   too long
+ - The x86-64 version of Kermit 95 now works on Windows XP x64 Edition
+ - Fixed DECCRA not copying attributes or obeying DECOM
+ - Fixed DECXCPR response - it was leaving the '?' character out
+ - Fixed DECSCPP parameter not being optional, and setting the terminal to maximum
+   width if the parameters value is 0. Any value less than 80 will now produce an
+   80 column terminal.
+ - Fixed crash writing to unopened file
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
@@ -983,9 +1120,11 @@ Change logs going back to the release of the first version in October 1995 (1.1)
  * 1.1 - First Release - 2 October 1995
  * [OS/2 C-Kermit 5A(191)](https://www.columbia.edu/kermit/cko191.html) - 23 April 1995
    * Last free release before it was renamed [Kermit 95 for OS/2](https://www.columbia.edu/kermit/os2.html), ported to Windows and sold commercially
+   * [Binaries](http://www.columbia.edu/kermit/ftp/archives/cko191.zip) (source never released)
  * [OS/2 C-Kermit 5A(190)](https://www.columbia.edu/kermit/os2new.html) - 4 October 1994 
    * Last release to include 16-bit OS/2 1.x support
    * Last release for which source code was publicly available until the Kermit 95 2.2 code was open-sourced in 2011
+   * [Source](http://www.columbia.edu/kermit/ftp/archives/ckc190.zip), [Binaries](http://www.columbia.edu/kermit/ftp/archives/cko190.zip)
  * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
  * [OS/2 C-Kermit 5A(188) (update)](https://groups.google.com/g/comp.os.os2.apps/c/DesD23imeHI/m/I6-udyEnNhAJ) - 3 February 1993
  * [OS/2 C-Kermit 5A(188)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
@@ -1004,4 +1143,5 @@ Change logs going back to the release of the first version in October 1995 (1.1)
      [ckoker.bwr](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.bwr),
      [ckoker.doc](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.doc)
  * [OS/2 C-Kermit 1.0b](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.ann) - 5 August 1988
+   * First release with terminal emulation?
  * [OS/2 C-Kermit 1.0a](https://groups.google.com/g/comp.protocols.kermit/c/KZ0P49Za-JA/m/ZpzhtBJOyT4J) - 29 July 1988

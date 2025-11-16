@@ -85,6 +85,15 @@ uncomment line 40:
 This will enable 3D Windows 95-style widgets (or the native widgets on XP and
 newer). This is only necessary for Visual C++ older than 2010.
 
+Then on lines 812 and 813, increase the values for `ZIL_MAXPATHLEN` and 
+`ZIL_MAXNAMELEN`. The default values are 128 and 64 respectively which can cause
+the dialer to crash when the PATH environment variable is very long. Increasing
+them to 1024 and 256 respectively should provide better results:
+```C
+#	define ZIL_MAXPATHLEN	1024
+#	define ZIL_MAXNAMELEN	256
+```
+
 Next run `\setenv.bat`. This should detect your compiler, the presence of
 OpenZinc and the fact you don't have a suitable build of it for your compiler
 available. You'll get a message along the lines of:

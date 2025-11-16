@@ -140,7 +140,7 @@ int type_intrp = 0;
 extern int tcp_avail;
 extern bool viewonly;
 extern int k95stdout;
-extern int tt_scroll;
+extern int tt_scroll, tt_scroll_usr;
 #ifndef NOTERM
 extern int tt_status[VNUM];
 #endif /* NOTERM */
@@ -404,7 +404,7 @@ extern int dialsta, dialatmo, dialcon, dialcq; /* DIAL status, etc. */
 #endif /* NODIAL */
 
 #ifdef CK_APC
-extern int apcactive, apcstatus;
+extern int apcactive, apcstatus, apccmd;
 #endif /* CK_APC */
 
 #ifndef NOPUSH
@@ -6735,7 +6735,22 @@ doclear() {
 #ifdef CK_APC
     if (x & CLR_APC) {
 	debug(F101,"Executing CLEAR APC","",apcactive);
-	apcactive = 0;
+#ifndef OS2
+	if (apcactive == APC_LOCAL ||
+		 (apcactive == APC_REMOTE && (apcstatus & APC_UNCH))) {
+		/* Clearing the APC status like this mid-APC is equivalent to being allowed to
+		 * do SET TERM APC UNCHECKED mid-APC. If Kermit doesn't think an APC is active,
+		 * it doesn't check if commands are safe to appear in an APC. Additionally, in
+		 * Kermit 95 1.1.21 and up forcing APC inactive like this mid-APC causes the
+         * parser to get stuck waiting forever for a semaphore that has already been
+		 * raised. To the user it looks like a crash. */
+		apcactive = APC_INACTIVE;
+	}
+#endif /* OS2 */
+	/* The documented purpose of this command is to cause Kermit to
+	 * remain on the command screen when the APC is finished.
+	 * This is a safer way to do it. */
+	apccmd = 1;
 	y = 0;
     }
 #endif /* CK_APC */
@@ -6827,11 +6842,11 @@ doclear() {
       case CLR_TRM:
 	 switch ( z ) {
 	  case CLR_C_ALL:
-	     if (VscrnGetBufferSize(VTERM) > 0 ) {
+	     if (VscrnGetBufferSize(VTERM, FALSE, TRUE) > 0 ) {
 		 VscrnScroll(VTERM, UPWARD, 0,
 			     VscrnGetHeight(VTERM)-(tt_status[VTERM]?2:1),
 			     VscrnGetHeight(VTERM) -
-			     (tt_status[VTERM]?1:0), TRUE, SP
+			     (tt_status[VTERM]?1:0), TRUE, SP, TRUE
 			     );
 		 cleartermscreen(VTERM);
 	     }
@@ -8048,6 +8063,77 @@ redossh() {
     return(y);
 }
 #endif	/* SSHCMD */
+
+#ifdef SSHBUILTIN
+/* Hides any SSH options that are not valid for the currently loaded (or
+ * compiled in) SSH backend */
+void update_ssh_options() {
+    int z;
+
+#ifdef SSH_DLL
+    if (!ssh_avail()) return;
+#endif /* SSH_DLL */
+
+    for (z = 0; z < nsshcmd; z++) {
+        if ((sshkwtab[z].kwval == XSSH_ADD || sshkwtab[z].kwval == XSSH_CLR
+            || sshkwtab[z].kwval == XSSH_FLP || sshkwtab[z].kwval == XSSH_FRP
+            || sshkwtab[z].kwval == XSSH_REM)
+            && !ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+            /* Port forwarding
+             *   "ssh add" - adds port fowards
+             *   "ssh clear" - clears port fowards
+             * And these, which are already hidden by default:
+             *   "ssh forward-local-port"
+             *   "ssh forward-remote-port"
+             * Possibly an unimplemented feature ("arbitrary forwarding")?
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+        else if (sshkwtab[z].kwval == XSSH_AGT
+            && !ssh_feature_supported(SSH_FEAT_AGENT_MGMT)) {
+            /*
+             * "ssh agent"
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+        else if (sshkwtab[z].kwval == XSSH_KEY
+            && !ssh_feature_supported(SSH_FEAT_KEY_MGMT)) {
+            /*
+             * "ssh agent"
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+        else if (sshkwtab[z].kwval == XSSH_V2
+            && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
+            /*
+             * "ssh v2 rekey"
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+    }
+
+    /* Hide any "ssh open" arguments not supported by the currently loaded
+     * SSH backend */
+    for (z = 0; z < nsshopnsw; z++) {
+        if (sshopnsw[z].kwval == SSHSW_VER && !ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+            /*
+             * "ssh open x /version:y" - if we don't support SSH V1 then we
+             * only support SSH V2 so this at best does nothing. We only
+             * hide this argument - it will still be parsed and the entered
+             * value passed through to the SSH backend to reject if
+             * necessary.
+             */
+            sshopnsw[z].flgs = CM_INV;
+        }
+        else if (sshopnsw[z].kwval == SSHSW_X11 && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+            /*
+             * "ssh open x /x11-forwarding"
+             */
+            sshopnsw[z].flgs = CM_INV;
+        }
+    }
+}
+#endif /* SSHBUILTIN */
 
 /*
   Like hmsga() in ckuus2.c but takes a single substitution parameter, s2,
@@ -10852,67 +10938,6 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
         makestr(&ssh_tmpcmd,NULL);
         makestr(&ssh_tmpport,NULL);
 
-        /* Hide any "ssh" commands not supported by the currently loaded SSH
-         * backend */
-        for (z = 0; z < nsshcmd; z++) {
-            if ((sshkwtab[z].kwval == XSSH_ADD || sshkwtab[z].kwval == XSSH_CLR
-                || sshkwtab[z].kwval == XSSH_FLP || sshkwtab[z].kwval == XSSH_FRP
-                || sshkwtab[z].kwval == XSSH_REM)
-                && !ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
-                /* Port forwarding
-                 *   "ssh add" - adds port fowards
-                 *   "ssh clear" - clears port fowards
-                 * And these, which are already hidden by default:
-                 *   "ssh forward-local-port"
-                 *   "ssh forward-remote-port"
-                 * Possibly an unimplemented feature ("arbitrary forwarding")?
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-            else if (sshkwtab[z].kwval == XSSH_AGT
-                && !ssh_feature_supported(SSH_FEAT_AGENT_MGMT)) {
-                /*
-                 * "ssh agent"
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-            else if (sshkwtab[z].kwval == XSSH_KEY
-                && !ssh_feature_supported(SSH_FEAT_KEY_MGMT)) {
-                /*
-                 * "ssh agent"
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-            else if (sshkwtab[z].kwval == XSSH_V2
-                && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
-                /*
-                 * "ssh v2 rekey"
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-        }
-
-        /* Hide any "ssh open" arguments not supported by the currently loaded
-         * SSH backend */
-        for (z = 0; z < nsshopnsw; z++) {
-            if (sshopnsw[z].kwval == SSHSW_VER && !ssh_feature_supported(SSH_FEAT_SSH_V1)) {
-                /*
-                 * "ssh open x /version:y" - if we don't support SSH V1 then we
-                 * only support SSH V2 so this at best does nothing. We only
-                 * hide this argument - it will still be parsed and the entered
-                 * value passed through to the SSH backend to reject if
-                 * necessary.
-                 */
-                sshopnsw[z].flgs = CM_INV;
-            }
-            else if (sshopnsw[z].kwval == SSHSW_X11 && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
-                /*
-                 * "ssh open x /x11-forwarding"
-                 */
-                sshopnsw[z].flgs = CM_INV;
-            }
-        }
-
         debug(F101,"SSH external parsing","",0);
 
 #ifdef SSH_DLL
@@ -13393,7 +13418,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifdef OS2
     if (cx == XXNSCR) {
 	if ((z = cmcfm()) < 0) return(z);
-        tt_scroll = 0;
+        tt_scroll = tt_scroll_usr = 0;
         return(success = 1);
     }
 #endif /* OS2 */

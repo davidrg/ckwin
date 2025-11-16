@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 extern int tnlm, tn_nlm;        /* Terminal newline mode, ditto for TELNET */
-extern videobuffer vscrn[];
+extern vscrn_t vscrn[];
 extern enum markmodes markmodeflag ;
 extern bool xprintff, printon ;
 extern HAB hab ;

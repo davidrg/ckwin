@@ -52,7 +52,8 @@ char * ck_cryear = "2025"; 		/* C-Kermit copyright year */
 */
 
 #ifdef OS2
-/* Kermit 95 version numbers come from here */
+/* Kermit 95 version numbers come from here as they're needed in a bunch of
+ * different places like resource scripts. */
 #include "ckover.h"
 #endif
 
@@ -78,6 +79,7 @@ char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
 
+#ifndef OS2
 #ifdef BETADATE                         /* Date of this version or edit */
 char *ck_s_date = __DATE__;             /* Compilation date */
 #else
@@ -85,6 +87,13 @@ char *ck_s_date = EDITDATE;		/* See top */
 
 #endif /* BETADATE */
 char *buildid = EDITNDATE;		/* See top */
+
+#else /* OS2 */
+/* On OS/2 and Windows, these come from ckover.h which contains all
+ * of the version number bits */
+char *ck_s_date = K95_REL_DATE;
+char *buildid = K95_REL_DATE_N;
+#endif /* OS2 */
 
 #ifdef UNIX
 static char sccsid[] = "@(#)C-Kermit 10.0";
@@ -1244,6 +1253,11 @@ extern int mdmtyp;                      /* Modem (/network) type */
 
 #ifdef NT
 extern int StartedFromDialer;
+#ifndef NOSPL
+#ifndef NORANDOM
+unsigned long srandThreadId = 0;
+#endif /*NORANDOM*/
+#endif /*NOSPL*/
 #ifdef NTSIG
 extern int TlsIndex;
 #endif /* NTSIG */
@@ -1271,6 +1285,7 @@ int cmd_rows = -1, cmd_cols = -1;       /* Command/console screen dimensions */
 #endif /* KUI */
 int k95stdio = 0;                       /* Stdio threads */
 int tt_bell = XYB_AUD | XYB_SYS;        /* BELL AUDIBLE (system sounds) */
+int tt_scroll_usr = 1;                  /* Saved value for tt_scroll */
 #else /* OS2 */
 int tt_rows = -1;                       /* Rows (height) */
 int tt_cols = -1;                       /* Columns (width) */
@@ -3353,6 +3368,13 @@ MAINNAME( argc, argv ) int argc; char **argv;
         for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
 	  c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
         srand((unsigned int)c);
+#ifdef NT
+        /* In Windows, the random number generator seed is per-thread. And the
+         * thread we're on right now probably isn't the thread that \frandom()
+         * will get executed on later. Store the thread ID so we know later if
+         * we need to do this again */
+        srandThreadId = GetCurrentThreadId();
+#endif /* NT */
     }
 #endif /* NORANDOM */
 #endif /* NOSPL */

@@ -19,6 +19,27 @@ mkdir lib
 copy regina.lib lib\
 ```
 
+Starting with Regina REXX 3.9.7, building with older compilers such as Visual
+C++ 6.0 and 4.0 is possible allowing it to run on Windows NT 3.51 or newer
+(including RISC platforms) as well as Windows 9x. When building with these older
+compilers, you must append `HAVE_MT=no` to the nmake line, for example: 
+`nmake -f makefile.win.vc HAVE_MT=no`
+
+Building for 32bit ARM
+----------------------
+Regina REXX doesn't support ARM32 (just like Microsoft!), but Kermit 95 does.
+The process for building it is a bit annoying:
+
+1. Build Regina from source for x86 (or arm64 if that's the platform you're on)
+   using the instructions above
+2. Grab a copy of `trexx.exe` that is produced during the build process and put
+   it somewhere safe
+3. Do a clean: `nmake -f makefile.win.vc clean`
+4. Put `trexx.exe` back where you found it
+5. Patch the makefile: `patch < ..\arm32.patch` - this will add an arm32 target,
+   and disable building of `trexx.exe`
+6. Switch to an ARM32 cross-compiler and build Regina as above setting `PLATFORM=arm32`
+
 RexxRE
 -------
 RexxRE is a handy regular expressions library for REXX available from

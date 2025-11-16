@@ -398,7 +398,15 @@ void KTerminal::disableMenuItem(UINT menuItemId) {
     }
 
     if (sysActions != NULL) {
+        // This the menubar is hidden and we're disabling menu items that live
+        // somewhere in the system menu. Start by checking if its in the
+        // Actions submenu.
         EnableMenuItem( sysActions, menuItemId, MF_BYCOMMAND | MF_GRAYED );
+
+        // Just in case this menu item lives in the system menu, rather than
+        // the actions menu
+        HMENU hSys = GetSystemMenu(hwnd(), FALSE);
+        EnableMenuItem( hSys, menuItemId, MF_BYCOMMAND | MF_GRAYED );
     }
 }
 
@@ -583,7 +591,7 @@ void KTerminal::createWin( KWin* par )
 
     if (status) {
         status->createWin( this );
-        int itemp[5] = { 350, 240, 130, 80, 0 };
+        int itemp[5] = { 370, 260, 150, 80, 0 };
         status->setParts( 5, itemp );
         status->setText( STATUS_CMD_TERM, "Command Screen" );
         status->setText( STATUS_LOCUS, "Locus: Local" );

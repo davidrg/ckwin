@@ -941,6 +941,7 @@ int nfntab = (sizeof(fntab) / sizeof(struct keytab));
 /* Terminal parameters table */
 static struct keytab trmtab[] = {
 #ifdef OS2
+    { "alternate-buffer", XYTALTBUF, 0 },
     { "answerback",    XYTANS,    0 },
 #endif /* OS2 */
 #ifdef CK_APC
@@ -1036,6 +1037,7 @@ static struct keytab trmtab[] = {
     { "newline-mode",  XYTNL,     0 },
 #ifdef OS2
     { "output-pacing", XYTPAC,    0 },
+    { "page",          XYTPAGE,   0 },
 #ifdef PCTERM
     { "pcterm",        XYTPCTERM, 0 },
 #endif /* PCTERM */
@@ -1065,6 +1067,7 @@ static struct keytab trmtab[] = {
     { "send-data",         XYTSEND, 0 },
     { "send-end-of-block", XYTSEOB, 0 },
     { "sgr-colors",            XYTSGRC,  0 },
+    { "size",                  XYTSIZE,  0 },
     { "sni-ch.code",           XYTSNICC, 0 },
     { "sni-firmware-versions", XYTSNIFV, 0 },
     { "sni-language",          XYTVTLNG, 0 },
@@ -1186,6 +1189,21 @@ struct keytab graphsettab[] = {  /* DEC VT Graphic Sets */
     { "keyboard", TT_GR_KBD, 0 }
 };
 int ngraphset = (sizeof(graphsettab) / sizeof(struct keytab));
+
+struct keytab altbufktab[] = {		/* Set TERM ALTERNATE-BUFFER */
+        { "active",    AB_ACTIVE,   CM_INV},
+        { "disabled",  AB_DISABLED, 0 },
+        { "enabled",   AB_ENABLED,  0 },
+        { "inactive",  AB_INACTIVE, CM_INV }
+};
+int naltbuf = (sizeof(altbufktab) / sizeof(struct keytab));
+
+struct keytab tpagektab[] = {		/* Set TERM PAGE */
+        { "active",            P_ACTIVE, 0 },
+        { "count",             P_COUNT,  0 },
+        { "cursor-coupling",   P_PCCM,   0 }
+};
+int npage = (sizeof(tpagektab) / sizeof(struct keytab));
 #endif /* OS2 */
 
 struct keytab adltab[] = {              /* Autodownload Options */
@@ -1291,6 +1309,11 @@ extern int autodl, adl_err, adl_ask;
 struct keytab beltab[] = {              /* Terminal bell mode */
 #ifdef OS2
     { "audible", XYB_AUD,  0 },
+#ifdef KUI
+    { "flash-window", XYB_FLASH, 0},
+#else
+    { "flash-window", XYB_FLASH, CM_INV },
+#endif /* KUI */
     { "none",    XYB_NONE, 0 },
 #else
     { "audible", XYB_AUD,  CM_INV },
@@ -1404,6 +1427,7 @@ int tt_cursorena_usr = 1;               /* Users Terminal cursor enabled */
 int tt_cursor_blink = 1;                /* Terminal Cursor Blink */
 int tt_answer = 0;                      /* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
+int tt_pages[VNUM] = {1,1,1,1};         /* Number of terminal pages */
 int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
 int tt_rkeys[VNUM] = {1,1,1,1};		/* Terminal roll keys (send) */
 int tt_rkeys_saved[VNUM] = {1,1,1,1};   /* Terminal roll keys (send, saved) */
@@ -1412,6 +1436,7 @@ int tt_ctstmo = 15;                     /* Terminal transmit-timeout */
 int tt_codepage = -1;                   /* Terminal code-page */
 int tt_update = 100;                    /* Terminal screen-update interval */
 int tt_updmode = TTU_FAST;              /* Terminal screen-update mode FAST */
+extern int decssdt;
 extern int updmode;
 #ifndef KUI
 int tt_status[VNUM] = {1,1,0,0};        /* Terminal status line displayed */
@@ -1425,10 +1450,10 @@ int tt_status_usr[VNUM] = {1,1,0,0};
 #else /* K95G */
 int tt_status[VNUM] = {0,0,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {0,0,0,0};
-int tt_clipboard_read = CLIPBOARD_DENY_NOTIFY,
-    tt_clipboard_write = CLIPBOARD_DENY_NOTIFY; /* Host clipboard access */
 #endif /* K95G */
 #endif /* KUI */
+int tt_clipboard_read = CLIPBOARD_DENY_NOTIFY,
+    tt_clipboard_write = CLIPBOARD_DENY_NOTIFY; /* Host clipboard access */
 int tt_senddata = 0;                    /* Let host read terminal data */
 extern int wy_blockend;                 /* Terminal Send Data EOB type */
 int tt_hidattr = 1;                     /* Attributes are hidden */
@@ -1437,11 +1462,12 @@ extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic,
 colorblink, colorbold, savedcolorselect, colordim,
-colorcursor;
+colorcursor, colorcrossedout;
 
-extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
+extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold,
+            truecrossedout;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
-		   savedtrueitalic, savedtruedim, savedtruebold;
+		   savedtrueitalic, savedtruedim, savedtruebold, savedtruecrossedout;
 extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr,
 		   dim_is_color, bold_font_only;
 
@@ -1486,11 +1512,13 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLBOL  14
 #define TTCOLDIM  15
 #define TTCOLCUR  16
+#define TTCOLCO   17
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "blink",              TTCOLBLI, 0 },      /* Blink color */
     { "bold",               TTCOLBOL, 0 },      /* Bold color */
     { "border",             TTCOLBOR, 0 },      /* Screen border color */
+    { "crossed-out-text",   TTCOLCO,  0 },      /* Crossed-out color */
 	{ "cursor", 			TTCOLCUR, 0 },		/* Cursor color */
     { "debug-terminal",     TTCOLDEB, 0 },      /* Debug color */
     { "dim",                TTCOLDIM, 0 },      /* Dim color */
@@ -1536,7 +1564,8 @@ int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 #define TTATTDIM  6
 #define TTATTINV  7
 #define TTATTITA  8
-#define TTATTDONE 9
+#define TTATTCO   9
+#define TTATTDONE 10
 
 struct keytab ttyattrtab[] = {
     { "blink",     TTATTBLI, 0 },
@@ -1545,6 +1574,7 @@ struct keytab ttyattrtab[] = {
 #else  /* KUI */
     { "bold",      TTATTBLD, CM_INV },
 #endif /* KUI */
+    { "crossed-out", TTATTCO, 0 },
     { "dim",       TTATTDIM, 0 },
     { "italic",    TTATTITA, 0 },
     { "protected", TTATTPRO, 0 },
@@ -2227,6 +2257,26 @@ struct keytab anbktab[] = {             /* For any command that needs */
     { "unsafe-message", 3,  CM_INV }
 };
 int nansbk = (sizeof(anbktab) / sizeof(struct keytab));
+
+#ifdef KUI
+struct keytab savtermopttab[] = {
+    { "/format",    XSTERM_FMT, CM_ARG },
+};
+int nsavtermopttab = (sizeof(savtermopttab) / sizeof(struct keytab));
+
+struct keytab savtermfmttab[] = {  /* SAVE TERM SCREEN /FORMAT:xxx */
+    { "bitmap",  XSTERM_FMT_BMP,     CM_INV },
+    { "bmp",     XSTERM_FMT_BMP,     0 },
+    { "emf",     XSTERM_FMT_EMF,     0 },
+#ifdef CK_HAVE_GDIPLUS
+    /* These formats rely on GDI+ for encoding */
+    { "gif",     XSTERM_FMT_GIF,     0 },
+    { "png",     XSTERM_FMT_PNG,     0 },
+#endif /* CK_HAVE_GDIPLUS */
+    { "text",    XSTERM_FMT_TEXT,    0 },
+};
+int nsavtermfmttab = (sizeof(savtermfmttab) / sizeof(struct keytab));
+#endif
 
 int win95_popup = 1;
 #ifdef NT
@@ -4621,6 +4671,9 @@ settrm() {
               case TTCOLITA:
                 coloritalic = attr;
                 break;
+              case TTCOLCO:
+                colorcrossedout = attr;
+                break;
               case TTCOLUND:
                 colorunderline = attr;
                 break;
@@ -4968,6 +5021,35 @@ settrm() {
         return(success = 1);
 
 #ifdef OS2
+      case XYTALTBUF: {                 /* SET TERMINAL ALTERNATE-BUFFER */
+          if ((x = cmkey(altbufktab,naltbuf,"Alternate Buffer setting","",
+                         xxstring)) < 0) {
+              return (x);
+          }
+
+          if ((y = cmcfm()) < 0)
+              return(y);
+
+          switch(x) {
+            case AB_DISABLED:
+              set_alternate_buffer_enabled(VTERM, FALSE);
+              break;
+            case AB_ENABLED:
+              set_alternate_buffer_enabled(VTERM, TRUE);
+              break;
+            case AB_INACTIVE: {
+                from_alternate_buffer(VTERM);
+              }
+              break;
+            case AB_ACTIVE: {
+                to_alternate_buffer(VTERM);
+              }
+              break;
+          }
+        }
+        return(success = 1);
+        break;
+
       case XYTANS: {                    /* SET TERMINAL ANSWERBACK */
 /*
   NOTE: We let them enable and disable the answerback sequence, but we
@@ -5461,13 +5543,15 @@ settrm() {
 #endif /* PCFONTS */
 
       case XYTVCH: {
-          extern int pheight, marginbot, cmd_rows, cmd_cols;
+          extern int pheight, cmd_rows, cmd_cols;
           if ((x = cmkey(tvctab,ntvctab,"",isWin95()?"win95-safe":"enabled",
                          xxstring)) < 0)
             return(x);
           if ((y = cmcfm()) < 0) return(y);
 #ifndef KUI
           if (x != tt_modechg) {
+              int p;
+              extern vscrn_t vscrn[];
               switch (x) {
                 case TVC_DIS:
                   /* When disabled the heights of all of the virtual screens */
@@ -5475,8 +5559,11 @@ settrm() {
                   /* window and may not be changed.                          */
                   /* The width of the window may not be altered.             */
                   tt_modechg = TVC_ENA;                 /* Temporary */
-                  if (marginbot > pheight-(tt_status[VTERM]?1:0))
-                    marginbot = pheight-(tt_status[VTERM]?1:0);
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      if (vscrn_page_margin_bot(VTERM,p) > pheight-(tt_status[VTERM]?1:0)) {
+                          vscrn_set_page_margin_bot(VTERM, p, pheight-(tt_status[VTERM]?1:0));
+                      }
+                  }
                   tt_szchng[VCMD] = 1 ;
                   tt_rows[VCMD] = pheight;
                   VscrnInit(VCMD);
@@ -5521,7 +5608,9 @@ settrm() {
                   cmd_rows = y;
                   cmd_cols = 80;
 
-                  marginbot = y-(tt_status[VTERM]?1:0);
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      vscrn_set_page_margin_bot(VTERM, p, y-(tt_status[VTERM]?1:0));
+                  }
                   tt_szchng[VTERM] = 2;
                   tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
                   tt_cols[VTERM] = 80;
@@ -5536,50 +5625,82 @@ settrm() {
 #endif /* KUI */
       }
       case XYTSTAT: {
-          extern int marginbot;
           if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
           if ((x = cmcfm()) < 0) return(x);
           if (y != tt_status[VTERM] || y != tt_status_usr[VTERM]) {
-              /* Might need to fixup the margins */
-              if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
-                if (y) {
-                    marginbot--;
-                } else {
-                    marginbot++;
-                }
-              tt_status_usr[VTERM] = tt_status[VTERM] = y;
+              int p;
+              extern vscrn_t vscrn[];
+              extern bool decssdt_override;
+
+              /* See the comment in ckoco3.c, function settermstatus for a
+               * description of what this is and why. */
+              int resize_window = ISK95(tt_type_mode) || ISVT520(tt_type_mode)
+                    || decssdt_override;
+
               if (y) {
-                    tt_szchng[VTERM] = 2;
-                    tt_rows[VTERM]--;
-                    VscrnInit(VTERM);  /* Height set here */
-#ifdef TNCODE
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      tn_snaws();
-#endif /* TNCODE */
-#ifdef RLOGCODE
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      ssh_snaws();
-#endif /* SSHBUILTIN */
+                  /* If the status line is turned off before a connection is
+                   * made (or the terminal reset), the status line type gets
+                   * set to blank. If we don't change the type here, then it
+                   * gets turned on but left blank so there is just a black
+                   * line at the bottom of the screen showing nothing. */
+                  if (decssdt == SSDT_BLANK) {
+                      decssdt = SSDT_INDICATOR;
+                  }
+              }
+
+              if (resize_window) {
+                  /* Change screen height only - not terminal height */
+		          tt_status[VTERM] = y;
+		          VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
               } else {
-                  tt_szchng[VTERM] = 1;
-                  tt_rows[VTERM]++;
-                  VscrnInit(VTERM);     /* Height set here */
+                  /* Might need to fixup the margins */
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      int margin = vscrn_page_margin_bot(VTERM,p);
+                      if ( margin == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
+                          if ( y ) {
+                              margin-- ;
+                          } else {
+                              margin++ ;
+                          }
+                          vscrn_set_page_margin_bot(VTERM, p, margin);
+                      }
+                  }
+                  tt_status_usr[VTERM] = tt_status[VTERM] = y;
+                  if (y) {
+                        tt_szchng[VTERM] = 2;
+                        tt_rows[VTERM]--;
+                        VscrnInit(VTERM);  /* Height set here */
 #ifdef TNCODE
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    tn_snaws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          tn_snaws();
 #endif /* TNCODE */
 #ifdef RLOGCODE
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    rlog_naws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          rlog_naws();
 #endif /* RLOGCODE */
 #ifdef SSHBUILTIN
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    ssh_snaws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          ssh_snaws();
 #endif /* SSHBUILTIN */
+
+
+                  } else {
+                      tt_szchng[VTERM] = 1;
+                      tt_rows[VTERM]++;
+                      VscrnInit(VTERM);     /* Height set here */
+#ifdef TNCODE
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        tn_snaws();
+#endif /* TNCODE */
+#ifdef RLOGCODE
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        ssh_snaws();
+#endif /* SSHBUILTIN */
+                  }
               }
           }
           return(1);
@@ -5600,6 +5721,26 @@ settrm() {
         if ((x = cmcfm()) < 0) return(x);
         sgrcolors = y;
         return(1);
+
+#ifdef OS2
+      case XYTSIZE: {
+        int width, height;
+        if ((y = cmnum("number of columns in display window during CONNECT",
+                       "80",10,&width,xxstring)) < 0) {
+            return(y);
+        }
+        if ((y = cmnum("number of rows in display window during CONNECT, not "
+                       "including status line", tt_status[VTERM]?"24":"25",
+                       10,&height,xxstring)) < 0) {
+            return(y);
+        }
+        if ((y = cmcfm()) < 0) return(y);
+
+        success = os2_settermwidth(width);
+        if (!success) return success;
+        return (success = os2_settermheight(height));
+        }
+#endif /* OS2 */
 
       case XYTSEND:
           if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
@@ -5757,6 +5898,12 @@ settrm() {
               if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
               if ((x = cmcfm()) < 0) return(x);
               savedtrueitalic = trueitalic = y;
+            break;
+
+          case TTATTCO:
+              if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+              if ((x = cmcfm()) < 0) return(x);
+              savedtruecrossedout = truecrossedout = y;
             break;
 
           case TTATTPRO: {      /* Set default Protected Character attribute */
@@ -6040,6 +6187,54 @@ settrm() {
           initvik = 1;                  /* Update VIK table */
           return(1);
       }
+
+      case XYTPAGE: {                   /* Paging settings */
+          extern int user_pages;
+          extern vscrn_t vscrn[];
+
+          if ((x = cmkey(tpagektab,npage,"Paging setting","",
+                         xxstring)) < 0) {
+              return (x);
+          }
+
+          switch(x) {
+            case P_COUNT:
+              /* Set current number of pages. Prompt for a number */
+              y = cmnum("Number of pages",
+                    ckitoa(ttype_pages()),10,&x,xxstring);
+              if ((x = setnum(&user_pages,x,y,ttype_pages())) < 0)
+                    return(x);
+              if (ISK95(tt_type))  tt_pages[VTERM] += 1;
+              return(success = 1);
+              break;
+
+            case P_PCCM:
+              /* Set PCCM on or off. Prompt for on/off */
+              if ((x = seton(&vscrn[VTERM].page_cursor_coupling)) < 0) return(x);
+              vscrn[VTERM].view_page = vscrn[VTERM].cursor.p;
+              return(success = 1);
+              break;
+
+            case P_ACTIVE: {
+              int pn;
+
+              /* Set current number of pages. Prompt for a number */
+              y = cmnum("Move cursor to page", "1",10,&x,xxstring);
+              if ((x = setnum(&pn,x,y,term_max_page(VTERM) + 1)) < 0)
+                    return(x);
+
+              pn -= 1;    /* page numbers are 0-based internally */
+              switch_to_page(VTERM, pn, vscrn[VTERM].page_cursor_coupling);
+
+              return(success = 1);
+              }
+              break;
+          }
+
+          return(success = 1);
+      }
+      break;
+
 
 #ifdef PCTERM
       case XYTPCTERM:                   /* PCTERM Keyboard Mode */
@@ -6741,6 +6936,17 @@ setbell() {
         tt_bell = 1;
 #endif /* OS2 */
         break;
+#ifdef OS2
+      case XYB_FLASH: {
+#ifdef KUI
+        extern int user_bell_flash, tt_bell_flash;
+        if ((x = cmkey(onoff,2,"","on",xxstring)) < 0) return(x);
+        if ((z = cmcfm()) < 0) return(z);
+        user_bell_flash = tt_bell_flash = x;
+#endif /* KUI */
+      }
+      break;
+#endif /* OS2 */
     }
     return(1);
 }
@@ -12477,7 +12683,7 @@ z_out(channel,s,length,flags) int channel, flags, length; char * s;
 #endif /* DEBUG */
     if (!z_inited)                      /* File i/o inited? */
       return(z_error = FX_NOP);
-    if (channel >= z_maxchan)           /* Channel in range? */
+    if (channel >= z_maxchan || channel < 0)   /* Channel in range? */
       return(z_error = FX_CHN);
     if (!z_file[channel])
       return(z_error = FX_NOP);
@@ -14415,7 +14621,7 @@ savkeys(name,disp) char * name; int disp;
 #ifdef OS2
 #ifndef NOLOCAL
 static struct keytab trmtrmopt[] = {
-    { "screen",     SV_SCRN, CM_INV },  /* For future save-as-image feature */
+    { "screen",     SV_SCRN, 0 },
     { "scrollback", SV_SCRL, 0 }
 };
 #endif /* NOLOCAL */
@@ -14453,6 +14659,11 @@ dosave(xx) int xx;
 #ifdef ZFNQFP
     struct zfnfp * fnp;
 #endif /* ZFNQFP */
+#ifdef OS2
+#ifdef KUI
+    int format = XSTERM_FMT_TEXT;
+#endif /* KUI */
+#endif /* OS2 */
 
 #ifndef NOSETKEY
     if (xx == XSKEY) {                  /* SAVE KEYMAP.. */
@@ -14472,11 +14683,136 @@ dosave(xx) int xx;
             break;
 #ifdef OS2
 #ifndef NOLOCAL
+
           case XSTERM:                  /* SAVE TERMINAL.. */
+          {
+#ifdef KUI
+            struct FDB of, sw;
+#endif /* KUI */
+
             if ((y = cmkey(trmtrmopt,2,
                            "What to save","scrollback",xxstring)) < 0)
               return(y);
-            break;
+#ifdef KUI
+            if (y == SV_SCRL) break;
+
+            /* From here on we're saving the terminal screen. For the terminal
+             * screen we have the option of saving in multiple image formats
+             * in addition to text. This relies on GDI (or even GDI+ on newer
+             * versions of Windows) so its KUI-only.
+             */
+
+            /* Collect a filename, optionally with a format switch... */
+            cmfdbi(&sw,
+                _CMKEY,		/* fcode */
+                "Filename, or switch", /* hlpmsg */
+                "",		/* default */
+                "",		/* addtl string data */
+                nsavtermopttab,	/* addtl numeric data 1: tbl size */
+                4,			    /* addtl numeric data 2: 4 = cmswi */
+                xxstring,		/* Processing function */
+                savtermopttab,	/* Keyword table */
+                &of		        /* Pointer to next FDB */
+                );
+	        cmfdbi(&of,		/* 2nd FDB - output file */
+		        _CMOFI,		/* output file */
+		        "",		    /* hlpmsg */
+		        "",		    /* default */
+		        "",		    /* addtl string data */
+		        0,			/* addtl numeric data 1 */
+		        0,			/* addtl numeric data 2 */
+		        xxstring,
+		        NULL,
+		        NULL
+		     );
+
+            while (1) {
+		      x = cmfdb(&sw);
+		      if (x == -3) break;
+		      if (x < 0) return(x);
+		      if (cmresult.fcode != _CMKEY) break;
+		      if (!cmgbrk()) {
+		          printf("?This switch requires an argument\n");
+		          return(-9);
+		      }
+              switch (cmresult.nresult) {
+		        case XSTERM_FMT:	/* /FORMAT:keyword */
+		          if ((y = cmkey(savtermfmttab,nsavtermfmttab,"", "text",xxstring)) < 0)
+			          return(y);
+		          format = y;
+		          break;
+		      }
+            } /* while.. */
+
+            if (cmresult.fcode == _CMOFI) { /* Filename */
+              if (cmresult.sresult) {
+                ckstrncpy(line,cmresult.sresult,LINBUFSIZ);
+                if (zfnqfp(line,TMPBUFSIZ,tmpbuf)) {
+                  ckstrncpy(line,tmpbuf,LINBUFSIZ);
+                }
+		      }
+	        }
+
+            switch(format) {
+            case XSTERM_FMT_TEXT:
+                {
+                    /* Get NEW/APPEND disposition */
+                    if ((z = cmkey(disptb,2,"Disposition","new",xxstring)) < 0)
+                      return(z);
+
+                    disp = z;
+                    if ((x = cmcfm()) < 0)              /* Get confirmation */
+                      return(x);
+
+                    return(success = savscrbk(VTERM,line[0] ? line : NULL,disp,TRUE));
+
+                }
+                break;
+            case XSTERM_FMT_EMF:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToEmfFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+            case XSTERM_FMT_BMP:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToBmpFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+#ifdef CK_HAVE_GDIPLUS
+            case XSTERM_FMT_PNG:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToPngFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+            case XSTERM_FMT_GIF:
+                {
+                    if (line[0]) {
+                        success = KuiRenderToGifFile(VTERM, line);
+                    }
+
+                    return success ? success : -9;
+                }
+                break;
+#endif /* CK_HAVE_GDIPLUS */
+            }
+
+
+            return -9;
+#endif /* KUI */
+          }
+          break;
 #endif /* NOLOCAL */
 #endif /* OS2 */
         }

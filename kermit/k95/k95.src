@@ -33,11 +33,10 @@
 # level with more extensions from xterm and elsewhere if they don't conflict.
 #
 # Differences from xterm-256color:
-#  Not many! In general, if an application doesn't need L/R margins or
-#  the alternate screen the TERM=xterm-256color shouldn't break anything. The
-#  main differences are:
-#   - No support for left/right margins yet    | Both of these are 
-#   - No support for the alternate screen yet  | high-priority features
+#  Not many! In general, if an application doesn't need L/R margins then
+#  TERM=xterm-256color shouldn't break anything. The main differences are:
+#   - No support for left/right margins yet    | Both of these are
+#   - No title stack                           | high-priority features
 #   - K95 has a status line (later versions of xterm seem to as well though)
 #   - Cursor normal and very visible is set via DECSCUSR (VT520) to change its
 #     shape from the default blinking underline to a blinking block
@@ -45,14 +44,17 @@
 #     *should* be good enough to get K95 into a sensible state.
 #   - K95 doesn't include 'ii' in the acsc string - likely not supported.
 #
-# Differences between K95 variants:
-#   - Console versions for Windows and OS/2:
-#     - are 16 colors only with no control over the palette (if a program
-#       ignores terminfo and tries 256-color or direct RGB anyway, K95 will
-#       still try to "do the right thing" and pick the nearest color in its 16-
-#       color palette).
-#     - Simulate Double-height and double-width lines
-#     - Bold, Underline, Italic, etc are simulated
+# There are two major variants of Kermit 95: the one that runs as a GUI
+# application on Windows, and the one that runs as a text-mode application in
+# the Windows or OS/2 console window. The text-mode version:
+#   - is 16 colors only with no control over the palette (if a program
+#     ignores terminfo and tries 256-color or direct RGB anyway, K95 will
+#     still try to "do the right thing" and pick the nearest color in its 16-
+#     color palette).
+#   - Simulates Double-height and double-width lines
+#   - Simulates the Bold, Underline, Italic, etc. attributes
+#
+# Additionally,
 #   - The GUI version for older versions of windows may not allow direct
 #     setting of arbitrary RGB colors via SGR. The palette can still be
 #     customised however, and up to 256 colors are still supported.
@@ -70,13 +72,15 @@
 #   report a 16-color palette as while it *understands* 256-color and direct
 #   RGB, colors are always converted to something valid for its 16-color
 #   display palette
+# - Should probably have a different terminfo entry for the console variant,
+#   which lacks a number of features (>16 colours, synchronised output, etc)
 # - Is there a capability to switch into/out of meta-sends-esc mode like there
 #   is for meta-sets-8th-bit? This would set/reset DEC mode 1036.
 # - We're currently using the private-mode mc4/mc5 as the VT320 terminfo entry
 #   did which differs from xterm, and xterm also advertises the mc5i
 #   capability. Need to investigate which is more appropriate.
 #
-# - Extra capabilities to consier:
+# - Extra capabilities to consider:
 #   - Terminfo has capabilities for the PC scancode keyboard (PCTERM) mode.
 #     And K95 does implement PCTERM mode, its just lacking the VT420 control
 #     sequences to enter/exit it - it has to be initiated by the user at the
@@ -278,11 +282,9 @@ k95|Kermit 95 v3.0.0 beta 8,
 	rmacs=\E%%G\E(B,
 # Turn off automatic margins (am)
 	rmam=\E[?7l,
-#######
-# TODO: Exit alternate screen mode
-# TODO: Not supported in K95 3.0 beta.8 - maybe in the next beta.
-# TODO:	rmcup=\E[?1049l\E[23;0;0t,
-#######
+# Exit alternate screen mode
+# TODO: Add \E[23;0;0t to pop the title from the stack (when we have one)
+    rmcup=\E[?1049l,
 # Exit insert mode
 	rmir=\E[4l,
 # SGR Italic attribute OFF
@@ -295,6 +297,8 @@ k95|Kermit 95 v3.0.0 beta 8,
 	rmso=\E[27m,
 # Exit undeline mode
 	rmul=\E[24m,
+# Exit strikeout/crossed-out
+    rmxx=\E[29m,
 # Reset string 2: Just do a hard reset - that should set everything back to
 # defaults or user-specified values. If it doesn't, its probably a K95 bug.
 	rs2=\Ec,
@@ -321,11 +325,10 @@ k95|Kermit 95 v3.0.0 beta 8,
 	smacs=\E%%@\E(0,
 # Enable alternate margins (am)
 	smam=\E[?7h,
+# Enter alternate screen mode
+# TODO: Add \E[22;0;0t to push the title on the stack (when we have one)
+    smcup=\E[?1049h,
 #######
-# TODO: Enter alternate screen mode
-# TODO: K95 doesn't implement the alternate screen yet
-# TODO:	smcup=\E[?1049h\E[22;0;0t,
-#
 # TODO: Set left margin at column p1
 # TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
 # TODO:	smglp=\E[?69h\E[%i%p1%ds
@@ -334,7 +337,7 @@ k95|Kermit 95 v3.0.0 beta 8,
 # TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
 # TODO:	smglr=\E[?69h\E[%i%p1%d;%p2%ds,
 #
-# TODO: Set right amrgin at column p1
+# TODO: Set right margin at column p1
 # TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
 # TODO:	smgrp=\E[?69h\E[%i;%p1%ds,
 #######
@@ -348,8 +351,12 @@ k95|Kermit 95 v3.0.0 beta 8,
 	smso=\E[7m,
 # Enter underline mode
 	smul=\E[4m,
-# Set cursor style (DECSCUSR
-	\E[%p1%d\sq,
+# Enter strikeout/crossed-out mode
+    smxx=\E[9m,
+# Set cursor style (DECSCUSR)
+	Ss=\E[%p1%d\sq,
+# Synchronized Output (K95G only)
+    Sync=\E[?2026%?%p1%{1}%-%tl%eh,
 # Clear all tab stops
 	tbc=\E[3g,
 # Move to status line

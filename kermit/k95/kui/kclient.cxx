@@ -9,6 +9,11 @@
 #include "ikcmd.h"
 #include "ikextern.h"
 
+#ifdef CK_HAVE_GDIPLUS
+#include <gdiplus.h>
+using namespace Gdiplus;
+#endif /* CK_HAVE_GDIPLUS */
+
 typedef struct _K_WORK_STORE {
     int               offset;
     int               length;
@@ -34,13 +39,18 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int tt_update;
+extern vscrn_t vscrn[];
 extern int scrollflag[];
+extern enum markmodes markmodeflag[] ;
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
-extern int trueblink, trueunderline, trueitalic, truedim, truebold;
+extern int trueblink, trueunderline, trueitalic, truedim, truebold,
+        truecrossedout;
 extern int decstglt, decatcbm, decatcum;
 cell_video_attr_t geterasecolor(int);
 int tt_old_update;
+extern int tt_sync_output;  /* ckoco3.c */
+extern int tt_sync_output_timeout;
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
@@ -89,12 +99,26 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
 VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
 #endif
 {
+    /* Guard against the terminal getting 'stuck' because something turns
+     * synchronised output on and leaving it on forever. */
+    if (tt_sync_output) {
+        if (tt_sync_output_timeout > 0) {
+            tt_sync_output_timeout -= tt_update;
+        }
+        if (tt_sync_output_timeout <= 0) {
+            tt_sync_output = FALSE;
+            tt_sync_output_timeout = 0;
+            VscrnIsDirty(VTERM);
+        }
+    }
+
     // debug(F111,"KTimerProc()","msg",msg);
     // debug(F111,"KTimerProc()","id",id);
     // debug(F111,"KTimerProc()","dwtime",dwtime);
     KClient* client = (KClient*) kglob->hwndset->find( hwnd );
     if( client ) {
-        if( ::VscrnClean( vmode /* client->getClientID() */ ) )
+        if( ::VscrnClean( vmode /* client->getClientID() */ )
+            && (!tt_sync_output || vmode != VTERM))
             client->getDrawInfo();
         else
             client->checkBlink();
@@ -163,21 +187,12 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     clientPaint = new K_CLIENT_PAINT;
     memset( clientPaint, '\0', sizeof(K_CLIENT_PAINT) );
 
-    // allocate the space in one chunck so it can be cleared in one call
-    //
     long maxcells = ::getMaxDim();
-    int column, row;
-    ::getMaxSizes( &column, &row );
-    //  workTempSize = (maxcells * sizeof(ushort) * 5) + (row * sizeof(ushort));  // This seems to allocate almost twice as much memory as actually needed!
-    workTempSize = (maxcells * ((sizeof(ushort) * 2) + sizeof(cell_video_attr_t))) + (MAXSCRNROW * sizeof(ushort));
-    workTemp = new uchar[ workTempSize ];
-    memset( workTemp, '\0', workTempSize);
-
-    clientPaint->textBuffer = textBuffer     = (ushort*)            &(workTemp[0]); /* One per cell */
-    clientPaint->attrBuffer = attrBuffer     = (cell_video_attr_t*) &(workTemp[ maxcells * sizeof(ushort)]); /* One per cell */
-    clientPaint->effectBuffer = effectBuffer = (ushort*)            &(workTemp[maxcells * (sizeof(cell_video_attr_t) + sizeof(ushort))]); /* One per cell */
-    clientPaint->lineAttr = lineAttr         = (ushort*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 2 * sizeof(ushort))]); /* One per line */
-
+    workTempSize = allocateClientPaintBuffers(clientPaint, maxcells, &workTemp);
+    textBuffer = clientPaint->textBuffer;
+    attrBuffer = clientPaint->attrBuffer;
+    effectBuffer = clientPaint->effectBuffer;
+    lineAttr = clientPaint->lineAttr;
 
     workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
@@ -188,6 +203,7 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     maxCursorCount = 1100;
     blinkInterval  = 600;
 
+    /* Invalid vscrn ID to always use the current vscrn */
     ikterm = new IKTerm( vmode /* clientID */, clientPaint );
     wc = 0;
     vscrollpos = hscrollpos = 0;
@@ -233,6 +249,26 @@ void KClient::startTimer() {
     stopTimer();
     tt_old_update = tt_update;
     timerID = SetTimer( hWnd, IDT_CLIENTTIMER, tt_update, KTimerProc );
+}
+
+size_t KClient::allocateClientPaintBuffers(K_CLIENT_PAINT* clientPaint,
+            long maxcells, uchar **workTempOut) {
+    // allocate the space in one chunck so it can be cleared in one call
+    //
+    int column, row;
+    ::getMaxSizes( &column, &row );
+    //  workTempSize = (maxcells * sizeof(ushort) * 5) + (row * sizeof(ushort));  // This seems to allocate almost twice as much memory as actually needed!
+    size_t workTempSize = (maxcells * ((sizeof(ushort) * 2) + sizeof(cell_video_attr_t))) + (MAXSCRNROW * sizeof(ushort));
+    uchar* workTemp = new uchar[ workTempSize ];
+    memset( workTemp, '\0', workTempSize);
+
+    clientPaint->textBuffer =   (ushort*)            &(workTemp[0]); /* One per cell */
+    clientPaint->attrBuffer =   (cell_video_attr_t*) &(workTemp[ maxcells * sizeof(ushort)]); /* One per cell */
+    clientPaint->effectBuffer = (ushort*)            &(workTemp[maxcells * (sizeof(cell_video_attr_t) + sizeof(ushort))]); /* One per cell */
+    clientPaint->lineAttr =     (ushort*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 2 * sizeof(ushort))]); /* One per line */
+
+    *workTempOut = workTemp;
+    return workTempSize;
 }
 
 /*------------------------------------------------------------------------
@@ -524,6 +560,8 @@ void KClient::endSizing( Bool doAnyway )
 
     if( vmode /* clientID */ == VCS )
         return;
+    if( vmode /* clientID */ == VSTATUS)
+        return;
 
     int w, h;
     getEndSize( w, h );
@@ -608,7 +646,13 @@ void KClient::getEndSize( int& w, int& h )
 Bool KClient::paint()
 {
     clearPaintRgn();
-    getDrawInfo();
+    if (tt_sync_output && vmode == VTERM) {
+        /* in synchronized output mode - keep re-rendering the existing display
+         * until we exit synchronized output mode. */
+        writeMe();
+    } else {
+        getDrawInfo();
+    }
     return TRUE;
 }
 
@@ -688,7 +732,7 @@ void KClient::checkBlink()
             cursorRect.right = cursorRect.left + font->getFontW();
             cursorRect.bottom = cursorRect.top + adjustedH;
 
-            if ( cursorena[vmode] ) {
+            if ( cursorena[vmode] && cursor_on_visible_page(vmode) || markmodeflag[vmode] != notmarking ) {
                 if ( !tt_cursor_blink ) {
                     if (!cursor_displayed && _inFocus || cursor_displayed && !_inFocus) {
                         ToggleCursor( hdcScreen(), &cursorRect );
@@ -816,7 +860,7 @@ void KClient::writeMe()
     if (cursorCount%300 == 0) {
         if (ikterm->getCursorPos() && (_inFocus || (!_inFocus && cursor_displayed)))
         {
-            if ( cursorena[vmode] ) {
+            if ( cursorena[vmode] && cursor_on_visible_page(vmode) || markmodeflag[vmode] != notmarking) {
                 if ( !tt_cursor_blink ) {
                     if (!cursor_displayed && _inFocus || cursor_displayed && !_inFocus) {
                         cursor_displayed = _inFocus;
@@ -855,6 +899,7 @@ void KClient::writeMe()
             Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
+			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
             if (decstglt == DECSTGLT_ALTERNATE) {
@@ -871,6 +916,32 @@ void KClient::writeMe()
 
             if( normal )
                 getFont()->resetFont( hdc() );
+            else if (crossedOut) {
+                if( bold && underline && italic )
+                    getFont()->setCrossedOutBoldUnderlineItalic( hdc() );
+                else if( bold && underline )
+                    getFont()->setCrossedOutBoldUnderline( hdc() );
+                else if( dim && underline && italic )
+                    getFont()->setCrossedOutDimUnderlineItalic( hdc() );
+                else if( dim && underline )
+                    getFont()->setCrossedOutDimUnderline( hdc() );
+                else if( underline && italic )
+                    getFont()->setCrossedOutUnderlineItalic( hdc() );
+                else if( bold && italic )
+                    getFont()->setCrossedOutBoldItalic( hdc() );
+                else if( bold )
+                    getFont()->setCrossedOutBold( hdc() );
+                else if( dim && italic )
+                    getFont()->setCrossedOutDimItalic( hdc() );
+                else if( dim )
+                    getFont()->setCrossedOutDim( hdc() );
+                else if( underline )
+                    getFont()->setCrossedOutUnderline( hdc() );
+                else if ( italic )
+                    getFont()->setCrossedOutItalic( hdc() );
+		    	else
+                    getFont()->setCrossedOut( hdc() );
+            }
             else if( bold && underline && italic )
                 getFont()->setBoldUnderlineItalic( hdc() );
             else if( bold && underline )
@@ -998,7 +1069,7 @@ void KClient::writeMe()
 
     // adjust the vertical scrollbar
     //
-    int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : tt_scrsize[vmode];
+    int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : clientPaint->page_length;
     vert->setRange( max, thi - (tt_status[vmode]?1:0), FALSE );
     horz->setRange( clientPaint->maxWidth, VscrnGetWidth(vmode) );
 
@@ -1026,6 +1097,630 @@ void KClient::writeMe()
             break;
         }
     }
+}
+
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Renders the specified vscrn to a device context for saving.
+ *  - Does not render the cursor
+ *  - All blinking elements are rendered as visible
+ *  - Uses the current font and font size
+ * Its based on a copy&paste of writeMe() with blinking and cursor related
+ * bits removed and its own copy of IKTerm and the K_CLIENT_PAINT to grab
+ * a single snapshot of the state of the vscrn.
+ *
+ * TODO: Someday writeMe() and this function should be refactored into a
+ *       bunch of methods and/or classes to try and maximise code sharing.
+ */
+BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
+    int twid, thi;
+    BOOL success = TRUE;
+
+    // Initialise font
+    font->setFont(hdc);
+
+    // Get dimensions of the vscrn
+    // Can't use ::getDimensions as that always returns the current vscrn
+    twid = VscrnGetWidth(vnum);
+    thi = VscrnGetDisplayHeight(vnum);
+
+    // Get dimensions
+    int w, h;
+    h = thi * font->getFontSpacedH();
+    w = twid * font->getFontW();
+
+    // Erase the background with default color
+    RECT r;
+    r.left = 0;
+    r.top = 0;
+    r.right = w;
+    r.bottom = h;
+
+    DWORD rgb = cell_video_attr_background_rgb(geterasecolor(vnum));
+    HBRUSH bgBrush = CreateSolidBrush( rgb );
+    FillRect( hdc, &r, bgBrush);
+    DeleteObject( bgBrush );
+
+    // Grab a snapshot of the terminal screen
+    long maxcells = ::getMaxDim();
+    K_CLIENT_PAINT clientPaint;
+    uchar *workBuf;
+    allocateClientPaintBuffers(&clientPaint, maxcells, &workBuf);
+    ushort* textBuffer            = clientPaint.textBuffer;
+    cell_video_attr_t* attrBuffer = clientPaint.attrBuffer;
+    ushort* effectBuffer          = clientPaint.effectBuffer;
+    ushort* lineAttr              = clientPaint.lineAttr;
+
+    K_WORK_STORE *workStore = new K_WORK_STORE[ maxcells ];
+    memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
+
+    IKTerm ikterm(vnum, &clientPaint);
+    if (!ikterm.getDrawInfo(vnum)) {
+        // TODO: Retry a few times in case we just couldn't get the mutex in time.
+        delete workBuf;
+        delete workStore;
+        return FALSE;
+    }
+
+    // Collect data up into runs of text with the same attributes
+    int xoffset = 0, yoffset = 0;  // Used by scrolling
+    int wc = 0;
+    int xpos, i;
+    int totlen = clientPaint.len;
+    _K_WORK_STORE* kws;
+
+    cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
+    ushort lattr = ushort(-1);
+    ushort effect = ushort(-1);
+    for( i = 0; i < totlen; i++ )
+    {
+        xpos = i % twid;
+        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) || effectBuffer[i] != effect )
+        {
+            kws = &(workStore[wc]);
+
+            kws->x = xpos * font->getFontW() - xoffset;
+            kws->y = (i / twid) * font->getFontSpacedH();
+
+            kws->offset = i;
+            if( wc )
+                workStore[wc-1].length = i - workStore[wc-1].offset;
+            attr = kws->attr = attrBuffer[i];
+            effect = kws->effect = effectBuffer[i];
+            wc++;
+        }
+    }
+    if( wc )
+        workStore[wc-1].length = i - workStore[wc-1].offset;
+
+    int interSpace[MAXNUMCOL];
+    int fontw = font->getFontW();
+    for( i = 0; i < MAXNUMCOL; i++ )
+        interSpace[i] = fontw;
+
+    // Output text in runs with matching attributes
+    RECT rect;
+    cell_video_attr_t prevAttr = cell_video_attr_init_vio_attribute(255);
+    ushort prevEffect = uchar(-1);
+    BOOL blink;
+    for( i = 0; i < wc; i++ )
+    {
+        kws = &(workStore[i]);
+        if( !cell_video_attr_equal(prevAttr, kws->attr) )
+        {
+            prevAttr = kws->attr;
+
+            /* These are the default colors used by the console window           */
+            /* This needs to be replaced by a class that allows the color values */
+            /* to be set by the user and stored somewhere.                       */
+            /* The RGBTable is now set via SET GUI RGB commands.                 */
+            SetBkColor( hdc, cell_video_attr_background_rgb(prevAttr));
+            SetTextColor( hdc, cell_video_attr_foreground_rgb(prevAttr));
+        }
+
+        if( prevEffect != kws->effect )
+        {
+            prevEffect = kws->effect;
+            Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
+            Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
+            Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
+            Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
+            Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
+			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
+            blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
+
+            if (decstglt == DECSTGLT_ALTERNATE) {
+                // DECSTGLT says we should show attributes as colors. DECATCUM
+                // and DECATCBM *may* say we should still do true underline and
+                // true blink even while doing these as colors.
+                bold = FALSE; dim = FALSE; italic = FALSE;
+
+                underline = decatcum && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
+                blink = decatcbm && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
+
+                normal = !underline && !blink;
+            }
+
+            if( normal )
+                font->resetFont( hdc );
+            else if (crossedOut) {
+                if( bold && underline && italic )
+                    font->setCrossedOutBoldUnderlineItalic( hdc );
+                else if( bold && underline )
+                    font->setCrossedOutBoldUnderline( hdc );
+                else if( dim && underline && italic )
+                    font->setCrossedOutDimUnderlineItalic( hdc );
+                else if( dim && underline )
+                    font->setCrossedOutDimUnderline( hdc );
+                else if( underline && italic )
+                    font->setCrossedOutUnderlineItalic( hdc );
+                else if( bold && italic )
+                    font->setCrossedOutBoldItalic( hdc );
+                else if( bold )
+                    font->setCrossedOutBold( hdc );
+                else if( dim && italic )
+                    font->setCrossedOutDimItalic( hdc );
+                else if( dim )
+                    font->setCrossedOutDim( hdc );
+                else if( underline )
+                    font->setCrossedOutUnderline( hdc );
+                else if ( italic )
+                    font->setCrossedOutItalic( hdc );
+		    	else
+                    font->setCrossedOut( hdc );
+            }
+            else if( bold && underline && italic )
+                font->setBoldUnderlineItalic( hdc );
+            else if( bold && underline )
+                font->setBoldUnderline( hdc );
+            else if( dim && underline && italic )
+                font->setDimUnderlineItalic( hdc );
+            else if( dim && underline )
+                font->setDimUnderline( hdc );
+            else if( underline && italic )
+                font->setUnderlineItalic( hdc );
+            else if( bold && italic )
+                font->setBoldItalic( hdc );
+            else if( bold )
+                font->setBold( hdc );
+            else if( dim && italic )
+                font->setDimItalic( hdc );
+            else if( dim )
+                font->setDim( hdc );
+            else if( underline )
+                font->setUnderline( hdc );
+            else if ( italic )
+                font->setItalic( hdc );
+        }
+
+        rect.left = kws->x;
+        rect.top = kws->y;
+        rect.right = rect.left + kws->length * font->getFontW();
+        rect.bottom = rect.top + font->getFontSpacedH();
+
+        if( rect.right == twid * font->getFontW() )
+            rect.right += margin;
+
+        if( rect.bottom == thi * font->getFontSpacedH() )
+            rect.bottom += margin;
+
+        // This is where writeMe() decides whether or not to render blinking text.
+        ExtTextOutW( hdc, rect.left, rect.top,
+                     ETO_CLIPPED | ETO_OPAQUE,
+                     &rect,
+                     (wchar_t*) &(textBuffer[ kws->offset ]),
+                     kws->length,
+                     (int*)&interSpace );
+    }
+
+    // Stretch the contents of any double-height or double-wide lines to
+    // double-height or double-wide size. The EMF output doesn't support doing
+    // this.
+    // TODO: Implement this using a different font size instead, and update the
+    //       HELP SAVE content accordingly.
+    if ((GetDeviceCaps(hdc, RASTERCAPS) & RC_STRETCHBLT) &&
+            GetObjectType(hdc) != OBJ_ENHMETADC) {
+        HDC hdcScratch = CreateCompatibleDC( hdc );
+        HBITMAP scratchBitmap = CreateCompatibleBitmap( hdc, w, h );
+        SelectObject( hdcScratch, scratchBitmap );
+        for( i = 0; i < thi; i++ )
+        {
+            lattr = lineAttr[i];
+            if( lattr == VT_LINE_ATTR_NORMAL )
+                continue;
+
+            Bool dblWide = lattr & VT_LINE_ATTR_DOUBLE_WIDE ? TRUE : FALSE;
+            Bool dblHigh = lattr & VT_LINE_ATTR_DOUBLE_HIGH ? TRUE : FALSE;
+            Bool upper = lattr & VT_LINE_ATTR_UPPER_HALF ? TRUE : FALSE;
+            Bool lower = lattr & VT_LINE_ATTR_LOWER_HALF ? TRUE : FALSE;
+
+            int destx = 0;
+            int desty = i * font->getFontSpacedH();
+            int destw = twid * font->getFontW();
+            int desth = font->getFontSpacedH();
+
+            int srcx = 0;
+            int srcy = upper ? desty : (desty + font->getFontSpacedH()/2);
+            int srcw = dblWide ? (destw/2) : destw;
+            int srch = dblHigh ? (desth/2) : desth;
+            if( dblWide && !dblHigh )
+                srcy = desty;
+
+            StretchBlt( hdcScratch, destx, desty, destw, desth
+                , hdc, srcx, srcy, srcw, srch, SRCCOPY );
+
+            StretchBlt( hdc, destx, desty, destw, desth
+                , hdcScratch, destx, desty, destw, desth, SRCCOPY );
+
+            if( i == thi - 1 ) {
+                desty += font->getFontSpacedH();
+                StretchBlt( hdcScratch, 0, 0, destw, margin
+                    , hdc, 0, desty, srcw, margin, SRCCOPY );
+
+                StretchBlt( hdc, 0, desty, destw, margin
+                    , hdcScratch, 0, 0, destw, margin, SRCCOPY );
+            }
+        }
+        DeleteDC( hdcScratch );
+        DeleteObject( scratchBitmap );
+    }
+
+    success = GdiFlush();
+
+    delete workBuf;
+    delete workStore;
+
+    return success;
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Renders the the specified vscrn to a device-independent bitmap (DIB)
+ * suitable for saving. Returns an HBITMAP, and the pixel data via
+ * outPixels. If an error occurs, NULL is returned.
+ */
+HBITMAP KClient::renderToBitmap(int vnum, DWORD **outPixels) {
+    KFont font(this->font->getLogFont());
+
+    HDC hDC = GetDC(NULL);
+    HDC hMDC = CreateCompatibleDC(hDC);
+
+    font.setFont(hMDC); // Required for getFontW/getFontSpacedH to work
+
+    int h = VscrnGetDisplayHeight(vnum) * font.getFontSpacedH();
+    int w = VscrnGetWidth(vnum) * font.getFontW();
+
+    BITMAPINFO bmi;
+    memset(&bmi, 0, sizeof(BITMAPINFO));
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = w;
+    bmi.bmiHeader.biHeight = h;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    DWORD *pixels;
+    HBITMAP hbmp = CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, (void**)&pixels, NULL, NULL);
+    *outPixels = pixels;
+
+    ReleaseDC(NULL, hDC);
+
+    HBITMAP hOldBmp = (HBITMAP)SelectObject(hMDC, hbmp);
+    DeleteObject(hOldBmp);
+
+    BOOL success = renderToDc(hMDC, &font, vnum, margin());
+
+    DeleteObject(hMDC);
+
+    if (!success) {
+        DeleteObject(hbmp);
+        hbmp = NULL;
+    }
+
+    return hbmp;
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Renders the specified vscrn to an EMF file with the specified filename.
+ * If an error occurs, FALSE is returned. Double Height/Double Wide lines are
+ * rendered as Single Height/Single Wide due to limitations in GDIs EMF
+ * recorder. */
+BOOL KClient::renderToEmfFile(int vnum, char* filename) {
+
+    HDC hdcEMF = CreateEnhMetaFile(NULL, filename, NULL,
+        vnum == VTERM ? "Kermit-95\0Terminal Screen\0"
+            : vnum == VCMD ?  "Kermit-95\0Command Screen\0"
+                : "Kermit-95\0Other Screen\0");
+
+    KFont font(this->font->getLogFont());
+
+    BOOL success = renderToDc(hdcEMF, &font, vnum, margin());
+
+    HENHMETAFILE hemf = CloseEnhMetaFile(hdcEMF);
+    DeleteEnhMetaFile(hemf);
+
+    return success;
+}
+
+
+#ifdef CK_HAVE_GDIPLUS
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Gets the Class Identifier for the specified GDI+ Image Encoder. This
+ * comes from Microsoft sample code:
+ *   https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-retrieving-the-class-identifier-for-an-encoder-use
+ */
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
+{
+    UINT  num = 0;          // number of image encoders
+    UINT  size = 0;         // size of the image encoder array in bytes
+
+    ImageCodecInfo* pImageCodecInfo = NULL;
+
+    GetImageEncodersSize(&num, &size);
+    if(size == 0)
+        return -1;  // Failure
+
+    pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+    if(pImageCodecInfo == NULL)
+        return -1;  // Failure
+
+    GetImageEncoders(num, size, pImageCodecInfo);
+
+    for(UINT j = 0; j < num; ++j)
+    {
+        if( wcscmp(pImageCodecInfo[j].MimeType, format) == 0 )
+        {
+            *pClsid = pImageCodecInfo[j].Clsid;
+            free(pImageCodecInfo);
+            return j;  // Success
+        }
+    }
+
+    free(pImageCodecInfo);
+    return -1;  // Failure
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Renders to an image file using GDI+
+ *    vnum        The vscrn to render
+ *    filename    File to save to
+ *    format      Image format, eg image/png
+ * If an error occurs, FALSE is returned.
+ */
+BOOL KClient::renderToImageFile(int vnum, char* filename, const wchar_t* format) {
+
+    // GDI+ wants the filename as a wide string.
+    size_t newsize = strlen(filename) + 1;
+    wchar_t* wcfilename = new wchar_t[newsize];
+    size_t convertedChars = 0;
+    mbstowcs_s(&convertedChars, wcfilename, newsize, filename, _TRUNCATE);
+
+    BOOL success = TRUE;
+    Status  stat;
+
+    // Initialize GDI+.
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    // Render vscrn to a bitmap
+    DWORD *pixels;
+    HBITMAP hbmp = renderToBitmap(vnum, &pixels);
+
+    // Convert to a GDI+ bitmap
+    Bitmap * bmp = Bitmap::FromHBITMAP(hbmp, NULL);
+
+    // Get the CLSID of the PNG encoder.
+    CLSID   encoderClsid;
+    if (GetEncoderClsid(format, &encoderClsid)) {
+        // Save to PNG file
+        stat = bmp->Save(wcfilename, &encoderClsid, NULL);
+
+        if(stat != Ok) {
+            printf("Failed to save image: stat = %d\n", stat);
+            success = FALSE;
+        }
+    } else {
+        printf("Failed to save image: could not get encoder\n");
+        success = FALSE;
+    }
+
+    delete wcfilename;
+    delete bmp;
+    DeleteObject(hbmp);
+    GdiplusShutdown(gdiplusToken);
+
+    return success;
+}
+
+BOOL KClient::renderToPngFile(int vnum, char* filename) {
+
+    return renderToImageFile(vnum, filename, L"image/png");
+}
+
+BOOL KClient::renderToGifFile(int vnum, char* filename) {
+    return renderToImageFile(vnum, filename, L"image/gif");
+}
+
+#endif /* CK_HAVE_GDIPLUS */
+
+/* GDI+ supposedly has a bitmap encoder which would be much less code than
+ * all of the stuff below, but I couldn't get it to work in my brief attempt.
+ * The code below would have still been required for when GDI+ isn't available
+ * anyhow. */
+
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Creates a suitable BITMAPINFO struct for the specified HBITMAP. The
+ * code comes from a Microsoft sample:
+ *   https://learn.microsoft.com/en-us/windows/win32/gdi/storing-an-image
+ */
+PBITMAPINFO CreateBitmapInfoStruct(HWND hwnd, HBITMAP hBmp)
+{
+    BITMAP bmp;
+    PBITMAPINFO pbmi;
+    WORD    cClrBits;
+
+    // Retrieve the bitmap color format, width, and height.
+    if (!GetObject(hBmp, sizeof(BITMAP), (LPSTR)&bmp)) {
+        return NULL;
+    }
+
+    // Convert the color format to a count of bits.
+    cClrBits = (WORD)(bmp.bmPlanes * bmp.bmBitsPixel);
+    if (cClrBits == 1)
+        cClrBits = 1;
+    else if (cClrBits <= 4)
+        cClrBits = 4;
+    else if (cClrBits <= 8)
+        cClrBits = 8;
+    else if (cClrBits <= 16)
+        cClrBits = 16;
+    else if (cClrBits <= 24)
+        cClrBits = 24;
+    else cClrBits = 32;
+
+    // Allocate memory for the BITMAPINFO structure. (This structure
+    // contains a BITMAPINFOHEADER structure and an array of RGBQUAD
+    // data structures.)
+
+     if (cClrBits < 24)
+         pbmi = (PBITMAPINFO) LocalAlloc(LPTR,
+                    sizeof(BITMAPINFOHEADER) +
+                    sizeof(RGBQUAD) * (1<< cClrBits));
+
+     // There is no RGBQUAD array for these formats: 24-bit-per-pixel or 32-bit-per-pixel
+
+     else
+         pbmi = (PBITMAPINFO) LocalAlloc(LPTR,
+                    sizeof(BITMAPINFOHEADER));
+
+    // Initialize the fields in the BITMAPINFO structure.
+
+    pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    pbmi->bmiHeader.biWidth = bmp.bmWidth;
+    pbmi->bmiHeader.biHeight = bmp.bmHeight;
+    pbmi->bmiHeader.biPlanes = bmp.bmPlanes;
+    pbmi->bmiHeader.biBitCount = bmp.bmBitsPixel;
+    if (cClrBits < 24)
+        pbmi->bmiHeader.biClrUsed = (1<<cClrBits);
+
+    // If the bitmap is not compressed, set the BI_RGB flag.
+    pbmi->bmiHeader.biCompression = BI_RGB;
+
+    // Compute the number of bytes in the array of color
+    // indices and store the result in biSizeImage.
+    // The width must be DWORD aligned unless the bitmap is RLE
+    // compressed.
+    pbmi->bmiHeader.biSizeImage = ((pbmi->bmiHeader.biWidth * cClrBits +31) & ~31) /8
+                                  * pbmi->bmiHeader.biHeight;
+    // Set biClrImportant to 0, indicating that all of the
+    // device colors are important.
+    pbmi->bmiHeader.biClrImportant = 0;
+    return pbmi;
+ }
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Renders the specified vscrn to a Windows device-independent bitmap
+ * (.bmp or .dib) file with the specified name. If an error occurs, FALSE
+ * is returned. */
+BOOL KClient::renderToBmpFile(int vnum, char* filename) {
+    BOOL success;
+
+    DWORD *pixels;
+    HBITMAP hbmp = renderToBitmap(vnum, &pixels);
+
+    if (hbmp == NULL) {
+        printf("Failed to render bitmap\n");
+        return FALSE;
+    }
+
+    PBITMAPINFO pbi = NULL;
+    PBITMAPINFOHEADER pbih = NULL;     // bitmap info-header
+    DWORD dwTotal = 0;                 // total count of bytes
+    DWORD cb = 0;                      // incremental count of bytes
+    DWORD dwTmp = 0;
+    int ret = 0;
+
+    pbi = CreateBitmapInfoStruct(NULL, hbmp);
+    if(pbi == NULL) {
+        printf("Failed to create bitmap\n");
+        DeleteObject(hbmp);
+        return FALSE;
+    }
+    pbih = (PBITMAPINFOHEADER) pbi;
+
+    HANDLE hf = CreateFile(filename,
+                           GENERIC_READ | GENERIC_WRITE,
+                           (DWORD) 0,
+                           NULL,
+                           CREATE_ALWAYS,
+                           FILE_ATTRIBUTE_NORMAL,
+                           (HANDLE) NULL);
+    if (hf == INVALID_HANDLE_VALUE) {
+        printf("Failed to create output file %s\n", filename);
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
+    }
+
+    BITMAPFILEHEADER hdr;
+    hdr.bfType = 0x4d42;        // 0x42 = "B" 0x4d = "M"
+    // Compute the size of the entire file.
+    hdr.bfSize = (DWORD) (sizeof(BITMAPFILEHEADER) +
+                 pbih->biSize + pbih->biClrUsed
+                 * sizeof(RGBQUAD) + pbih->biSizeImage);
+    hdr.bfReserved1 = 0;
+    hdr.bfReserved2 = 0;
+
+    // Compute the offset to the array of color indices.
+    hdr.bfOffBits = (DWORD) sizeof(BITMAPFILEHEADER) +
+                    pbih->biSize + pbih->biClrUsed
+                    * sizeof (RGBQUAD);
+
+    // Copy the BITMAPFILEHEADER into the .BMP file.
+    if (!WriteFile(hf, (LPVOID) &hdr, sizeof(BITMAPFILEHEADER),
+        (LPDWORD) &dwTmp,  NULL)) {
+        printf("Error writing to output file %s\n", filename);
+        CloseHandle(hf);
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
+    }
+
+    // Copy the BITMAPINFOHEADER and RGBQUAD array into the file.
+    if (!WriteFile(hf, (LPVOID) pbih, sizeof(BITMAPINFOHEADER)
+                  + pbih->biClrUsed * sizeof (RGBQUAD),
+                  (LPDWORD) &dwTmp, ( NULL))) {
+        printf("Error writing to output file %s\n", filename);
+        CloseHandle(hf);
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
+    }
+
+    // Copy the array of color indices into the .BMP file.
+    dwTotal = cb = pbih->biSizeImage;
+
+    if (!WriteFile(hf, (LPSTR) pixels, (int) cb, (LPDWORD) &dwTmp,NULL)) {
+        printf("Error writing to output file %s\n", filename);
+        CloseHandle(hf);
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
+    }
+
+    CloseHandle(hf);
+    free(pbi);
+    DeleteObject(hbmp);
+
+    return success;
 }
 
 /*------------------------------------------------------------------------

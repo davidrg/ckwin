@@ -3,8 +3,11 @@
 set SUFFIX=
 if [%1] NEQ [] set SUFFIX=%1
 
+if "%CKB_STAT_PREFIX%" NEQ "" echo %CKB_STAT_PREFIX%Console Build...%CKB_STAT_SUFFIX%
 @call mknt.bat N %SUFFIX%
+if "%CKB_STAT_PREFIX%" NEQ "" echo %CKB_STAT_PREFIX%K95G Build...%CKB_STAT_SUFFIX%
 @call mkg.bat N %SUFFIX%
+if "%CKB_STAT_PREFIX%" NEQ "" echo %CKB_STAT_PREFIX%IKSD Build...%CKB_STAT_SUFFIX%
 @call mkiksd.bat
 
 if not exist cknker.exe exit /b 1

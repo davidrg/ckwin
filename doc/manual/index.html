@@ -8372,7 +8372,7 @@ emulation name when the mode is active, e.g. "VT320-E".
 You can also select a special keyboard mode with the command:
 
 <p><pre>
-  SET TERMINAL KEYBOARD-MODE <i>{</i> NORMAL, EMACS, HEBREW, RUSSIAN, WP <i>}</i>
+  SET TERMINAL KEYBOARD-MODE <i>{</i> NORMAL, EMACS, HEBREW, RUSSIAN, WP, META, XTERM-META <i>}</i>
 </pre><p>
 
 The special keyboard modes are:
@@ -8403,6 +8403,20 @@ This mode sets up the keys approximately as for PC Word Perfect.
 <dt><b>Russian</b>
 <dd>For entering Cyrillic letters on Roman keyboards.
 <a href="cyrillic.html">CLICK HERE</a> for details.
+
+<p>
+<dt><b>Meta</b>
+<dd>A special mode for improved xterm compatibility, this is a subset of EMACS
+    mode and uses the same ID. Unlike EMACS mode, it only affects how the Alt
+    key works without modifying any other keys. It is compatible with xterms
+    metaSendsEscape setting and the default settings of many other terminal
+    emulators.
+
+<p>
+<dt><b>Xterm Meta</b>
+<dd>A special mode for improved xterm compatibility, this matches xterms default
+    behavior for the Alt key, where Alt plus an ASCII character sends that
+    character shifted into the 128-256 range. This modes ID is M.
 </dl>
 <p>
 
@@ -8638,8 +8652,9 @@ is used by VTNT already.
 
 <b>References:</b>
 <ul>
-<li></b>Gianone, Christine M., <cite>Using MS-DOS Kermit</cite>,
-Second Edition, Digital Press (1992).
+<li><a href="https://kermitproject.org/onlinebooks/usingmsdoskermit2e.pdf">
+    Gianone, Christine M., <cite>Using MS-DOS Kermit</cite>,
+Second Edition, Digital Press (1992).</a>
 <li><a href="keycodes.html">MS-DOS Kermit and K-95 Keycode Tables</a>
 </ul>
 <p>
@@ -9302,10 +9317,10 @@ protocol simply by commanding that system to run the appropriate program.
 
 Commands to start file transfer programs on these computers range from cryptic
 acronyms like "kermit" to intuitive words like sz, rz, sb, rb, sx, or
-rx <tt>:-)</tt> (sz/rz, etc, are available from Omen Technology Inc.,
+rx <tt>:-)</tt> (sz/rz, etc., were available from Omen Technology Inc.,
 10255 Northwest Old Cornelius Pass Road, Portland, Oregon 97231, USA,
 Voice: +1 (503) 614-0430, Fax: +1 (503) 629-0665, e-mail:
-<a href="mailto:caf@omen.com">caf@omen.com</a>.
+caf@omen.com.)
 
 <p>
 

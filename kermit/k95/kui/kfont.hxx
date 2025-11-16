@@ -49,6 +49,19 @@ public:
     void setDimItalic( HDC hdc );
     void setDimUnderlineItalic( HDC hdc );
 
+    void setCrossedOut( HDC hdc );
+    void setCrossedOutBold( HDC hdc );
+    void setCrossedOutDim( HDC hdc );
+    void setCrossedOutUnderline( HDC hdc );
+    void setCrossedOutBoldUnderline( HDC hdc );
+    void setCrossedOutBoldItalic( HDC hdc );
+    void setCrossedOutUnderlineItalic( HDC hdc );
+    void setCrossedOutBoldUnderlineItalic( HDC hdc );
+    void setCrossedOutItalic( HDC hdc );
+    void setCrossedOutDimUnderline( HDC hdc );
+    void setCrossedOutDimItalic( HDC hdc );
+    void setCrossedOutDimUnderlineItalic( HDC hdc );
+
     void displayABCwidths( HDC hdc );
 
     char * getFaceName();
