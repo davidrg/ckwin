@@ -3190,6 +3190,9 @@ VscrnGetCurPos( BYTE vmode ) {
 static viocell *        cellmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 static unsigned short * attrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
+#ifdef KUI
+static char * cellattrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
+#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* VscrnSetBufferSize                                       | Page: All      */
@@ -3293,6 +3296,10 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         cellmem[vmode]=NULL ;
         free(attrmem[vmode]) ;
         attrmem[vmode]=NULL ;
+#ifdef KUI
+        free(cellattrmem[vmode]);
+        cellattrmem[vmode]=NULL ;
+#endif /* KUI */
     }
 
     if (vscrn[vmode].pages == NULL) {
@@ -3368,6 +3375,10 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
                 (total_lines + 1) * MAXTERMCOL * sizeof(short)) ;
         debug( F101,"VscrnSetBufferSize hyperlinkmem size","",
                 (total_lines + 1) * MAXTERMCOL * sizeof(short)) ;
+#ifdef KUI
+        debug( F101,"VscrnSetBufferSize cellattrmem size","",
+                (total_lines + 1) * MAXTERMROW * sizeof(char)) ;
+#endif /* KUI */
 
         cellmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(viocell) ) ;
         if ( !cellmem[vmode] )
@@ -3378,6 +3389,11 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
+#ifdef KUI
+        cellattrmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(char) ) ;
+        if ( !cellattrmem[vmode] )
+            fatal("VscrnSetBufferSize: unable to allocate memory for cellattrmem[]!");
+#endif /* KUI */
 
 		/* Loop over all lines in all pages assigning memory to them. As the
          * various per-cell members are allocated in big blocks of memory, we
@@ -3395,6 +3411,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
             	vscrn[vmode].pages[pagenum].lines[j].width = 0 ;
             	vscrn[vmode].pages[pagenum].lines[j].cells = cellmem[vmode] + mem_offset ;
             	vscrn[vmode].pages[pagenum].lines[j].vt_char_attrs = attrmem[vmode] + mem_offset ;
+#ifdef KUI
+                vscrn[vmode].pages[pagenum].lines[j].cell_attrs = cellattrmem[vmode] + mem_offset ;
+#endif /* KUI */
             	vscrn[vmode].pages[pagenum].lines[j].vt_line_attr = VT_LINE_ATTR_NORMAL ;
             	vscrn[vmode].pages[pagenum].lines[j].hyperlinks = hyperlinkmem[vmode] + mem_offset ;
             	vscrn[vmode].pages[pagenum].lines[j].markbeg = -1 ;
@@ -3411,6 +3430,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         vscrn_t          TmpScrn ;
         viocell *        oldcellmem = cellmem[vmode] ;
         unsigned short * oldattrmem = attrmem[vmode] ;
+#ifdef KUI
+        char *           oldcellattrmem = cellattrmem[vmode] ;
+#endif /* KUI */
         unsigned short * oldhyperlinkmem = hyperlinkmem[vmode] ;
         int              old_lines;
 
@@ -3484,6 +3506,14 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         memcpy( attrmem[vmode], oldattrmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(short) ) ;
 
+#ifdef KUI
+        cellattrmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(char) ) ;
+        if ( !cellattrmem[vmode] )
+            fatal("VscrnSetBufferSize: unable to allocate memory for cellattrmem[]!");
+        memcpy( cellattrmem[vmode], oldcellattrmem, (old_lines + 1)
+                * MAXTERMCOL * sizeof(short) ) ;
+#endif /* KUI */
+
         hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
@@ -3512,6 +3542,12 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
                 	+ (attrmem[vmode] - oldattrmem);
             	line->vt_char_attrs = 0 ;
 
+#ifdef KUI
+                TmpScrn.pages[pagenum].lines[i].cell_attrs = line->cell_attrs
+                	+ (cellattrmem[vmode] - oldcellattrmem);
+            	line->vt_char_attrs = 0 ;
+#endif /* KUI */
+
             	TmpScrn.pages[pagenum].lines[i].hyperlinks = line->hyperlinks
                 	+ (hyperlinkmem[vmode] - oldhyperlinkmem);
             	line->hyperlinks = 0 ;
@@ -3528,6 +3564,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
             	TmpScrn.pages[pagenum].lines[i].width = 0 ;
             	TmpScrn.pages[pagenum].lines[i].cells = cellmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
             	TmpScrn.pages[pagenum].lines[i].vt_char_attrs = attrmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
+#ifdef KUI
+                TmpScrn.pages[pagenum].lines[i].cell_attrs = cellattrmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
+#endif /* KUI */
             	TmpScrn.pages[pagenum].lines[i].hyperlinks = hyperlinkmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
             	TmpScrn.pages[pagenum].lines[i].vt_line_attr = VT_LINE_ATTR_NORMAL ;
             	TmpScrn.pages[pagenum].lines[i].markbeg = -1 ;
@@ -3541,6 +3580,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 
         free(oldcellmem) ;
         free(oldattrmem) ;
+#ifdef KUI
+        free(oldcellattrmem) ;
+#endif /* KUI */
         free(oldhyperlinkmem) ;
         vscrn[vmode] = TmpScrn ;
     }
@@ -3715,6 +3757,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
                 line->cells = linetodelete.cells ;
                 line->vt_char_attrs = linetodelete.vt_char_attrs ;
+#ifdef KUI
+				line->cell_attrs = linetodelete.cell_attrs ;
+#endif /* KUI */
             }
 
             for ( i = 0 ; i < nlines ; i++ ) {
@@ -3730,6 +3775,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                 for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
                     line->cells[x] = blankcell ;
                     line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+#ifdef KUI
+					line->cell_attrs[x] = CA_ATTR_NONE;
+#endif /* KUI */
                 }
             }
             break;
@@ -5333,6 +5381,9 @@ vscrn_size_bytes(BYTE vnum) {
     size_t result;
     size_t cellsize = sizeof(viocell)     /* viocell */
             + sizeof(short)     /* attributes */
+#ifdef KUI
+            + sizeof(char)      /* Cell attributes */
+#endif /* KUI */
             + sizeof(short);    /* hyperlink IDs */
     size_t vlinesize = sizeof(videoline) + MAXTERMCOL * cellsize;
 

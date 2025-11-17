@@ -794,6 +794,9 @@ cleartermpage( BYTE vmode, int page ) {
             line->cells[x].c = ' ' ;
             line->cells[x].video_attr = vmode == VTERM ? attribute : colorcmd ;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+#ifdef KUI
+			line->cell_attrs[x] = CA_ATTR_NONE;
+#endif /* KUI */
             }
         }
     lgotoxy(vmode,1, 1);
