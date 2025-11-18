@@ -14887,12 +14887,18 @@ DCS $ q 3 , } ST</pre>
             -->
         </section>
         <section role="ctlseq" id="decctr" mnemonic="DECCTR"
-                 title="Color Table Request"
-                 not-implemented="true" todo="true">
+                 title="Color Table Request" badges="vt525 k95">
             <ctlseq>CSI 2 ; <param-single/> $ u</ctlseq>
             <ref src="070:364"/>
             <ref src="vt52x:268"/>
-            <termsupp first="vt525" series="vt" additional=""/>
+            <termsupp first="vt525" series="vt" additional="wt"/>
+            <p>
+                Requests the terminals current color palette.
+                <param-single/> specifies the format: 1 for HLS
+                (hue 0-360, lightness 0-100, saturation 0-100 with <em>blue at
+                0 degrees</em>, not red), or 2 for RGB (red 0-100, green 0-100,
+                blue 0-100).
+            </p>
         </section>
         <section role="ctlseq" id="decrqupss" mnemonic="DECRQUPSS"
                  title="User-Preferred Supplemental Set"
@@ -16797,8 +16803,8 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     The <tt><param-single symbol="c"/></tt> component is the
                     color index to change. Valid values depend on which color
-                    palette is currently active: 0–15 for aixterm-16, 0–87 for
-                    xterm-88, and 0–255 for xterm-256. The first five values
+                    palette is currently active: 0-15 for aixterm-16, 0-87 for
+                    xterm-88, and 0-255 for xterm-256. The first five values
                     above the range of the current palette (e.g., for the
                     xterm-256 palette: 256, 257, 258, 259, 260) set attribute
                     colors. See <a href="#osc-5">OSC-5</a> for more details.
@@ -16833,6 +16839,10 @@ DCS $ q 3 , } ST</pre>
                 <p>If a color was set by name rather than an RGB value, then
                     when queried that colors RGB value will be returned;
                     Kermit 95 does not remember the original color name used.
+                </p>
+                <p>
+                    The VT525 <a href="#decctr">Color Table Request</a> is also
+                    supported for querying the current color palette.
                 </p>
             </section>
             <section role="parameter" id="osc-5" mnemonic=""

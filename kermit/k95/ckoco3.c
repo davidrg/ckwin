@@ -2979,6 +2979,76 @@ ULONG cell_video_attr_background_rgb(cell_video_attr_t attr) {
 }
 #endif /* CK_COLORS_DEBUG */
 
+/* Converts the supplied R/G/B values (0-255) to the DEC H/L/S coordinate
+ * system which places Red at zero degrees rather than blue. Result is returned
+ * via the h, l and s parameters. The method for doing this is documented in
+ * AA-MI676A-TE "A Guide to migrating VWS Applications to DECwindows",
+ * September 1989, Appendix F */
+void rgb_to_hls(unsigned char r, unsigned char g, unsigned char b,
+                float *h, float *l, float *s) {
+    float red, green, blue, max_value, min_value;
+
+    red = r / 255.0;
+    green = g / 255.0;
+    blue = b / 255.0;
+
+    max_value = ((red > green) ? red:green) > blue ?
+                ((red > green) ? red:green) : blue;
+    min_value = ((red < green) ? red:green) < blue ?
+                ((red < green) ? red:green) : blue;
+
+    /* Lightness */
+    *l = (max_value + min_value) / 2;
+
+    if (max_value == min_value) {
+        *s = 0;
+        *h = -1;
+    } else {
+        float red_content, green_content, blue_content;
+        float color_span = max_value - min_value;
+
+        /* Saturation */
+        if (*l < 0.5) {
+            *s = color_span / (max_value + min_value);
+        } else {
+            *s = color_span / (2.0 - max_value - min_value);
+        }
+
+        /* Hue */
+        red_content = (max_value - red) / color_span;
+        green_content = (max_value - green) / color_span;
+        blue_content = (max_value - blue) / color_span;
+
+        if (red == max_value) {
+            *h = blue_content - green_content;
+        } else {
+            if (green == max_value) {
+                *h = 2.0 + red_content - blue_content;
+            } else {
+                *h = 4.0 + green_content - red_content;
+            }
+        }
+
+        *h = *h * 60.0;
+
+        /* Make sure hue is positive */
+        while (*h < 0.0) {
+            *h += 360.0;
+        }
+    }
+
+    /* Put blue at zero degrees */
+    *h = *h + 120;
+
+    while (*h >= 360.0) {
+        *h -= 360.0;
+    }
+
+    /* Convert lightness and saturation to percentages */
+    *l = *l * 100;
+    *s = *s * 100;
+}
+
 USHORT
 xldecgrph( CHAR c ) {
 #ifdef COMMENT
@@ -7051,6 +7121,138 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
     }
     debug(F111, "DECRQCRA", "checksum", checksum);
     return checksum;
+}
+
+/*----------------------------------------------------------+----------------*/
+/* TODO: terminal_state_report                              | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+void
+terminal_state_report() {
+    /* The format of this is apparently intentionally undocumented and can vary
+     * between terminal models and even firmware versions. Response is
+     * sixel-encoded 8-bit bytes. Total length of the response (from DCS to
+     * terminating ST) is guaranteed to not exceed 256 characters.
+     *
+     * As there is no defined format for the response, K95 is free to define
+     * something with no need for it to be portable to other terminals or
+     * terminal emulators. The only question is... what to include? */
+}
+
+
+/*----------------------------------------------------------+----------------*/
+/* color_table_report                                       | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+/* Sends a Color Table Report (DECCTR) for the currently selected palette to
+ * the host. This can later be restored via DECRSTS.
+ *
+ * Available in: VT525, K95 */
+void
+color_table_report(int coordinate_system) {
+    /* Response is: DCS 2 $ s D...D ST
+     * Where D...D is consists of groups of five parameters separated by the '/'
+     * character. Eg:
+     *    1;2;3;4;5/1;2;3;4;5/1;2;3;4;5/...
+     * Where:
+     *   1 is the colour number (0-255)
+     *   2 is the coordinate system (1=HLS, 2=RGB)
+     *   3 is either hue (0-360) or red (0-100)
+     *   4 is either lightness (0-100) or green (0-100)
+     *   5 is either saturation (0-100) or blue (0-100)
+     * So a single color is 17 bytes. A response containing a full 256
+     * characters would be at most 4,614 bytes:
+     *     256*17 + 255 (for the '/' characters) plus a few more for the DCS,
+     *     ST, 2, $ and s
+     * thats really too big for sendescseq so we'll need to deal with the C0/C1
+     * situation ourselves and send it with sendchars.
+     */
+#define DECCTRBUFLEN 5000
+    int i = 0, j=0;
+    unsigned char max_color;
+    unsigned long* palette;
+    unsigned long bgr;
+    char roundbuf[10];
+    char* response = (char*)malloc(DECCTRBUFLEN);
+    memset( response, 0, DECCTRBUFLEN ) ;
+    memset( roundbuf, 0, 10 ) ;
+    max_color = current_palette_max_index();
+    palette = current_palette_rgb_table();
+
+    if (send_c1) {
+        response[i++] = _DCS;
+    } else {
+        response[i++] = ESC;
+        response[i++] = 'P';
+    }
+    response[i++] = '2';
+    response[i++] = '$';
+    response[i++] = 's';
+
+    for (j = 0; j <= max_color; j++) {
+        unsigned char palindex, palr, palg, palb;
+        palindex = color_index_to_vio(j);
+        bgr = palette[palindex];
+        palb = (bgr & 0x00FF0000)>>16;
+        palg = (bgr & 0x0000FF00)>>8;
+        palr = (bgr & 0x000000FF);
+
+        /* Color number */
+        i += ckstrncat(response, ckitoa(j), DECCTRBUFLEN);
+        response[i++] = ';';
+
+        if (coordinate_system == 1) {  /* HLS */
+            float h, l, s;
+
+            rgb_to_hls(palr, palg, palb, &h, &l, &s);
+
+            /* Coordinate system */
+            response[i++] = '1';
+            response[i++] = ';';
+
+            /* We say roundbuf is one smaller than it is so the null temrination
+             * doesn't get overwritten as internally ckround just uses strncpy.
+             * to return the result as a string. */
+            ckround(h, 0, roundbuf, 9);
+            i += ckstrncat(response, roundbuf, DECCTRBUFLEN);
+            response[i++] = ';';
+            ckround(l, 0, roundbuf, 9);
+            i += ckstrncat(response, roundbuf, DECCTRBUFLEN);
+            response[i++] = ';';
+            ckround(s, 0, roundbuf, 9);
+            i += ckstrncat(response, roundbuf, DECCTRBUFLEN);
+        } else { /* RGB */
+            unsigned char r, g, b;
+            /* Convert from 0-255 range to 0-100 */
+            r = (unsigned char)(palr / 255.0 * 100.0);
+            g = (unsigned char)(palg / 255.0 * 100.0);
+            b = (unsigned char)(palb / 255.0 * 100.0);
+
+            /* Coordinate system */
+            response[i++] = '2';
+            response[i++] = ';';
+
+            /* R, G, B */
+            i += ckstrncat(response, ckitoa(r), DECCTRBUFLEN);
+            response[i++] = ';';
+            i += ckstrncat(response, ckitoa(g), DECCTRBUFLEN);
+            response[i++] = ';';
+            i += ckstrncat(response, ckitoa(b), DECCTRBUFLEN);
+        }
+
+        if (j < max_color) response[i++] = '/';
+    }
+
+    if (send_c1) {
+        response[i++] = _ST8;
+    } else {
+        response[i++] = ESC;
+        response[i++] = '\\';
+    }
+    response[i++] = '\0';
+
+    sendchars(response, strlen(response));
+
+    free(response);
+#undef DECCTRBUFLEN
 }
 
 void
@@ -17951,6 +18153,8 @@ vtcsi(void)
                 }
 #endif /* TCPSOCKET */
                 break;
+            case 'u':    /* DECRQTSR - default is ignored */
+                break;
             }
             break;
         case 'S':
@@ -18660,6 +18864,26 @@ vtcsi(void)
                         }
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
+                        }
+                    }
+                    break;
+                case 'u':  /* DECRQTSR, DECCTR */
+                    if (k >= 0) {
+                        switch(pn[1]) {
+                        case 0: /* Ignored */
+                            break;
+                        case 1: /* TODO: DECTSR */
+                            if (ISVT420(tt_type_mode)) {
+                                terminal_state_report();
+                            }
+                            break;
+                        case 2: /* DECCTR */
+                            if (k > 1 && (pn[2] == 1 || pn[2] == 2) &
+                                    (ISVT525(tt_type_mode)
+                                     || ISK95(tt_type_mode) ) {
+                                color_table_report(pn[2]);
+                            }
+                            break;
                         }
                     }
                     break;

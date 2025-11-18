@@ -211,9 +211,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  
 ### New terminal control sequences
 > [!NOTE]
-> Until Kermit 95 gets a VT525 terminal type option, control sequences marked
-> as requiring a VT525 are temporarily available under the existing VT320 
-> terminal type instead.
+> Until Kermit 95 gets a VT420 and VT525 terminal type options, control 
+> sequences marked as requiring one of these terminals  are temporarily 
+> available under the existing VT320 terminal type instead.
 
  - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-ic) and 
    [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-ic) are 
@@ -290,6 +290,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      enables or disables true blink in DECSTGLT alternate color mode
    - [DECATCUM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcum) 
      enables or disables true underline in DECSTGLT alternate color mode
+   - [DECCTR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decctr): Color
+     Table Request - provides the current color palette in RGB or HLS format.
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
  - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
