@@ -6664,7 +6664,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">21</dt>  <!-- vt510, vt420, xt -->
                 <dd>Horizontal scrolling</dd>
 
-                <dt not-implemented="true">22</dt>   <!-- vt525, xt -->
+                <dt>22</dt>   <!-- vt525, xt -->
                 <dd>ANSI color (eg, VT525)</dd>
                 <!-- DECCTR, DECSTGLT
                  https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=361
