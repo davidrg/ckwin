@@ -18880,7 +18880,7 @@ vtcsi(void)
                         case 2: /* DECCTR */
                             if (k > 1 && (pn[2] == 1 || pn[2] == 2) &
                                     (ISVT525(tt_type_mode)
-                                     || ISK95(tt_type_mode) ) {
+                                     || ISK95(tt_type_mode)) ) {
                                 color_table_report(pn[2]);
                             }
                             break;
