@@ -2681,6 +2681,15 @@ int nl2ktab = (sizeof(l2ktab) / sizeof(struct compose_key_tab));
 extern vik_rec vik;
 #endif /* NOKVERBS */
 
+#if defined(_MSC_VER) && _MSC_VER >= 1920
+/* The round function is new in Visual C++ 2013. */
+#define K95ROUND(x) ((int)round((x)))
+#else
+/* It is absent in Open Watcom 1.9 and I'm not sure about the various MinGW/GCC
+ * versions so for now they get the fallback option */
+#define K95ROUND(x) ((int)ckround((x), 0, NULL, 0))
+#endif
+
 /* A few colour table entries below 16 are swapped around compared
  * to the standard xterm color table for OS/2 reasons. This is equivalent
  * to sgrcols, but valid for the full 0-15 range (sgrcols only covers 0-7) */
@@ -3048,6 +3057,60 @@ void rgb_to_hls(unsigned char r, unsigned char g, unsigned char b,
     *l = *l * 100;
     *s = *s * 100;
 }
+
+#define ONE_THIRD (1.0/3.0)
+#define ONE_SIXTH (1.0/6.0)
+#define TWO_THIRD (2.0/3.0)
+
+float
+hls_v(float m1, float m2, float hue) {
+    float temp = fmod(hue, 1.0);
+    if (hue < 0) {
+        hue = hue - temp;
+    } else {
+        hue = temp;
+    }
+    if (hue < ONE_SIXTH) {
+        return m1 + (m2 - m1) * hue * 6.0;
+    } else if (hue < 0.5) {
+        return m2;
+    } else if (hue < TWO_THIRD) {
+        return m1 + (m2 - m1) * (TWO_THIRD - hue) * 6.0;
+    }
+    return m1;
+}
+
+void
+hls_to_rgb(int h, int l, int s,
+           int* r, int* g, int* b)
+{
+    float hue, lightness, saturation, m1, m2;
+    hue = h / 360.0;
+    lightness = l / 100.0;
+    saturation = s / 100.0;
+
+    if (saturation == 0.0) {
+        int x = K95ROUND(lightness * 255);
+        *r = *g = *b = x;
+        return;
+    }
+
+    if (lightness <= 0.5) {
+        m2 = lightness * (1.0 + saturation);
+    } else {
+        m2 = lightness + saturation - (lightness * saturation);
+    }
+    m1 = 2.0 * lightness - m2;
+
+    *r = K95ROUND(hls_v(m1, m2, hue) * 255);
+    *g = K95ROUND(hls_v(m1, m2, hue - ONE_THIRD) * 255);
+    *b = K95ROUND(hls_v(m1, m2, hue + ONE_THIRD) * 255);
+}
+
+
+#undef ONE_THIRD
+#undef ONE_SIXTH
+#undef TWO_THIRD
 
 USHORT
 xldecgrph( CHAR c ) {
@@ -7253,6 +7316,87 @@ color_table_report(int coordinate_system) {
 
     free(response);
 #undef DECCTRBUFLEN
+}
+
+/*----------------------------------------------------------+----------------*/
+/* restore_color_table                                      | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+/* Restores the current color palette using supplied values in the same format
+ * as DECCTR. Input lives in the apc buffer
+ *
+ * Available in: VT525, K95 */
+void
+restore_color_table(int dcsnext)
+{
+    int palmax;
+    ULONG *palette;
+
+    palmax = current_palette_max_index();
+    palette = current_palette_rgb_table();
+
+    debug(F101, "Processing DCS string from", 0, dcsnext);
+
+    /* Format is:
+     *  Pc;Pu;Px;Py;Pz/Pc;Pu;Px;Py;Pz......
+     */
+    while(dcsnext<apclength) {
+        int values[5] = {0,0,0,0,0};
+        int i = 0;
+
+        do {
+            achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+
+            if (i > 4) {
+                /* Invalid entry with more than five values. Skip
+                 * TODO: What does a real VT525 do? Does it abandon the whole
+                 * restore, or just skip this entry?*/
+                debug(F101, "Parameter limit exceeded for entry with index", 0, values[0]);
+                i = -1;
+                break;
+            }
+
+            while (isdigit(achar)) {            /* Get number */
+                values[i] = (values[i] * 10) + achar - 48;
+                achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+            }
+            i++;
+        } while (achar == ';');
+
+        if (i == -1) {
+            continue;    /* Bad entry - skip it */
+        }
+
+        debug(F100, "--------------------------------", 0, 0);
+        debug(F101, "Got definition for palette entry", "index", values[0]);
+        debug(F111, "Got definition for palette entry", "cspac", values[1]);
+        debug(F111, "Got definition for palette entry", "val 1", values[2]);
+        debug(F111, "Got definition for palette entry", "val 2", values[3]);
+        debug(F111, "Got definition for palette entry", "val 3", values[4]);
+
+        if (values[0] <= palmax) {
+            int r, g, b;
+            if (values[1] == 1) {    /* HLS format */
+                debug(F101, "Palette entry in HLS format", 0, values[0]);
+                hls_to_rgb(values[2], values[3], values[4], &r, &g, &b);
+            } else if (values[1] == 2) { /* RGB format */
+                debug(F101, "Palette entry in RGB format", 0, values[0]);
+                r = K95ROUND((values[2]/100.0) * 255);
+                g = K95ROUND((values[3]/100.0) * 255);
+                b = K95ROUND((values[4]/100.0) * 255);
+            } else {   /* Invalid format */
+                continue;
+            }
+            debug(F111, "Got definition for palette entry", "red  ", r);
+            debug(F111, "Got definition for palette entry", "green", g);
+            debug(F111, "Got definition for palette entry", "blue ", b);
+
+            palette[color_index_to_vio(values[0])] =
+                               (unsigned)(((unsigned)b << 16) |
+                               (unsigned)((unsigned)g << 8) |
+                               (unsigned)r);
+        }
+    }
+    VscrnIsDirty(VTERM);
 }
 
 void
@@ -14273,7 +14417,7 @@ dodcs( void )
       return ;                 /* don't do anything    */
     achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
     switch ( achar ) {
-    case '$':  /* as in $q - DECRQSS */
+    case '$':  /* as in $q - DECRQSS, or $p as in DECRSTS */
         k = 0 ;
         goto LB4003;
     case '|':  /* DECUDK */
@@ -14317,6 +14461,15 @@ dodcs( void )
 
                 achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                 switch ( achar ) {
+                case 'p':
+                    if (ISVT420(tt_type_mode) && k == 1 && pn[1] == 1) {
+                        /* TODO: DECRSTS - Restore Terminal State */
+                    } else if (k == 1 && pn[1] == 2 &&
+                               (ISVT525(tt_type_mode) || ISK95(tt_type_mode))) {
+                        /* DECRSTS - Restore Terminal Color Table State */
+                        restore_color_table(dcsnext);
+                    }
+                    break;
                 case 'q': {              /* DECRQSS */
                     char fmt[15];
                     memset(fmt,0,sizeof(fmt));

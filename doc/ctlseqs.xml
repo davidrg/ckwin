@@ -4035,7 +4035,7 @@ DECTSR		462
 
         <section role="ctlseq" id="decrsts" mnemonic="DECRSTS"
                  title="Restore Terminal State"
-                 not-implemented="true" todo="true">
+                 groups="isvt420" badges="vt525 k95">
             <ctlseq>DCS <param-single/> $ p D...D ST</ctlseq>
             <ref src="070:463"/>
             <ref src="vt340:222"/>
@@ -4045,9 +4045,61 @@ DECTSR		462
             <ref src="wy370:140"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 vt520 wt"/>
 
-            <!-- TODO: Note! The VT520/VT525 supports an additional
-                for Ps. 0 and 1 are as in the VT420 and 510, while
-                2 is new - it restores colours -->
+            <section role="parameter" id="decrsts-1" title="Restore Terminal State"
+                    not-implemented="true">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 vt520"/>
+            </section>
+            <section role="parameter" id="decrsts-2" badges="vt525 k95"
+                     title="Restore Terminal Color Table State">
+                <ref src="vt52x:272"/>
+                <ref src="070:364"/>
+                <ctlseq><param-single/> = 2</ctlseq>
+                <termsupp first="vt525" series="vt" additional="wt"/>
+                <p>
+                    Restores one or more entries in the current colour palette
+                    from values supplied by the host. Values can either be in
+                    HLS (hue 0-360, lightness 0-100, saturation 0-100),
+                    or RGB (red 0-100, green 0-100, blue 0-100).
+                </p>
+                <p>
+                    The format of a color palette entry in the data string is
+                    <tt>Pc ; Pu ; Px ; Py ; Pz</tt> where:
+                </p>
+                <dl>
+                    <dt>Pc</dt>
+                    <dd>The color index (0-255).</dd>
+                    <dt>Pu</dt>
+                    <dd>The color format - 1 for HLS, or 2 for RGB.
+                    </dd>
+                    <dt>Px, Py, Pz</dt>
+                    <dd>In HLS format these are Hue, Lightness and Saturation.
+                        In RGB format these are Red, Green and Blue. Note that
+                        RGB values are 0-100, not 0-255 as in
+                        <a href="#osc-4">OSC-4</a>. Note that in HLS format,
+                        <em>blue is at 0 degrees</em>, not red.
+                    </dd>
+                </dl>
+                <p>
+                    To supply more than one color palette entry to be restored,
+                    separate multiple entries with the '/' character. For
+                    example, the following would restore K95s entire default
+                    16-colour palette using RGB format:
+                </p>
+                <p><tt>printf '\x1bP2$p0;2;0;0;0/1;2;50;0;0/2;2;0;50;0/3;2;50;50;0/4;2;0;0;50/5;2;50;0;50/6;2;0;50;50/7;2;75;75;75/8;2;50;50;50/9;2;100;0;0/10;2;0;100;0/11;2;100;100;0/12;2;0;0;100/13;2;100;0;100/14;2;0;100;100/15;2;100;100;100\x1b\\'</tt></p>
+                <p>
+                    And the following would do the same, but using the HLS color
+                    system:
+                </p>
+                <p><tt>printf '\x1bP2$p0;1;119;0;0/1;1;120;25;100/2;1;240;25;100/3;1;180;25;100/4;1;0;25;100/5;1;60;25;100/6;1;300;25;100/7;1;119;75;0/8;1;119;50;0/9;1;120;50;100/10;1;240;50;100/11;1;180;50;100/12;1;0;50;100/13;1;60;50;100/14;1;300;50;100/15;1;119;100;0\x1b\\'</tt></p>
+                <p>
+                    When restoring the color palette, entries with a color
+                    index outside the range of the current color palette or an
+                    invalid color format are discarded. Any palette entries not
+                    specified remain unmodified allowing only a subset of the
+                    palette to be updated as required.
+                </p>
+            </section>
         </section>
 
         <section role="ctlseq" id="decrsps" mnemonic="DECRSPS"
@@ -16842,7 +16894,9 @@ DCS $ q 3 , } ST</pre>
                 </p>
                 <p>
                     The VT525 <a href="#decctr">Color Table Request</a> is also
-                    supported for querying the current color palette.
+                    supported for querying the current color palette, and
+                    <a href="#decrsts-2">DECRSTS</a> for restoring some or all
+                    of the color palette.
                 </p>
             </section>
             <section role="parameter" id="osc-5" mnemonic=""
