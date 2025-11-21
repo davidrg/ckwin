@@ -6764,12 +6764,15 @@ decdwl_escape(bool dwlflag) {
 
 int
 calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOOL obey_margins) {
-    int checksum=0;
+    unsigned short checksum=0;
     int x, y, height, width, max_page;
 
     height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
     width = VscrnGetWidth(VTERM);
     max_page = term_max_page(VTERM);
+
+	/* TODO: If page == 0, calculate checksum of
+	 * 		 *all* pages (unless on alternate buffer) */
 
     if (top < 1) top = 1;
     if (left < 1) left = 1;
@@ -6779,6 +6782,11 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
     else page = page - 1;
 
     if (obey_margins) {
+        debug(F111, "DECRQCRA", "margintop", vscrn_page_margin_top(VTERM,page));
+        debug(F111, "DECRQCRA", "marginleft", vscrn_page_margin_left(VTERM,page));
+        debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
+        debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
+
         if (top < vscrn_page_margin_top(VTERM,page)) top = vscrn_page_margin_top(VTERM,page);
         if (top > vscrn_page_margin_bot(VTERM,page) + 1) top = vscrn_page_margin_bot(VTERM,page) + 1;
         if (left < vscrn_page_margin_left(VTERM,page)) left = vscrn_page_margin_left(VTERM,page);
@@ -6806,7 +6814,7 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
         videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
         for ( x=left-1; x<right; x++ ) {
             unsigned short c, a;
-            unsigned char cellattr, fgcoloridx = 0, bgcoloridx = 0;
+            unsigned char fgcoloridx = 0, bgcoloridx = 0;
 
             c = line->cells[x].c;
             a = line->vt_char_attrs[x];
@@ -6815,23 +6823,11 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
             fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
             bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
 
-            /* Xterm implements the following behaviour to
-             * supposedly match what the VT525 does (I don't
-             * have access to a VT525 to confirm the
-             * behaviour myself): If the current background
-             * color is the default and the current foreground
-             * is *not* the default, then ignore the bold attribute
-             * if its set.
-             */
-            if (a & VT_CHAR_ATTR_BOLD) {
-                  unsigned char df_fg, df_bg;
-                  df_fg = cell_video_attr_foreground(defaultattribute);
-                  df_bg = cell_video_attr_background(defaultattribute);
-                  if (df_bg == bgcoloridx && df_fg != fgcoloridx) {
-                      checksum -= 0x80;
-                  }
-            }
+#ifdef CK_COLORS_24BIT
+			/* TODO: Map all colors into SGR palette */
+#endif /* CK_COLORS_24BIT */
 
+			/* TODO: this is wrong I think*/
             if (fgcoloridx < 16) {
                 fgcoloridx = sgrindex[fgcoloridx%8];
             } else {
@@ -6851,21 +6847,24 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
             debug(F111, "DECRQCRA iteration", "x", x);
             debug(F111, "DECRQCRA iteration", "y", y);
             debug(F111, "DECRQCRA iteration", "c", c);
+			debug(F111, "DECRQCRA iteration", "a", a);
             debug(F111, "DECRQCRA iteration", "checksum", checksum);
 
-            checksum += c;
+            checksum -= c;
 
-            debug(F111, "DECRQCRA iteration", "checksum+c", checksum);
+            debug(F111, "DECRQCRA iteration", "checksum-c", checksum);
 
-            if (a & VT_CHAR_ATTR_PROTECTED) checksum += 0x04;
-            if (a & VT_CHAR_ATTR_INVISIBLE) checksum += 0x08;
-            if (a & VT_CHAR_ATTR_UNDERLINE) checksum += 0x10;
-            if (a & VT_CHAR_ATTR_REVERSE) checksum += 0x20;
-            if (a & VT_CHAR_ATTR_BLINK) checksum += 0x40;
-            if (a & VT_CHAR_ATTR_BOLD) checksum += 0x80;
-            /*checksum += bgcoloridx;
-            checksum += fgcoloridx * 0x10;*/
-            debug(F111, "DECRQCRA iteration", "checksum+attrs", checksum);
+            if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
+            if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
+            if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
+            if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
+            if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
+            if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
+			if (ISVT525(tt_type_mode) && 0) {
+            	checksum -= bgcoloridx;
+            	checksum -= fgcoloridx * 0x10;
+			}
+            debug(F111, "DECRQCRA iteration", "checksum-attrs", checksum);
         }
     }
     debug(F111, "DECRQCRA", "checksum", checksum);
@@ -18757,30 +18756,25 @@ vtcsi(void)
                             page = ALTERNATE_BUFFER_PAGE(VTERM);
                         }
 
-                        /*checksum &= 0xffff;*/
-                        top = pn[3] + (vscrn_page_margin_top(VTERM,page) > 1 ? vscrn_page_margin_top(VTERM,page) : 0);
-                        left = pn[4] + (vscrn_page_margin_left(VTERM,page) > 1 ? vscrn_page_margin_left(VTERM,page) : 0);
+                        top = pn[3];
+                        left = pn[4];
                         bot = pn[5];
                         right = pn[6];
 
                         debug(F111, "DECRQCRA", "pid", pid);
+						debug(F111, "DECRQCRA", "page", pn[2]);
                         debug(F111, "DECRQCRA", "init-top", pn[3]);
                         debug(F111, "DECRQCRA", "init-left", pn[4]);
                         debug(F111, "DECRQCRA", "init-bot", pn[5]);
                         debug(F111, "DECRQCRA", "init-right", pn[6]);
 
-                        debug(F111, "DECRQCRA", "margintop", vscrn_page_margin_top(VTERM,page));
-                        debug(F111, "DECRQCRA", "marginleft", vscrn_page_margin_left(VTERM,page));
-                        debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
-                        debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
-
                         checksum = calculate_decrqcra_checksum(
                             top, left, bot, right, page, TRUE);
 
                         if (send_c1) {
-                            sprintf(buf, "\033P%d!~%04X%c", pid, checksum,_ST8);
+                            sprintf(buf, "P%d!~%04X%c", pid, checksum, _ST8);
                         } else {
-                            sprintf(buf, "\033P%d!~%04X\033\\", pid, checksum);
+                            sprintf(buf, "P%d!~%04X\033\\", pid, checksum);
                         }
                         sendescseq(buf);
                     }
