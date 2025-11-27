@@ -217,7 +217,7 @@ extern int      mouse_reporting_mode;
 extern long     speed, vernum;
 extern int      local, escape, duplex, parity, flow, seslog, pmask,
                 cmdmsk, cmask, sosi, xitsta, debses, mdmtyp, carrier, what;
-extern int      cflg, cnflg, stayflg, tt_escape, tt_scroll, tt_scroll_usr;
+extern int      cflg, cnflg, stayflg, tt_escape, tt_scroll, tt_term_scroll;
 extern int      network, nettype, ttnproto, protocol, inautodl;
 extern int cmdlvl,tlevel, ckxech;
 extern int ttnum;                               /* from ckcnet.c */
@@ -5514,19 +5514,14 @@ switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
     if (cursor_on_visible_page(VTERM)) {
         /* Disable scrollback if we're not on page 0 */
         if (page != 0) {
-            tt_scroll = 0;
+            tt_term_scroll = 0;
 
             /* If we were scrolled back, we're not anymore! */
             scrollflag[VTERM] = 0;
             scrollstatus[VTERM] = 0;
             ipadl25();
-
         } else {
-            /* As scrollback can be disabled via the NOSCROLL and LOCKDOWN
-             * commands (restart required to re-enable), we don't want to
-             * re-enable it so restore the previous setting rather than just
-             * turning it on. */
-            tt_scroll = tt_scroll_usr;
+            tt_term_scroll = 1;
         }
 
         /* If we were in mark mode, we're not anymore!*/
@@ -8440,7 +8435,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     switch_to_page(VTERM, 0, TRUE);
 	saved_view_page = -1;
     saved_cursor_page = -1;
-	tt_scroll = tt_scroll_usr;
+	tt_term_scroll = 1;
     decspma_max_page = -1;
 
     udkreset() ;                        /* Reset UDKs     */
@@ -12389,7 +12384,7 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
     debug(F101,"scrollback tt_roll","",tt_roll[vmode]);
 #endif /* DEBUG */
 
-    if ( !tt_scroll ) {
+    if ( !tt_scroll || (vmode == VTERM && !tt_term_scroll)) {
         debug(F100,"scrollback disabled","",0);
         return;
     }
