@@ -59,22 +59,9 @@ extern DWORD VscrnIsDirty( int );
 extern int colorpalette; /* ckoco3.c */
 extern cell_video_attr_t  colorcursor;  /* ckoco3.c */
 
-/* Copies of the RGB tables so that resetting the terminal can reset the
- * the colour palettes. */
-ULONG SavedRGBTable256[256];
-ULONG SavedRGBTable88[88];
-ULONG SavedRGBTable[16];
-#ifdef CK_PALETTE_WY370
-ULONG SavedWY370RGBTable[65];
-#endif /* CK_PALETTE_WY370 */
-
-/* And the working copies which may be modified by the remote host */
+#ifdef CK_COLORS_DEBUG
 extern ULONG RGBTable256[256];
-extern ULONG RGBTable88[88];
-extern ULONG RGBTable[16];
-#ifdef CK_PALETTE_WY370
-extern ULONG WY370RGBTable[65];
-#endif /* CK_PALETTE_WY370 */
+#endif /* CK_COLORS_DEBUG */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/

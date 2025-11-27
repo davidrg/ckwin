@@ -521,35 +521,40 @@ DECTSR		462
                 key="e43"
                 uri="https://ecma-international.org/wp-content/uploads/ECMA-43_3rd_edition_december_1991.pdf"
                 uri-type="pdf-page"
-                sort-order="1"/>
+                sort-order="10"/>
         <refsrc name="ecma-35"
                 key="e35"
                 uri="https://ecma-international.org/wp-content/uploads/ECMA-35_6th_edition_december_1994.pdf"
                 uri-type="pdf-page"
-                sort-order="2"/>
+                sort-order="20"/>
         <refsrc name="dec-std-070"
                 key="070"
                 uri="https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf"
                 uri-type="pdf-page"
-                sort-order="3"/>
+                sort-order="30"/>
+        <refsrc name="dec-std-070"
+                key="070h"
+                uri="https://j4james.github.io/vtdocs/EL-00070-05.html"
+                uri-type="anchor"
+                sort-order="order=40"/>
         <refsrc name="vt52x"
                 key="vt52x"
                 uri="https://vt100.net/dec/ek-vt520-rm.pdf"
                 uri-type="pdf-page"
-                sort-order="4"
+                sort-order="41"
                 badge="vt520"/>
         <refsrc name="vt510"
                 key="vt510"
                 uri="https://vt100.net/docs/vt510-rm/"
                 uri-type="prefix"
-                sort-order="5"
+                sort-order="50"
                 badge="vt510"/>
         <refsrc name="vt420"
                 key="vt420"
                 uri="https://vt100.net/mirror/mds-199909/cd3/term/vt420rm2.pdf"
                 uri-type="pdf-page"
                 pdf-page-offset="22"
-                sort-order="6"
+                sort-order="60"
                 badge="vt420"/>
         <!-- Volume 1: Text Programming (EK-VT3XX-TP) -->
         <refsrc name="vt340"
@@ -557,75 +562,75 @@ DECTSR		462
                 uri="http://www.bitsavers.org/pdf/dec/terminal/vt340/EK-VT3XX-TP-001_VT330_VT340_Text_Programming_Mar87.pdf"
                 uri-type="pdf-page"
                 pdf-page-offset="14"
-                sort-order="7"/>
+                sort-order="70"/>
         <!-- Volume 2: Graphics Programming (EK-VT3XX-GP) -->
         <refsrc name="vt340"
                 key="vt340g"
                 uri="https://bitsavers.org/pdf/dec/terminal/vt340/EK-VT3XX-GP-001_VT330_VT340_Graphics_Programming_Mar87.pdf"
                 uri-type="pdf-page"
                 pdf-page-offset="16"
-                sort-order="7"/>
+                sort-order="71"/>
         <!--TODO: Need to find a copy of EK-VT320-RM -->
         <refsrc name="vt220"
                 key="vt220"
                 uri="https://vt100.net/docs/vt220-rm/chapter4.html"
                 uri-type="anchor"
-                sort-order="8"
+                sort-order="80"
                 badge="vt220"/>
         <refsrc name="vt132"
                 key="vt132"
                 uri="https://bitsavers.org/pdf/dec/terminal/vt132/EK-VT132-UG-002_VT132_User_Guide_Nov79.pdf"
                 uri-type="pdf-page"
                 pdf-page-offset="12"
-                sort-order="9"
+                sort-order="90"
                 badge="vt132"/>
         <refsrc name="vt100"
                 key="vt100"
                 uri="https://vt100.net/docs/vt100-ug/chapter3.html"
                 uri-type="anchor"
-                sort-order="10"
+                sort-order="100"
                 badge="vt100"/>
         <refsrc name="vt102"
                 key="vt102"
                 uri="https://vt100.net/docs/vt102-ug/appendixc.html"
                 uri-type="anchor"
-                sort-order="11"
+                sort-order="110"
                 badge="vt102"/>
         <refsrc name="vt52"
                 key="vt52"
                 uri="https://vt100.net/dec/ek-vt5x-op-001.pdf"
                 uri-type="pdf-page"
-                sort-order="12"
+                sort-order="120"
                 badge="vt52"/>
         <refsrc name="wy370"
                 key="wy370"
                 uri="https://bitsavers.org/pdf/wyse/WY-370/881133-02A_WY-370_Programmers_Guide_Jun90.pdf"
                 uri-type="pdf-page"
-                sort-order="13"
+                sort-order="130"
                 badge="wy370"/>
         <refsrc name="xterm"
                 key="xt"
                 uri="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html"
                 uri-type="anchor"
-                sort-order="14"
+                sort-order="140"
                 badge="xterm"/>
         <refsrc name="k95"
                 key="k95"
                 uri="https://davidrg.github.io/ckwin/current/"
                 uri-type="anchor"
-                sort-order="15"
+                sort-order="150"
                 badge="k95"/>
         <refsrc name="msk"
                 key="msk"
                 uri="https://www.kermitproject.org/onlinebooks/usingmsdoskermit2e.pdf"
                 uri-type="pdf-page"
-                sort-order="16"/>
+                sort-order="160"/>
         <refsrc name="vt1000"
                 key="vt1000"
                 uri="https://manx-docs.org/collections/mds-199909/cd3/term/v1000ug2.pdf"
                 uri-type="pdf-page"
                 pdf-page-offset="10"
-                sort-order="17"/>
+                sort-order="170"/>
         <!-- This isn't DECterm documentation (that doesn't really exist
              anywhere online), but rather a section of the Digital UNIX manual
              "Writing Software for the International Market", the only place where
@@ -634,7 +639,7 @@ DECTSR		462
                 key="dtl"
                 uri="https://ftp.zx.net.nz/rom/V4.0D_D1/DOCS/HTML/AQ0R4CTE/DOCU_006.HTM"
                 uri-type="anchor"
-                sort-order="18"
+                sort-order="180"
                 badge="decterm"
         />
 
@@ -649,7 +654,7 @@ DECTSR		462
                 key="vws"
                 uri="https://bitsavers.org/pdf/dec/vax/vms/vms_workstation/AA-EZ24D-TE_VMS_Workstation_Software_Users_Guide_Jun1989.pdf"
                 uri-type="pdf-page"
-                sort-order="19"
+                sort-order="190"
                 badge="vws"
         />
         <!-- Digital ANSI-Compliant Printing Protocol - Level 2 Programming Reference Manual -->
@@ -657,46 +662,46 @@ DECTSR		462
                 key="dap"
                 uri="https://vt100.net/mirror/mds-199909/cd3/printer/pplv2pmb.pdf"
                 uri-type="pdf-page"
-                sort-order="20"/>
+                sort-order="200"/>
         <refsrc name="vt105"
                 key="vt105"
                 uri="https://bitsavers.org/pdf/dec/terminal/vt105/EK-VT105-TM-001_VT105_Graphic_Terminal_Technical_Manual_Sep79.pdf"
                 uri-type="pdf-page"
-                sort-order="21"
+                sort-order="210"
                 badge="vt105"/>
         <refsrc name="vk100"
                 key="vk100"
                 uri="http://www.bitsavers.org/www.computer.museum.uq.edu.au/pdf/EK-VK100-IN-002%20GIGI%20Terminal%20Installation%20And%20Owner's%20Manual.pdf"
                 uri-type="pdf-page"
-                sort-order="22"
+                sort-order="220"
                 badge="vk100"/>
         <refsrc name="dtc01"
                 key="dtc01"
                 uri="https://www.vaxhaven.com/images/3/3d/EK-DTC01-RM-003.pdf"
                 uri-type="pdf-page"
                 pdf-page-offset="13"
-                sort-order="23"
+                sort-order="230"
                 badge="dtc01"/>
         <refsrc name="tphb87"
                 key="tphb87"
                 uri="https://bitsavers.org/pdf/dec/handbooks/1987_Terminals_and_Printers_Handbook.pdf"
                 uri-type="pdf-page"
-                sort-order="24"/>
+                sort-order="240"/>
         <refsrc name="vt125"
                 key="vt125"
                 uri="https://bitsavers.org/pdf/dec/terminal/vt125/EK-VT125-UG-001_VT125_User_Guide_Sept81.pdf"
                 uri-type="pdf-page"
-                sort-order="25"/>
+                sort-order="250"/>
         <refsrc name="vt382"
                 key="vt382"
                 uri="https://vt100.net/dec/ek-vt382-rm-001.pdf"
                 uri-type="pdf-page"
-                sort-order="26"/>
+                sort-order="260"/>
         <refsrc name="lj250"
                 key="lj250"
                 uri="https://bitsavers.org/pdf/dec/printer/lj250/EK-LJ250-RM-001.pdf"
                 uri-type="pdf-page"
-                sort-order="27"/>
+                sort-order="270"/>
     </references>
 
     <badges>
@@ -4097,7 +4102,7 @@ DECTSR		462
 
         <section role="ctlseq" id="decrsts" mnemonic="DECRSTS"
                  title="Restore Terminal State"
-                 not-implemented="true" todo="true">
+                 groups="isvt420" badges="vt525 k95">
             <ctlseq>DCS <param-single/> $ p D...D ST</ctlseq>
             <ref src="070:463"/>
             <ref src="vt340:222"/>
@@ -4107,9 +4112,61 @@ DECTSR		462
             <ref src="wy370:140"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 vt520 wt"/>
 
-            <!-- TODO: Note! The VT520/VT525 supports an additional
-                for Ps. 0 and 1 are as in the VT420 and 510, while
-                2 is new - it restores colours -->
+            <section role="parameter" id="decrsts-1" title="Restore Terminal State"
+                    not-implemented="true">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 vt520"/>
+            </section>
+            <section role="parameter" id="decrsts-2" badges="vt525 k95"
+                     title="Restore Terminal Color Table State">
+                <ref src="vt52x:272"/>
+                <ref src="070:364"/>
+                <ctlseq><param-single/> = 2</ctlseq>
+                <termsupp first="vt525" series="vt" additional="wt"/>
+                <p>
+                    Restores one or more entries in the current colour palette
+                    from values supplied by the host. Values can either be in
+                    HLS (hue 0-360, lightness 0-100, saturation 0-100),
+                    or RGB (red 0-100, green 0-100, blue 0-100).
+                </p>
+                <p>
+                    The format of a color palette entry in the data string is
+                    <tt>Pc ; Pu ; Px ; Py ; Pz</tt> where:
+                </p>
+                <dl>
+                    <dt>Pc</dt>
+                    <dd>The color index (0-255).</dd>
+                    <dt>Pu</dt>
+                    <dd>The color format - 1 for HLS, or 2 for RGB.
+                    </dd>
+                    <dt>Px, Py, Pz</dt>
+                    <dd>In HLS format these are Hue, Lightness and Saturation.
+                        In RGB format these are Red, Green and Blue. Note that
+                        RGB values are 0-100, not 0-255 as in
+                        <a href="#osc-4">OSC-4</a>. Note that in HLS format,
+                        <em>blue is at 0 degrees</em>, not red.
+                    </dd>
+                </dl>
+                <p>
+                    To supply more than one color palette entry to be restored,
+                    separate multiple entries with the '/' character. For
+                    example, the following would restore K95s entire default
+                    16-colour palette using RGB format:
+                </p>
+                <p><tt>printf '\x1bP2$p0;2;0;0;0/1;2;50;0;0/2;2;0;50;0/3;2;50;50;0/4;2;0;0;50/5;2;50;0;50/6;2;0;50;50/7;2;75;75;75/8;2;50;50;50/9;2;100;0;0/10;2;0;100;0/11;2;100;100;0/12;2;0;0;100/13;2;100;0;100/14;2;0;100;100/15;2;100;100;100\x1b\\'</tt></p>
+                <p>
+                    And the following would do the same, but using the HLS color
+                    system:
+                </p>
+                <p><tt>printf '\x1bP2$p0;1;119;0;0/1;1;120;25;100/2;1;240;25;100/3;1;180;25;100/4;1;0;25;100/5;1;60;25;100/6;1;300;25;100/7;1;119;75;0/8;1;119;50;0/9;1;120;50;100/10;1;240;50;100/11;1;180;50;100/12;1;0;50;100/13;1;60;50;100/14;1;300;50;100/15;1;119;100;0\x1b\\'</tt></p>
+                <p>
+                    When restoring the color palette, entries with a color
+                    index outside the range of the current color palette or an
+                    invalid color format are discarded. Any palette entries not
+                    specified remain unmodified allowing only a subset of the
+                    palette to be updated as required.
+                </p>
+            </section>
         </section>
 
         <section role="ctlseq" id="decrsps" mnemonic="DECRSPS"
@@ -4587,6 +4644,7 @@ DECTSR		462
                 <ctlseq><param-text/> = , |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Reports one of the 16 color pairs set with
                     <a href="#decac">DECAC</a>. A parameter must be supplied
@@ -4617,6 +4675,7 @@ DECTSR		462
                 <ctlseq><param-text/> = , }</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Reports one of the 16 color pairs set with
                     <a href="#decatc">DECATC</a>. A parameter must be supplied
@@ -6899,7 +6958,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">21</dt>  <!-- vt510, vt420, xt -->
                 <dd>Horizontal scrolling</dd>
 
-                <dt not-implemented="true">22</dt>   <!-- vt525, xt -->
+                <dt>22</dt>   <!-- vt525, xt -->
                 <dd>ANSI color (eg, VT525)</dd>
                 <!-- DECCTR, DECSTGLT
                  https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=361
@@ -8459,7 +8518,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Underline Mode">
                 <ctlseq><param-single/> = 114</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Enables true underline when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> allowing underlined text combined with
@@ -8470,7 +8529,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Color Blink Mode">
                 <ctlseq><param-single/> = 115</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Enables true blink when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> allowing blinking text combined with
@@ -8482,14 +8541,18 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 116</ctlseq>
                 <ref src="vt52x:179"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
             </section>
             <section role="parameter" id="dececm" mnemonic="DECECM"
-                     title="Erase Color Mode"
-                     not-implemented="true" todo="true">
+                     title="Erase Color Mode" badges="isvt525">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
-                <termsupp first="vt520" series="vt" additional="wt"/>
+                <termsupp first="vt525" series="vt" additional="wt"/>
+                <p>
+                    Causes the default attribute as set by <tt>SET TERMINAL COLOR TERMINAL-SCREEN</tt>
+                    to be used when clearing parts of the screen. This setting
+                    can also be enabled with <tt>SET TERMINAL COLOR ERASE DEFAULT-COLOR</tt>.
+                </p>
             </section>
             <section role="parameter" id="xt-sxym" title="XTERM - Send Mouse X&amp;Y on button press and release">
                 <ctlseq><param-single/> = 1000</ctlseq>
@@ -10451,7 +10514,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Underline Mode">
                 <ctlseq><param-single/> = 114</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Disables true underline when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> causing the underline attribute to only
@@ -10462,7 +10525,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Color Blink Mode">
                 <ctlseq><param-single/> = 115</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Disables true blink when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> causing the blink attribute to only
@@ -10474,14 +10537,19 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 116</ctlseq>
                 <ref src="vt52x:179"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
             </section>
             <section role="parameter" id="r-dececm" mnemonic="DECECM"
-                     title="Erase Color Mode"
-                     not-implemented="true" todo="true">
+                     title="Erase Color Mode" badges="isvt525">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
-                <termsupp first="vt520" series="vt" additional="wt"/>
+                <termsupp first="vt525" series="vt" additional="wt"/>
+                <p>
+                    Causes the current color as set by <a href="#sgr">SGR</a>
+                    to be used when clearing parts of the screen. This setting
+                    can also be enabled with
+                    <tt>SET TERMINAL COLOR ERASE CURRENT-COLOR</tt>.
+                </p>
             </section>
             <section role="parameter" id="decrst-1000"
                      title="XTERM - Don't Send Mouse X&amp;Y on button press and release">
@@ -13778,14 +13846,14 @@ DCS $ q 3 , } ST</pre>
                          title="Alternate Text Underline Mode">
                     <ctlseq><param-single/> = 114</ctlseq>
                     <ref src="vt52x:177"/>
-                    <termsupp first="vt520" series="vt" additional=""/>
+                    <termsupp first="vt525" series="vt" additional=""/>
                     <p>Reports the current DECATCUM setting</p>
                 </section>
                 <section role="parameter" id="rqm-115" mnemonic="DECATCBM"
                          title="Alternate Text Color Blink Mode">
                     <ctlseq><param-single/> = 115</ctlseq>
                     <ref src="vt52x:177"/>
-                    <termsupp first="vt520" series="vt" additional=""/>
+                    <termsupp first="vt525" series="vt" additional=""/>
                     <p>Reports the current DECATCBM setting</p>
                 </section>
                 <section role="parameter" id="rqm-116" mnemonic="DECBBSM"
@@ -13793,14 +13861,18 @@ DCS $ q 3 , } ST</pre>
                          not-implemented="true" todo="true">
                     <ctlseq><param-single/> = 116</ctlseq>
                     <ref src="vt52x:179"/>
-                    <termsupp first="vt520" series="vt" additional=""/>
+                    <termsupp first="vt525" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-117" mnemonic="DECECM"
-                         title="Erase Color Mode"
-                         not-implemented="true" todo="true">
+                         title="Erase Color Mode">
                     <ctlseq><param-single/> = 117</ctlseq>
                     <ref src="vt52x:202"/>
-                    <termsupp first="vt520" series="vt" additional="wt"/>
+                    <termsupp first="vt525" series="vt" additional="wt"/>
+                    <p>
+                        Reports the current <tt>SET TERMINAL COLOR ERASE</tt>
+                        setting: Set for <tt>DEFAULT-COLOR</tt>, reset for
+                        <tt>CURRENT-COLOR</tt>
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1000" groups="isansi"
                          badges="linux xterm k95"
@@ -15434,12 +15506,18 @@ DCS $ q 3 , } ST</pre>
             -->
         </section>
         <section role="ctlseq" id="decctr" mnemonic="DECCTR"
-                 title="Color Table Request"
-                 not-implemented="true" todo="true">
+                 title="Color Table Request" badges="vt525 k95">
             <ctlseq>CSI 2 ; <param-single/> $ u</ctlseq>
             <ref src="070:364"/>
             <ref src="vt52x:268"/>
-            <termsupp first="vt520" series="vt" additional=""/>
+            <termsupp first="vt525" series="vt" additional="wt"/>
+            <p>
+                Requests the terminals current color palette.
+                <param-single/> specifies the format: 1 for HLS
+                (hue 0-360, lightness 0-100, saturation 0-100 with <em>blue at
+                0 degrees</em>, not red), or 2 for RGB (red 0-100, green 0-100,
+                blue 0-100).
+            </p>
         </section>
         <section role="ctlseq" id="decrqupss" mnemonic="DECRQUPSS"
                  title="User-Preferred Supplemental Set"
@@ -16543,23 +16621,11 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt525" series="vt" additional=""/>
             <p>You can query the current state of DECSTGLT with <a href="#decrqss">DECRQSS</a></p>
 
-            <p>
-                <b>Warning:</b> The behavior of the implementation described here has
-                not been checked against a real VT525 and as such is subject to
-                change should it turn out the real terminal behaves differently.
-            </p>
-
             <section role="parameter" id="decstglt-0"
                     title="Mono">
                 <ctlseq><param-text/> = 0</ctlseq>
                 <p>
-                    Disables <em>display</em> of SGR colors. All text on screen
-                    and in the scrollback buffer immediately appears in the
-                    default terminal colors as set by <tt>SET TERMINAL COLOR TERMINAL</tt>.
-                </p>
-                <p>
-                    While in this mode you can still use SGR to set colors, they
-                    just won't appear until display of SGR colors is re-enabled.
+                    Switches to a monochrome palette.
                 </p>
             </section>
             <section style="group" role="group">
@@ -16593,7 +16659,7 @@ DCS $ q 3 , } ST</pre>
                      title="ANSI SGR color">
                 <ctlseq><param-text/> = 3</ctlseq>
                 <p>
-                    Enables <em>display</em> of SGR colors. Returns display of
+                    Enables display of SGR colors. Returns display of
                     reverse, underline, bold and blink attributes to their normal
                     status.
                 </p>
@@ -16791,102 +16857,186 @@ DCS $ q 3 , } ST</pre>
                 index, and the third parameter is the background color index.
             </p>
             <p>
-                While a real VT525 limits you to the 16-color palette for the
-                foreground and background color values, in Kermit 95 you can
-                use any color from the current palette chosen with
-                <tt>SET TERMINAL COLOR PALETTE</tt>.
-            </p>
-            <p>
-                DECATC only affects a separate table of colors that Kermit 95
-                maintains for use by the <em>DECSTGLT Alternate Color Mode</em>.
-                These colors are not used when attributes are turned off via
-                <tt>SET TERMINAL ATTRIBUTE</tt>, and except for the first five
-                entries in the table they cannot be set via the
-                <tt>SET TERMINAL COLOR</tt> command. The remaining eleven table
-                entries can only be changed via DECATC. The DECATC color table
-                is reset on terminal reset.
-            </p>
-
-            <p>
                 You can query the current state of DECATC with
                 <a href="#decrqss">DECRQSS</a>
-            </p>
-
-            <p>
-                <b>Warning:</b> Initial color assignments for these attribute
-                combinations are subject to change! The current default color
-                assignments are arbitrary and will likely change in the future
-                if the proper assignments can be obtained from someone with
-                access to a real VT525 for testing.
             </p>
             <table>
                 <tr>
                     <th>Ps1</th>
                     <th>Attributes</th>
+                    <th>Default Foreground</th>
+                    <th>Default Background</th>
                 </tr>
                 <tr>
                     <td>0</td>
                     <td>Normal text</td>
+                    <td>2 - Red</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>1</td>
                     <td>Bold</td>
+                    <td>1 - Blue</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>2</td>
                     <td>Reverse</td>
+                    <td>6 - Yellow</td>
+                    <td>4 - Magenta</td>
                 </tr>
                 <tr>
                     <td>3</td>
                     <td>Underline</td>
+                    <td>6 - Yellow</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>4</td>
                     <td>Blink</td>
+                    <td>3 - Green</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>5</td>
                     <td>Bold + Reverse</td>
+                    <td>1 - Blue</td>
+                    <td>4 - Magenta</td>
                 </tr>
                 <tr>
                     <td>6</td>
                     <td>Bold + Underline</td>
+                    <td>7 - Gray 50%</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>7</td>
                     <td>Bold + Blink</td>
+                    <td>1 - Blue</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>8</td>
                     <td>Reverse + Underline</td>
+                    <td>6 - Yellow</td>
+                    <td>4 - Magenta</td>
                 </tr>
                 <tr>
                     <td>9</td>
                     <td>Reverse + Blink</td>
+                    <td>3 - Green</td>
+                    <td>4 - Magenta</td>
                 </tr>
                 <tr>
                     <td>10</td>
                     <td>Underline + Blink</td>
+                    <td>7 - Gray 50%</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>11</td>
                     <td>Bold + Reverse + Underline</td>
+                    <td>7 - Gray 50%</td>
+                    <td>4 - Gray on Magenta</td>
                 </tr>
                 <tr>
                     <td>12</td>
                     <td>Bold + Reverse + Blink</td>
+                    <td>5 - Cyan</td>
+                    <td>4 - Magenta</td>
                 </tr>
                 <tr>
                     <td>13</td>
                     <td>Bold + Underline + Blink</td>
+                    <td>5 - Cyan</td>
+                    <td>0 - Black</td>
                 </tr>
                 <tr>
                     <td>14</td>
                     <td>Reverse + Underline + Blink</td>
+                    <td>7 - Gray 50%</td>
+                    <td>4 - Magenta</td>
                 </tr>
                 <tr>
                     <td>15</td>
                     <td>Bold + Reverse + Underline + Blink</td>
+                    <td>5 - Cyan</td>
+                    <td>4 - Magenta</td>
+                </tr>
+            </table>
+            <p>
+                Color indexes are for the special DECATC palette used only when
+                Kermit 95 is in Alternate Color Mode. This palette is arranged
+                differently from the normal SGR palette:
+            </p>
+            <table>
+                <tr>
+                    <th>Ps2, Ps3</th>
+                    <th>Color</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>Black</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Blue</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Red</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Green</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Magenta</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Cyan</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Yellow</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Gray 50%</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>Gray 25%</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td>Dark Blue</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td>Dark Red</td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td>Dark Green</td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td>Dark Magenta</td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td>Dark Cyan</td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td>Dark Yellow</td>
+                </tr>
+                <tr>
+                    <td>15</td>
+                    <td>Gray 75%</td>
                 </tr>
             </table>
         </section>
@@ -17272,8 +17422,8 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     The <tt><param-single symbol="c"/></tt> component is the
                     color index to change. Valid values depend on which color
-                    palette is currently active: 0–15 for aixterm-16, 0–87 for
-                    xterm-88, and 0–255 for xterm-256. The first five values
+                    palette is currently active: 0-15 for aixterm-16, 0-87 for
+                    xterm-88, and 0-255 for xterm-256. The first five values
                     above the range of the current palette (e.g., for the
                     xterm-256 palette: 256, 257, 258, 259, 260) set attribute
                     colors. See <a href="#osc-5">OSC-5</a> for more details.
@@ -17308,6 +17458,12 @@ DCS $ q 3 , } ST</pre>
                 <p>If a color was set by name rather than an RGB value, then
                     when queried that colors RGB value will be returned;
                     Kermit 95 does not remember the original color name used.
+                </p>
+                <p>
+                    The VT525 <a href="#decctr">Color Table Request</a> is also
+                    supported for querying the current color palette, and
+                    <a href="#decrsts-2">DECRSTS</a> for restoring some or all
+                    of the color palette.
                 </p>
             </section>
             <section role="parameter" id="osc-5" mnemonic=""
@@ -18053,15 +18209,21 @@ DCS $ q 3 , } ST</pre>
         <ul>
             <li><b>aixterm-16</b> - The aixterm 16-color palette (eight standard
                 ANSI colors plus their intense variants)</li>
+            <li><b>vt525</b> - The VT525 16-color palette</li>
+            <li><b>vt525-mono</b> - The
+                <a href="#decstglt-0">VT525 Monochrome mode</a></li>
+            <li><b>vt525-alternate</b> - Special
+                <a href="#decstglt-2">VT525 Alternate Color mode</a>
+            </li>
             <li><b>xterm-88</b> - Xterms 88-color palette</li>
             <li><b>xterm-256</b> - Xterms 256-color palette</li>
             <li><b>xterm-rgb</b> - Xterms 256-color palette, with direct RGB color support enabled</li>
         </ul>
 
-        <p> The first 16 colors are the same in each palette.
-            You can change the currently active color palette via the
-            <tt>SET TERM COLOR PALETTE</tt> command. This setting is primarily
-            for the GUI version of K95 and affects:
+        <p> The first 16 colors are equivalent in each palette except for the
+            VT525 palettes. You can change the currently active color palette
+            via the <tt>SET TERM COLOR PALETTE</tt> command. This setting is
+            primarily for the GUI version of K95 and affects:
         </p>
         <ul>
             <li>How the terminal is rendered</li>
@@ -18078,7 +18240,7 @@ DCS $ q 3 , } ST</pre>
             scroll-back buffer. Switching from a larger palette to a smaller one
             mid-session will result in incorrect colors being displayed. As this
             is just a rendering setting, switching back to the previous palette will
-            imediately restore correct color for the terminal screen and scrollback
+            immediately restore correct color for the terminal screen and scrollback
             buffer.
         </p>
 
@@ -18167,7 +18329,7 @@ DCS $ q 3 , } ST</pre>
             <p>
                 To retain compatibility with software blindly expecting 256-color or
                 24-bit RGB color support, 16-color versions of Kermit 95 still
-                support the <tt>SET TERM COLOR PALETTE</tt> command and implement
+                support the <tt>SET TERM COLOR PALETTE</tt> command and implements
                 <a href="#sgr-38-ic">SGR-38</a> and <a href="#sgr-48-ic">SGR-48</a>.
                 When the host tries to set a color via SGR-38 or SGR-48, that
                 request is translated into something valid for the aixterm-16
