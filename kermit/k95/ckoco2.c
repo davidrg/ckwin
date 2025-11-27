@@ -2061,6 +2061,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
         (att.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
         (att.dim        ? VT_CHAR_ATTR_DIM       : 0) |
         (att.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
+        (VT_CHAR_ATTR_SET_UL_STYLE(att.ul_style))     |
         (att.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
         (att.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
         (att.italic     ? VT_CHAR_ATTR_ITALIC    : 0) |
@@ -2621,6 +2622,7 @@ VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
     vta.bold            = attr & VT_CHAR_ATTR_BOLD ? 1 : 0 ;
     vta.dim             = attr & VT_CHAR_ATTR_DIM ? 1 : 0 ;
     vta.underlined      = attr & VT_CHAR_ATTR_UNDERLINE ? 1 : 0 ;
+    vta.ul_style        = VT_CHAR_ATTR_GET_UL_STYLE(attr);
     vta.blinking        = attr & VT_CHAR_ATTR_BLINK ? 1 : 0 ;
     vta.reversed        = attr & VT_CHAR_ATTR_REVERSE ? 1 : 0 ;
     vta.italic          = attr & VT_CHAR_ATTR_ITALIC ? 1 : 0 ;
@@ -2654,6 +2656,7 @@ VscrnSetVtCharAttr( BYTE vmode, SHORT x, SHORT y, vtattrib vta )
                 (vta.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
                 (vta.dim        ? VT_CHAR_ATTR_DIM       : 0) |
                 (vta.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
+                (VT_CHAR_ATTR_SET_UL_STYLE(vta.ul_style))     |
                 (vta.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
                 (vta.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
                 (vta.italic     ? VT_CHAR_ATTR_ITALIC    : 0) | 
