@@ -1250,6 +1250,7 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
     unsigned wyseattr:1;        /* Wyse Attribute */
     unsigned italic:1;          /* Italic */
 	unsigned crossedout:1;		/* Crossed out */
+    unsigned erased:1;          /* Erased cell */
     unsigned hyperlink:1;       /* Hyperlink */
     unsigned short linkid;      /* Hyperlink Index */
 } vtattrib ;
@@ -1269,14 +1270,28 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 #define VT_CHAR_ATTR_GRAPHIC          ((USHORT) 0x0040)
 #define VT_CHAR_ATTR_DIM              ((USHORT) 0x0080)
 #define WY_CHAR_ATTR                  ((USHORT) 0x0100)
-#define KUI_CHAR_ATTR_UPPER_HALF      ((USHORT) 0x0200)
-#define KUI_CHAR_ATTR_LOWER_HALF      ((USHORT) 0x0400)
+#define VT_CHAR_ATTR_ERASED           ((USHORT) 0x0200)
+#define VT_CHAR_RESERVED_3            ((USHORT) 0x0400)  /* Unused */
 #define VT_CHAR_ATTR_ITALIC           ((USHORT) 0x0800)
 #define VT_CHAR_ATTR_HYPERLINK        ((USHORT) 0x1000)
 #define VT_CHAR_ATTR_CROSSEDOUT      ((USHORT) 0x2000)
 /* These three are available for use */
-#define VT_CHAR_RESERVED_2            ((USHORT) 0x4000)  /* Doubly-underlined */
-#define VT_CHAR_RESERVED_1            ((USHORT) 0x8000)
+#define VT_CHAR_RESERVED_2            ((USHORT) 0x4000)  /* Unused */
+#define VT_CHAR_RESERVED_1            ((USHORT) 0x8000)  /* Unused */
+
+/* In the future:
+ *   - The three reserved fields will probably together become the three-bit
+ *     underline style for which there are six options (none, normal, double,
+ *     dashed, dotted and wavy) and two unused values.
+ *   - VT_CHAR_ATTR_UNDERLINE may become doubly-underlined as XTerm tracks that
+ *     separately from singly underlined (a character can be both singly and
+ *     doubly underlined at the same time, with doubly underlined taking
+ *     priority). In this case, doubly-underlined may be removed from the above
+ *     3-bit field resulting in three unused values there.
+ *   - If an extra attribute field is required for something, VT_CHAR_ERASED
+ *     could be moved to one of the unused underline styles as ERASED is
+ *     mutually exclusive with underline (and all other attributes).
+ */
 
 #define VT_LINE_ATTR_NORMAL           ((USHORT) 0x00)
 #define VT_LINE_ATTR_DOUBLE_WIDE      ((USHORT) 0x01)

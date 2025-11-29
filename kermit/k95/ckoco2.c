@@ -1856,7 +1856,7 @@ VscrnScrollLf( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
             }
         for ( x = RightCol - Columns + 1 ; x <= RightCol ; x++ ){
             line->cells[x] = Cell ;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
 
@@ -1903,7 +1903,7 @@ VscrnScrollRt( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
             }
         for ( x = LeftCol + Columns - 1 ; x >= LeftCol ; x-- ){
             line->cells[x] = Cell ;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
 
@@ -2043,7 +2043,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
         for ( i=0 ; i<MAXTERMCOL  ; i++ ) {
             line->cells[i].c = ' ' ;
             line->cells[i].video_attr = cellcolor ;
-            line->vt_char_attrs[i] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[i] = VT_CHAR_ATTR_ERASED ;
         }
     }
 
@@ -2060,6 +2060,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
         (att.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
         (att.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
         (att.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
+        (att.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
         (att.wyseattr   ? WY_CHAR_ATTR         : 0) ;
     line->hyperlinks[Col] = att.hyperlink ? att.linkid : 0;
     return NO_ERROR ;
@@ -2620,6 +2621,7 @@ VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
     vta.graphic         = attr & VT_CHAR_ATTR_GRAPHIC ? 1 : 0 ;
     vta.wyseattr        = attr & WY_CHAR_ATTR ? 1 : 0 ;
     vta.crossedout      = attr & VT_CHAR_ATTR_CROSSEDOUT ? 1 : 0 ;
+    vta.erased          = attr & VT_CHAR_ATTR_ERASED ? 1 : 0 ;
     vta.hyperlink       = attr & VT_CHAR_ATTR_HYPERLINK ? 1 : 0;
     vta.linkid          = attr & VT_CHAR_ATTR_HYPERLINK ? line->hyperlinks[x] : 0;
 
@@ -2652,6 +2654,7 @@ VscrnSetVtCharAttr( BYTE vmode, SHORT x, SHORT y, vtattrib vta )
                 (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
                 (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
                 (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
+                (vta.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
                 (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
                 (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
     line = VscrnGetLineFromTop(vmode,y,FALSE);
@@ -3636,7 +3639,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
                     for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
                         line->cells[x] = blankcell ;
-                        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                     }
                 }
 
@@ -3675,7 +3678,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     for ( x = 0 ; x < MAXTERMCOL ; x++ )
                         {
                         line->cells[x] = blankcell ;
-                        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                         }
                     }
                 }
@@ -3720,7 +3723,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                 line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
                 for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
                     line->cells[x] = blankcell ;
-                    line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                    line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                 }
             }
             break;
@@ -5656,7 +5659,7 @@ VscrnInit( BYTE vmode )
                         	for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
                             	line->cells[x].c = ' ' ;
                             	line->cells[x].video_attr = vmode == VTERM ? attribute : colorcmd;
-                            	line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                            	line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                         	}
                     	}
                 	}
@@ -5711,6 +5714,10 @@ VscrnIsClear( BYTE vmode, int page )
                 debug(F100,"VscrnIsClear video_attr != cellcolor","",0);
                 return 0;
             }
+			/* TODO: Ideally we'd check if VT_CHAR_ATTR_ERASED is set too, but
+             *       in order to do that we'd need to be *certain* that all
+             *       emulations are correctly setting and clearing the attribute
+             *       which is not currently the case. */
         }
     }
     debug(F100,"VscrnIsClear all clear","",0);
