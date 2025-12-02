@@ -19237,8 +19237,20 @@ vtcsi(void)
                                 && (pn[1] <= 255 || (tt_utf8 && pn[1] <= 65535))) {
 
                             int c = pn[1];
-                            if ( !tt_utf8 )
+                            if ( !tt_utf8 ) {
+                                /* Briefly pretend we're using an 8bit
+                                 * connection so rtoxlat doesn't mask off the
+                                 * 8th bit */
+                                int x = cmdmsk;
+                                cmdmsk = 255;
+
+                                /* Translate from remote to local cset*/
                                 c = rtolxlat(pn[1]);
+
+                                /* Restore 7-bit mode if thats what we were
+                                 * using before */
+                                cmdmsk = x;
+                            }
 
                             clrrect_escape( VTERM, pn[2], pn[3],
                                             pn[4], pn[5], c ) ;
