@@ -213,13 +213,15 @@ static char *ckxrev = "32-bit";
 #include "ckokey.h"
 #include "ckoslp.h"
 
-#ifdef KUI
-extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+
+extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[],
+             SavedVT525RGBTable[], SavedVT525MonoRGBTable[],
+             SavedVT525ATCRGBTable[];
 #ifdef CK_PALETTE_WY370
 extern ULONG SavedWY370RGBTable[];
 #endif /* CK_PALETTE_WY370 */
-#endif /* KUI */
-extern ULONG RGBTable[], RGBTable256[], RGBTable88[];
+extern ULONG RGBTable[], RGBTable256[], RGBTable88[], VT525RGBTable[],
+             VT525MonoRGBTable[], VT525ATCRGBTable[];
 #ifdef CK_PALETTE_WY370
 extern ULONG WY370RGBTable[];
 #endif /* CK_PALETTE_WY370 */
@@ -273,7 +275,9 @@ void doreset(int);      /* ckoco3.c */
 #endif /* NOTERM */
 
 #ifndef NOLOCAL
+#ifndef KUI
 void VscrnForceFullUpdate();    /* ckoco2.c */
+#endif /* KUI */
 int ttgcwsz();                  /* ckocon.c */
 #endif /* NOLOCAL */
 
@@ -529,12 +533,14 @@ int quitonbreak = FALSE ;               /* Should SIGBREAK result in Quit */
 static int nOldCP;
 static char szOldTitle[80];
 
+#ifndef KUI
 #ifdef NT
 HANDLE
 #else
 HVIO
 #endif /* NT */
 VioHandle = 0;
+#endif /* ! KUI */
 
 #ifndef NOLOCAL
 #ifndef KUI
@@ -2150,18 +2156,21 @@ sysinit() {
             ttgwsiz() ;
     }
 
-#ifdef KUI
     {
         int i;
         // Initialise the backup copies of the RGB colour tables
         for (i = 0; i < 256; i++) SavedRGBTable256[i] = RGBTable256[i];
         for (i = 0; i < 88; i++) SavedRGBTable88[i] = RGBTable88[i];
-        for (i = 0; i < 16; i++) SavedRGBTable[i] = RGBTable[i];
+        for (i = 0; i < 16; i++) {
+            SavedRGBTable[i] = RGBTable[i];
+            SavedVT525RGBTable[i] = VT525RGBTable[i];
+            SavedVT525MonoRGBTable[i] = VT525MonoRGBTable[i];
+            SavedVT525ATCRGBTable[i] = VT525ATCRGBTable[i];
+        }
 #ifdef CK_PALETTE_WY370
         for (i = 0; i < 65; i++) SavedWY370RGBTable[i] = WY370RGBTable[i];
 #endif /* CK_PALETTE_WY370 */
     }
-#endif /* KUI*/
 
     debug(F100,"about to VscrnInit()","",0);
     /* Setup the Virtual Screens */
@@ -2386,7 +2395,11 @@ sysinit() {
 #endif /* NT */
 
 #ifndef NOLOCAL
+#ifdef KUI
+    os2settitle(NULL,1);                /* Force a Title update */
+#else
     VscrnForceFullUpdate();             /* Just in case command screen did not write */
+#endif /* KUI */
 #endif /* NOLOCAL */
     SysInited = 1;
 	debug(F100,"sysinit complete","",0);
@@ -2508,9 +2521,11 @@ syscleanup() {
 #endif /* KUI */
 #ifdef NT
     CloseSerialMutex() ;
+#ifndef KUI
     if ( !stdout )
         CloseHandle(VioHandle);
     VioHandle = 0 ;
+#endif /* ! KUI */
 #endif /* NT */
     CloseThreadMgmtMutex() ;
     CloseZoutDumpMutex();

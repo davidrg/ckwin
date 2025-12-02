@@ -104,6 +104,7 @@ extern vtattrib attrib, cmdattrib;
 extern bool cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[] ;
 extern TID tidTermScrnUpd ;
 
+#ifndef KUI
 extern
 #ifdef NT
 HANDLE
@@ -111,6 +112,7 @@ HANDLE
 HVIO
 #endif
 VioHandle;
+#endif /* ! KUI */
 
 #ifdef OS2MOUSE
 extern int tt_mouse ;
@@ -143,9 +145,19 @@ int pwidth, pheight;            /* Physical screen width, height */
 int ttgcwsz();                  /* ckocon.c */
 int os2settitle(char *, int);   /* ckotio.c */
 
+/* ===========================================================================
+ * Begin Console-mode-only (non-KUI) functions
+ * ===========================================================================*/
+
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* ReadCellStr                                                               */
 /*---------------------------------------------------------------------------*/
+/* In practice this is only ever used for one thing: during startup to set the
+ * command screen colour to the existing console screen colour. The only other
+ * reference is reversescreen but only when ONETERMUPD is not defined, which
+ * probably hasn't been the case since the mid 90s.
+ */
 USHORT
 ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
 {
@@ -278,11 +290,11 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
 #endif /* NT */
 }
 
+
 /*---------------------------------------------------------------------------*/
 /* WrtCellStr                                                                */
 /*---------------------------------------------------------------------------*/
 #ifdef NT
-#ifndef KUI
 USHORT
 OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
@@ -412,14 +424,12 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
     }
     return(0);
 }
-#endif /* KUI */
 #endif /* NT */
 
 USHORT
 WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
 #ifdef NT
-#ifndef KUI
     static CHAR_INFO *lpBuffer = NULL;  // pointer to buffer with data to write
     static COORD dwBufferSize  = {0,0}; // column-row size of source buffer
     COORD dwBufferCoord = {0,0};        // upper-left cell to write from
@@ -509,13 +519,10 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         rc = 2 ;
     }
    return(0);
-#endif /* KUI */
 #else /* NT */
    return VioWrtCellStr( (PCH) CellStr, Length*sizeof(viocell), Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-
-
 
 
 /* WrtCellStrDiff
@@ -619,7 +626,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
 
 }
 
-#ifndef KUI
+
 /*---------------------------------------------------------------------------*/
 /* WrtNCell                                                                  */
 /*---------------------------------------------------------------------------*/
@@ -758,8 +765,8 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
    return VioWrtNCell( (PCH) &Cell, Times, Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-#endif /* KUI */
 
+#ifndef ONETERMUPD
 /*---------------------------------------------------------------------------*/
 /* WrtCharStrAtt                                                             */
 /*---------------------------------------------------------------------------*/
@@ -768,7 +775,6 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
                       cell_video_attr_t* Attr )
 {
 #ifdef NT
-#ifndef KUI
     static LPWSTR wchars = NULL;
     static LPTSTR tchars = NULL ;
     static LPWORD attrs = NULL ;
@@ -895,13 +901,12 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         rc = 2 ;
     }
     return rc ;
-#endif /* KUI */
 #else /* NT */
    return VioWrtCharStrAtt( CharStr, Length, Row, Column, Attr, VioHandle ) ;
 #endif /* NT */
 }
+#endif /* ! ONETERMUPD */
 
-#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* GetMode                                                                   */
 /*   Determines:                                                             */
@@ -1309,7 +1314,6 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
     ReleaseScreenMutex() ;
     return rc ;
 }
-#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* GetCurPos                                                                 */
@@ -1445,6 +1449,11 @@ USHORT SetCurType( PCK_CURSORINFO CursorData )
 #endif /* NT */
     return rc ;
 }
+
+#endif /* !KUI */
+/* ===========================================================================
+ * End   Console-mode-only (non-KUI) functions
+ * ===========================================================================*/
 
 BOOL
 IsOS2FullScreen( void )
@@ -2018,6 +2027,32 @@ VscrnScrollUp( BYTE vmode, USHORT TopRow, USHORT LeftCol, USHORT BotRow,
 }
 
 /*---------------------------------------------------------------------------*/
+/* vtattrib_to_int                                          | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* Converts the vtattrib struct into a USHORT for storage in the vscreen
+ * buffer */
+USHORT vtattrib_to_int(vtattrib vta) {
+	USHORT attr;
+
+	attr = VT_CHAR_ATTR_NORMAL |
+                (vta.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
+                (vta.dim        ? VT_CHAR_ATTR_DIM       : 0) |
+                (vta.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
+                (vta.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
+                (vta.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
+                (vta.italic     ? VT_CHAR_ATTR_ITALIC    : 0) |
+                (vta.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
+                (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
+                (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
+                (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
+                (att.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
+                (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
+                (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
+
+	return attr;
+}
+
+/*---------------------------------------------------------------------------*/
 /* VscrnWrtCell                                             | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
 USHORT
@@ -2048,20 +2083,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
     }
 
     line->cells[Col] = Cell ;
-    line->vt_char_attrs[Col] = VT_CHAR_ATTR_NORMAL |
-        (att.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
-        (att.dim        ? VT_CHAR_ATTR_DIM       : 0) |
-        (att.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
-        (att.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
-        (att.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
-        (att.italic     ? VT_CHAR_ATTR_ITALIC    : 0) |
-        (att.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
-        (att.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
-        (att.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
-        (att.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
-        (att.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
-        (att.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
-        (att.wyseattr   ? WY_CHAR_ATTR         : 0) ;
+    line->vt_char_attrs[Col] = vtattrib_to_int(att);
     line->hyperlinks[Col] = att.hyperlink ? att.linkid : 0;
     return NO_ERROR ;
 }
@@ -2643,20 +2665,7 @@ VscrnSetVtCharAttr( BYTE vmode, SHORT x, SHORT y, vtattrib vta )
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    attr = VT_CHAR_ATTR_NORMAL |
-                (vta.bold       ? VT_CHAR_ATTR_BOLD      : 0) |
-                (vta.dim        ? VT_CHAR_ATTR_DIM       : 0) |
-                (vta.underlined ? VT_CHAR_ATTR_UNDERLINE : 0) |
-                (vta.blinking   ? VT_CHAR_ATTR_BLINK     : 0) |
-                (vta.reversed   ? VT_CHAR_ATTR_REVERSE   : 0) |
-                (vta.italic     ? VT_CHAR_ATTR_ITALIC    : 0) | 
-                (vta.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
-                (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
-                (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
-                (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
-                (vta.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
-                (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
-                (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
+    attr = vtattrib_to_int(vta);
     line = VscrnGetLineFromTop(vmode,y,FALSE);
     line->vt_char_attrs[x] = attr;
     line->hyperlinks[x] = vta.linkid;
@@ -4388,6 +4397,7 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
  */
 #define URLMINCNT 4096
 #define NEW_EXCLUSIVE 1
+
 void
 TermScrnUpd( void * threadinfo)
 {
@@ -5248,6 +5258,9 @@ os2ResetFont( void )
 /*---------------------------------------------------------------------------*/
 void
 killcursor( BYTE vmode ) {
+#ifdef KUI
+    cursoron[vmode] = FALSE;
+#else
     CK_CURSORINFO crsr_info;
     debug(F100,"killcursor","",0);
     if (!cursoron[vmode])                       /* It's already off */
@@ -5258,6 +5271,7 @@ killcursor( BYTE vmode ) {
     {
         cursoron[vmode] = FALSE;
     }
+#endif /* ! KUI */
 }
 
 /*---------------------------------------------------------------------------*/
@@ -5265,6 +5279,9 @@ killcursor( BYTE vmode ) {
 /*---------------------------------------------------------------------------*/
 void
 newcursor( BYTE vmode ) {
+#ifdef KUI
+    cursoron[vmode] = TRUE;
+#else KUI
     CK_CURSORINFO vci;
 
     debug(F100,"newcursor","",0);
@@ -5306,6 +5323,7 @@ newcursor( BYTE vmode ) {
         cursoron[vmode] = TRUE;
         VscrnIsDirty(vmode);
     }
+#endif /* ! KUI */
 }
 
 /*---------------------------------------------------------------------------*/

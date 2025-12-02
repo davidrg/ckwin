@@ -194,6 +194,9 @@ typedef int bool;
 #define CK_PALETTE_XT256   4   /* xterm 256-color */
 #define CK_PALETTE_XTRGB   5   /* 24-bit RGB + xterm-256 */
 #define CK_PALETTE_XTRGB88 6   /* 24-bit RGB + xterm-88 */
+#define CK_PALETTE_VT525   7   /* VT525 16-color */
+#define CK_PALETTE_VT525_M 8   /* VT525 mono */
+#define CK_PALETTE_VT525_A 9   /* VT525 Alternate */
 
 #ifdef COMMENT
 /* For the Wyse WY-370 colour palette, a bunch of extra work needs to be done:
@@ -216,6 +219,11 @@ typedef int bool;
  */
 #define CK_PALETTE_WY370 7   /* Wyse WY370 */
 #endif
+
+#define DECSTGLT_MONO           0
+#define DECSTGLT_ALTERNATE      1
+#define DECSTGLT_ALTERNATE_2    2
+#define DECSTGLT_COLOR          3
 
 /* The OS/2 console only supports 16 colours */
 #ifdef OS2ONLY
@@ -322,6 +330,14 @@ cell_video_attr_t cell_video_attr_set(
     CK_RGB_FLAG_INDEXED, \
     0, 0, cell_video_attr8_foreground(value), \
     0, 0, cell_video_attr8_background(value) \
+}
+
+/* Initialise a colour attribute at declaration time with a constant RGB color
+ */
+#define cell_video_attr_init_rgb_attribute(fgr, fgg, fgb, bgr, bgg, bgb) { \
+    CK_RGB_FLAG_RGB, \
+    (fgr), (fgg), (fgb), \
+    (bgr), (bgg), (bgb) \
 }
 
 /* Set a colour attribute to a 16-colour value pair packed into an unsigned
@@ -601,35 +617,6 @@ cell_video_attr_t cell_video_attr_set(
 #define cell_video_attr_fg_rgb_b(value) ( \
     cell_video_attr_fg_is_indexed(value) ? 0 : (value).fg_b )
 
-/* Returns the background colour as an RGB value
- * Called by the terminal rendering code in kclient.cxx
- * TODO: WY370 palette
- */
-#define cell_video_attr_foreground_rgb(value) ( \
-    cell_video_attr_fg_is_indexed(value) \
-    ? (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
-	  ? RGBTable256[cell_video_attr_foreground((value))%256] \
-	  : ((colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) \
-	      ? RGBTable88[cell_video_attr_foreground((value))%88] \
-  		  : RGBTable[cell_video_attr_foreground((value))%16]) \
-  	: cell_video_attr_fg_to_rgb(value) \
-)
-
-
-/* Returns the background colour as an RGB value
- * Called by the terminal rendering code in kclient.cxx
- * TODO: WY370 palette
- */
-#define cell_video_attr_background_rgb(value) ( \
-    cell_video_attr_bg_is_indexed(value) \
-    ? (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
-	  ? RGBTable256[cell_video_attr_background((value))%256] \
-	  : ((colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) \
-	      ? RGBTable88[cell_video_attr_background((value))%88] \
-		  : RGBTable[cell_video_attr_background((value))%16]) \
-	: cell_video_attr_bg_to_rgb(value) \
-)
-
 /* Sets the foreground to an RGB value */
 #define cell_video_attr_set_fg_rgb(attr, r, g, b) ( \
     cell_video_attr_set((attr).flags & ~CK_RGB_FLAG_FG_INDEXED, \
@@ -893,32 +880,6 @@ typedef unsigned short cell_video_attr_t;
     cell_video_attr_foreground(value) < 15 ? colors[cell_video_attr_foreground(value)] : "")
 
 
-/* Returns the background colour as an RGB value
- * Called by the terminal rendering code in kclient.cxx
- * TODO: WY370 palette
- */
-#define cell_video_attr_foreground_rgb(value) ( \
-    (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
-	? RGBTable256[cell_video_attr_foreground((value))%256] \
-	: ((colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) \
-	    ? RGBTable88[cell_video_attr_foreground((value))%88] \
-		: RGBTable[cell_video_attr_foreground((value))%16]) \
-)
-
-
-/* Returns the background colour as an RGB value
- * Called by the terminal rendering code in kclient.cxx
- * TODO: WY370 palette
- */
-#define cell_video_attr_background_rgb(value) ( \
-    (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
-	? RGBTable256[cell_video_attr_background((value))%256] \
-	: ((colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) \
-	    ? RGBTable88[cell_video_attr_background((value))%88] \
-		: RGBTable[cell_video_attr_background((value))%16]) \
-)
-
-
 /* Checks to see if the attribute is currently null (black)
  * Its called in a few places in ckoco3.c to see if a colour was previously
  * saved in savcolor and can be overwritten or restored.
@@ -944,7 +905,9 @@ typedef unsigned short cell_video_attr_t;
 /* ***************************** 16-COLORS *****************************/
 /* ***************************** 16-COLORS *****************************/
 /* ***************************** 16-COLORS *****************************/
-#define CK_DEFAULT_PALETTE CK_PALETTE_16
+/* The 256-color palette is still used so that if the host tries to use
+ * SGR-38/SGR-48 colors can be mapped correctly */
+#define CK_DEFAULT_PALETTE CK_PALETTE_XT256
 
 typedef unsigned char cell_video_attr_t;  /* this really should be color_attr_t */
 
@@ -1096,18 +1059,6 @@ typedef unsigned char cell_video_attr_t;  /* this really should be color_attr_t 
  */
 #define cell_video_attr_background_color_name(value) (colors[cell_video_attr_background(value)])
 #define cell_video_attr_foreground_color_name(value) (colors[cell_video_attr_foreground(value)])
-
-
-/* Returns the background colour as an RGB value
- * Called by the terminal rendering code in kclient.cxx
- */
-#define cell_video_attr_foreground_rgb(value) (RGBTable256[cell_video_attr_foreground((value))])
-
-
-/* Returns the background colour as an RGB value
- * Called by the terminal rendering code in kclient.cxx
- */
-#define cell_video_attr_background_rgb(value) (RGBTable256[cell_video_attr_background((value))])
 
 
 /* Checks to see if the attribute is currently null (black)
@@ -1509,10 +1460,14 @@ _PROTOTYP( int  vt_macro_in, (void) );
 _PROTOTYP( void savescreen, (ascreen *,int,int) ) ;
 _PROTOTYP( int restorescreen, (ascreen *) ) ;
 _PROTOTYP( void reverserange, (SHORT, SHORT, SHORT, SHORT) ) ;
+#ifndef KUI
 _PROTOTYP( USHORT ReadCellStr, ( viocell *, PUSHORT, USHORT, USHORT ) );
+#endif
 _PROTOTYP( USHORT WrtCellStr, ( viocell *, USHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT ReadCharStr, ( viocell *, PUSHORT, USHORT, USHORT ) );
+#ifndef ONETERMUPD
 _PROTOTYP( USHORT WrtCharStrAtt, ( PCH, USHORT, USHORT, USHORT, cell_video_attr_t* ) );
+#endif /* ONETERMUPD */
 #ifndef KUI
 _PROTOTYP( USHORT WrtNCell, ( viocell, USHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT GetMode, ( PCK_VIDEOMODEINFO ) );
@@ -1561,6 +1516,7 @@ _PROTOTYP( ULONG VscrnGetTop, ( BYTE, BOOL, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetPageScrollTop, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetScrollTop, ( BYTE, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetScrollHorz, ( BYTE ) ) ;
+_PROTOTYP( ULONG VscrnGetPageBegin, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetBegin, ( BYTE, BOOL, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetPageEnd, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetEnd, ( BYTE, BOOL, BOOL ) ) ;
@@ -1782,6 +1738,16 @@ _PROTOTYP(void to_alternate_buffer, (BYTE));
 _PROTOTYP(void from_alternate_buffer, (BYTE));
 _PROTOTYP(void set_alternate_buffer_enabled, (BYTE,BOOL));
 _PROTOTYP(BOOL on_alternate_buffer, (BYTE));
+
+_PROTOTYP(void reset_palettes, (void));
+#ifndef CK_COLORS_DEBUG
+_PROTOTYP(ULONG cell_video_attr_foreground_rgb, (cell_video_attr_t));
+_PROTOTYP(ULONG cell_video_attr_background_rgb, (cell_video_attr_t));
+#endif /* CK_COLORS_DEBUG */
+_PROTOTYP(ULONG* palette_rgb_table, (int));
+_PROTOTYP(unsigned char palette_max_index, (int));
+
+_PROTOTYP(USHORT vtattrib_to_int,(vtattrib));
 
 typedef struct _hyperlink {
     int index;

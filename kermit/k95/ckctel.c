@@ -3544,7 +3544,15 @@ tn_debug(s) char *s;
     if (!scrninitialized[VTERM]) {
         USHORT x,y;
         checkscreenmode();
+#ifndef ONETERMUPD
         GetCurPos(&y, &x);
+#else
+        {
+            position * ppos = VscrnGetCurPos(VCMD);
+            x = ppos->x;
+            y = ppos->y;
+        };
+#endif
         SaveCmdMode(x+1,y+1);
         scrninit();
         RestoreCmdMode();
