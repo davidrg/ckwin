@@ -2045,7 +2045,7 @@ USHORT vtattrib_to_int(vtattrib vta) {
                 (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
                 (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
                 (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
-                (att.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
+                (vta.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
                 (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
                 (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
 
