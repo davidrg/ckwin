@@ -6697,10 +6697,11 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
 /* Clears a rectangle from current cursor position to row,col */
 /* using fillchar.                                            */
 void
-clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar )
+clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar )
 {
     int startx, starty, endx, endy, l, x ;
     videoline * line = NULL ;
+    bool erase = FALSE;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( left < right ) {
@@ -6721,8 +6722,10 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
         endy = top - 1 ;
     }
 
-    if ( fillchar == NUL )
+    if ( fillchar == NUL ) {
         fillchar = SP ;
+        erase = TRUE;
+    }
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
@@ -6739,9 +6742,13 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
         line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
-            line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* If we're erasing, then ignore already erased cells. If we're just
+             * filling, then fill everything. */
+            if (line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED || !erase) {
+                line->cells[x].c = fillchar ;
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            }
         }
 
     }
@@ -7004,10 +7011,11 @@ selclrrect_escape( BYTE vmode, int top, int left, int bot, int right,
         line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
-            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
+            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED) &&
+                 line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED ) {
                 line->cells[x].c = fillchar ;
                 line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
     }
@@ -19223,10 +19231,20 @@ vtcsi(void)
                             pn[2] = 1 ;
                         if ( k < 1 )
                             pn[1] = SP ;
-                        clrrect_escape( VTERM, pn[2], pn[3],
-                                        pn[4], pn[5], pn[1] ) ;
-                        if (cursor_on_visible_page(VTERM)) {
-                            VscrnIsDirty(VTERM);
+
+                        /*  GL---------------------------   GR & BMP -------- */
+                        if (pn[1] >= 32 && (pn[1] <= 126 || pn[1] >= 160)
+                                && (pn[1] <= 255 || (tt_utf8 && pn[1] <= 65535))) {
+
+                            int c = pn[1];
+                            if ( !tt_utf8 )
+                                c = rtolxlat(pn[1]);
+
+                            clrrect_escape( VTERM, pn[2], pn[3],
+                                            pn[4], pn[5], c ) ;
+                            if (cursor_on_visible_page(VTERM)) {
+                                VscrnIsDirty(VTERM);
+                            }
                         }
                     }
                     break;
@@ -19248,7 +19266,7 @@ vtcsi(void)
                         if ( k < 1 || pn[1] < 1 )
                             pn[1] = 1 ;
                         clrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], SP ) ;
+                                        pn[3], pn[4], NUL ) ;
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }

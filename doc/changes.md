@@ -407,6 +407,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    width if the parameters value is 0. Any value less than 80 will now produce an
    80 column terminal.
  - Fixed crash writing to unopened file
+ - Fixed DECFRA accepting invalid fill character specifications
+ - Fixed DECFRA not using the selected remote character set for the fill character
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

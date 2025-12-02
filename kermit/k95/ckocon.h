@@ -1627,7 +1627,7 @@ _PROTOTYP(void clreoscr_escape, (BYTE,CHAR));
 _PROTOTYP(void clreol_escape, (BYTE,CHAR));
 _PROTOTYP(void clrline_escape, (BYTE,CHAR));
 _PROTOTYP(void clrcol_escape, (BYTE,CHAR));
-_PROTOTYP(void clrrect_escape, (BYTE, int, int, int, int, CHAR)) ;
+_PROTOTYP(void clrrect_escape, (BYTE, int, int, int, int, int)) ;
 _PROTOTYP(void selclrtoeoln, (BYTE,CHAR));
 _PROTOTYP(void selclrbol_escape, (BYTE,CHAR));
 _PROTOTYP(void selclrbos_escape, (BYTE,CHAR));
