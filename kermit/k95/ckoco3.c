@@ -438,12 +438,12 @@ cell_video_attr_t                       /* Video attribute bytes */
 
 cell_video_attr_t decatc_colors[16];
 
-vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
+vtattrib attrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0},
          savedattrib[SAVED_CURSORS]={
-                {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0}},
-         cmdattrib={0,0,0,0,0,0,0,0,0,0};
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
+         cmdattrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 extern int wherex[];                    /* Screen column, 1-based */
 extern int wherey[];                    /* Screen row, 1-based */
@@ -6287,7 +6287,7 @@ clrtoeoln( BYTE vmode, CHAR fillchar ) {
         {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor ;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
         }
 }
 
@@ -6330,7 +6330,7 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
     {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
     }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
 
@@ -6346,7 +6346,7 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
         {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
         }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
     }
@@ -6392,7 +6392,7 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
             {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
         }
@@ -6403,7 +6403,7 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
         {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
         }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
 }
@@ -6475,7 +6475,7 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
     }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
 
@@ -6488,7 +6488,7 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
         {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
         }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
     }
@@ -6532,7 +6532,7 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
             {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
         }
@@ -6543,7 +6543,7 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
         {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
         }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
 }
@@ -6581,7 +6581,7 @@ clrbol_escape( BYTE vmode, CHAR fillchar ) {
         {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
         }
 }
 
@@ -6618,7 +6618,7 @@ clreol_escape( BYTE vmode, CHAR fillchar ) {
     {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
     }
 }
 
@@ -6655,7 +6655,7 @@ clrline_escape( BYTE vmode, CHAR fillchar ) {
     {
         line->cells[x].c = fillchar ;
         line->cells[x].video_attr = cellcolor;
-        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
     }
 }
 
@@ -6664,11 +6664,15 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys ;
     int x  = wherex[VTERM]-1 ;
     int y ;
-    vtattrib vta ={0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     viocell cell;
 
     cell.c = fillchar;
     cell.video_attr = geterasecolor(vmode);
+    /* TODO: vta.erased = TRUE; ?
+     *  Used by WYSE emulations to clear a column to a particular character, so
+     * perhaps not?
+     **/
 
     if ( fillchar == NUL )
         cell.c = SP ;
@@ -6693,10 +6697,11 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
 /* Clears a rectangle from current cursor position to row,col */
 /* using fillchar.                                            */
 void
-clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar )
+clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar )
 {
     int startx, starty, endx, endy, l, x ;
     videoline * line = NULL ;
+    bool erase = FALSE;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( left < right ) {
@@ -6717,8 +6722,10 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
         endy = top - 1 ;
     }
 
-    if ( fillchar == NUL )
+    if ( fillchar == NUL ) {
         fillchar = SP ;
+        erase = TRUE;
+    }
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
@@ -6735,9 +6742,13 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
         line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
-            line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            /* If we're erasing, then ignore already erased cells. If we're just
+             * filling, then fill everything. */
+            if (line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED || !erase) {
+                line->cells[x].c = fillchar ;
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            }
         }
 
     }
@@ -6798,7 +6809,7 @@ selclrtoeoln( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
 }
@@ -6826,7 +6837,7 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
 
@@ -6839,7 +6850,7 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
                 line->cells[x].c = fillchar ;
                 line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                 }
             }
         }
@@ -6865,7 +6876,7 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
                 line->cells[x].c = fillchar ;
                 line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                 }
             }
         }
@@ -6877,7 +6888,7 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
 }
@@ -6900,7 +6911,7 @@ selclrbol_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
 }
@@ -6923,7 +6934,7 @@ selclrline_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
             line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
         }
     }
 }
@@ -6934,11 +6945,14 @@ selclrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
     int x  = wherex[VTERM]-1 ;
     int y ;
-    vtattrib vta ={0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     viocell cell;
 
     cell.c = fillchar;
     cell.video_attr = geterasecolor(vmode);
+    /* TODO: vta.erased = TRUE; ?
+     * Used by WYSE emulations to selectively clear a column to a particular
+     * character, so perhaps not? */
 
     if ( fillchar == NUL )
         cell.c = SP ;
@@ -6997,7 +7011,8 @@ selclrrect_escape( BYTE vmode, int top, int left, int bot, int right,
         line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
-            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
+            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED) &&
+                 line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED ) {
                 line->cells[x].c = fillchar ;
                 line->cells[x].video_attr = cellcolor;
                 line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
@@ -7012,7 +7027,7 @@ boxrect_escape( BYTE vmode, int row, int col )
 {
     int brow, bcol, erow, ecol, x, y ;
     viocell cell ;
-    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
     if ( vmode == VTERM ) {
         cell.video_attr = attribute ;
@@ -7075,12 +7090,15 @@ decdwl_escape(bool dwlflag) {
 
 int
 calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOOL obey_margins) {
-    int checksum=0;
+    unsigned short checksum=0;
     int x, y, height, width, max_page;
 
     height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
     width = VscrnGetWidth(VTERM);
     max_page = term_max_page(VTERM);
+
+	/* TODO: If page == 0, calculate checksum of
+	 * 		 *all* pages (unless on alternate buffer) */
 
     if (top < 1) top = 1;
     if (left < 1) left = 1;
@@ -7090,6 +7108,11 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
     else page = page - 1;
 
     if (obey_margins) {
+        debug(F111, "DECRQCRA", "margintop", vscrn_page_margin_top(VTERM,page));
+        debug(F111, "DECRQCRA", "marginleft", vscrn_page_margin_left(VTERM,page));
+        debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
+        debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
+
         if (top < vscrn_page_margin_top(VTERM,page)) top = vscrn_page_margin_top(VTERM,page);
         if (top > vscrn_page_margin_bot(VTERM,page) + 1) top = vscrn_page_margin_bot(VTERM,page) + 1;
         if (left < vscrn_page_margin_left(VTERM,page)) left = vscrn_page_margin_left(VTERM,page);
@@ -7117,32 +7140,25 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
         videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
         for ( x=left-1; x<right; x++ ) {
             unsigned short c, a;
-            unsigned char cellattr, fgcoloridx = 0, bgcoloridx = 0;
+            unsigned char fgcoloridx = 0, bgcoloridx = 0;
 
             c = line->cells[x].c;
             a = line->vt_char_attrs[x];
+
+            if (a == VT_CHAR_ATTR_ERASED) {
+                /* Unoccupied character cells are excluded from the checksum */
+                continue;
+            }
 
             /* These return 0 for RGB colors */
             fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
             bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
 
-            /* Xterm implements the following behaviour to
-             * supposedly match what the VT525 does (I don't
-             * have access to a VT525 to confirm the
-             * behaviour myself): If the current background
-             * color is the default and the current foreground
-             * is *not* the default, then ignore the bold attribute
-             * if its set.
-             */
-            if (a & VT_CHAR_ATTR_BOLD) {
-                  unsigned char df_fg, df_bg;
-                  df_fg = cell_video_attr_foreground(defaultattribute);
-                  df_bg = cell_video_attr_background(defaultattribute);
-                  if (df_bg == bgcoloridx && df_fg != fgcoloridx) {
-                      checksum -= 0x80;
-                  }
-            }
+#ifdef CK_COLORS_24BIT
+			/* TODO: Map all colors into SGR palette */
+#endif /* CK_COLORS_24BIT */
 
+			/* TODO: this is wrong I think*/
             if (fgcoloridx < 16) {
                 fgcoloridx = sgrindex[fgcoloridx%8];
             } else {
@@ -7162,21 +7178,24 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
             debug(F111, "DECRQCRA iteration", "x", x);
             debug(F111, "DECRQCRA iteration", "y", y);
             debug(F111, "DECRQCRA iteration", "c", c);
+			debug(F111, "DECRQCRA iteration", "a", a);
             debug(F111, "DECRQCRA iteration", "checksum", checksum);
 
-            checksum += c;
+            checksum -= c;
 
-            debug(F111, "DECRQCRA iteration", "checksum+c", checksum);
+            debug(F111, "DECRQCRA iteration", "checksum-c", checksum);
 
-            if (a & VT_CHAR_ATTR_PROTECTED) checksum += 0x04;
-            if (a & VT_CHAR_ATTR_INVISIBLE) checksum += 0x08;
-            if (a & VT_CHAR_ATTR_UNDERLINE) checksum += 0x10;
-            if (a & VT_CHAR_ATTR_REVERSE) checksum += 0x20;
-            if (a & VT_CHAR_ATTR_BLINK) checksum += 0x40;
-            if (a & VT_CHAR_ATTR_BOLD) checksum += 0x80;
-            /*checksum += bgcoloridx;
-            checksum += fgcoloridx * 0x10;*/
-            debug(F111, "DECRQCRA iteration", "checksum+attrs", checksum);
+            if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
+            if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
+            if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
+            if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
+            if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
+            if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
+			if (ISVT525(tt_type_mode) && 0) {
+            	checksum -= bgcoloridx;
+            	checksum -= fgcoloridx * 0x10;
+			}
+            debug(F111, "DECRQCRA iteration", "checksum-attrs", checksum);
         }
     }
     debug(F111, "DECRQCRA", "checksum", checksum);
@@ -15699,7 +15718,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                     /* now to process it  */
                     USHORT Row, Col;
                     viocell  vio={0,0};
-                    vtattrib vta={0,0,0,0,0,0,0,0,0,0};
+                    vtattrib vta={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
                     pScrnBufInf = (PCONSOLE_SCREEN_BUFFER_INFO) vtnt_buf;
                     pCursor = (PCOORD) ((PCHAR) pScrnBufInf
@@ -16346,7 +16365,7 @@ scrninit() {
 void
 wrtch(unsigned short ch) {
     viocell cell;
-    vtattrib vta = {0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     int vmode = decsasd == SASD_TERMINAL ? VTERM : VSTATUS ;
     extern int k95stdio,k95stdin,k95stdout;
 
@@ -16392,6 +16411,7 @@ wrtch(unsigned short ch) {
                 vta.wyseattr = FALSE ;
             cell.c = ch;
             cell.video_attr = attribute;
+            vta.erased = FALSE;
 
             if ( (ISWYSE(tt_type_mode) ||
                    ISTVI(tt_type_mode) ||
@@ -16422,6 +16442,7 @@ wrtch(unsigned short ch) {
 
                     /* Retrieve the attributes of the new position */
                     vta = VscrnGetVtCharAttr( vmode,x-1,y-1 ) ;
+                    vta.erased = FALSE;
                     if ( !tt_hidattr )
                         vta.wyseattr = FALSE ;
                 }
@@ -17831,7 +17852,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
     _vtattr = vtattr;
 	_decstglt = decstglt;
 
-    if (vtattr == VT_CHAR_ATTR_NORMAL && decstglt != DECSTGLT_ALTERNATE)
+    if ((vtattr == VT_CHAR_ATTR_NORMAL && decstglt != DECSTGLT_ALTERNATE) || vtattr == VT_CHAR_ATTR_ERASED)
         goto done;
 
     if (!(vtattr & WY_CHAR_ATTR) || tt_hidattr)
@@ -18053,7 +18074,7 @@ static bool  private=FALSE;
 static bool  ansiext=FALSE;
 static bool  zdsext=FALSE;
 static bool  kermext=FALSE;
-static vtattrib blankattrib={0,0,0,0,0,0,0,0,0,0};
+static vtattrib blankattrib={0,0,0,0,0,0,0,0,0,0,0,1 /* erased */,0,0};
 
 void
 vtcsi(void)
@@ -18217,6 +18238,7 @@ vtcsi(void)
             attrib.graphic = FALSE ;
             attrib.wyseattr = FALSE ;
 			attrib.crossedout = FALSE ;
+            attrib.erased = FALSE;
             attrib.hyperlink = FALSE;
             attrib.linkid = 0;
 
@@ -18838,6 +18860,12 @@ vtcsi(void)
                                 for ( x=0; x<w; x++ ) {
                                     for ( z=5; z<=k; z++ ) {
                                         USHORT a = line->vt_char_attrs[pn[2]+x-1];
+                                        if (a == VT_CHAR_ATTR_ERASED) {
+                                            /* In rectangle mode, unoccuped (erased)
+                                             * character positions are changed to
+                                             * blanks (become unerased) */
+                                            a = VT_CHAR_ATTR_NORMAL;
+                                        }
                                         switch ( pn[z] ) {
                                         case 0:
                                             a = VT_CHAR_ATTR_NORMAL;
@@ -18877,6 +18905,11 @@ vtcsi(void)
                                 for ( x = (y==0 ? pn[2] - 1 : 0);
                                       x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
                                       x++ ) {
+                                    if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
+                                        /* In stream mode, DECCARA doesn't affect
+                                         * unoccupied (erased) character positions */
+                                        continue;
+                                    }
                                     for ( z=5; z<=k; z++ ) {
                                         USHORT a = line->vt_char_attrs[x];
                                         switch ( pn[z] ) {
@@ -18960,6 +18993,12 @@ vtcsi(void)
                                 for ( x=0; x<w; x++ ) {
                                     for ( z=5; z<=k; z++ ) {
                                         USHORT a = line->vt_char_attrs[pn[2]+x-1];
+                                        if (a == VT_CHAR_ATTR_ERASED) {
+                                            /* In rectangle mode, unoccuped (erased)
+                                             * character positions are changed to
+                                             * blanks (become unerased) */
+                                            a = VT_CHAR_ATTR_NORMAL;
+                                        }
                                         if (pn[z] == 0 || pn[z] == 1) {
                                             if ( a & VT_CHAR_ATTR_BOLD )
                                                 a &= ~VT_CHAR_ATTR_BOLD;
@@ -18994,6 +19033,11 @@ vtcsi(void)
                                 for ( x = (y==0 ? pn[2] - 1 : 0);
                                       x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
                                       x++ ) {
+                                    if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
+                                        /* In stream mode, DECRARA doesn't affect
+                                         * unoccupied (erased) character positions */
+                                        continue;
+                                    }
                                     for ( z=5; z<=k; z++ ) {
                                         USHORT a = line->vt_char_attrs[x];
                                         if (pn[z] == 0 || pn[z] == 1) {
@@ -19187,10 +19231,32 @@ vtcsi(void)
                             pn[2] = 1 ;
                         if ( k < 1 )
                             pn[1] = SP ;
-                        clrrect_escape( VTERM, pn[2], pn[3],
-                                        pn[4], pn[5], pn[1] ) ;
-                        if (cursor_on_visible_page(VTERM)) {
-                            VscrnIsDirty(VTERM);
+
+                        /*  GL---------------------------   GR & BMP -------- */
+                        if (pn[1] >= 32 && (pn[1] <= 126 || pn[1] >= 160)
+                                && (pn[1] <= 255 || (tt_utf8 && pn[1] <= 65535))) {
+
+                            int c = pn[1];
+                            if ( !tt_utf8 ) {
+                                /* Briefly pretend we're using an 8bit
+                                 * connection so rtoxlat doesn't mask off the
+                                 * 8th bit */
+                                int x = cmdmsk;
+                                cmdmsk = 255;
+
+                                /* Translate from remote to local cset*/
+                                c = rtolxlat(pn[1]);
+
+                                /* Restore 7-bit mode if thats what we were
+                                 * using before */
+                                cmdmsk = x;
+                            }
+
+                            clrrect_escape( VTERM, pn[2], pn[3],
+                                            pn[4], pn[5], c ) ;
+                            if (cursor_on_visible_page(VTERM)) {
+                                VscrnIsDirty(VTERM);
+                            }
                         }
                     }
                     break;
@@ -19212,7 +19278,7 @@ vtcsi(void)
                         if ( k < 1 || pn[1] < 1 )
                             pn[1] = 1 ;
                         clrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], SP ) ;
+                                        pn[3], pn[4], NUL ) ;
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }
@@ -19354,30 +19420,25 @@ vtcsi(void)
                             page = ALTERNATE_BUFFER_PAGE(VTERM);
                         }
 
-                        /*checksum &= 0xffff;*/
-                        top = pn[3] + (vscrn_page_margin_top(VTERM,page) > 1 ? vscrn_page_margin_top(VTERM,page) : 0);
-                        left = pn[4] + (vscrn_page_margin_left(VTERM,page) > 1 ? vscrn_page_margin_left(VTERM,page) : 0);
+                        top = pn[3];
+                        left = pn[4];
                         bot = pn[5];
                         right = pn[6];
 
                         debug(F111, "DECRQCRA", "pid", pid);
+						debug(F111, "DECRQCRA", "page", pn[2]);
                         debug(F111, "DECRQCRA", "init-top", pn[3]);
                         debug(F111, "DECRQCRA", "init-left", pn[4]);
                         debug(F111, "DECRQCRA", "init-bot", pn[5]);
                         debug(F111, "DECRQCRA", "init-right", pn[6]);
 
-                        debug(F111, "DECRQCRA", "margintop", vscrn_page_margin_top(VTERM,page));
-                        debug(F111, "DECRQCRA", "marginleft", vscrn_page_margin_left(VTERM,page));
-                        debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
-                        debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
-
                         checksum = calculate_decrqcra_checksum(
                             top, left, bot, right, page, TRUE);
 
                         if (send_c1) {
-                            sprintf(buf, "\033P%d!~%04X%c", pid, checksum,_ST8);
+                            sprintf(buf, "P%d!~%04X%c", pid, checksum, _ST8);
                         } else {
-                            sprintf(buf, "\033P%d!~%04X\033\\", pid, checksum);
+                            sprintf(buf, "P%d!~%04X\033\\", pid, checksum);
                         }
                         sendescseq(buf);
                     }
@@ -21883,6 +21944,7 @@ vtcsi(void)
                         attrib.graphic = FALSE ;
                         attrib.dim = FALSE ;
 						attrib.crossedout = FALSE ;
+                        attrib.erased = FALSE;
                         attrib.wyseattr = FALSE ;
                         attrib.hyperlink = FALSE;
                         attrib.linkid = 0;
@@ -22135,6 +22197,7 @@ vtcsi(void)
                             attrib.wyseattr = FALSE ;
                             attrib.hyperlink = FALSE;
 							attrib.crossedout = FALSE;
+                            attrib.erased = FALSE;
                             attrib.linkid = 0;
 
                             sco8bit = FALSE ;
@@ -23924,6 +23987,7 @@ vtcsi(void)
                     int start, end, width;
                     blankvcell.c = ' ' ;
                     blankvcell.video_attr = geterasecolor(VTERM) ;
+                    /* TODO: attrib.erased = TRUE; ? */
                     start = end = wherex[VTERM];
                     width = VscrnGetWidth(VTERM);
                     if (start > 1) {

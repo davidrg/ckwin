@@ -16252,10 +16252,17 @@ DCS $ q 3 , } ST</pre>
                 this will only be available to VT420 and higher emulations.
             </p>
             <p>
-                <param-single symbol="Pc"/> is the character
-                to fill with, while <tt><param-single symbol="Pt"/> ;
-                <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
-                <param-single symbol="Pr"/></tt> is the rectangle to fill
+                <tt><param-single symbol="Pt"/> ;
+                    <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
+                    <param-single symbol="Pr"/></tt> is the rectangle to fill.
+            </p>
+            <p>
+                <param-single symbol="Pc"/> is an integer referring to a
+                character in the current GL or GR character set to fill the
+                specified rectangular area. When not in UTF8 mode, it must fall
+                in the range 32-126 (GL) or 160-255 (GR). If the remote
+                character set is UTF8, then the second range is extended to
+                160-65535 to cover the Unicode base multilingual plane.
             </p>
         </section>
         <section role="ctlseq" id="decrqpkfm" mnemonic="DECRQPKFM"
