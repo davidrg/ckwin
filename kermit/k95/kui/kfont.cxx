@@ -59,6 +59,7 @@ KFont::KFont( PLOGFONT plog )
         char * names[] = {
             "Andale Mono WT J",
             "Andale Mono 64",
+            "Cascadia Mono Regular",
             "Bitstream Vera Sans Mono",
             "Everson Mono Terminal",
             "Monotype.com",

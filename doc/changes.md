@@ -213,6 +213,25 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    Bold produced odd effects in PowerShell which renders autocomplete 
    suggestions using the Dim attribute combined with whatever the foreground
    color is.
+ - Updated K95Gs list of preferred fonts to include _Cascadia Mono Regular_, a
+   Unicode font suitable for terminals which is better populated than the other
+   fonts bundled with Windows that K95 knows about. This font was created for
+   and also ships with the Windows Terminal and is available under an open 
+   license. The new preferred fonts list (in order) is included below. The three
+   Andale fonts, plus Everson and Monotype are commercial fonts not likely to be
+   present on most systems. K95G will pick the first one of these it finds if
+   the user has never chosen a font:
+   - Andale Mono WT J
+   - Andale Mono 64
+   - Cascadia Mono Regular
+   - Bitstream Vera Sans Mono
+   - Everson Mono Terminal
+   - Monotype.com
+   - Andale Mono
+   - Lucida Console
+   - Courier
+   - Terminal
+   - System
  
 ### New terminal control sequences
 > [!NOTE]
@@ -412,6 +431,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    width if the parameters value is 0. Any value less than 80 will now produce an
    80 column terminal.
  - Fixed crash writing to unopened file
+ - Fixed K95G attempting to save a null font face name to the registry when the
+   registry key isn't present and the user has never selected a font. This
+   could result in garbage being saved as the font face name in the registry
+   resulting in an odd font selection next time K95G is run.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
