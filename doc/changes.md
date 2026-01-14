@@ -207,7 +207,12 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    screen. Unlike DECRQCRA, it is not bound by page margins.
  - `SET TERM COLOR ERASE` now takes effect immediately rather than requiring a
    terminal reset to take effect.
-   
+ - In K95G the Dim attribute is now rendered by reducing the foreground 
+   intensity by half - this matches the behavior of Xterm and the 
+   Windows Terminal. K95Gs previous approach of treating Dim as a synonym for
+   Bold produced odd effects in PowerShell which renders autocomplete 
+   suggestions using the Dim attribute combined with whatever the foreground
+   color is.
  
 ### New terminal control sequences
 > [!NOTE]

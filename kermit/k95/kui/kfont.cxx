@@ -8,27 +8,19 @@ typedef struct _KFONT_HOLDER {
     long InternalLeading;
     HFONT hfont;
     HFONT hfontBold;
-    HFONT hfontDim;
     HFONT hfontUnderline;
     HFONT hfontBoldUnderline;
     HFONT hfontBoldItalic;
-    HFONT hfontDimUnderline;
-    HFONT hfontDimItalic;
     HFONT hfontUnderlineItalic;
     HFONT hfontBoldUnderlineItalic;
-    HFONT hfontDimUnderlineItalic;
     HFONT hfontItalic;
     HFONT hfontCrossedOut;
     HFONT hfontCrossedOutBold;
-    HFONT hfontCrossedOutDim;
     HFONT hfontCrossedOutUnderline;
     HFONT hfontCrossedOutBoldUnderline;
     HFONT hfontCrossedOutBoldItalic;
-    HFONT hfontCrossedOutDimUnderline;
-    HFONT hfontCrossedOutDimItalic;
     HFONT hfontCrossedOutUnderlineItalic;
     HFONT hfontCrossedOutBoldUnderlineItalic;
-    HFONT hfontCrossedOutDimUnderlineItalic;
     HFONT hfontCrossedOutItalic;
 } KFONT_HOLDER;
 
@@ -132,27 +124,34 @@ KFont::~KFont()
         DeleteObject( holder->hfont );
     if( holder->hfontBold )
         DeleteObject( holder->hfontBold );
-    if( holder->hfontDim )
-        DeleteObject( holder->hfontDim );
     if( holder->hfontUnderline )
         DeleteObject( holder->hfontUnderline );
     if( holder->hfontBoldUnderline )
         DeleteObject( holder->hfontBoldUnderline );
     if( holder->hfontBoldItalic )
         DeleteObject( holder->hfontBoldItalic );
-    if( holder->hfontDimUnderline )
-        DeleteObject( holder->hfontDimUnderline );
-    if( holder->hfontDimItalic )
-        DeleteObject( holder->hfontDimItalic );
     if( holder->hfontItalic )
         DeleteObject( holder->hfontItalic );
     if( holder->hfontUnderlineItalic )
         DeleteObject( holder->hfontUnderlineItalic );
     if( holder->hfontBoldUnderlineItalic )
         DeleteObject( holder->hfontBoldUnderlineItalic );
-    if( holder->hfontDimUnderlineItalic )
-        DeleteObject( holder->hfontDimUnderlineItalic );
-
+    if( holder->hfontCrossedOut )
+        DeleteObject( holder->hfontCrossedOut );
+    if( holder->hfontCrossedOutBold )
+        DeleteObject( holder->hfontCrossedOutBold );
+    if( holder->hfontCrossedOutUnderline )
+        DeleteObject( holder->hfontCrossedOutUnderline );
+    if( holder->hfontCrossedOutBoldUnderline )
+        DeleteObject( holder->hfontCrossedOutBoldUnderline );
+    if( holder->hfontCrossedOutBoldItalic )
+        DeleteObject( holder->hfontCrossedOutBoldItalic );
+    if( holder->hfontCrossedOutItalic )
+        DeleteObject( holder->hfontCrossedOutItalic );
+    if( holder->hfontCrossedOutUnderlineItalic )
+        DeleteObject( holder->hfontCrossedOutUnderlineItalic );
+    if( holder->hfontCrossedOutBoldUnderlineItalic )
+        DeleteObject( holder->hfontCrossedOutBoldUnderlineItalic );
     delete holder->logfont;
     delete holder;
 }
@@ -219,21 +218,9 @@ void KFont::setFont( HDC hdc )
         holder->hfontBoldUnderline = NULL;
     }
 
-    if( holder->hfontDim ) {
-        DeleteObject( holder->hfontDim );
-        holder->hfontDim = NULL;
-    }
     if( holder->hfontBoldItalic ) {
         DeleteObject( holder->hfontBoldItalic );
         holder->hfontBoldItalic = NULL;
-    }
-    if( holder->hfontDimUnderline ) {
-        DeleteObject( holder->hfontDimUnderline );
-        holder->hfontDimUnderline = NULL;
-    }
-    if( holder->hfontDimItalic ) {
-        DeleteObject( holder->hfontDimItalic );
-        holder->hfontDimItalic = NULL;
     }
     if( holder->hfontItalic ) {
         DeleteObject( holder->hfontItalic );
@@ -247,10 +234,6 @@ void KFont::setFont( HDC hdc )
         DeleteObject( holder->hfontBoldUnderlineItalic );
         holder->hfontBoldUnderlineItalic = NULL;
     }
-    if( holder->hfontDimUnderlineItalic ) {
-        DeleteObject( holder->hfontDimUnderlineItalic );
-        holder->hfontDimUnderlineItalic = NULL;
-    }
     if( holder->hfontCrossedOut ) {
         DeleteObject( holder->hfontCrossedOut );
         holder->hfontCrossedOut = NULL;
@@ -258,10 +241,6 @@ void KFont::setFont( HDC hdc )
     if( holder->hfontCrossedOutBold ) {
         DeleteObject( holder->hfontCrossedOutBold );
         holder->hfontCrossedOutBold = NULL;
-    }
-    if( holder->hfontCrossedOutDim ) {
-        DeleteObject( holder->hfontCrossedOutDim );
-        holder->hfontCrossedOutDim = NULL;
     }
     if( holder->hfontCrossedOutUnderline ) {
         DeleteObject( holder->hfontCrossedOutUnderline );
@@ -275,14 +254,6 @@ void KFont::setFont( HDC hdc )
         DeleteObject( holder->hfontCrossedOutBoldItalic );
         holder->hfontCrossedOutBoldItalic = NULL;
     }
-    if( holder->hfontCrossedOutDimUnderline ) {
-        DeleteObject( holder->hfontCrossedOutDimUnderline );
-        holder->hfontCrossedOutDimUnderline = NULL;
-    }
-    if( holder->hfontCrossedOutDimItalic ) {
-        DeleteObject( holder->hfontCrossedOutDimItalic );
-        holder->hfontCrossedOutDimItalic = NULL;
-    }
     if( holder->hfontCrossedOutUnderlineItalic ) {
         DeleteObject( holder->hfontCrossedOutUnderlineItalic );
         holder->hfontCrossedOutUnderlineItalic = NULL;
@@ -290,10 +261,6 @@ void KFont::setFont( HDC hdc )
     if( holder->hfontCrossedOutBoldUnderlineItalic ) {
         DeleteObject( holder->hfontCrossedOutBoldUnderlineItalic );
         holder->hfontCrossedOutBoldUnderlineItalic = NULL;
-    }
-    if( holder->hfontCrossedOutDimUnderlineItalic ) {
-        DeleteObject( holder->hfontCrossedOutDimUnderlineItalic );
-        holder->hfontCrossedOutDimUnderlineItalic = NULL;
     }
     if( holder->hfontCrossedOutItalic ) {
         DeleteObject( holder->hfontCrossedOutItalic );
@@ -329,20 +296,6 @@ void KFont::setBold( HDC hdc )
         holder->hfontBold = CreateFontIndirect( &tmplogfont );
     }
     SelectObject( hdc, holder->hfontBold );
-}
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-void KFont::setDim( HDC hdc )
-{
-    if( !holder->hfontDim )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        holder->hfontDim = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontDim );
 }
 
 /*------------------------------------------------------------------------
@@ -394,37 +347,6 @@ void KFont::setBoldItalic( HDC hdc )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KFont::setDimUnderline( HDC hdc )
-{
-    if( !holder->hfontDimUnderline )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        tmplogfont.lfUnderline = TRUE;
-        holder->hfontDimUnderline = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontDimUnderline );
-}
-
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-void KFont::setDimItalic( HDC hdc )
-{
-    if( !holder->hfontDimItalic )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        tmplogfont.lfItalic = TRUE;
-        holder->hfontDimItalic = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontDimItalic );
-}
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
 void KFont::setUnderlineItalic( HDC hdc )
 {
     if( !holder->hfontUnderlineItalic )
@@ -456,21 +378,6 @@ void KFont::setBoldUnderlineItalic( HDC hdc )
     SelectObject( hdc, holder->hfontBoldUnderlineItalic );
 }
 
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-void KFont::setDimUnderlineItalic( HDC hdc )
-{
-    if( !holder->hfontDimUnderlineItalic )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        tmplogfont.lfUnderline = TRUE;
-        tmplogfont.lfItalic = TRUE;
-        holder->hfontDimUnderlineItalic = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontDimUnderlineItalic );
-}
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 void KFont::setItalic( HDC hdc )
@@ -514,21 +421,6 @@ void KFont::setCrossedOutBold( HDC hdc )
         holder->hfontCrossedOutBold = CreateFontIndirect( &tmplogfont );
     }
     SelectObject( hdc, holder->hfontCrossedOutBold );
-}
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-void KFont::setCrossedOutDim( HDC hdc )
-{
-    if( !holder->hfontCrossedOutDim )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        tmplogfont.lfStrikeOut = TRUE;
-        holder->hfontCrossedOutDim = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontCrossedOutDim );
 }
 
 /*------------------------------------------------------------------------
@@ -583,39 +475,6 @@ void KFont::setCrossedOutBoldItalic( HDC hdc )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KFont::setCrossedOutDimUnderline( HDC hdc )
-{
-    if( !holder->hfontCrossedOutDimUnderline )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        tmplogfont.lfUnderline = TRUE;
-        tmplogfont.lfStrikeOut = TRUE;
-        holder->hfontCrossedOutDimUnderline = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontCrossedOutDimUnderline );
-}
-
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-void KFont::setCrossedOutDimItalic( HDC hdc )
-{
-    if( !holder->hfontCrossedOutDimItalic )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        tmplogfont.lfItalic = TRUE;
-        tmplogfont.lfStrikeOut = TRUE;
-        holder->hfontCrossedOutDimItalic = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontCrossedOutDimItalic );
-}
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
 void KFont::setCrossedOutUnderlineItalic( HDC hdc )
 {
     if( !holder->hfontCrossedOutUnderlineItalic )
@@ -649,22 +508,6 @@ void KFont::setCrossedOutBoldUnderlineItalic( HDC hdc )
     SelectObject( hdc, holder->hfontCrossedOutBoldUnderlineItalic );
 }
 
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-void KFont::setCrossedOutDimUnderlineItalic( HDC hdc )
-{
-    if( !holder->hfontCrossedOutDimUnderlineItalic )
-    {
-        LOGFONT tmplogfont;
-        memcpy( &tmplogfont, holder->logfont, sizeof(LOGFONT) );
-        tmplogfont.lfWeight = FW_BOLD;
-        tmplogfont.lfUnderline = TRUE;
-        tmplogfont.lfItalic = TRUE;
-        tmplogfont.lfStrikeOut = TRUE;
-        holder->hfontCrossedOutDimUnderlineItalic = CreateFontIndirect( &tmplogfont );
-    }
-    SelectObject( hdc, holder->hfontCrossedOutDimUnderlineItalic );
-}
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 void KFont::setCrossedOutItalic( HDC hdc )
