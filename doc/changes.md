@@ -435,6 +435,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    registry key isn't present and the user has never selected a font. This
    could result in garbage being saved as the font face name in the registry
    resulting in an odd font selection next time K95G is run.
+ - Fixed crash opening serial ports on Windows NT 3.1
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
