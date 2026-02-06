@@ -29,6 +29,8 @@ env:
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
   OPENSSL_ARM_VERSION: 3.5.5
+  # OpenSSL 3.5.5 isn't compatible with MinGW
+  OPENSSL_MINGW_VERSION: 3.5.4
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
   # If jom works ideally we use that as it results in shorter build times.
   OPENSSL_MAKE: nmake
@@ -1797,7 +1799,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Select configuration
         id: cfg
-        run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
+        run: echo "openssl=${{env.OPENSSL_MINGW_VERSION}}" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Install MinGW-w64
