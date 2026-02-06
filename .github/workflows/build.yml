@@ -25,10 +25,10 @@ env:
   # fine, so we've switched back to zlib.net.
   ZLIB_VERSION: 1.3.1
   # Expected filename: https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-  OPENSSL_VERSION: 3.5.4
+  OPENSSL_VERSION: 3.5.5
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
-  OPENSSL_ARM_VERSION: 3.5.4
+  OPENSSL_ARM_VERSION: 3.5.5
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
   # If jom works ideally we use that as it results in shorter build times.
   OPENSSL_MAKE: nmake
