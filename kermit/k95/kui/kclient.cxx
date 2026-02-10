@@ -865,6 +865,8 @@ void KClient::writeMe()
     RECT rect;
     for( i = 0; i < wc; i++ )
     {
+        COLORREF textColor;
+
         kws = &(workStore[i]);
         if( !cell_video_attr_equal(prevAttr, kws->attr) )
         {
@@ -873,7 +875,8 @@ void KClient::writeMe()
             /* These are the default colors used by the console window, set by   */
             /* the SET GUI RGB commands and a few escape sequences               */
 			SetBkColor( hdc(), cell_video_attr_background_rgb(prevAttr));
-			SetTextColor( hdc(), cell_video_attr_foreground_rgb(prevAttr));
+            textColor = cell_video_attr_foreground_rgb(prevAttr);
+			SetTextColor( hdc(), textColor);
         }
 
         if( prevEffect != kws->effect )
@@ -905,8 +908,11 @@ void KClient::writeMe()
 			    // are three separate numbers packed in we need to mask out the
 				// high bit of each as part of this so that the low bit of each
 				// value to the left is erased.
-				SetTextColor( hdc(),
-					(cell_video_attr_foreground_rgb(prevAttr) >> 1) & 0x7F7F7F);
+				SetTextColor( hdc(), (textColor >> 1) & 0x7F7F7F);
+			} else {
+			    // If not dim, reset the textColor just in case dim is turned
+			    // off without the text colour also changing.
+			    SetTextColor( hdc(), textColor);
 			}
 
             if( normal )
