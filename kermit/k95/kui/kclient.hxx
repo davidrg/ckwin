@@ -100,6 +100,7 @@ private:    // this section is for performance
 
     cell_video_attr_t prevAttr;
     ushort prevEffect;
+    COLORREF textColor;
 
     int wc;
     int vscrollpos;

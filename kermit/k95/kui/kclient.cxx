@@ -865,8 +865,6 @@ void KClient::writeMe()
     RECT rect;
     for( i = 0; i < wc; i++ )
     {
-        COLORREF textColor;
-
         kws = &(workStore[i]);
         if( !cell_video_attr_equal(prevAttr, kws->attr) )
         {
