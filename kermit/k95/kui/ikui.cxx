@@ -250,12 +250,24 @@ int heightToChars(int height) {
 }
 
 void KuiGetTerminalMaximisedSize(BOOL inChars, int* width, int* height) {
+#ifdef SPI_GETWORKAREA
+    // SPI_GETWORKAREA is new in Windows 95 and Visual C++ 4.0. Windows NT 4.0
+    // apparently does handle it, but returns the dimensions of the entire
+    // screen including the task bar, rather than the dimensions of the screen
+    // area excluding the task bar.
     RECT rec;
     BOOL r = SystemParametersInfo(
             SPI_GETWORKAREA,0, &rec, 0);
-
-    *width = rec.right - rec.left;
-    *height = rec.bottom - rec.top;
+    if (r) {
+        *width = rec.right - rec.left;
+        *height = rec.bottom - rec.top;
+    } else
+#endif /* SPI_GETWORKAREA */
+    {
+        // On NT 3.x
+        *width = GetSystemMetrics( SM_CXSCREEN );
+        *height = GetSystemMetrics( SM_CYSCREEN );
+    }
 
     if (inChars) {
         *width = widthToChars(*width);
