@@ -232,7 +232,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Courier
    - Terminal
    - System
- 
+ - Improved throughput for pipe connections on Windows 
+
 ### New terminal control sequences
 > [!NOTE]
 > Until Kermit 95 gets a VT420 and VT525 terminal type options, control 
