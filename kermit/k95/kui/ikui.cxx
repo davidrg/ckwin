@@ -341,6 +341,7 @@ BOOL KuiRenderToEmfFile(int vmode, char* filename) {
     return kui->getTerminal()->getClient()->renderToEmfFile(vmode, filename);
 }
 
+#ifdef CK_SAVE_TO_IMAGE
 BOOL KuiRenderToBmpFile(int vmode, char* filename) {
     return kui->getTerminal()->getClient()->renderToBmpFile(vmode, filename);
 }
@@ -353,3 +354,4 @@ BOOL KuiRenderToGifFile(int vmode, char* filename) {
     return kui->getTerminal()->getClient()->renderToGifFile(vmode, filename);
 }
 #endif /* CK_HAVE_GDIPLUS */
+#endif /* CK_SAVE_TO_IMAGE */

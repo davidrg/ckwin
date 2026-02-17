@@ -1186,11 +1186,15 @@ static char *hmxxsave[] = {
 " ",
 "  K95G has the additional ability to save the terminal screen as an image file",
 "  This can be done with the syntax: ",
+#ifdef CK_SAVE_TO_IMAGE
 #ifdef CK_HAVE_GDIPLUS
 "    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF, GIF, PNG } filename ",
 #else /* CK_HAVE_GDIPLUS */
 "    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF } filename ",
 #endif  /* CK_HAVE_GDIPLUS */
+#else
+"    SAVE TERMINAL SCREEN /FORMAT:EMF filename ",
+#endif /* CK_SAVE_TO_IMAGE */
 "  When saving as an image, a new file is always created. The EMF format does",
 "  not currently support saving double-height/double-wide lines",
 #endif /* KUI */

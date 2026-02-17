@@ -1367,6 +1367,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     return success;
 }
 
+#ifdef CK_SAVE_TO_IMAGE
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 /* Renders the the specified vscrn to a device-independent bitmap (DIB)
@@ -1413,6 +1414,7 @@ HBITMAP KClient::renderToBitmap(int vnum, DWORD **outPixels) {
 
     return hbmp;
 }
+#endif /* CK_SAVE_TO_IMAGE */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -1437,7 +1439,7 @@ BOOL KClient::renderToEmfFile(int vnum, char* filename) {
     return success;
 }
 
-
+#ifdef CK_SAVE_TO_IMAGE
 #ifdef CK_HAVE_GDIPLUS
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -1713,6 +1715,7 @@ BOOL KClient::renderToBmpFile(int vnum, char* filename) {
 
     return TRUE;
 }
+#endif /* CK_SAVE_TO_IMAGE */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
