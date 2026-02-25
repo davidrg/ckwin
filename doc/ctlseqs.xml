@@ -8544,7 +8544,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt525" series="vt" additional=""/>
             </section>
             <section role="parameter" id="dececm" mnemonic="DECECM"
-                     title="Erase Color Mode" badges="isvt525">
+                     title="Erase Color Mode" groups="isvt525" badges="k95">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
                 <termsupp first="vt525" series="vt" additional="wt"/>
@@ -10540,7 +10540,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt525" series="vt" additional=""/>
             </section>
             <section role="parameter" id="r-dececm" mnemonic="DECECM"
-                     title="Erase Color Mode" badges="isvt525">
+                     title="Erase Color Mode" groups="isvt525" badges="k95">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
                 <termsupp first="vt525" series="vt" additional="wt"/>
@@ -13868,7 +13868,7 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt525" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-117" mnemonic="DECECM"
-                         title="Erase Color Mode">
+                         title="Erase Color Mode" groups="isvt525" badges="k95">
                     <ctlseq><param-single/> = 117</ctlseq>
                     <ref src="vt52x:202"/>
                     <termsupp first="vt525" series="vt" additional="wt"/>

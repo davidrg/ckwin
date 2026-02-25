@@ -318,7 +318,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECCTR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decctr): Color
      Table Request - provides the current color palette in RGB or HLS format.
    - [DECRSTS - Color Table](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrsts-2):
-     Update/restore the current color palette 
+     Update/restore the current color palette
+   - [DECECM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm) - Erase Color Mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
  - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
