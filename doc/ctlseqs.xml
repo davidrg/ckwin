@@ -120,7 +120,11 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
-        <!ELEMENT section (ctlseq|ref|termsupp|p|ul|ol|dl|section|pre|table)*>
+        <!ELEMENT implchk EMPTY>
+        <!ATTLIST implchk std070 (true|false) "false">
+        <!ATTLIST implchk xt CDATA "">
+
+        <!ELEMENT section (ctlseq|ref|termsupp|implchk|p|ul|ol|dl|section|pre|table)*>
         <!ATTLIST section id ID #IMPLIED>
         <!ATTLIST section title CDATA #IMPLIED>
         <!ATTLIST section ctlseq CDATA #IMPLIED>
@@ -240,6 +244,11 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
       does support it. In cases where references aren't available, the
       termsupp element can be explicitly used to state which real terminals
       support it.
+
+      The implchk element states which, if any, reference implementations K95s
+      implementation of a control sequence has been checked against:
+        std070: the pseudo-code in DEC STD 070. True/false.
+        xt: Xterm. Value is xterm version checked against.
 
       Ctlseq, ctlchar and parameter sections can still have textual content
       just like a regular section with the text role. This textual content
@@ -4294,6 +4303,7 @@ DECTSR		462
             <ref src="vws:112"/>
             <ref src="wy370:145"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+            <implchk std070="true"/>
             <ctlseq>
                 DCS $ q <param-text/> ST
             </ctlseq>
@@ -4365,6 +4375,7 @@ DECTSR		462
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
                 <termsupp first="vt510" series="vt" additional="tt"/>
+                <implchk std070="true"/>
                 <p>
                     Returns currently <a href="#sgr">selected graphic rendition</a>.
                     Only the following are currently reported:
