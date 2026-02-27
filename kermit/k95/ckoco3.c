@@ -8097,6 +8097,31 @@ SNI_chcode( int state ) {
     }
 }
 
+
+/* Home the cursor taking DECSASD and DECOM into account. This is really for
+ * VT-like emulations - for others that don't have margins, just use
+ * lgotoxy(vmode,1,1) instead.
+ */
+void
+home_cursor(int vmode)
+{
+    if ( decsasd == SASD_STATUS || !relcursor)
+    {
+        /* The VT520 doesn't seem to implement DECLRMM (left/right margins) on
+         * its status line, and it only has the one status line so no DECSTBM
+         * too, meaning that on the status line home is always 1,1.
+         */
+        lgotoxy( VSTATUS, 1, 1 );
+    }
+    else  /* relcursor */
+    {
+        /* If DECOM is set, send the cursor to the top
+         * left corner within the page margins */
+        lgotoxy(VTERM,
+            vscrn_c_page_margin_left(VTERM),
+            vscrn_c_page_margin_top(VTERM));
+    }
+}
 void
 savecurpos(int vmode, int x) {          /* x: 0 = cursor X/Y only, 1 = all */
     int i ;
@@ -8155,7 +8180,7 @@ restorecurpos(int vmode, int x) {
     }
 
     if (saved[slot] == FALSE) {                /* Nothing saved, home the cursor */
-        lgotoxy(vmode, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
+        home_cursor(vmode);
     }
     else {
         lgotoxy(vmode, savedcol[slot], savedrow[slot]);/* Goto saved position */
@@ -17512,6 +17537,12 @@ vtcsi(void)
     int             i;
     char            tempstr[20];
     unsigned short  pecount = 0;  /* Number of pe */
+    int             vmode = VTERM;
+    /* Currently everything here assumes terminal emulation only ever happens on
+     * VTERM and, selevtively, VSTATUS. Ideally that restriction would be lifted
+     * someday in which chas a vmode parameter will have to be introduced. Until
+     * then, the hardcoded VTERMs can be progressively replaced with the above
+     * vmode variable. */
 
     if ( ISH19(tt_type_mode) ) {
         /* Hold Screen Mode On */
@@ -17639,10 +17670,10 @@ vtcsi(void)
                 break;
             }
             /* (no break) Cursor Home */
-        case 'f':
+        case 'f':  /* HVP */
             if ( IS97801(tt_type_mode) && decsasd == SASD_STATUS )
                 setdecsasd(SASD_TERMINAL);
-            lgotoxy(VTERM, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
+            home_cursor(vmode);
             break;
         case 'g':
             if ( !ISSCO(tt_type_mode) ) {
@@ -19446,10 +19477,7 @@ vtcsi(void)
                             break;
                         case 6: /* DECOM - Relative origin */
                             relcursor = TRUE;
-                            if ( decsasd == SASD_STATUS )
-                                lgotoxy( VSTATUS, 1, 1 );
-                            else
-                                lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
+                            home_cursor(vmode);
                             break;
                         case 7: /* DECAWM - Auto Wrap mode */
                             tt_wrap = TRUE;
@@ -19932,10 +19960,7 @@ vtcsi(void)
 
                             case 6: /* Relative origin */
                                 relcursor = TRUE;
-                                if ( decsasd == SASD_STATUS )
-                                    lgotoxy( VSTATUS, 1, 1 );
-                                else
-                                    lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
+                                home_cursor(vmode);
                                 break;
                             case 7: /* Auto Wrap mode */
                                 tt_wrap = TRUE;
@@ -22460,10 +22485,7 @@ vtcsi(void)
                             lgotoxy(VTERM, relcursor ? vscrn_c_page_margin_left(VTERM) : 1,
                                      relcursor ? vscrn_c_page_margin_bot(VTERM) : 1);
                         } else if ( !IS97801(tt_type_mode) ) {
-                            if ( decsasd == SASD_STATUS )
-                                lgotoxy( VSTATUS, 1, 1 );
-                            else
-                                lgotoxy(VTERM, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
+                            home_cursor(vmode);
                         }
                     }
                     else if (!ISSCO(tt_type_mode)) {
@@ -22472,11 +22494,7 @@ vtcsi(void)
                             pn[2] = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ;
                         setmargins(pn[1], pn[2]);
                         if ( !IS97801(tt_type_mode) ) {
-                            if ( decsasd == SASD_STATUS )
-                                lgotoxy( VSTATUS, 1, 1 );
-                            else
-                                lgotoxy(VTERM, 1, relcursor ?
-                                        vscrn_c_page_margin_top(VTERM) : 1);
+                            home_cursor(vmode);
                         }
                     }
                     break;
