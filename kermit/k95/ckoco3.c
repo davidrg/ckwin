@@ -17554,7 +17554,7 @@ vtcsi(void)
         achar = (escnext<=esclast)?escbuffer[escnext++]:0;
      LB2000:
         switch (achar) {        /* Second level */
-        case 'A':               /* Cursor up one line */
+        case 'A':               /* CUU - Cursor up one line */
             if ( IS97801(tt_type_mode) ) {
                 /* ignored if outside scroll region */
                 if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
@@ -17565,7 +17565,7 @@ vtcsi(void)
             if ( !ISANSI(tt_type_mode) || ISLINUX(tt_type_mode))
                 wrapit = FALSE;
             break;
-        case 'B':               /* Cursor down one line */
+        case 'B':               /* CUD - Cursor down one line */
             if ( IS97801(tt_type_mode) ) {
                 /* ignored if outside scroll region */
                 if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
@@ -17576,10 +17576,10 @@ vtcsi(void)
             if ( !ISANSI(tt_type_mode) || ISLINUX(tt_type_mode) )
                 wrapit = FALSE;
             break;
-        case 'C':               /* Cursor forward, stay on same line */
+        case 'C':               /* CUF - Cursor forward, stay on same line */
             cursorright(0);
             break;
-        case 'D':               /* Cursor back, stay on same line */
+        case 'D':               /* CUB - Cursor back, stay on same line */
             cursorleft(0);
             break;
         case 'E':
@@ -17598,7 +17598,7 @@ vtcsi(void)
                 break;
             }
             else {
-                /* Cursor Next Line */
+                /* CNL - Cursor Next Line */
                 cursornextline();
             }
             break;
@@ -18888,7 +18888,7 @@ vtcsi(void)
                 }
                 break;
             case 'a':
-                /* Horizontal Position Relative */
+                /* HPR - Horizontal Position Relative */
                 /* moves active position pn[1] characters */
                 /* to the right */
                 do {
@@ -20097,8 +20097,11 @@ vtcsi(void)
                     break;
                 }
                 else if (ansiext && ISSCO(tt_type_mode)) {
-                    /* SCO - Clear and Home Cursor */
+                    /* CHC - SCO - Clear and Home Cursor */
                     clrscreen(VTERM,SP);
+					/* TODO: Apparently this should home the cursor obeying
+							 the scrolling region. See:
+						http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html */
                     lgotoxy(VTERM,1,1);
                     VscrnIsDirty(VTERM);
                 }
@@ -25175,7 +25178,7 @@ vtescape( void )
                   clrline_escape(VTERM,SP);
               } else if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
 							|| ISXTERM(tt_type_mode) ) {
-                  /* Lock Memory Area */
+                  /* LMA - Lock Memory Area */
                   setmargins(wherey[VTERM],VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, relcursor ? vscrn_c_page_margin_left(VTERM) : 1,
                            relcursor ? vscrn_c_page_margin_bot(VTERM) : 1);
@@ -25211,7 +25214,7 @@ vtescape( void )
         case 'm':
               if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
 					|| ISXTERM(tt_type_mode)  ) {
-                  /* Unlock Memory Area */
+                  /* USR - Unlock Memory Area */
                   setmargins(1,VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, 1, 1);
               }
