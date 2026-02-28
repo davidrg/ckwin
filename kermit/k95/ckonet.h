@@ -124,7 +124,6 @@ extern CHAR ttibuf[];
 _PROTOTYP( void NetCmdInit, (void) );
 _PROTOTYP( void NetCmdCleanup, (void) );
 _PROTOTYP( int  NetCmdInBuf, (void) );
-_PROTOTYP( int  NetCmdPutStr, (char *) );
 _PROTOTYP( int  NetCmdPutChars, (char *, int) );
 _PROTOTYP( int  NetCmdPutChar, (char) );
 _PROTOTYP( int  NetCmdGetChar, (char *) );

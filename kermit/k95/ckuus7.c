@@ -2268,14 +2268,18 @@ struct keytab savtermopttab[] = {
 int nsavtermopttab = (sizeof(savtermopttab) / sizeof(struct keytab));
 
 struct keytab savtermfmttab[] = {  /* SAVE TERM SCREEN /FORMAT:xxx */
+#ifdef CK_SAVE_TO_IMAGE
     { "bitmap",  XSTERM_FMT_BMP,     CM_INV },
     { "bmp",     XSTERM_FMT_BMP,     0 },
+#endif /* CK_SAVE_TO_IMAGE */
     { "emf",     XSTERM_FMT_EMF,     0 },
+#if CK_SAVE_TO_IMAGE
 #ifdef CK_HAVE_GDIPLUS
     /* These formats rely on GDI+ for encoding */
     { "gif",     XSTERM_FMT_GIF,     0 },
     { "png",     XSTERM_FMT_PNG,     0 },
 #endif /* CK_HAVE_GDIPLUS */
+#endif /* CK_SAVE_TO_IMAGE */
     { "text",    XSTERM_FMT_TEXT,    0 },
 };
 int nsavtermfmttab = (sizeof(savtermfmttab) / sizeof(struct keytab));
@@ -14796,6 +14800,7 @@ dosave(xx) int xx;
                     return success ? success : -9;
                 }
                 break;
+#ifdef CK_SAVE_TO_IMAGE
             case XSTERM_FMT_BMP:
                 {
                     if (line[0]) {
@@ -14825,6 +14830,7 @@ dosave(xx) int xx;
                 }
                 break;
 #endif /* CK_HAVE_GDIPLUS */
+#endif /* CK_SAVE_TO_IMAGE */
             }
 
 
