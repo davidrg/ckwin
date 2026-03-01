@@ -7091,11 +7091,24 @@ decdwl_escape(bool dwlflag) {
 /*----------------------------------------------------------+----------------*/
 /* calculate_decrqcra_checksum                              | Page: specified*/
 /*----------------------------------------------------------+----------------*/
+/* This algorithm matches what the VT520 does, and *should* also be correct for
+ * the VT525 when using its colour palette. It is invoked by either the DECRQCRA
+ * control sequence, or the \fterminalchecksum function. */
 int
 calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                             BOOL obey_margins) {
     unsigned short checksum=0;
     int x, y, height, width, max_page;
+    char include_color;
+
+    /* Only include colour information specifically for these terminal types. We
+     * cant use ISVT525() at the moment because thats currently returning true
+     * for the VT320, etc, in order to make VT525 features available in the
+     * absence of a real VT525 emulation. So instead K95 and XTERM will behave
+     * as the VT525 does, while VT320 will behave as the VT420 does. When a
+     * proper VT525 emulation is added this should be updated. */
+    include_color = tt_type_mode == TT_VT525 || ISK95(tt_type_mode)
+        || ISXTERM(tt_type_mode);
 
     height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
     width = VscrnGetWidth(VTERM);
@@ -7163,52 +7176,76 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                     continue;
                 }
 
-                /* These return 0 for RGB colors */
-                fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
-                bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
+                if (include_color) {
+                    /* These will be 0 for RGB colours */
+                    fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
+                    bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
 
 #ifdef CK_COLORS_24BIT
-			    /* TODO: Map all colors into SGR palette */
+                    /* If the currently assigned foreground or background colour is is a
+                     * direct 24-bit RGB colour, then use the nearest colour in the
+                     * VT525 palette for the checksum. */
+                    if (!cell_video_attr_fg_is_indexed(line->cells[x].video_attr)) {
+                        int r, g, b;
+                        r = cell_video_attr_fg_rgb_r(line->cells[x].video_attr);
+                        g = cell_video_attr_fg_rgb_g(line->cells[x].video_attr);
+                        b = cell_video_attr_fg_rgb_b(line->cells[x].video_attr);
+
+                        /* If we're emulating a VT525 we'll use its palette as the
+                         * target - not that we should ever be doing RGB colour in
+                         * a VT525 emulation */
+                        fgcoloridx = nearest_palette_color_rgb(
+                            ISVT525(tt_type_mode) ? CK_PALETTE_VT525 : CK_PALETTE_16,
+                            r, g, b);
+                    }
+                    if (!cell_video_attr_bg_is_indexed(line->cells[x].video_attr)) {
+                        int r, g, b;
+                        r = cell_video_attr_bg_rgb_r(line->cells[x].video_attr);
+                        g = cell_video_attr_bg_rgb_g(line->cells[x].video_attr);
+                        b = cell_video_attr_bg_rgb_b(line->cells[x].video_attr);
+
+                        bgcoloridx = nearest_palette_color_rgb(
+                            ISVT525(tt_type_mode) ? CK_PALETTE_VT525 : CK_PALETTE_16,
+                            r, g, b);
+                    }
 #endif /* CK_COLORS_24BIT */
 
-			    /* TODO: this is wrong I think*/
-                if (fgcoloridx < 16) {
-                    fgcoloridx = sgrindex[fgcoloridx%8];
-                } else {
-                    /* FG color index is outside the range of
-                     * valid values for the VT525. */
-                    fgcoloridx = 0;
-                }
+                    /* If the colour is outside the valid range for a VT525, convert it
+                     * to the VT525 palette. We'll leave the regular SGR colours as-is.
+                     * TODO: The VT525 only supports the 8 regular ANSI SGR
+                     *       colours; should we be mapping all colours to the
+                     *       0-7 range?
+                     */
+                    if (fgcoloridx > palette_max_index(CK_PALETTE_VT525)) {
+                        fgcoloridx = nearest_palette_color_palette(colorpalette,
+                            fgcoloridx);
+                    }
 
-                if (bgcoloridx < 16) {
-                    bgcoloridx = sgrindex[bgcoloridx%8];
-                } else {
-                    /* BG color index is outside the range of
-                     * valid values for the VT525. */
-                    bgcoloridx = 0;
-                }
+                    if (bgcoloridx > palette_max_index(CK_PALETTE_VT525)) {
+                        bgcoloridx = nearest_palette_color_palette(colorpalette,
+                            bgcoloridx);
+                    }
 
-                debug(F111, "DECRQCRA iteration", "x", x);
-                debug(F111, "DECRQCRA iteration", "y", y);
-                debug(F111, "DECRQCRA iteration", "c", c);
-			    debug(F111, "DECRQCRA iteration", "a", a);
-                debug(F111, "DECRQCRA iteration", "checksum", checksum);
+                    /* The lower 16 colours in the vscreen buffere are arranged a
+                     * little different from SGR colours for OS/2 reasons - this
+                     * will fix that up */
+                    fgcoloridx = color_index_from_vio(fgcoloridx);
+                    bgcoloridx = color_index_from_vio(bgcoloridx);
+                }
 
                 checksum -= c;
 
-                debug(F111, "DECRQCRA iteration", "checksum-c", checksum);
-
+                /* The VT420, VT520 and VT525 only support these attributes */
                 if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
                 if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
                 if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
                 if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
                 if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
                 if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
-			    if (ISVT525(tt_type_mode) && 0) {
-            	    checksum -= bgcoloridx;
-            	    checksum -= fgcoloridx * 0x10;
-			    }
-                debug(F111, "DECRQCRA iteration", "checksum-attrs", checksum);
+                if (include_color) {
+                    checksum -= (unsigned short)fgcoloridx << 4;
+                    checksum -= bgcoloridx;
+                }
             }
         }
     }
