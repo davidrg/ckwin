@@ -1910,7 +1910,10 @@ DECTSR		462
             <ref src="vt52x:359"/>
             <termsupp first="vt220" series="vt" additional="vt420 vt330 vt340 vt510 tt dtterm wt"/>
             <!-- 0x8D -->
-            <p>Single shift G2, left</p>
+            <p>
+                Maps the G2 character set into GL for the next graphic
+                character only.
+            </p>
         </section>
         <section role="ctlseq" id="ssg3l" ctlseq="ESC O" mnemonic="SS3" title="Single shift G3, left" groups="isvt220 isansi">
             <ref src="e48:84"/>
@@ -1925,7 +1928,8 @@ DECTSR		462
             <ref src="vt52x:359"/>
             <termsupp first="vt220" series="vt" additional="vt420 vt330 vt340 vt510 tt dtterm wt"/>
             <!-- 0x8F -->
-            <p>Single shift G3, left</p>
+            <p>Maps the G3 character set into GL for the next graphic
+                character only.</p>
         </section>
         <section role="ctlseq" id="dcs" ctlseq="ESC P" mnemonic="DCS" title="Device Control String">
             <ref src="e48:52"/>
@@ -2592,7 +2596,7 @@ DECTSR		462
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
             <termsupp first="xterm" series="xt" additional="putty wt"/>
             <ref src="dap:160"/>
-            <p>Return to ISO 2002 mode</p>
+            <p>Return to ISO-2022 mode</p>
         </section>
         <section role="ctlseq" id="sutf8" ctlseq="ESC % G" title="Select UTF-8 character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-G.F93"/>
@@ -16390,6 +16394,30 @@ DCS $ q 3 , } ST</pre>
             <p>
                 You can also compute a checksum using the same algorithm with
                 the K95 function <tt>\fterminalchecksum()</tt>.
+            </p>
+            <p>
+                The checksum is computed by subtracting the ordinal value of
+                characters from an unsigned 16bit integer which has a starting
+                value of 0. Character cells that are in the erased state are
+                skipped. If a character cell has attributes set, then those
+                attributes are also subtracted from the checksum using the
+                following values:
+            </p>
+            <ul>
+                <li>Protected: 0x04</li>
+                <li>Invisible: 0x08</li>
+                <li>Underline: 0x10</li>
+                <li>Reverse: 0x20</li>
+                <li>Blink: 0x40</li>
+                <li>Bold: 0x80</li>
+            </ul>
+            <p>
+                If a VT525 is being emulated, then the cells color background
+                color index is also subtracted from the checksum along with the
+                foreground color index multiplied by 16. If a cells color index
+                is above 16 or has an RGB color assigned, the nearest color
+                from a suitable 16-color palette is used for the checksum
+                calculation instead.
             </p>
         </section>
         <section role="ctlseq" id="decpkfmr" mnemonic="DECPKFMR"
