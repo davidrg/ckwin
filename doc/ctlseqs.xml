@@ -16369,8 +16369,12 @@ DCS $ q 3 , } ST</pre>
                 <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                 <param-single symbol="Pr"/></tt> is the rectangle to calculate
                 the checksum for. Coordinates are affected by origin mode
-                (<a href="#decom">DECOM</a>). Only available if send-data is
-                enabled (<tt>set terminal send-data on</tt>) - if it is disabled
+                (<a href="#decom">DECOM</a>). If zero is given as the page
+                number, the checksum of all pages will be computed.
+            </p>
+            <p>
+                This control sequence only functions if send-data is enabled
+                (<tt>set terminal send-data on</tt>). If it is disabled
                 (the default), this control sequence is ignored.
             </p>
             <p>

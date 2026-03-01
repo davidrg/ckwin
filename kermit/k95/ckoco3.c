@@ -7088,8 +7088,12 @@ decdwl_escape(bool dwlflag) {
     }
 }
 
+/*----------------------------------------------------------+----------------*/
+/* calculate_decrqcra_checksum                              | Page: specified*/
+/*----------------------------------------------------------+----------------*/
 int
-calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOOL obey_margins) {
+calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
+                            BOOL obey_margins) {
     unsigned short checksum=0;
     int x, y, height, width, max_page;
 
@@ -7097,15 +7101,23 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
     width = VscrnGetWidth(VTERM);
     max_page = term_max_page(VTERM);
 
-	/* TODO: If page == 0, calculate checksum of
-	 * 		 *all* pages (unless on alternate buffer) */
-
     if (top < 1) top = 1;
     if (left < 1) left = 1;
     if (bot < 1) bot = height;
     if (right < 1) right = width;
-    if (page < 1) page = 0;
-    else page = page - 1;
+
+    /* If page is zero, then do all pages. Otherwise do the specified page */
+    if (page < 1) {
+        page = 0;
+        top = 1;
+        left = 1;
+        bot = height;
+        right = width;
+    } else {
+        page = page - 1;
+        if (page > max_page) page = max_page;
+        max_page = page;
+    }
 
     if (obey_margins) {
         debug(F111, "DECRQCRA", "margintop", vscrn_page_margin_top(VTERM,page));
@@ -7113,6 +7125,8 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
         debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
         debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
 
+        /* TODO: this is wrong. We should be transforming the coordinates
+         *       according to DECOM */
         if (top < vscrn_page_margin_top(VTERM,page)) top = vscrn_page_margin_top(VTERM,page);
         if (top > vscrn_page_margin_bot(VTERM,page) + 1) top = vscrn_page_margin_bot(VTERM,page) + 1;
         if (left < vscrn_page_margin_left(VTERM,page)) left = vscrn_page_margin_left(VTERM,page);
@@ -7128,74 +7142,74 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page, BOO
         if (left > right) left = 1;
     }
 
-    if (page > max_page) page = max_page;
-
     debug(F111, "DECRQCRA", "top", top);
     debug(F111, "DECRQCRA", "left", left);
     debug(F111, "DECRQCRA", "bot", bot);
     debug(F111, "DECRQCRA", "right", right);
-    debug(F111, "DECRQCRA", "page", page);
 
-    for ( y=top-1; y<bot; y++ ) {
-        videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
-        for ( x=left-1; x<right; x++ ) {
-            unsigned short c, a;
-            unsigned char fgcoloridx = 0, bgcoloridx = 0;
+    for (; page <= max_page; page++) {
+        debug(F111, "DECRQCRA", "page", page);
+        for ( y=top-1; y<bot; y++ ) {
+            videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
+            for ( x=left-1; x<right; x++ ) {
+                unsigned short c, a;
+                unsigned char fgcoloridx = 0, bgcoloridx = 0;
 
-            c = line->cells[x].c;
-            a = line->vt_char_attrs[x];
+                c = line->cells[x].c;
+                a = line->vt_char_attrs[x];
 
-            if (a == VT_CHAR_ATTR_ERASED) {
-                /* Unoccupied character cells are excluded from the checksum */
-                continue;
-            }
+                if (a == VT_CHAR_ATTR_ERASED) {
+                    /* Unoccupied character cells are excluded from the checksum */
+                    continue;
+                }
 
-            /* These return 0 for RGB colors */
-            fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
-            bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
+                /* These return 0 for RGB colors */
+                fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
+                bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
 
 #ifdef CK_COLORS_24BIT
-			/* TODO: Map all colors into SGR palette */
+			    /* TODO: Map all colors into SGR palette */
 #endif /* CK_COLORS_24BIT */
 
-			/* TODO: this is wrong I think*/
-            if (fgcoloridx < 16) {
-                fgcoloridx = sgrindex[fgcoloridx%8];
-            } else {
-                /* FG color index is outside the range of
-                 * valid values for the VT525. */
-                fgcoloridx = 0;
+			    /* TODO: this is wrong I think*/
+                if (fgcoloridx < 16) {
+                    fgcoloridx = sgrindex[fgcoloridx%8];
+                } else {
+                    /* FG color index is outside the range of
+                     * valid values for the VT525. */
+                    fgcoloridx = 0;
+                }
+
+                if (bgcoloridx < 16) {
+                    bgcoloridx = sgrindex[bgcoloridx%8];
+                } else {
+                    /* BG color index is outside the range of
+                     * valid values for the VT525. */
+                    bgcoloridx = 0;
+                }
+
+                debug(F111, "DECRQCRA iteration", "x", x);
+                debug(F111, "DECRQCRA iteration", "y", y);
+                debug(F111, "DECRQCRA iteration", "c", c);
+			    debug(F111, "DECRQCRA iteration", "a", a);
+                debug(F111, "DECRQCRA iteration", "checksum", checksum);
+
+                checksum -= c;
+
+                debug(F111, "DECRQCRA iteration", "checksum-c", checksum);
+
+                if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
+                if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
+                if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
+                if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
+                if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
+                if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
+			    if (ISVT525(tt_type_mode) && 0) {
+            	    checksum -= bgcoloridx;
+            	    checksum -= fgcoloridx * 0x10;
+			    }
+                debug(F111, "DECRQCRA iteration", "checksum-attrs", checksum);
             }
-
-            if (bgcoloridx < 16) {
-                bgcoloridx = sgrindex[bgcoloridx%8];
-            } else {
-                /* BG color index is outside the range of
-                 * valid values for the VT525. */
-                bgcoloridx = 0;
-            }
-
-            debug(F111, "DECRQCRA iteration", "x", x);
-            debug(F111, "DECRQCRA iteration", "y", y);
-            debug(F111, "DECRQCRA iteration", "c", c);
-			debug(F111, "DECRQCRA iteration", "a", a);
-            debug(F111, "DECRQCRA iteration", "checksum", checksum);
-
-            checksum -= c;
-
-            debug(F111, "DECRQCRA iteration", "checksum-c", checksum);
-
-            if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
-            if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
-            if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
-            if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
-            if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
-            if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
-			if (ISVT525(tt_type_mode) && 0) {
-            	checksum -= bgcoloridx;
-            	checksum -= fgcoloridx * 0x10;
-			}
-            debug(F111, "DECRQCRA iteration", "checksum-attrs", checksum);
         }
     }
     debug(F111, "DECRQCRA", "checksum", checksum);
@@ -19399,10 +19413,11 @@ vtcsi(void)
                          *       setting of origin mode
                          */
                         int checksum=0, pid=1;
-                        int top, left, bot, right, page, max_page;
+                        int top, left, bot, right, page;
                         int row, col;
                         char buf[20];
 
+                        if (k < 2) pn[2] = 0;
                         if (k < 3) pn[3] = 1;
                         if (k < 4) pn[4] = 1;
                         if (k < 5) pn[5] = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
@@ -19411,10 +19426,6 @@ vtcsi(void)
 
                         pid = pn[1];
                         page = pn[2];
-
-                        max_page = term_max_page(VTERM);
-						if (page < 1) page = 1;
-						if (page > max_page) page = max_page;
 
                         if (on_alternate_buffer(VTERM)) {
                             page = ALTERNATE_BUFFER_PAGE(VTERM);
