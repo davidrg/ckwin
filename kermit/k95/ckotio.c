@@ -880,9 +880,11 @@ savetty() {
          * library won't let the binary run anywhere it isn't)
          */
 #ifdef CKT_NT35_AND_31
-        savedcfg->dwSize = 1024;
-        savedcfgsize = 1024;
-        _GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+        if (_GetCommConfig != NULL) {
+            savedcfg->dwSize = 1024;
+            savedcfgsize = 1024;
+            _GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+        }
 #else
 #ifndef CKT_NT31ONLY
         savedcfg->dwSize = 1024;

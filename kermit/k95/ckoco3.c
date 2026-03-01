@@ -21947,7 +21947,35 @@ vtcsi(void)
                     }
                     break;
                 }
-                else {
+				if (zdsext && (ISXTERM(tt_type_mode) || ISK95(tt_type_mode))) {
+					if (k < 1) pn[1] = 0;
+					switch (pn[1]) {
+					case 0: /* XTVERSION */
+						{
+							/* TODO: If we were emulating XTerm, then ideally
+							 *  	 we'd respond with the version of XTerm we
+							 * 		 are emulating. */
+							char resp[256] ;
+							extern char *ck_s_name;
+							extern char *ck_s_xver;
+							if (send_c1) {
+                        		sprintf(resp, "P>|%s %s%c",
+                                 	ck_s_name,
+                                 	ck_s_xver,
+								 	_ST8);
+							} else {
+								sprintf(resp, "P>|%s %s%c\\",
+                                 	ck_s_name,
+                                 	ck_s_xver,
+								 	ESC);
+							}
+                        	sendescseq(resp);
+						}
+						break;
+					default:
+						break;
+					}
+                } else {
                     /* Load LEDs */
                     for ( i=1 ; i<=k ; i++ ) {
                         switch ( pn[i] ) {

@@ -38,29 +38,21 @@ public:
 
     void resetFont( HDC hdc );
     void setBold( HDC hdc );
-    void setDim( HDC hdc );
     void setUnderline( HDC hdc );
     void setBoldUnderline( HDC hdc );
     void setBoldItalic( HDC hdc );
     void setUnderlineItalic( HDC hdc );
     void setBoldUnderlineItalic( HDC hdc );
     void setItalic( HDC hdc );
-    void setDimUnderline( HDC hdc );
-    void setDimItalic( HDC hdc );
-    void setDimUnderlineItalic( HDC hdc );
 
     void setCrossedOut( HDC hdc );
     void setCrossedOutBold( HDC hdc );
-    void setCrossedOutDim( HDC hdc );
     void setCrossedOutUnderline( HDC hdc );
     void setCrossedOutBoldUnderline( HDC hdc );
     void setCrossedOutBoldItalic( HDC hdc );
     void setCrossedOutUnderlineItalic( HDC hdc );
     void setCrossedOutBoldUnderlineItalic( HDC hdc );
     void setCrossedOutItalic( HDC hdc );
-    void setCrossedOutDimUnderline( HDC hdc );
-    void setCrossedOutDimItalic( HDC hdc );
-    void setCrossedOutDimUnderlineItalic( HDC hdc );
 
     void displayABCwidths( HDC hdc );
 

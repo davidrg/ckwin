@@ -131,15 +131,21 @@ Bool KRegistryEdit::setFontinfo( K_GLOBAL* kglob )
 
     LONG ret = ERROR_SUCCESS;
 
-    ret = RegSetValueEx( hkey, settingLabels[Font_Facename]
-                         , 0, REG_SZ, (BYTE*) &kglob->faceName
-                         , (DWORD)strlen(kglob->faceName) );
+    if (kglob->faceName[0]) {
+        ret = RegSetValueEx( hkey, settingLabels[Font_Facename]
+                             , 0, REG_SZ, (BYTE*) &kglob->faceName
+                             , (DWORD)strlen(kglob->faceName) );
+    }
 
-    ret = RegSetValueEx( hkey, settingLabels[Font_Height]
-                         , 0, REG_DWORD, (BYTE*) &kglob->fontHeight, sizeof(DWORD) );
+    if (kglob->fontHeight > 0) {
+        ret = RegSetValueEx( hkey, settingLabels[Font_Height]
+                             , 0, REG_DWORD, (BYTE*) &kglob->fontHeight, sizeof(DWORD) );
+    }
 
-    ret = RegSetValueEx( hkey, settingLabels[Font_Width]
-                         , 0, REG_DWORD, (BYTE*) &kglob->fontWidth, sizeof(DWORD) );
+    if (kglob->fontWidth > 0) {
+        ret = RegSetValueEx( hkey, settingLabels[Font_Width]
+                             , 0, REG_DWORD, (BYTE*) &kglob->fontWidth, sizeof(DWORD) );
+    }
 
     RegCloseKey( hkey );
     return TRUE;

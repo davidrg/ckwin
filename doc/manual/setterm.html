@@ -261,6 +261,13 @@ Colors are:
 <tt>WHITE</tt> (high intensity)
 </blockquote>
 <p>
+In addition to the above named colors, in K95G you can also specify RGB colors
+using the <tt>RGB</tt> keyword, or colors by number with the <tt>INDEX</tt>
+keyword. For example, <tt>SET TERMINAL COLOR TERMINAL-SCREEN RGB 255 110 0 INDEX 0</tt>
+would set the foreground to R/G/B color 255/110/0, a shade of amber, and the
+background to color 0 which is black. Valid color indexes depend on the
+currently selected color palette.
+<p>
 We do not recommend you use any of the high-intensity colors for the
 TERMINAL-SCREEN screen part (the main terminal screen), since this can
 confuse matters when the host sends highlighting escape sequences.
@@ -276,7 +283,7 @@ screen when erase commands are received from the host.
 <p>
 <dt><tt>SET TERMINAL COLOR PALETTE <i>{</i> AIXTERM-16, VT525, VT525-ALTERNATE,
     VT525-MONO, XTERM-256, XTERM-88, XTERM-RGB <i>}</i></tt>
-<dd>sets the color palette used to render the terminal screen. In the Windows
+<dd>Sets the color palette used to render the terminal screen. In the Windows
     Console and OS/2 versions of Kermit 95 (or K95G built with only 16-color
     support), colors are mapped from the chosen palette to AIXTERM-16 for
     display. The XTERM-RGB option, where available, is the XTERM-256 color
