@@ -785,6 +785,7 @@ void
 cleartermpage( BYTE vmode, int page ) {
     int             x,y ;
     videoline *     line ;
+    cell_video_attr_t erasecolor = geterasecolor(vmode) ;
 
     for ( y = 0 ; y < VscrnGetHeight(vmode) ; y++ ) {
         line = VscrnGetPageLineFromTop(vmode,y,page) ;
@@ -792,8 +793,8 @@ cleartermpage( BYTE vmode, int page ) {
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             line->cells[x].c = ' ' ;
-            line->cells[x].video_attr = vmode == VTERM ? attribute : colorcmd ;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+            line->cells[x].video_attr = erasecolor;
+            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
     lgotoxy(vmode,1, 1);
