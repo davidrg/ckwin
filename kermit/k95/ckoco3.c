@@ -7138,15 +7138,12 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
         debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
         debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
 
-        /* TODO: this is wrong. We should be transforming the coordinates
-         *       according to DECOM */
-        if (top < vscrn_page_margin_top(VTERM,page)) top = vscrn_page_margin_top(VTERM,page);
-        if (top > vscrn_page_margin_bot(VTERM,page) + 1) top = vscrn_page_margin_bot(VTERM,page) + 1;
-        if (left < vscrn_page_margin_left(VTERM,page)) left = vscrn_page_margin_left(VTERM,page);
-        if (left > vscrn_page_margin_right(VTERM,page) + 1) left = vscrn_page_margin_right(VTERM,page) + 1;
-        if (bot < vscrn_page_margin_top(VTERM,page)) bot = vscrn_page_margin_top(VTERM,page);
+        top += vscrn_page_margin_top(VTERM,page) - 1;
+        bot += vscrn_page_margin_top(VTERM,page) - 1;
+        left += vscrn_page_margin_left(VTERM,page) - 1;
+        right += vscrn_page_margin_left(VTERM,page) - 1;
+
         if (bot > vscrn_page_margin_bot(VTERM,page)) bot = vscrn_page_margin_bot(VTERM,page);
-        if (right < vscrn_page_margin_left(VTERM,page)) right = vscrn_page_margin_left(VTERM,page);
         if (right > vscrn_page_margin_right(VTERM,page)) right = vscrn_page_margin_right(VTERM,page);
     } else {
         if (bot > height) bot = height;
@@ -19481,7 +19478,7 @@ vtcsi(void)
                         debug(F111, "DECRQCRA", "init-right", pn[6]);
 
                         checksum = calculate_decrqcra_checksum(
-                            top, left, bot, right, page, TRUE);
+                            top, left, bot, right, page, relcursor);
 
                         if (send_c1) {
                             sprintf(buf, "P%d!~%04X%c", pid, checksum, _ST8);
