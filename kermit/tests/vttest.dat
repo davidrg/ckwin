@@ -1531,4 +1531,9 @@
 
 
 
-11_3_7_3_9 !018B2D # K95 doesn't currently store the original received character, or the character set it was converted from so can't undo the conversion for the checksum calculation
+# The two DECRQCRA tests
+11_3_7_3_9 8E
+11_3_7_3_10 D02F
+
+11_3_7_3_11 DC22
+
