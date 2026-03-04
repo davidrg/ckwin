@@ -28,7 +28,7 @@
 # selected, and produces around 7,800 image files.
 #
 # TODO
-#  - SAVE TERMINAL SCREEN /FORAMT:TEXT should probably save as unicode
+#  - SAVE TERMINAL SCREEN /FORMAT:TEXT should probably save as unicode
 #  - Compute a hash of the text output and store that alongside the checksum, as
 #    the terminal checksum only tells us *what* characters are on the screen but
 #    tells us nothing about their order.
@@ -44,7 +44,7 @@
 #	 These tests also need it - and they need to show if its blinking or not:
 # 	    test_11_4_5_vt520_reporting_functions
 # 		test_11_4_6_v520_screen_display
-#  - Option to run for the various terminal emultaion options: vt100, 102
+#  - Option to run for the various terminal emulation options: vt100, 102
 #		220, 320 and K95 as the results may be (should be?) different.
 #  - Test 5.1 needs the status line to be covered by the checksum
 #  - A way of injecting keyboard scancodes so keyboard tests can be done
@@ -237,7 +237,7 @@ def screenshot {
 	save terminal screen /format:text \m(output_directory)/\%1.txt
 }
 
-# Output to HTML flie
+# Output to HTML file
 # Parameters:
 #	1 - string to output
 def putout {
