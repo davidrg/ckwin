@@ -7168,6 +7168,13 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                 c = line->cells[x].c;
                 a = line->vt_char_attrs[x];
 
+                /* TODO: If c is outside the range of values for the latin1
+                 *       character set, the calculation here will be incorrect
+                 *       as the values the VT420/VT520 assigns to those
+                 *       characters unsurprisingly differ from Unicode. For the
+                 *       calculation to match the real terminal we'll need to do
+                 *       Unicode->VT conversion here. */
+
                 if (a == VT_CHAR_ATTR_ERASED) {
                     /* Unoccupied character cells are excluded from the checksum */
                     continue;
@@ -7181,7 +7188,7 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
 #ifdef CK_COLORS_24BIT
                     /* If the currently assigned foreground or background colour is is a
                      * direct 24-bit RGB colour, then use the nearest colour in the
-                     * VT525 palette for the checksum. */
+                     * VT525 or 16-colour palette for the checksum. */
                     if (!cell_video_attr_fg_is_indexed(line->cells[x].video_attr)) {
                         int r, g, b;
                         r = cell_video_attr_fg_rgb_r(line->cells[x].video_attr);
@@ -7209,9 +7216,6 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
 
                     /* If the colour is outside the valid range for a VT525, convert it
                      * to the VT525 palette. We'll leave the regular SGR colours as-is.
-                     * TODO: The VT525 only supports the 8 regular ANSI SGR
-                     *       colours; should we be mapping all colours to the
-                     *       0-7 range?
                      */
                     if (fgcoloridx > palette_max_index(CK_PALETTE_VT525)) {
                         fgcoloridx = nearest_palette_color_palette(colorpalette,
@@ -7223,7 +7227,7 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                             bgcoloridx);
                     }
 
-                    /* The lower 16 colours in the vscreen buffere are arranged a
+                    /* The lower 16 colours in the vscreen buffer are arranged a
                      * little different from SGR colours for OS/2 reasons - this
                      * will fix that up */
                     fgcoloridx = color_index_from_vio(fgcoloridx);
