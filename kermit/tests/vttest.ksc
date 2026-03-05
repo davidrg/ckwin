@@ -28,6 +28,10 @@
 # selected, and produces around 7,800 image files.
 #
 # TODO
+#  - SAVE TERMINAL SCREEN /FORMAT:TEXT should probably save as unicode
+#  - Compute a hash of the text output and store that alongside the checksum, as
+#    the terminal checksum only tells us *what* characters are on the screen but
+#    tells us nothing about their order.
 #  - The various tests that loop through a bunch of margin combinations aren't
 #	 getting enough time to render the menus properly either.
 #  - more outputs: separate pages for passing/failing/unknown results in
@@ -40,7 +44,7 @@
 #	 These tests also need it - and they need to show if its blinking or not:
 # 	    test_11_4_5_vt520_reporting_functions
 # 		test_11_4_6_v520_screen_display
-#  - Option to run for the various terminal emultaion options: vt100, 102
+#  - Option to run for the various terminal emulation options: vt100, 102
 #		220, 320 and K95 as the results may be (should be?) different.
 #  - Test 5.1 needs the status line to be covered by the checksum
 #  - A way of injecting keyboard scancodes so keyboard tests can be done
@@ -160,7 +164,7 @@ def test_procedure {
 # The dot syntax and :=, ::=, is described here:
 #	https://www.columbia.edu/kermit/ckermit70.html#x7.9
 #
-local vttest_version \&a[] \&b[] \%c \%d \%f \%n \%o \%p \%r \%s \%u \%v 
+local vttest_version \&a[] \&b[] \%c \%d \%f \%l \%n \%o \%p \%r \%s \%u \%v
 local line test checksum_file
 
 # Single letter variables used at the script level:
@@ -169,6 +173,7 @@ local line test checksum_file
 # \%c - checksum file
 # \%d - output data file
 # \%f - test fail count
+# \%l - log file
 # \%n - checksum note/comment
 # \%o - output file
 # \%p - test pass count
@@ -229,9 +234,10 @@ def init_terminal {
 # 	1 - filename
 def screenshot {
 	save terminal screen /format:\M(image_format) \m(output_directory)/\%1.\m(image_format)
+	save terminal screen /format:text \m(output_directory)/\%1.txt
 }
 
-# Output to HTML flie
+# Output to HTML file
 # Parameters:
 #	1 - string to output
 def putout {
@@ -477,7 +483,7 @@ def add_test_result {
 	
 	putout {	<tr>}
 	putout {		<td><a href="\%1.\m(image_format)"><img src="\%1.\m(image_format)"></a><br>}
-	putout {			<tt>\m(checksum_id) \m(checksum)</tt>}
+	putout {			<tt>\m(checksum_id) \m(checksum)</tt> <a href="\%1.txt">text</a>}
 	putout {		</td>}
 
 	get_test_checksum \m(checksum_id)
@@ -496,18 +502,22 @@ def add_test_result {
 	.comment := \fsubstring(\%n, 2)
 	
 	if equal \m(checksum) \m(pass_checksum) {
+	    fwrite /line \%l {\m(checksum_id)\{9}PASS\{9}\{9}\%1.\m(image_format)\{9}\m(comment)}
 		putout {		<td bgcolor="lightseagreen">Pass}
 		.%p ::= \%p + 1
 	} else if ( equal \m(pass_checksum) 0 or equal "\fleft(\m(pass_checksum),1)" "!" ) {
 		# Failing test, don't know what the right checksum is
+		fwrite /line \%l {\m(checksum_id)\{9}FAIL\{9}\{9}\%1.\m(image_format)\{9}\m(comment)}
 		putout {<td bgcolor="firebrick">Fail}
 		.%f ::= \%f + 1
 	} else if ( = \flength(\m(pass_checksum)) 0 or equal "\fleft(\m(pass_checksum),1)" "?" ) {
 		# Unknown/unevaluated result
+		fwrite /line \%l {\m(checksum_id)\{9}UNKNOWN\{9}\{9}\%1.\m(image_format)\{9}\m(comment)}
 		putout {		<td bgcolor="khaki">}
 		.%u ::= \%u + 1
 	} else if > \flength(\m(pass_checksum)) 0 {
 		# Failing test - checksum mismatch
+		fwrite /line \%l {\m(checksum_id)\{9}FAIL\{9}Expected \m(pass_checksum) got \m(checksum)\{9}\%1.\m(image_format)\{9}\m(comment)}
 		putout {		<td bgcolor="firebrick">}
 		putout {			Fail - expected \m(pass_checksum)}
 		.%f ::= \%f + 1
@@ -642,6 +652,20 @@ def start_vttest {
 	echo file \m(output_directory)/checksums.dat open for output
 	fwrite /line \%d {# Test Checksums}
 
+    # Write out a .gitignore file. This isn't really important, so failure is ok
+    fopen /write \%l \m(output_directory)/.gitignore
+    if not fail {
+        fwrite /line \%l {*}
+        fclose \%l
+    }
+
+	fopen /write \%l \m(output_directory)/results.dat
+    if fail {
+        fail_and_stop 2 "Failed to open results log file"
+    }
+    echo file \m(output_directory)/results.dat open for output
+    fwrite /line \%l {Test-ID\{9}Result\{9}Note\{9}Picture-File\{9}Comment}
+
 	# Start logging
 	#log session \m(output_directory)/session.log
 	#log debug \m(output_directory)/debug.log
@@ -719,6 +743,7 @@ def close_output {
 	putout {</html>}
 	fclose \%o
 	fclose \%d
+    fclose \%l
 }
 
 # Exits VTTEST
