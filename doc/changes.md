@@ -434,6 +434,12 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    width if the parameters value is 0. Any value less than 80 will now produce an
    80 column terminal.
  - Fixed crash writing to unopened file
+ - Mostly fixed incorrect DECRQCRA calculation. The result will now match what
+   is produced by a real VT420/520 using the ISO Latin 1 character set, and
+   should be correct for the VT525 too. The calculation doesn't currently handle
+   other character sets, so for those the result will be incorrect.
+ - Fixed DECFRA accepting invalid fill character specifications
+ - Fixed DECFRA not using the selected remote character set for the fill character
  - Fixed K95G attempting to save a null font face name to the registry when the
    registry key isn't present and the user has never selected a font. This
    could result in garbage being saved as the font face name in the registry
