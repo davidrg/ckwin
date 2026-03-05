@@ -389,18 +389,6 @@ NetCmdInBuf( void ) {
 }
 
 int
-NetCmdPutStr( char * s )
-{
-    char * p ;
-    int rc = 0 ;
-    RequestNetCmdMutex( SEM_INDEFINITE_WAIT ) ;
-    for ( p=s; *p && !rc ; p++ )
-      rc = NetCmdPutChar( *p ) ;
-    ReleaseNetCmdMutex() ;
-    return rc ;
-}
-
-int
 NetCmdPutChars( char * s, int n )
 {
     int rc = 0 ;
@@ -415,11 +403,11 @@ NetCmdPutChars( char * s, int n )
     return rc ;
 }
 
+/* NOTE: NetCmdMutex must be obtained before calling! */
 int
 NetCmdPutChar( char ch ) {
     int rc = 0 ;
 
-    RequestNetCmdMutex( SEM_INDEFINITE_WAIT ) ;
     while ( (NetCmdStart - NetCmdEnd == 1) ||
             ( NetCmdStart == 0 && NetCmdEnd == NET_CMD_BUFSIZE - 1 ) )
         /* Buffer is full */
@@ -435,7 +423,6 @@ NetCmdPutChar( char ch ) {
         NetCmdEnd = 0 ;
     NetCmdData = TRUE;
     PostNetCmdAvailSem()  ;
-    ReleaseNetCmdMutex() ;
     return rc ;
 }
 
@@ -469,18 +456,24 @@ NetCmdGetChar( char * pch )
 
 #ifdef NT
 void
-NetCmdReadThread( void *pipe )
-{
-    int success = 1;
-    CHAR c;
+NetCmdReadThread( void *pipe ) {
+    int success = 1, avail = 0;
     DWORD io;
+    char* buf = malloc(sizeof(char) * NET_CMD_BUFSIZE);
 
     while ( success && ttyfd != -1 ) {
-        if ( success = ReadFile((HANDLE)pipe, &c, 1, &io, NULL ) )
+        avail = NET_CMD_BUFSIZE - NetCmdInBuf() - 1;
+
+        if (!avail) {
+            continue; /* Buffer full - can't ready yet. */
+        }
+
+        if ( success = ReadFile((HANDLE)pipe, buf, avail, &io, NULL ) )
         {
-            NetCmdPutChar(c);
+            NetCmdPutChars(buf, io);
         }
     }
+    free(buf);
 }
 #else /* NT */
 void
@@ -493,7 +486,9 @@ NetCmdReadThread( void *pipe )
     while ( success && ttyfd != -1 ) {
         if ( success = !DosRead((HFILE)pipe, &c, 1, &io) )
         {
+            RequestNetCmdMutex( SEM_INDEFINITE_WAIT ) ;
             NetCmdPutChar(c);
+            ReleaseNetCmdMutex() ;
         }
     }
 }
@@ -2401,6 +2396,7 @@ os2_netxin(int n, char * buf) {
         if (n > len) {
             copysize = len;
         }
+        RequestNetCmdMutex( SEM_INDEFINITE_WAIT ) ;
         for (i = 0; i < copysize; i++) {
             char c = 0;
             int x = NetCmdGetChar(&c);
@@ -2411,6 +2407,7 @@ os2_netxin(int n, char * buf) {
                 break; /* Run out of characters to read. */
             }
         }
+        ReleaseNetCmdMutex() ;
         return rc;
     }
 #endif

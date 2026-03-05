@@ -82,11 +82,13 @@ public:
     void startTimer();
 
     BOOL renderToEmfFile(int vnum, char* filename);
+#ifdef CK_SAVE_TO_IMAGE
     BOOL renderToBmpFile(int vnum, char* filename);
 #ifdef CK_HAVE_GDIPLUS
     BOOL renderToPngFile(int vnum, char* filename);
     BOOL renderToGifFile(int vnum, char* filename);
 #endif /* CK_HAVE_GDIPLUS */
+#endif /* CK_SAVE_TO_IMAGE */
 
 private:    // this section is for performance
     uchar* workTemp;
@@ -100,6 +102,7 @@ private:    // this section is for performance
 
     cell_video_attr_t prevAttr;
     ushort prevEffect;
+    COLORREF textColor;
 
     int wc;
     int vscrollpos;

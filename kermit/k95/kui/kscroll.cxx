@@ -52,12 +52,18 @@ void KScroll::setValues( long line, long page )
 ------------------------------------------------------------------------*/
 void KScroll::setRange( int max, int viewable, Bool trackPos )
 {
+    int scroll_enabled;
     if ( !parent )
         return;
 
+    scroll_enabled = tt_scroll;
+    if (vmode == VTERM && !tt_term_scroll) {
+        scroll_enabled = 0;
+    }
+
     maxVal = max - 1/* viewable */;
 
-    if( maxVal == prevMaxVal && tt_scroll == prevTtScroll )
+    if( maxVal == prevMaxVal && scroll_enabled == prevTtScroll )
         return;
 
     if( vertical ) {
@@ -67,7 +73,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
             currentPos += maxVal - prevMaxVal;
     }
     prevMaxVal = maxVal;
-	prevTtScroll = tt_scroll;
+	prevTtScroll = scroll_enabled;
 
 #ifndef CKT_NT35_OR_31
     UINT mask = SIF_PAGE | SIF_RANGE | SIF_POS;
@@ -81,7 +87,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
     memset( &info, '\0', sizeof(SCROLLINFO) );
     info.cbSize = sizeof(SCROLLINFO);
     info.fMask = mask;
-    if ( tt_scroll ) {
+    if ( scroll_enabled ) {
         info.nMin = minVal;
         info.nMax = maxVal;
         info.nPage = viewable;

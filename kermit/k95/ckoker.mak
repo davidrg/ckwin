@@ -245,14 +245,15 @@ SUBSYSTEM_WIN32=windows,5.2
 !endif
 !endif  # EndIf MSC_VER >= 170 and MSC_VER <= 192
 
-!if ($(MSC_VER) == 80) && ("$(TARGET_CPU)" == "AXP")
+!if ($(MSC_VER) == 80) && ("$(TARGET_CPU)" == "AXP" || "$(TARGET_CPU)" == "MIPS")
 # The linker included with the NT 3.50 SDK for Alpha can't handle
-# K95 (complains "LINK : error LNK1155: Special symbol 'end' already defined.")
+# K95 (complains "LINK : error LNK1155: Special symbol 'end' already defined."),
+# and the NT 3.1 SDK for MIPS doesn't even include the normal Visual C++ linker.
 # So to support using a newer linker that has less problems, we'll set
 # the subsystem version so the result still works on NT 3.1/3.50
 SUBSYSTEM_CONSOLE=console,3.1
 SUBSYSTEM_WIN32=windows,3.1
-!endif  # EndIf MSC_VER == 80 and TARGET_CPU == AXP
+!endif  # EndIf MSC_VER == 80 and ( TARGET_CPU == AXP OR TARGET_CPU == MIPS )
 
 !if ($(MSC_VER) > 90)
 !if "$(TARGET_CPU)" != "MIPS"

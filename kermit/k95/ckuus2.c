@@ -1186,11 +1186,15 @@ static char *hmxxsave[] = {
 " ",
 "  K95G has the additional ability to save the terminal screen as an image file",
 "  This can be done with the syntax: ",
+#ifdef CK_SAVE_TO_IMAGE
 #ifdef CK_HAVE_GDIPLUS
 "    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF, GIF, PNG } filename ",
 #else /* CK_HAVE_GDIPLUS */
 "    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF } filename ",
 #endif  /* CK_HAVE_GDIPLUS */
+#else
+"    SAVE TERMINAL SCREEN /FORMAT:EMF filename ",
+#endif /* CK_SAVE_TO_IMAGE */
 "  When saving as an image, a new file is always created. The EMF format does",
 "  not currently support saving double-height/double-wide lines",
 #endif /* KUI */
@@ -8203,14 +8207,22 @@ static char *hxyterm[] = {
 "  the screen when erase commands are received from the host.",
 " ",
 
+"SET TERMINAL COLOR PALETTE { AIXTERM-16, VT525, VT525-MONO, VT525-ALTERNATE,",
 #ifdef CK_COLORS_24BIT
-"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88, XTERM-RGB }",
+"    XTERM-256, XTERM-88, XTERM-RGB }",
 #else
-"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88 }",
+"    XTERM-256, XTERM-88 }",
 #endif
-"  Sets the active color palette. In the Windows Console and OS/2 versions of",
-"  Kermit 95 (or K95G built with only 16-color support), colors are mapped",
-"  from the chosen palette into AIXTERM-16 for display.",
+"  Sets the active color palette used to render the terminal screen. In the ",
+"  Windows Console and OS/2 versions of Kermit 95 (or K95G built with only ",
+"  16-color support), colors are mapped from the chosen palette into AIXTERM-16",
+"  for display. The XTERM-RGB option, where available, is the XTERM-256 color",
+"  palette with 24bit RGB color support enabled. When 24bit RGB color support",
+"  is disabled, RGB colors set by the host are mapped to the nearest color in",
+"  the selected palette. Selecting either the VT525-ALTERNATE or VT525-MONO",
+"  palette switches the VT525 color mode to the respective setting. In the",
+"  Alternate setting, attribute combinations are used to select colors and",
+"  normal SGR colors are not displayed.",
 " ",
 
 "SET TERMINAL COLOR RESET-ON-ESC[0m { CURRENT-COLOR, DEFAULT-COLOR }",

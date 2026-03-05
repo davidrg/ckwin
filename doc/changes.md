@@ -71,6 +71,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Included palettes are: 
      - xterm 256-colors (the new default palette)
      - xterm 88-colors
+     - vt525 16-colors
+     - vt525 monochrome
+     - vt525 alternate (uses bold, underline, blink and reverse attributes for
+       color instead of normal ANSI color attributes)
      - aixterm 16-colors (the palette used by prior Kermit 95 releases)
    - Screen colors can be set to values from the larger palette with the
      `SET TERMINAL COLOR` command by using the new INDEX keyword followed by
@@ -104,6 +108,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      configured to accept the COLORTERM environment variable; to make it work, 
      it will likely have to be added to the `AcceptEnv` list in 
      `/etc/ssh/sshd_config` on the server.
+ - Support for VT525 color including its alternate color and mono SGR color 
+   modes.
  - New screen elements can be given color via `SET TERMINAL COLOR`
    - Blinking text (if the blink attribute is disabled with the new 
      `SET TERMINAL ATTRIBUTE BLINK OFF COLOR` command)
@@ -190,7 +196,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    the `SHOW VERSIONS` output going forward
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
- - Upgrade OpenSSL to 3.5.4
+ - Upgrade OpenSSL to 3.5.5
  - Improved terminal throughput for SSH connections by around seven times, which
    helps when you accidentally cat a large log file.
  - Doubled maximum terminal lines to 256 in K95G on modern systems
@@ -199,13 +205,40 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    to specify a region of a particular page to calculate a checksum off. If
    parameters are left off it calculates the checksum of the entire page on
    screen. Unlike DECRQCRA, it is not bound by page margins.
-   
- 
+ - `SET TERM COLOR ERASE` now takes effect immediately rather than requiring a
+   terminal reset to take effect.
+ - In K95G the Dim attribute is now rendered by reducing the foreground 
+   intensity by half - this matches the behavior of Xterm and the 
+   Windows Terminal. K95Gs previous approach of treating Dim as a synonym for
+   Bold produced odd effects in PowerShell which renders autocomplete 
+   suggestions using the Dim attribute combined with whatever the foreground
+   color is.
+ - Updated K95Gs list of preferred fonts to include _Cascadia Mono Regular_, a
+   Unicode font suitable for terminals which is better populated than the other
+   fonts bundled with Windows that K95 knows about. This font was created for
+   and also ships with the Windows Terminal and is available under an open 
+   license. The new preferred fonts list (in order) is included below. The three
+   Andale fonts, plus Everson and Monotype are commercial fonts not likely to be
+   present on most systems. K95G will pick the first one of these it finds if
+   the user has never chosen a font:
+   - Andale Mono WT J
+   - Andale Mono 64
+   - Cascadia Mono Regular
+   - Bitstream Vera Sans Mono
+   - Everson Mono Terminal
+   - Monotype.com
+   - Andale Mono
+   - Lucida Console
+   - Courier
+   - Terminal
+   - System
+ - Improved throughput for pipe connections on Windows 
+
 ### New terminal control sequences
 > [!NOTE]
-> Until Kermit 95 gets a VT525 terminal type option, control sequences marked
-> as requiring a VT525 are temporarily available under the existing VT320 
-> terminal type instead.
+> Until Kermit 95 gets a VT420 and VT525 terminal type options, control 
+> sequences marked as requiring one of these terminals  are temporarily 
+> available under the existing VT320 terminal type instead.
 
  - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-ic) and 
    [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-ic) are 
@@ -282,6 +315,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      enables or disables true blink in DECSTGLT alternate color mode
    - [DECATCUM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcum) 
      enables or disables true underline in DECSTGLT alternate color mode
+   - [DECCTR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decctr): Color
+     Table Request - provides the current color palette in RGB or HLS format.
+   - [DECRSTS - Color Table](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrsts-2):
+     Update/restore the current color palette
+   - [DECECM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm) - Erase Color Mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
  - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
@@ -299,6 +337,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
+   - [117](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm): Erase Color Mode
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
@@ -322,11 +361,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [PPA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppa) - Page Position Absolute
    - [PPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppr) - Page Position Relative
    - [PPB](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppb) - Page Position Backward
-   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Session Page Memory Allocation
    - [DECMC-10](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-10) - Print Composed Main Display
    - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
    - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages
    - [DECSNLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsnls) - Set number of lines per screen
+ - [XTVERSION](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtversion) (k95 terminal type only)
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
@@ -395,6 +434,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    width if the parameters value is 0. Any value less than 80 will now produce an
    80 column terminal.
  - Fixed crash writing to unopened file
+ - Fixed K95G attempting to save a null font face name to the registry when the
+   registry key isn't present and the user has never selected a font. This
+   could result in garbage being saved as the font face name in the registry
+   resulting in an odd font selection next time K95G is run.
+ - Fixed crash opening serial ports on Windows NT 3.1
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

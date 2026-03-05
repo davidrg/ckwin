@@ -59,22 +59,9 @@ extern DWORD VscrnIsDirty( int );
 extern int colorpalette; /* ckoco3.c */
 extern cell_video_attr_t  colorcursor;  /* ckoco3.c */
 
-/* Copies of the RGB tables so that resetting the terminal can reset the
- * the colour palettes. */
-ULONG SavedRGBTable256[256];
-ULONG SavedRGBTable88[88];
-ULONG SavedRGBTable[16];
-#ifdef CK_PALETTE_WY370
-ULONG SavedWY370RGBTable[65];
-#endif /* CK_PALETTE_WY370 */
-
-/* And the working copies which may be modified by the remote host */
+#ifdef CK_COLORS_DEBUG
 extern ULONG RGBTable256[256];
-extern ULONG RGBTable88[88];
-extern ULONG RGBTable[16];
-#ifdef CK_PALETTE_WY370
-extern ULONG WY370RGBTable[65];
-#endif /* CK_PALETTE_WY370 */
+#endif /* CK_COLORS_DEBUG */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -883,12 +870,11 @@ void KClient::writeMe()
         {
             prevAttr = kws->attr;
 
-            /* These are the default colors used by the console window           */ 
-            /* This needs to be replaced by a class that allows the color values */
-            /* to be set by the user and stored somewhere.                       */
-            /* The RGBTable is now set via SET GUI RGB commands.                 */
-            SetBkColor( hdc(), cell_video_attr_background_rgb(prevAttr));
-            SetTextColor( hdc(), cell_video_attr_foreground_rgb(prevAttr));
+            /* These are the default colors used by the console window, set by   */
+            /* the SET GUI RGB commands and a few escape sequences               */
+			SetBkColor( hdc(), cell_video_attr_background_rgb(prevAttr));
+            textColor = cell_video_attr_foreground_rgb(prevAttr);
+			SetTextColor( hdc(), textColor);
         }
 
         if( prevEffect != kws->effect )
@@ -914,6 +900,19 @@ void KClient::writeMe()
                 normal = !underline && !blink;
             }
 
+			if (dim) {
+				// Cut the colours intensity by dividing each component by 2.
+				// We can just quickly do this with a right-shift. Because there
+			    // are three separate numbers packed in we need to mask out the
+				// high bit of each as part of this so that the low bit of each
+				// value to the left is erased.
+				SetTextColor( hdc(), (textColor >> 1) & 0x7F7F7F);
+			} else {
+			    // If not dim, reset the textColor just in case dim is turned
+			    // off without the text colour also changing.
+			    SetTextColor( hdc(), textColor);
+			}
+
             if( normal )
                 getFont()->resetFont( hdc() );
             else if (crossedOut) {
@@ -921,20 +920,12 @@ void KClient::writeMe()
                     getFont()->setCrossedOutBoldUnderlineItalic( hdc() );
                 else if( bold && underline )
                     getFont()->setCrossedOutBoldUnderline( hdc() );
-                else if( dim && underline && italic )
-                    getFont()->setCrossedOutDimUnderlineItalic( hdc() );
-                else if( dim && underline )
-                    getFont()->setCrossedOutDimUnderline( hdc() );
                 else if( underline && italic )
                     getFont()->setCrossedOutUnderlineItalic( hdc() );
                 else if( bold && italic )
                     getFont()->setCrossedOutBoldItalic( hdc() );
                 else if( bold )
                     getFont()->setCrossedOutBold( hdc() );
-                else if( dim && italic )
-                    getFont()->setCrossedOutDimItalic( hdc() );
-                else if( dim )
-                    getFont()->setCrossedOutDim( hdc() );
                 else if( underline )
                     getFont()->setCrossedOutUnderline( hdc() );
                 else if ( italic )
@@ -946,20 +937,12 @@ void KClient::writeMe()
                 getFont()->setBoldUnderlineItalic( hdc() );
             else if( bold && underline )
                 getFont()->setBoldUnderline( hdc() );
-            else if( dim && underline && italic )
-                getFont()->setDimUnderlineItalic( hdc() );
-            else if( dim && underline )
-                getFont()->setDimUnderline( hdc() );
             else if( underline && italic )
                 getFont()->setUnderlineItalic( hdc() );
             else if( bold && italic )
                 getFont()->setBoldItalic( hdc() );
             else if( bold )
                 getFont()->setBold( hdc() );
-            else if( dim && italic )
-                getFont()->setDimItalic( hdc() );
-            else if( dim )
-                getFont()->setDim( hdc() );
             else if( underline )
                 getFont()->setUnderline( hdc() );
             else if ( italic )
@@ -1242,6 +1225,16 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                 normal = !underline && !blink;
             }
 
+			if (dim) {
+				// Cut the colours intensity by dividing each component by 2.
+				// We can just quickly do this with a right-shift. Because there
+			    // are three separate numbers packed in we need to mask out the
+				// high bit of each as part of this so that the low bit of each
+				// value to the left is erased.
+				SetTextColor( hdc,
+					(cell_video_attr_foreground_rgb(prevAttr) >> 1) & 0x7F7F7F);
+			}
+
             if( normal )
                 font->resetFont( hdc );
             else if (crossedOut) {
@@ -1249,20 +1242,20 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                     font->setCrossedOutBoldUnderlineItalic( hdc );
                 else if( bold && underline )
                     font->setCrossedOutBoldUnderline( hdc );
-                else if( dim && underline && italic )
+                /*else if( dim && underline && italic )
                     font->setCrossedOutDimUnderlineItalic( hdc );
                 else if( dim && underline )
-                    font->setCrossedOutDimUnderline( hdc );
+                    font->setCrossedOutDimUnderline( hdc );*/
                 else if( underline && italic )
                     font->setCrossedOutUnderlineItalic( hdc );
                 else if( bold && italic )
                     font->setCrossedOutBoldItalic( hdc );
                 else if( bold )
                     font->setCrossedOutBold( hdc );
-                else if( dim && italic )
+                /*else if( dim && italic )
                     font->setCrossedOutDimItalic( hdc );
                 else if( dim )
-                    font->setCrossedOutDim( hdc );
+                    font->setCrossedOutDim( hdc );*/
                 else if( underline )
                     font->setCrossedOutUnderline( hdc );
                 else if ( italic )
@@ -1274,20 +1267,20 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                 font->setBoldUnderlineItalic( hdc );
             else if( bold && underline )
                 font->setBoldUnderline( hdc );
-            else if( dim && underline && italic )
+            /*else if( dim && underline && italic )
                 font->setDimUnderlineItalic( hdc );
             else if( dim && underline )
-                font->setDimUnderline( hdc );
+                font->setDimUnderline( hdc );*/
             else if( underline && italic )
                 font->setUnderlineItalic( hdc );
             else if( bold && italic )
                 font->setBoldItalic( hdc );
             else if( bold )
                 font->setBold( hdc );
-            else if( dim && italic )
+            /*else if( dim && italic )
                 font->setDimItalic( hdc );
             else if( dim )
-                font->setDim( hdc );
+                font->setDim( hdc );*/
             else if( underline )
                 font->setUnderline( hdc );
             else if ( italic )
@@ -1374,6 +1367,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     return success;
 }
 
+#ifdef CK_SAVE_TO_IMAGE
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 /* Renders the the specified vscrn to a device-independent bitmap (DIB)
@@ -1420,6 +1414,7 @@ HBITMAP KClient::renderToBitmap(int vnum, DWORD **outPixels) {
 
     return hbmp;
 }
+#endif /* CK_SAVE_TO_IMAGE */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -1444,7 +1439,7 @@ BOOL KClient::renderToEmfFile(int vnum, char* filename) {
     return success;
 }
 
-
+#ifdef CK_SAVE_TO_IMAGE
 #ifdef CK_HAVE_GDIPLUS
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -1631,8 +1626,6 @@ PBITMAPINFO CreateBitmapInfoStruct(HWND hwnd, HBITMAP hBmp)
  * (.bmp or .dib) file with the specified name. If an error occurs, FALSE
  * is returned. */
 BOOL KClient::renderToBmpFile(int vnum, char* filename) {
-    BOOL success;
-
     DWORD *pixels;
     HBITMAP hbmp = renderToBitmap(vnum, &pixels);
 
@@ -1720,8 +1713,9 @@ BOOL KClient::renderToBmpFile(int vnum, char* filename) {
     free(pbi);
     DeleteObject(hbmp);
 
-    return success;
+    return TRUE;
 }
+#endif /* CK_SAVE_TO_IMAGE */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/

@@ -261,6 +261,13 @@ Colors are:
 <tt>WHITE</tt> (high intensity)
 </blockquote>
 <p>
+In addition to the above named colors, in K95G you can also specify RGB colors
+using the <tt>RGB</tt> keyword, or colors by number with the <tt>INDEX</tt>
+keyword. For example, <tt>SET TERMINAL COLOR TERMINAL-SCREEN RGB 255 110 0 INDEX 0</tt>
+would set the foreground to R/G/B color 255/110/0, a shade of amber, and the
+background to color 0 which is black. Valid color indexes depend on the
+currently selected color palette.
+<p>
 We do not recommend you use any of the high-intensity colors for the
 TERMINAL-SCREEN screen part (the main terminal screen), since this can
 confuse matters when the host sends highlighting escape sequences.
@@ -273,6 +280,19 @@ be abbreviated with just <tt>L</tt>, for example <tt>LBLUE</tt>.
 <dd>Determines whether the current color as set by the host or the default color
 as set by the user (<tt>SET TERMINAL COLOR TERMINAL</tt>) is used to clear the
 screen when erase commands are received from the host. 
+<p>
+<dt><tt>SET TERMINAL COLOR PALETTE <i>{</i> AIXTERM-16, VT525, VT525-ALTERNATE,
+    VT525-MONO, XTERM-256, XTERM-88, XTERM-RGB <i>}</i></tt>
+<dd>Sets the color palette used to render the terminal screen. In the Windows
+    Console and OS/2 versions of Kermit 95 (or K95G built with only 16-color
+    support), colors are mapped from the chosen palette to AIXTERM-16 for
+    display. The XTERM-RGB option, where available, is the XTERM-256 color
+    palette with 24bit RGB color support enabled. When 24bit RGB color support
+    is disabled, RGB colors set by the host are mapped to the nearest color in
+    the selected palette. Selecting either the VT525-ALTERNATE or VT525-MONO
+    palette switches the VT525 color mode to the respective setting. In the
+    Alternate setting, attribute combinations are used to select colors and
+    normal SGR colors are not displayed.
 <p>
 <dt><tt>SET TERMINAL COLOR RESET-ON-ESC[0m <i>{</i> CURRENT-COLOR, DEFAULT-COLOR <i>}</i></tt>
 <dd>Determines whether the current color or the default color is used after an

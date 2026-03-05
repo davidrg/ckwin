@@ -58,7 +58,7 @@ extern char trafil[];           /* Transaction log filename */
 extern struct keytab * term_font;
 extern struct keytab * _term_font;
 extern int ntermfont;
-extern int tt_font, tt_font_size, tt_scroll;
+extern int tt_font, tt_font_size, tt_scroll, tt_term_scroll;
 
 extern int os2gks;              /* Kverb processing active? */
 extern int win95lucida, win95hsl;
