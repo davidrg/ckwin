@@ -2981,6 +2981,9 @@ def test_11_4_2_v520_cm_tests {
 	choose_single_test_option 12 "11.4.2.12-\%1-\%2-\%3-\%4-\%5" "Test Line-Position-Absolute (VPA) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
 	choose_single_test_option 13 "11.4.2.13-\%1-\%2-\%3-\%4-\%5" "Test Next-Line (CNL) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
 	choose_single_test_option 14 "11.4.2.14-\%1-\%2-\%3-\%4-\%5" "Test Previous-Line (CPL) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+
+	# This option isn't listed in the menu, but the menu does say "Enter choice number (0 - 15)"
+	choose_single_test_option 15 "11.4.2.15-\%1-\%2-\%3-\%4-\%5" "Test Vertical-Position-Relative (VPR) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
 }
 
 def test_11_4_2_v520_cursor_movement {
