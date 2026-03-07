@@ -4537,16 +4537,20 @@ DECTSR		462
                     is 20 the response would be: <tt><cc>DCS</cc> 1 $ r 5 ; 2 0 r <cc>ST</cc></tt>
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decslrm"
-                     mnemonic="DECSLRM" title="Set Left and Right Margins">
+            <section role="parameter" id="decrqss-decslrm" groups="isvt420"
+                     mnemonic="DECSLRM" title="Set Left and Right Margins"
+                     badges="k95 xterm">
                 <ctlseq><param-text/> = s</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <termsupp first="vt510" series="vt" additional="tt"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 1 $ r s ST</pre>
+                <termsupp first="vt420" series="vt" additional="tt"/>
+                <implchk std070="true"/>
+                <p>Reports the current <a href="#decslrm">DECSLRM</a> setting -
+                    the left and right margins of the current page. For example:
+                </p>
+                <pre><cc>DCS</cc>1$r1;80s<cc>>ST</cc></pre>
             </section>
             <section role="parameter" id="decrqss-decslpp" mnemonic="DECSLPP"
                      title="Set Lines Per Page">
@@ -15022,13 +15026,34 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="decslrm" mnemonic="DECSLRM"
                  title="Set Left and Right margins"
-                 not-implemented="true" todo="true">
+                 groups="isvt420" badges="k95 xterm">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pl;Pr-s.1DA9"/>
             <ref src="vt420:155"/>
             <ref src="vt510:DECSLRM.html"/>
-            <ref src="vt52x:294"/>
+            <ref src="vt52x:291"/>
+            <ref src="070:282"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+            <implchk std070="true" xt="407"/>
             <ctlseq>CSI <param-single symbol="Pl"/> ; <param-single symbol="Pr"/> s </ctlseq>
+            <p>
+                Sets the left and right margins for the current page and homes
+                the cursor obeying <a href="#decom">DECOM</a> if and only
+                if <a href="#decvssm">DECVSSM/DECLRMM</a> is set, the
+                specified value for the left margin is less than the value
+                specified for the right margin, and the right margin is less
+                than or equal to the width of the page.
+            </p>
+            <p groups="isvt420" badges="k95">
+                <!-- TODO: XTERM does not do this - STD070 doesn't specify it,
+                          but it is how the VT420 and VT520 behave -->
+                This control sequence is ignored when the cursor is on the
+                host-writable status line (see: <a href="#decssdt">DECSSDT</a>,
+                <a href="#decsasd">DECSASD</a>).
+            </p>
+            <p>
+                The current Left/Right margin setting can be queried with
+                <a href="#decrqss">DECRQSS</a>.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="DECSPRTT" id="decsprtt"
                  title="Select Printer Type"

@@ -5534,7 +5534,7 @@ VscrnInit( BYTE vmode )
 #ifndef KUI
    CK_VIDEOMODEINFO m;
 #endif /* KUI */
-    int old_height;
+    int old_height, old_width;
 
     /* Because a bunch of Vscrn functions act on VSTATUS rather than VTERM when
      * DECSASD is SASD_STATUS, if we want to be sure everything acts on VTERM
@@ -5599,6 +5599,7 @@ VscrnInit( BYTE vmode )
           updmode = tt_updmode ;  /* Set screen update mode */
       }
       old_height = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
+	  old_width = VscrnGetWidth(VTERM);
    }
 
    VscrnSetWidth( vmode, tt_cols[vmode] ) ;
@@ -5610,10 +5611,16 @@ VscrnInit( BYTE vmode )
     if ( vmode == VTERM ) {
         int p;
         for (p = 0; p < vscrn[VTERM].page_count; p++) {
+			extern bool declrmm;
             int margin = vscrn_page_margin_bot(VTERM,p);
             if ( margin == old_height ||
                VscrnGetHeight(VTERM) < 0 || margin > tt_rows[VTERM] ) {
                vscrn_set_page_margin_bot(VTERM, p, tt_rows[VTERM]);
+            }
+			margin = vscrn_page_margin_right(VTERM,p);
+			if (!declrmm && ( margin == old_width ||
+               VscrnGetWidth(VTERM) < 0 || margin > tt_cols[VTERM] )) {
+               vscrn_set_page_margin_right(VTERM, p, tt_cols[VTERM]);
             }
         }
     }

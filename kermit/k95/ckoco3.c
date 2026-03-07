@@ -14912,10 +14912,15 @@ dodcs( void )
                         break;
                         }
                     case 's':           /* DECSLRM - Set Left and Right Margins */
-                        if ( send_c1 )
-                            sprintf(decrpss,"%c1$rs%c",_DCS,_ST8);
-                        else
-                            sprintf(decrpss,"%cP1$rs%c\\",ESC,ESC);
+						if ((ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ||
+						        ISK95(tt_type_mode) )) {
+							char buf[200];
+                            _snprintf(buf, sizeof(buf), "%d;%ds",
+								vscrn_c_page_margin_left(VTERM),
+								vscrn_c_page_margin_right(VTERM));
+                            _snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+						}
                         break;
                     case '*':
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
@@ -16878,6 +16883,15 @@ setmargins(int topmargin, int bottommargin) {
 }
 
 /*---------------------------------------------------------------------------*/
+/* setmargins                                                                */
+/*---------------------------------------------------------------------------*/
+void
+setlrmargins(int leftmargin, int rightmargin) {
+ 	vscrn_setc_page_margin_left(VTERM,leftmargin);
+ 	vscrn_setc_page_margin_right(VTERM,rightmargin);
+}
+
+/*---------------------------------------------------------------------------*/
 /* line25                                                                    */
 /*---------------------------------------------------------------------------*/
 
@@ -18394,7 +18408,19 @@ vtcsi(void)
         case 's': 
             if ( ISSUN(tt_type_mode) ) {
                 doreset(1);
-            } else 
+            } else if (declrmm &&
+                        (decsasd == SASD_TERMINAL || ISXTERM(tt_type_mode)) &&
+                        (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ||
+                            ISK95(tt_type_mode))) {
+                /* DECSLRM - Set Left/Right Margins (reset) -------------------
+                 * Sets Left/Right margins only if Left/Right Margin Mode is
+                 * enabled. The VT520 and VT420 ignore DECSLRM if the cursor is
+                 * currently on the status line. This behaviour is not described
+                 * by DEC STD-070, and XTERM does not implement it.
+                 */
+				setlrmargins(1, VscrnGetWidth(VTERM));
+                home_cursor(vmode);
+			} else
             /* ANSI.SYS save cursor position */
             if ( ISANSI(tt_type_mode) ||
                  ISLINUX(tt_type_mode) ||
@@ -24330,6 +24356,30 @@ vtcsi(void)
                             break;
                         }
                 }
+				else if (declrmm &&
+				        (decsasd == SASD_TERMINAL || ISXTERM(tt_type_mode)) &&
+				        (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ||
+				            ISK95(tt_type_mode)) ) {
+				    /* DECSLRM - Set Left/Right Margins -----------------------
+                     * Sets Left/Right margins only if Left/Right Margin Mode is
+                     * enabled. The VT520 and VT420 ignore DECSLRM if the cursor
+                     * is currently on the status line. This behaviour is not
+                     * described by DEC STD-070, and XTERM does not implement
+                     * it.
+				     */
+					int left, right;
+					if (k < 1) left = 1;
+					else left = pn[1];
+
+					if (k < 2) right = VscrnGetWidth(VTERM);
+					else right = pn[2];
+
+				    if (left < right && right <= VscrnGetWidth(VTERM))
+				    {
+				        setlrmargins(left, right);
+				        home_cursor(vmode);
+				    }
+				}
                 else if ( ISANSI(tt_type_mode) ||
                             IS97801(tt_type_mode) ||
                             ISSCO(tt_type_mode) ||
