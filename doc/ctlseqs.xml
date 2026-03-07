@@ -8335,7 +8335,7 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="decvssm" mnemonic="DECVSSM"
                      title="Vertical Split Screen Mode (DECLRMM)"
-                     not-implemented="true" todo="true" >
+                     groups="isvt420" badges="k95 xterm">
                 <ctlseq><param-single/> = 69</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-6-9.1ECC"/>
                 <ref src="070:284"/>
@@ -8343,12 +8343,18 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECLRMM.html"/>
                 <ref src="vt52x:226"/>
                 <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+                <implchk std070="true" xt="407"/>
                 <p>Called DECVSSM (Vertial Split Screen Mode) in the VT420
                     manual, and DECLRMM (Left Right Margin Mode) in the VT5xx.
                     Whatever you call it, this enables or disables the
                     <a href="#decslrmm">DECSLRMM</a> control sequence. When
                     DECSLRMM is enabled, <a href="#decdhl">DECDHL</a> and
-                    <a href="#decdwl">DECDWL</a> are disabled.
+                    <a href="#decdwl">DECDWL</a> are disabled and all lines on
+                    all pages are reset to single with, single height.
+                </p>
+                <p badges="k95 xterm">
+                    When this mode is enabled, the <a href="#scosc">SCOSC</a>
+                    control sequence is unavaialble.
                 </p>
             </section>
             <section role="parameter" id="decfpm" mnemonic="DECFPM"
@@ -10344,13 +10350,14 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="ctlseq" id="r-decvssm" mnemonic="DECVSSM"
                      title="Vertical Split Screen Mode (DECLRMM)"
-                     not-implemented="true" todo="true" >
+                     groups="isvt420" badges="k95 xterm">
                 <ctlseq>CSI <param-single/> 69</ctlseq>
                 <ref src="070:284"/>
                 <ref src="vt420:157"/>
                 <ref src="vt510:DECLRMM.html"/>
                 <ref src="vt52x:226"/>
                 <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+                <implchk std070="true"/>
                 <p>Called DECVSSM (Vertial Split Screen Mode) in the VT420
                     manual, and DECLRMM (Left Right Margin Mode) in the VT5xx.
                     Whatever you call it, this enables or disables the
@@ -13711,7 +13718,7 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="decrqm-69" mnemonic="DECLRMM"
                          title="Vertical Split Screen"
-                         not-implemented="true" todo="true">
+                         groups="isvt420" badges="k95 xterm">
                     <ctlseq><param-single/> = 69</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-6-9.1ECC"/>
                     <ref src="070:284"/>
@@ -14986,7 +14993,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" ctlseq="CSI s" badges="aaa" mnemonic="zPSH"
                  not-implemented="true" title="Push Line"/>
         <section role="ctlseq" ctlseq="CSI s" id="scosc" mnemonic="SCOSC"
-                 title="Save Cursor Position" badges="linux xterm" groups="isansi">
+                 title="Save Cursor Position" badges="linux xterm k95" groups="isansi">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-s.1BC3"/>
             <ref src="vt52x:371"/>
             <ref src="wy370:35"/>
@@ -14994,10 +15001,18 @@ DCS $ q 3 , } ST</pre>
                 <!-- Supposedly for SNI-97801 too, but for that the `CSI Ps s`
                      code path will be taken first resulting in this being
                      skipped -->
-            <!-- TODO: xterm: available only when DECLRMM is disabled (SCOSC, also ANSI.SYS) -->
+            <!-- TODO: xterm: available only when DECLRMM is disabled
+
+            This sequence supposedly comes from ANSI.SYS (DOS 2.0) rather than
+            SCO.
+            -->
             <p>
                 Saves the cursor X,Y position only. Does not save attributes or
                 the current page.
+            </p>
+            <p badges="k95 xterm">
+                This control sequence is not available when
+                <a href="#decvssm">DECLRMM/DECVSSM is enabled</a>.
             </p>
         </section>
         <section role="ctlseq" id="sunreset" ctlseq="CSI s"

@@ -512,6 +512,7 @@ extern bool     cursorena[];       /* Cursor enabled / disabled */
 extern bool     cursoron[] ;       /* Cursor state on/off       */
 extern bool     bracketed_paste[]; /* Bracketed paste on/off    */
 bool     relcursor = FALSE;
+bool     declrmm   = FALSE;			/* VT420 Left/Right Margin Mode */
 bool     keylock   = FALSE;
 bool     vt52graphics = FALSE;
 
@@ -7465,6 +7466,34 @@ restore_color_table(int dcsnext)
         }
     }
     VscrnIsDirty(VTERM);
+}
+
+
+void
+set_declrmm(bool enabled) {
+	if ((ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) || ISK95(tt_type_mode) )) {
+		declrmm = enabled;
+
+		if (declrmm) {
+			/* Clear DECDHL/DECDWL line attributes on all pages */
+			int p, l;
+			videoline * line;
+			for (l = 0; l < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); l++) {
+				for (p = 0; p < vscrn[VTERM].page_count; p++) {
+					line = VscrnGetPageLineFromTop(VTERM, l, p) ;
+					if (line) {
+						line->vt_line_attr = VT_LINE_ATTR_NORMAL;
+					}
+				}
+			}
+		} else {
+			/* Reset margins on all pages to the far left/right */
+			for (int p = 0; p < vscrn[VTERM].page_count; p++) {
+				vscrn_set_page_margin_left(VTERM, p, 1);
+				vscrn_set_page_margin_right(VTERM, p, VscrnGetWidth(VTERM));
+			}
+		}
+	}
 }
 
 void
@@ -18368,8 +18397,10 @@ vtcsi(void)
             } else 
             /* ANSI.SYS save cursor position */
             if ( ISANSI(tt_type_mode) ||
-                IS97801(tt_type_mode))
-                savecurpos(VTERM,0);
+                 ISLINUX(tt_type_mode) ||
+                 ISXTERM(tt_type_mode) ||
+                 (ISK95(tt_type_mode) && !declrmm))
+                savecurpos(VTERM,0); /* SCOSC */
             break;
         case 'u': /* ANSI.SYS restore cursor position */
             if ( ISANSI(tt_type_mode) ||
@@ -18703,6 +18734,12 @@ vtcsi(void)
                         case 68: /* DECKBUM */
                             pn[2] = 3 ; /* permanently set */
                             break;
+						case 69: /* DECLRMM aka DECVSSM */
+							if (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode)
+									|| ISK95(tt_type_mode)) {
+								pn[2] = declrmm ? 1 : 2;
+							}
+							break;
                         case 114: /* DECATCUM */
                             pn[2] = decatcum ? 1 : 2;
                             break;
@@ -20359,6 +20396,13 @@ vtcsi(void)
                             /* Keyboard Usage - Data Processing */
                             deckbum = 1;
                             break;
+						case 69: /* DECLRMM aka DECVSSM */
+                            if (ISVT420(tt_type_mode) || ISK95(tt_type_mode) ||
+                                ISXTERM(tt_type_mode))
+                            {
+                                set_declrmm(TRUE);
+                            }
+							break;
                         case 73: /* DECXRLM */
                             /* Transmit rate limiting */
                             break;
@@ -21021,6 +21065,13 @@ vtcsi(void)
                                /* Keyboard Usage - Typewriter mode */
                                deckbum = 0 ;
                                break;
+						   case 69: /* DECLRMM aka DECVSSM */
+                               if (ISVT420(tt_type_mode) || ISK95(tt_type_mode) ||
+                                   ISXTERM(tt_type_mode))
+                               {
+                                   set_declrmm(FALSE);
+                               }
+							   break;
                            case 73: /* DECXRLM */
                                /* Transmit rate limiting */
                                break;
@@ -24282,8 +24333,10 @@ vtcsi(void)
                 else if ( ISANSI(tt_type_mode) ||
                             IS97801(tt_type_mode) ||
                             ISSCO(tt_type_mode) ||
-							ISLINUX(tt_type_mode)) {
-                    /* Save Cursor Position */
+                            ISLINUX(tt_type_mode) ||
+                            ISXTERM(tt_type_mode) ||
+                            ISK95(tt_type_mode)) {
+                    /* SCOSC - Save Cursor Position */
                     savecurpos(VTERM,0);
                 }
                 break;
@@ -26262,20 +26315,28 @@ vtescape( void )
             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
             switch (achar) {
             case '3': /* DECDHL */
-                decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
-                               VT_LINE_ATTR_DOUBLE_HIGH |
+				if (!declrmm) {
+                	decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
+                                  VT_LINE_ATTR_DOUBLE_HIGH |
                                   VT_LINE_ATTR_UPPER_HALF );
+				}
                 break;
             case '4': /* DECDHL */
-                decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
+				if (!declrmm) {
+                    decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
                                   VT_LINE_ATTR_DOUBLE_HIGH |
                                   VT_LINE_ATTR_LOWER_HALF);
+				}
                 break;
             case '5': /* DECSWL */
-                decdwl_escape(VT_LINE_ATTR_NORMAL);
+				if (!declrmm) {
+                    decdwl_escape(VT_LINE_ATTR_NORMAL);
+				}
                 break;
             case '6': /* DECDWL */
-                decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE);
+				if (!declrmm) {
+                	decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE);
+				}
                 break;
             case '7': /* Hardcopy (vt100) */
                 break;
