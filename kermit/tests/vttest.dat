@@ -10,7 +10,7 @@
 1_2 1CCF
 1_3 C614
 1_4 C614
-1_5 !0 			# Currently failing - see ticket <a href="https://github.com/davidrg/ckwin/issues/172">#172</a>.
+1_5 !CDD3  			# Currently failing - see ticket <a href="https://github.com/davidrg/ckwin/issues/172">#172</a>.
 1_6 CA27
 2_1 9E9A
 2_2 D6FF
@@ -76,7 +76,7 @@
 11_1_2_4_3 6B75
 11_1_3 A979
 11_2_2_1 CEF8
-11_2_2_2 ?CCAC 	# Output matches xterm, but not the VT520
+11_2_2_2 ?D0C6 	# Output matches xterm, but not the VT520
 11_2_3_1_1 45FD
 11_2_3_1_2 45FD
 11_2_3_1_3 45FD
@@ -216,7 +216,7 @@
 11_3_2_10_disabled_disabled_top_half_middle_half_color ?0
 11_3_2_7_disabled_disabled_bottom_half_reset_no_color 2A65
 11_3_2_8_disabled_disabled_bottom_half_reset_no_color 2943
-11_3_2_9_disabled_disabled_bottom_half_reset_no_color !0 			# TODO: Currently broken
+11_3_2_9_disabled_disabled_bottom_half_reset_no_color !9D17 			# TODO: Currently broken
 11_3_2_10_disabled_disabled_bottom_half_reset_no_color 9231
 11_3_2_7_disabled_disabled_bottom_half_reset_color ?0
 11_3_2_8_disabled_disabled_bottom_half_reset_color ?0
@@ -224,7 +224,7 @@
 11_3_2_10_disabled_disabled_bottom_half_reset_color ?0
 11_3_2_7_disabled_disabled_bottom_half_left_half_no_color 2A65
 11_3_2_8_disabled_disabled_bottom_half_left_half_no_color 2943
-11_3_2_9_disabled_disabled_bottom_half_left_half_no_color !0  	# TODO: Currently broken (as above)
+11_3_2_9_disabled_disabled_bottom_half_left_half_no_color !9D17   	# TODO: Currently broken (as above)
 11_3_2_10_disabled_disabled_bottom_half_left_half_no_color 9231
 11_3_2_7_disabled_disabled_bottom_half_left_half_color ?0
 11_3_2_8_disabled_disabled_bottom_half_left_half_color ?0
@@ -232,7 +232,7 @@
 11_3_2_10_disabled_disabled_bottom_half_left_half_color ?0
 11_3_2_7_disabled_disabled_bottom_half_right_half_no_color 2A65
 11_3_2_8_disabled_disabled_bottom_half_right_half_no_color 2943
-11_3_2_9_disabled_disabled_bottom_half_right_half_no_color !0 		# TODO: Currently broken (as above)
+11_3_2_9_disabled_disabled_bottom_half_right_half_no_color !9D17  		# TODO: Currently broken (as above)
 11_3_2_10_disabled_disabled_bottom_half_right_half_no_color 9231
 11_3_2_7_disabled_disabled_bottom_half_right_half_color ?0
 11_3_2_8_disabled_disabled_bottom_half_right_half_color ?0
@@ -240,7 +240,7 @@
 11_3_2_10_disabled_disabled_bottom_half_right_half_color ?0
 11_3_2_7_disabled_disabled_bottom_half_middle_half_no_color 2A65
 11_3_2_8_disabled_disabled_bottom_half_middle_half_no_color 2943
-11_3_2_9_disabled_disabled_bottom_half_middle_half_no_color !0 		# TODO: Currently broken (as above)
+11_3_2_9_disabled_disabled_bottom_half_middle_half_no_color !9D17  		# TODO: Currently broken (as above)
 11_3_2_10_disabled_disabled_bottom_half_middle_half_no_color 9231
 11_3_2_7_disabled_disabled_bottom_half_middle_half_color ?0
 11_3_2_8_disabled_disabled_bottom_half_middle_half_color ?0
@@ -248,7 +248,7 @@
 11_3_2_10_disabled_disabled_bottom_half_middle_half_color ?0
 11_3_2_7_disabled_disabled_middle_half_reset_no_color 7245
 11_3_2_8_disabled_disabled_middle_half_reset_no_color 7123
-11_3_2_9_disabled_disabled_middle_half_reset_no_color !0 		# TODO: Currently broken (as above)
+11_3_2_9_disabled_disabled_middle_half_reset_no_color !D634  		# TODO: Currently broken (as above)
 11_3_2_10_disabled_disabled_middle_half_reset_no_color 9231
 11_3_2_7_disabled_disabled_middle_half_reset_color ?0
 11_3_2_8_disabled_disabled_middle_half_reset_color ?0
@@ -256,7 +256,7 @@
 11_3_2_10_disabled_disabled_middle_half_reset_color ?0
 11_3_2_7_disabled_disabled_middle_half_left_half_no_color 7245
 11_3_2_8_disabled_disabled_middle_half_left_half_no_color 7123
-11_3_2_9_disabled_disabled_middle_half_left_half_no_color !0 		# TODO: Currently broken (as above)
+11_3_2_9_disabled_disabled_middle_half_left_half_no_color !D634  		# TODO: Currently broken (as above)
 11_3_2_10_disabled_disabled_middle_half_left_half_no_color 9231
 11_3_2_7_disabled_disabled_middle_half_left_half_color ?0
 11_3_2_8_disabled_disabled_middle_half_left_half_color ?0
@@ -264,7 +264,7 @@
 11_3_2_10_disabled_disabled_middle_half_left_half_color ?0
 11_3_2_7_disabled_disabled_middle_half_right_half_no_color 7245
 11_3_2_8_disabled_disabled_middle_half_right_half_no_color 7123
-11_3_2_9_disabled_disabled_middle_half_right_half_no_color !0 0		# TODO: Currently broken (as above)
+11_3_2_9_disabled_disabled_middle_half_right_half_no_color !D634 		# TODO: Currently broken (as above)
 11_3_2_10_disabled_disabled_middle_half_right_half_no_color 9231
 11_3_2_7_disabled_disabled_middle_half_right_half_color ?0
 11_3_2_8_disabled_disabled_middle_half_right_half_color ?0
@@ -272,7 +272,7 @@
 11_3_2_10_disabled_disabled_middle_half_right_half_color ?0
 11_3_2_7_disabled_disabled_middle_half_middle_half_no_color 7245
 11_3_2_8_disabled_disabled_middle_half_middle_half_no_color 7123
-11_3_2_9_disabled_disabled_middle_half_middle_half_no_color !0 		# TODO: Currently broken (as above)
+11_3_2_9_disabled_disabled_middle_half_middle_half_no_color !D634  		# TODO: Currently broken (as above)
 11_3_2_10_disabled_disabled_middle_half_middle_half_no_color 9231
 11_3_2_7_disabled_disabled_middle_half_middle_half_color ?0
 11_3_2_8_disabled_disabled_middle_half_middle_half_color ?0
@@ -286,26 +286,26 @@
 11_3_2_8_disabled_enabled_reset_reset_color ?0
 11_3_2_9_disabled_enabled_reset_reset_color ?0
 11_3_2_10_disabled_enabled_reset_reset_color ?0
-11_3_2_7_disabled_enabled_reset_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_reset_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_reset_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_reset_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_left_half_no_color !4BA6  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_left_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_left_half_no_color !9B58  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_left_half_no_color !9AA1  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_reset_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_reset_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_reset_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_reset_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_right_half_no_color !4964  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_right_half_no_color !4A84   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_right_half_no_color !9DF6   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_right_half_no_color !9D3D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_reset_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_reset_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_reset_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_reset_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_reset_middle_half_no_color !4964   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_middle_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_reset_middle_half_no_color !9CEC   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_reset_middle_half_no_color !9BCF   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -317,89 +317,89 @@
 11_3_2_7_disabled_enabled_top_half_reset_color ?0
 11_3_2_8_disabled_enabled_top_half_reset_color !0  # TODO: Failed (screenshot taken too soon?)
 11_3_2_10_disabled_enabled_top_half_reset_color ?0
-11_3_2_7_disabled_enabled_top_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_top_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_top_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_top_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_left_half_no_color !1956 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_left_half_no_color !15D9 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_left_half_no_color !2ADC  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_left_half_no_color !1F3D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_top_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_top_half_left_half_color !0  		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_top_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_top_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_top_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_top_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_right_half_no_color !1714 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_right_half_no_color !1834 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_right_half_no_color !2AE2  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_right_half_no_color !1F71  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_top_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_top_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_top_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_top_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_top_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_top_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_top_half_middle_half_no_color !1714  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_middle_half_no_color !15D9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_top_half_middle_half_no_color !2ACA 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_top_half_middle_half_no_color !1EFD  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_top_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_reset_no_color 2A65
 11_3_2_8_disabled_enabled_bottom_half_reset_no_color 2943
-11_3_2_9_disabled_enabled_bottom_half_reset_no_color !0 		# TODO: Currently broken
+11_3_2_9_disabled_enabled_bottom_half_reset_no_color !9D17 		# TODO: Currently broken
 11_3_2_10_disabled_enabled_bottom_half_reset_no_color 9231
 11_3_2_7_disabled_enabled_bottom_half_reset_color ?0
 11_3_2_8_disabled_enabled_bottom_half_reset_color ?0
 11_3_2_9_disabled_enabled_bottom_half_reset_color !0 		# TODO: Currently broken
 11_3_2_10_disabled_enabled_bottom_half_reset_color ?0
-11_3_2_7_disabled_enabled_bottom_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_bottom_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_bottom_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_bottom_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_left_half_no_color !FC96 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_left_half_no_color !F919 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_left_half_no_color !97DB 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_left_half_no_color !8D4D	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_bottom_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_bottom_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_bottom_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_bottom_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_right_half_no_color !FA54 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_right_half_no_color !FB74 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_right_half_no_color !8E2C 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_right_half_no_color !8D81 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_bottom_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_bottom_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_bottom_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_bottom_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_bottom_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_bottom_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_bottom_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_bottom_half_middle_half_no_color !FA54 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_middle_half_no_color !F919 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_bottom_half_middle_half_no_color !9241 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_bottom_half_middle_half_no_color !8D11 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_bottom_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_bottom_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_bottom_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_reset_no_color 7245
 11_3_2_8_disabled_enabled_middle_half_reset_no_color 7123
-11_3_2_9_disabled_enabled_middle_half_reset_no_color !0 		# TODO: Currently broken
+11_3_2_9_disabled_enabled_middle_half_reset_no_color !D634 		# TODO: Currently broken
 11_3_2_10_disabled_enabled_middle_half_reset_no_color 9231
 11_3_2_7_disabled_enabled_middle_half_reset_color ?0
 11_3_2_8_disabled_enabled_middle_half_reset_color ?0
 11_3_2_9_disabled_enabled_middle_half_reset_color !0 		# TODO: Currently broken
 11_3_2_10_disabled_enabled_middle_half_reset_color ?0
-11_3_2_7_disabled_enabled_middle_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_middle_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_middle_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_middle_half_left_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_left_half_no_color !2086 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_left_half_no_color !1D09 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_left_half_no_color !C830 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_left_half_no_color !8D4D 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_middle_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_middle_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_middle_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_middle_half_right_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_right_half_no_color !1E44 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_right_half_no_color !1F64 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_right_half_no_color !C830 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_right_half_no_color !8D81 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_middle_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_middle_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_middle_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_disabled_enabled_middle_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_disabled_enabled_middle_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_middle_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_middle_half_middle_half_no_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_disabled_enabled_middle_half_middle_half_no_color !1E44 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_middle_half_no_color !1D09 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_disabled_enabled_middle_half_middle_half_no_color !C864 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_disabled_enabled_middle_half_middle_half_no_color !8D11 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_middle_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_middle_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -540,26 +540,26 @@
 11_3_2_8_enabled_enabled_reset_reset_color ?0
 11_3_2_9_enabled_enabled_reset_reset_color ?0
 11_3_2_10_enabled_enabled_reset_reset_color ?0
-11_3_2_7_enabled_enabled_reset_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_reset_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_reset_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_reset_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_left_half_no_color !4BA6  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_left_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_left_half_no_color !9B58  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_left_half_no_color !9AA1  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_reset_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_reset_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_reset_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_reset_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_right_half_no_color !45B8  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_right_half_no_color !48B3  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_right_half_no_color !3CB4  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_right_half_no_color !3A8D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_reset_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_reset_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_reset_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_reset_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_reset_middle_half_no_color !4950  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_middle_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_reset_middle_half_no_color !EE00  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_reset_middle_half_no_color !EBD9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -572,26 +572,26 @@
 11_3_2_8_enabled_enabled_top_half_reset_color ?0
 11_3_2_9_enabled_enabled_top_half_reset_color ?0
 11_3_2_10_enabled_enabled_top_half_reset_color ?0
-11_3_2_7_enabled_enabled_top_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_top_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_top_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_top_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_left_half_no_color !1956  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_left_half_no_color !15D9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_left_half_no_color !BD6E  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_left_half_no_color !BA9D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_top_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_top_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_top_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_top_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_right_half_no_color !1368  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_right_half_no_color !1663  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_right_half_no_color !1186  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_right_half_no_color !0EB5  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_top_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_top_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_top_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_top_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_top_half_middle_half_no_color !1700  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_middle_half_no_color !15D9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_top_half_middle_half_no_color !E88E  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_top_half_middle_half_no_color !E5BD  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -604,26 +604,26 @@
 11_3_2_8_enabled_enabled_bottom_half_reset_color ?0
 11_3_2_9_enabled_enabled_bottom_half_reset_color ?0
 11_3_2_10_enabled_enabled_bottom_half_reset_color ?0
-11_3_2_7_enabled_enabled_bottom_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_bottom_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_bottom_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_bottom_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_left_half_no_color !FC96  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_left_half_no_color !F919  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_left_half_no_color !8DC8  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_left_half_no_color !8D4D 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_bottom_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_bottom_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_bottom_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_bottom_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_right_half_no_color !F6A8 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_right_half_no_color !F9A3 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_right_half_no_color !E8E2 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_right_half_no_color !E867	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_bottom_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_bottom_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_bottom_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_bottom_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_bottom_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_bottom_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_bottom_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_bottom_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_bottom_half_middle_half_no_color !FA40 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_middle_half_no_color !F919 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_bottom_half_middle_half_no_color !BC80  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_bottom_half_middle_half_no_color !BC05  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_bottom_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_bottom_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_bottom_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -636,26 +636,26 @@
 11_3_2_8_enabled_enabled_middle_half_reset_color ?0
 11_3_2_9_enabled_enabled_middle_half_reset_color ?0
 11_3_2_10_enabled_enabled_middle_half_reset_color ?0
-11_3_2_7_enabled_enabled_middle_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_middle_half_left_half_no_color !0  	# DECLRMM not implemented by K95  - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_middle_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_middle_half_left_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_left_half_no_color !2086  	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_left_half_no_color !1D09  	    # DECLRMM not implemented by K95  - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_left_half_no_color !BF04   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_left_half_no_color !8D4D	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_middle_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_middle_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_middle_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_middle_half_right_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_right_half_no_color !1A98 	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_right_half_no_color !1D93 	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_right_half_no_color !1A1E 	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_right_half_no_color !E867	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_middle_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_middle_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_middle_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_middle_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_7_enabled_enabled_middle_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_8_enabled_enabled_middle_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_middle_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_middle_half_middle_half_no_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_7_enabled_enabled_middle_half_middle_half_no_color !1E30  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_middle_half_no_color !1D09  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_9_enabled_enabled_middle_half_middle_half_no_color !EDBC  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_10_enabled_enabled_middle_half_middle_half_no_color !BC05  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_middle_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_middle_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_middle_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -1514,7 +1514,594 @@
 # 	test_11_3_6_v420_rectangular_operations  # This one says "should not work"
 #	test_11_3_7_vt420_reporting_functions
 #	test_11_3_8_v420_screen_display
-#	test_11_4_2_v520_cursor_movement
+
+#
+# 11.5.2.* VT520 Cursor Movement
+#
+11_4_2_7_disabled_disabled_reset_reset_no_color B729
+11_4_2_8_disabled_disabled_reset_reset_no_color 9E3E
+11_4_2_9_disabled_disabled_reset_reset_no_color B80D
+11_4_2_10_disabled_disabled_reset_reset_no_color B306
+11_4_2_11_disabled_disabled_reset_reset_no_color B67E
+11_4_2_12_disabled_disabled_reset_reset_no_color B8CC
+11_4_2_13_disabled_disabled_reset_reset_no_color D6EE
+11_4_2_14_disabled_disabled_reset_reset_no_color D49E
+11_4_2_15_disabled_disabled_reset_reset_no_color B760
+11_4_2_7_disabled_disabled_reset_left_half_no_color B729
+11_4_2_8_disabled_disabled_reset_left_half_no_color 9E3E
+11_4_2_9_disabled_disabled_reset_left_half_no_color B80D
+11_4_2_10_disabled_disabled_reset_left_half_no_color B306
+11_4_2_11_disabled_disabled_reset_left_half_no_color B67E
+11_4_2_12_disabled_disabled_reset_left_half_no_color B8CC
+11_4_2_13_disabled_disabled_reset_left_half_no_color D6EE
+11_4_2_14_disabled_disabled_reset_left_half_no_color D49E
+11_4_2_15_disabled_disabled_reset_left_half_no_color B760
+11_4_2_7_disabled_disabled_reset_right_half_no_color B729
+11_4_2_8_disabled_disabled_reset_right_half_no_color 9E3E
+11_4_2_9_disabled_disabled_reset_right_half_no_color B80D
+11_4_2_10_disabled_disabled_reset_right_half_no_color B306
+11_4_2_11_disabled_disabled_reset_right_half_no_color B67E
+11_4_2_12_disabled_disabled_reset_right_half_no_color B8CC
+11_4_2_13_disabled_disabled_reset_right_half_no_color D6EE
+11_4_2_14_disabled_disabled_reset_right_half_no_color D49E
+11_4_2_15_disabled_disabled_reset_right_half_no_color B760
+11_4_2_7_disabled_disabled_reset_middle_half_no_color B729
+11_4_2_8_disabled_disabled_reset_middle_half_no_color 9E3E
+11_4_2_9_disabled_disabled_reset_middle_half_no_color B80D
+11_4_2_10_disabled_disabled_reset_middle_half_no_color B306
+11_4_2_11_disabled_disabled_reset_middle_half_no_color B67E
+11_4_2_12_disabled_disabled_reset_middle_half_no_color B8CC
+11_4_2_13_disabled_disabled_reset_middle_half_no_color D6EE
+11_4_2_14_disabled_disabled_reset_middle_half_no_color D49E
+11_4_2_15_disabled_disabled_reset_middle_half_no_color B760
+11_4_2_7_disabled_disabled_top_half_reset_no_color 5B85
+11_4_2_8_disabled_disabled_top_half_reset_no_color 3B0E
+11_4_2_9_disabled_disabled_top_half_reset_no_color 5C69
+11_4_2_10_disabled_disabled_top_half_reset_no_color 4E66
+11_4_2_11_disabled_disabled_top_half_reset_no_color 5ADA
+11_4_2_12_disabled_disabled_top_half_reset_no_color 5D56
+11_4_2_13_disabled_disabled_top_half_reset_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_14_disabled_disabled_top_half_reset_no_color 65EE
+11_4_2_15_disabled_disabled_top_half_reset_no_color 5BBC
+11_4_2_7_disabled_disabled_top_half_left_half_no_color 5B85
+11_4_2_8_disabled_disabled_top_half_left_half_no_color 3B0E
+11_4_2_9_disabled_disabled_top_half_left_half_no_color 5C69
+11_4_2_10_disabled_disabled_top_half_left_half_no_color 4E66
+11_4_2_11_disabled_disabled_top_half_left_half_no_color 5ADA
+11_4_2_12_disabled_disabled_top_half_left_half_no_color 5D56
+11_4_2_13_disabled_disabled_top_half_left_half_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_14_disabled_disabled_top_half_left_half_no_color 65EE
+11_4_2_15_disabled_disabled_top_half_left_half_no_color 5BBC
+11_4_2_7_disabled_disabled_top_half_right_half_no_color 5B85
+11_4_2_8_disabled_disabled_top_half_right_half_no_color 3B0E
+11_4_2_9_disabled_disabled_top_half_right_half_no_color 5C69
+11_4_2_10_disabled_disabled_top_half_right_half_no_color 4E66
+11_4_2_11_disabled_disabled_top_half_right_half_no_color 5ADA
+11_4_2_12_disabled_disabled_top_half_right_half_no_color 5D56
+11_4_2_13_disabled_disabled_top_half_right_half_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_14_disabled_disabled_top_half_right_half_no_color 65EE
+11_4_2_15_disabled_disabled_top_half_right_half_no_color 5BBC
+11_4_2_7_disabled_disabled_top_half_middle_half_no_color 5B85
+11_4_2_8_disabled_disabled_top_half_middle_half_no_color 3B0E
+11_4_2_9_disabled_disabled_top_half_middle_half_no_color 5C69
+11_4_2_10_disabled_disabled_top_half_middle_half_no_color 4E66
+11_4_2_11_disabled_disabled_top_half_middle_half_no_color 5ADA
+11_4_2_12_disabled_disabled_top_half_middle_half_no_color 5D56
+11_4_2_13_disabled_disabled_top_half_middle_half_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_14_disabled_disabled_top_half_middle_half_no_color 65EE
+11_4_2_15_disabled_disabled_top_half_middle_half_no_color 5BBC
+11_4_2_7_disabled_disabled_bottom_half_reset_no_color 2205
+11_4_2_8_disabled_disabled_bottom_half_reset_no_color 15DC
+11_4_2_9_disabled_disabled_bottom_half_reset_no_color 22E9
+11_4_2_10_disabled_disabled_bottom_half_reset_no_color 2768
+11_4_2_11_disabled_disabled_bottom_half_reset_no_color 215A
+11_4_2_12_disabled_disabled_bottom_half_reset_no_color 23D6
+11_4_2_13_disabled_disabled_bottom_half_reset_no_color 3D1E
+11_4_2_14_disabled_disabled_bottom_half_reset_no_color !367E  # Bottom lines should be numbered 1,13...20
+11_4_2_15_disabled_disabled_bottom_half_reset_no_color 223C
+11_4_2_7_disabled_disabled_bottom_half_left_half_no_color 2205
+11_4_2_8_disabled_disabled_bottom_half_left_half_no_color 15DC
+11_4_2_9_disabled_disabled_bottom_half_left_half_no_color 22E9
+11_4_2_10_disabled_disabled_bottom_half_left_half_no_color 2768
+11_4_2_11_disabled_disabled_bottom_half_left_half_no_color 215A
+11_4_2_12_disabled_disabled_bottom_half_left_half_no_color 23D6
+11_4_2_13_disabled_disabled_bottom_half_left_half_no_color 3D1E
+11_4_2_14_disabled_disabled_bottom_half_left_half_no_color !367E  # Bottom lines should be numbered 1,13...20
+11_4_2_15_disabled_disabled_bottom_half_left_half_no_color 223C
+11_4_2_7_disabled_disabled_bottom_half_right_half_no_color 2205
+11_4_2_8_disabled_disabled_bottom_half_right_half_no_color 15DC
+11_4_2_9_disabled_disabled_bottom_half_right_half_no_color 22E9
+11_4_2_10_disabled_disabled_bottom_half_right_half_no_color 2768
+11_4_2_11_disabled_disabled_bottom_half_right_half_no_color 215A
+11_4_2_12_disabled_disabled_bottom_half_right_half_no_color 23D6
+11_4_2_13_disabled_disabled_bottom_half_right_half_no_color 3D1E
+11_4_2_14_disabled_disabled_bottom_half_right_half_no_color !367E  # Bottom lines should be numbered 1,13...20
+11_4_2_15_disabled_disabled_bottom_half_right_half_no_color 223C
+11_4_2_7_disabled_disabled_bottom_half_middle_half_no_color 2205
+11_4_2_8_disabled_disabled_bottom_half_middle_half_no_color 15DC
+11_4_2_9_disabled_disabled_bottom_half_middle_half_no_color 22E9
+11_4_2_10_disabled_disabled_bottom_half_middle_half_no_color 2768
+11_4_2_11_disabled_disabled_bottom_half_middle_half_no_color 215A
+11_4_2_12_disabled_disabled_bottom_half_middle_half_no_color 23D6
+11_4_2_13_disabled_disabled_bottom_half_middle_half_no_color 3D1E
+11_4_2_14_disabled_disabled_bottom_half_middle_half_no_color !367E  # Bottom lines should be numbered 1,13...20
+11_4_2_15_disabled_disabled_bottom_half_middle_half_no_color 223C
+11_4_2_7_disabled_disabled_middle_half_reset_no_color 60E9
+11_4_2_8_disabled_disabled_middle_half_reset_no_color 4774
+11_4_2_9_disabled_disabled_middle_half_reset_no_color 61CD
+11_4_2_10_disabled_disabled_middle_half_reset_no_color 6988
+11_4_2_11_disabled_disabled_middle_half_reset_no_color 603E
+11_4_2_12_disabled_disabled_middle_half_reset_no_color 628C
+11_4_2_13_disabled_disabled_middle_half_reset_no_color 747E
+11_4_2_14_disabled_disabled_middle_half_reset_no_color !7112  # Lines should be numbered 1,7...20
+11_4_2_15_disabled_disabled_middle_half_reset_no_color 6120
+11_4_2_7_disabled_disabled_middle_half_left_half_no_color 60E9
+11_4_2_8_disabled_disabled_middle_half_left_half_no_color 4774
+11_4_2_9_disabled_disabled_middle_half_left_half_no_color 61CD
+11_4_2_10_disabled_disabled_middle_half_left_half_no_color 6988
+11_4_2_11_disabled_disabled_middle_half_left_half_no_color 603E
+11_4_2_12_disabled_disabled_middle_half_left_half_no_color 628C
+11_4_2_13_disabled_disabled_middle_half_left_half_no_color 747E
+11_4_2_14_disabled_disabled_middle_half_left_half_no_color !7112  # Lines should be numbered 1,7...20
+11_4_2_15_disabled_disabled_middle_half_left_half_no_color 6120
+11_4_2_7_disabled_disabled_middle_half_right_half_no_color 60E9
+11_4_2_8_disabled_disabled_middle_half_right_half_no_color 4774
+11_4_2_9_disabled_disabled_middle_half_right_half_no_color 61CD
+11_4_2_10_disabled_disabled_middle_half_right_half_no_color 6988
+11_4_2_11_disabled_disabled_middle_half_right_half_no_color 603E
+11_4_2_12_disabled_disabled_middle_half_right_half_no_color 628C
+11_4_2_13_disabled_disabled_middle_half_right_half_no_color 747E
+11_4_2_14_disabled_disabled_middle_half_right_half_no_color !7112  # Lines should be numbered 1,7...20
+11_4_2_15_disabled_disabled_middle_half_right_half_no_color 6120
+11_4_2_7_disabled_disabled_middle_half_middle_half_no_color 60E9
+11_4_2_8_disabled_disabled_middle_half_middle_half_no_color 4774
+11_4_2_9_disabled_disabled_middle_half_middle_half_no_color 61CD
+11_4_2_10_disabled_disabled_middle_half_middle_half_no_color 6988
+11_4_2_11_disabled_disabled_middle_half_middle_half_no_color 603E
+11_4_2_12_disabled_disabled_middle_half_middle_half_no_color 628C
+11_4_2_13_disabled_disabled_middle_half_middle_half_no_color 747E
+11_4_2_14_disabled_disabled_middle_half_middle_half_no_color !7112  # Lines should be numbered 1,7...20
+11_4_2_15_disabled_disabled_middle_half_middle_half_no_color 6120
+11_4_2_7_disabled_enabled_reset_reset_no_color B729
+11_4_2_8_disabled_enabled_reset_reset_no_color 9E3E
+11_4_2_9_disabled_enabled_reset_reset_no_color B80D
+11_4_2_10_disabled_enabled_reset_reset_no_color B306
+11_4_2_11_disabled_enabled_reset_reset_no_color B67E
+11_4_2_12_disabled_enabled_reset_reset_no_color B8CC
+11_4_2_13_disabled_enabled_reset_reset_no_color D6EE
+11_4_2_14_disabled_enabled_reset_reset_no_color D49E
+11_4_2_15_disabled_enabled_reset_reset_no_color B760
+11_4_2_7_disabled_enabled_reset_left_half_no_color 3767
+11_4_2_8_disabled_enabled_reset_left_half_no_color 240E
+11_4_2_9_disabled_enabled_reset_left_half_no_color 384B
+11_4_2_10_disabled_enabled_reset_left_half_no_color !30F7  # Lines with * or + should pass right margin
+11_4_2_11_disabled_enabled_reset_left_half_no_color 36BC
+11_4_2_12_disabled_enabled_reset_left_half_no_color 395E
+11_4_2_13_disabled_enabled_reset_left_half_no_color 472E
+11_4_2_14_disabled_enabled_reset_left_half_no_color 44DE
+11_4_2_15_disabled_enabled_reset_left_half_no_color 379E
+11_4_2_7_disabled_enabled_reset_right_half_no_color 381F
+11_4_2_8_disabled_enabled_reset_right_half_no_color !2076   # Numbers should start at the left margin: 1, 8, 8, 9, 10
+11_4_2_9_disabled_enabled_reset_right_half_no_color 3903
+11_4_2_10_disabled_enabled_reset_right_half_no_color !3994  # Lines with asterisks should wrap to left margin
+11_4_2_11_disabled_enabled_reset_right_half_no_color 3774
+11_4_2_12_disabled_enabled_reset_right_half_no_color 3A16
+11_4_2_13_disabled_enabled_reset_right_half_no_color !4FCE  # Only number 1 should be on the left of the screen, all other numbers should be on the left margin
+11_4_2_14_disabled_enabled_reset_right_half_no_color 4E08
+11_4_2_15_disabled_enabled_reset_right_half_no_color 3856
+11_4_2_7_disabled_enabled_reset_middle_half_no_color 30EF
+11_4_2_8_disabled_enabled_reset_middle_half_no_color !240E  # Numbers should start on the left margin: 1, 4...10
+11_4_2_9_disabled_enabled_reset_middle_half_no_color 31D3
+11_4_2_10_disabled_enabled_reset_middle_half_no_color !3A0E  # Lines with * and + should wrap on the right margin, and resume on the left margin
+11_4_2_11_disabled_enabled_reset_middle_half_no_color 3044
+11_4_2_12_disabled_enabled_reset_middle_half_no_color 32EE
+11_4_2_13_disabled_enabled_reset_middle_half_no_color !4FCE  # Only the first line (1) should be left of the left margin, the rest should be on the left margin
+11_4_2_14_disabled_enabled_reset_middle_half_no_color 4E08
+11_4_2_15_disabled_enabled_reset_middle_half_no_color 312E
+11_4_2_7_disabled_enabled_top_half_reset_no_color 5B85
+11_4_2_8_disabled_enabled_top_half_reset_no_color 3B0E
+11_4_2_9_disabled_enabled_top_half_reset_no_color 5C69
+11_4_2_10_disabled_enabled_top_half_reset_no_color 4E66
+11_4_2_11_disabled_enabled_top_half_reset_no_color 5ADA
+11_4_2_12_disabled_enabled_top_half_reset_no_color 5D56
+11_4_2_13_disabled_enabled_top_half_reset_no_color !6BFD   # Top lines should be numbered 1...11,19
+11_4_2_14_disabled_enabled_top_half_reset_no_color 65EE
+11_4_2_15_disabled_enabled_top_half_reset_no_color 5BBC
+11_4_2_7_disabled_enabled_top_half_left_half_no_color 09C3
+11_4_2_8_disabled_enabled_top_half_left_half_no_color F1BE
+11_4_2_9_disabled_enabled_top_half_left_half_no_color 0AA7
+11_4_2_10_disabled_enabled_top_half_left_half_no_color !FEA7  # Lines with * or + should wrap on the right margin
+11_4_2_11_disabled_enabled_top_half_left_half_no_color 0918
+11_4_2_12_disabled_enabled_top_half_left_half_no_color 0BBA
+11_4_2_13_disabled_enabled_top_half_left_half_no_color !6BFD  # Dots on the right of the right margin are missing. Lines should be numbered 1...19 down the screen.
+11_4_2_14_disabled_enabled_top_half_left_half_no_color 0FAE
+11_4_2_15_disabled_enabled_top_half_left_half_no_color 09FA
+11_4_2_7_disabled_enabled_top_half_right_half_no_color 0A1F
+11_4_2_8_disabled_enabled_top_half_right_half_no_color !EF96 # Lines on the top half should start on the left margin. Lines on the bottom half should start on the screen left.
+11_4_2_9_disabled_enabled_top_half_right_half_no_color 0B03
+11_4_2_10_disabled_enabled_top_half_right_half_no_color !0744  # Lines with + or * should wrap to left margin
+11_4_2_11_disabled_enabled_top_half_right_half_no_color 0974
+11_4_2_12_disabled_enabled_top_half_right_half_no_color 0C16
+11_4_2_13_disabled_enabled_top_half_right_half_no_color !6BFD  # Dots to left of left margin are missing. First line should have 1 on the screen left, subsequent lines should be numbered on the left margin 2...11,19
+11_4_2_14_disabled_enabled_top_half_right_half_no_color 1488
+11_4_2_15_disabled_enabled_top_half_right_half_no_color 0A56
+11_4_2_7_disabled_enabled_top_half_middle_half_no_color 0687
+11_4_2_8_disabled_enabled_top_half_middle_half_no_color !F1BE  # Lines on top half should start on left margin, bottom half should start on page left
+11_4_2_9_disabled_enabled_top_half_middle_half_no_color 076B
+11_4_2_10_disabled_enabled_top_half_middle_half_no_color !07BE  # Lines with * or + should wrap on the right margin to the left margin
+11_4_2_11_disabled_enabled_top_half_middle_half_no_color 05DC
+11_4_2_12_disabled_enabled_top_half_middle_half_no_color 0886
+11_4_2_13_disabled_enabled_top_half_middle_half_no_color !6BFD  # Dots left of left margin are missing. Line 1 should be numbered 1 on the screen left. Lines 2..12 should be numbered 2..12 on the left margin. Remaining lines should be numbered 13..19
+11_4_2_14_disabled_enabled_top_half_middle_half_no_color 1488
+11_4_2_15_disabled_enabled_top_half_middle_half_no_color 06C6
+11_4_2_7_disabled_enabled_bottom_half_reset_no_color 2205
+11_4_2_8_disabled_enabled_bottom_half_reset_no_color 15DC
+11_4_2_9_disabled_enabled_bottom_half_reset_no_color 22E9
+11_4_2_10_disabled_enabled_bottom_half_reset_no_color 2768
+11_4_2_11_disabled_enabled_bottom_half_reset_no_color 215A
+11_4_2_12_disabled_enabled_bottom_half_reset_no_color 23D6
+11_4_2_13_disabled_enabled_bottom_half_reset_no_color 3D1E
+11_4_2_14_disabled_enabled_bottom_half_reset_no_color !367E  # Lines should be numbered 1,13...20 in bottom half.
+11_4_2_15_disabled_enabled_bottom_half_reset_no_color 223C
+11_4_2_7_disabled_enabled_bottom_half_left_half_no_color ED03
+11_4_2_8_disabled_enabled_bottom_half_left_half_no_color DEE0
+11_4_2_9_disabled_enabled_bottom_half_left_half_no_color EDE7
+11_4_2_10_disabled_enabled_bottom_half_left_half_no_color ED95
+11_4_2_11_disabled_enabled_bottom_half_left_half_no_color EC58
+11_4_2_12_disabled_enabled_bottom_half_left_half_no_color EEFA
+11_4_2_13_disabled_enabled_bottom_half_left_half_no_color FC6E
+11_4_2_14_disabled_enabled_bottom_half_left_half_no_color !F5CE  # Lines should be numbered 1,14...20 in the bottom half.
+11_4_2_15_disabled_enabled_bottom_half_left_half_no_color ED3A
+11_4_2_7_disabled_enabled_bottom_half_right_half_no_color ED5F
+11_4_2_8_disabled_enabled_bottom_half_right_half_no_color !DD42  # Bottom half should be within margins, numbered 1, 7...10
+11_4_2_9_disabled_enabled_bottom_half_right_half_no_color EE43
+11_4_2_10_disabled_enabled_bottom_half_right_half_no_color EDC0
+11_4_2_11_disabled_enabled_bottom_half_right_half_no_color ECB4
+11_4_2_12_disabled_enabled_bottom_half_right_half_no_color EF56
+11_4_2_13_disabled_enabled_bottom_half_right_half_no_color !BE  # Numbers from 12 should be within margins
+11_4_2_14_disabled_enabled_bottom_half_right_half_no_color !FEF8  # Should be 1,13...20 in the bottom half according to the VT520 and xterm. WT numbers lines 1..20 ignoring the top margin.
+11_4_2_15_disabled_enabled_bottom_half_right_half_no_color ED96
+11_4_2_7_disabled_enabled_bottom_half_middle_half_no_color E9C7
+11_4_2_8_disabled_enabled_bottom_half_middle_half_no_color !DEE0  # Bottom half should be numbered 1, 4...10 starting from the left margin
+11_4_2_9_disabled_enabled_bottom_half_middle_half_no_color EAAB
+11_4_2_10_disabled_enabled_bottom_half_middle_half_no_color EDB0
+11_4_2_11_disabled_enabled_bottom_half_middle_half_no_color E91C
+11_4_2_12_disabled_enabled_bottom_half_middle_half_no_color EBC6
+11_4_2_13_disabled_enabled_bottom_half_middle_half_no_color !BE  # Should be numbered 1...11 down screen left, then 12...19 from the left margin
+11_4_2_14_disabled_enabled_bottom_half_middle_half_no_color !FDB6  # Should be 1...20 down screen left
+11_4_2_15_disabled_enabled_bottom_half_middle_half_no_color EA06
+11_4_2_7_disabled_enabled_middle_half_reset_no_color 60E9
+11_4_2_8_disabled_enabled_middle_half_reset_no_color 4774
+11_4_2_9_disabled_enabled_middle_half_reset_no_color 61CD
+11_4_2_10_disabled_enabled_middle_half_reset_no_color 6988
+11_4_2_11_disabled_enabled_middle_half_reset_no_color 603E
+11_4_2_12_disabled_enabled_middle_half_reset_no_color 628C
+11_4_2_13_disabled_enabled_middle_half_reset_no_color 747E
+11_4_2_14_disabled_enabled_middle_half_reset_no_color !7112  # Lines should be numbered 1,7...20 from the top margin
+11_4_2_15_disabled_enabled_middle_half_reset_no_color 6120
+11_4_2_7_disabled_enabled_middle_half_left_half_no_color 0C47
+11_4_2_8_disabled_enabled_middle_half_left_half_no_color F808
+11_4_2_9_disabled_enabled_middle_half_left_half_no_color 0D2B
+11_4_2_10_disabled_enabled_middle_half_left_half_no_color !0EA5  # Tabs should wrap at the right margin
+11_4_2_11_disabled_enabled_middle_half_left_half_no_color 0B9C
+11_4_2_12_disabled_enabled_middle_half_left_half_no_color 0E3E
+11_4_2_13_disabled_enabled_middle_half_left_half_no_color 1E3E
+11_4_2_14_disabled_enabled_middle_half_left_half_no_color !13A2  # Lines should be numbered 1,7...20 from the top margin
+11_4_2_15_disabled_enabled_middle_half_left_half_no_color 0C7E
+11_4_2_7_disabled_enabled_middle_half_right_half_no_color 0CFF
+11_4_2_8_disabled_enabled_middle_half_right_half_no_color !F5B2  # Middle lines should be numbered 1,7..10 from the left margin
+11_4_2_9_disabled_enabled_middle_half_right_half_no_color 0DE3
+11_4_2_10_disabled_enabled_middle_half_right_half_no_color !109C  # Tabs should wrap to the left margin
+11_4_2_11_disabled_enabled_middle_half_right_half_no_color 0C54
+11_4_2_12_disabled_enabled_middle_half_right_half_no_color 0EF6
+11_4_2_13_disabled_enabled_middle_half_right_half_no_color !242C  # Lines should be numbered 1..5 on screen left, then 6...19 down the left margin.
+11_4_2_14_disabled_enabled_middle_half_right_half_no_color !1BB8  # Lines should be numbered 1...20 down screen left - top margin should be ignored as we're outside the left margin
+11_4_2_15_disabled_enabled_middle_half_right_half_no_color 0D36
+11_4_2_7_disabled_enabled_middle_half_middle_half_no_color 05CF
+11_4_2_8_disabled_enabled_middle_half_middle_half_no_color !F808  # Middle lines should be numbered 1,4...10 from the left margin
+11_4_2_9_disabled_enabled_middle_half_middle_half_no_color 06B3
+11_4_2_10_disabled_enabled_middle_half_middle_half_no_color !10BA  # Tabs should wrap to the left margin
+11_4_2_11_disabled_enabled_middle_half_middle_half_no_color 0524
+11_4_2_12_disabled_enabled_middle_half_middle_half_no_color 07CE
+11_4_2_13_disabled_enabled_middle_half_middle_half_no_color !242C  # Lines should be numbered 1...5 down screen left, then 6...18 down left margin, finally 19 on screen left.
+11_4_2_14_disabled_enabled_middle_half_middle_half_no_color !1BB8  # Lines should be numbered 1...20 down screen left as its outside the margins
+11_4_2_15_disabled_enabled_middle_half_middle_half_no_color 060E
+11_4_2_7_enabled_disabled_reset_reset_no_color B70C
+11_4_2_8_enabled_disabled_reset_reset_no_color 9DCD
+11_4_2_9_enabled_disabled_reset_reset_no_color B7F0
+11_4_2_10_enabled_disabled_reset_reset_no_color B306
+11_4_2_11_enabled_disabled_reset_reset_no_color B661
+11_4_2_12_enabled_disabled_reset_reset_no_color B8AF
+11_4_2_13_enabled_disabled_reset_reset_no_color D6EE
+11_4_2_14_enabled_disabled_reset_reset_no_color D49E
+11_4_2_15_enabled_disabled_reset_reset_no_color B743
+11_4_2_7_enabled_disabled_reset_left_half_no_color B70C
+11_4_2_8_enabled_disabled_reset_left_half_no_color 9DCD
+11_4_2_9_enabled_disabled_reset_left_half_no_color B7F0
+11_4_2_10_enabled_disabled_reset_left_half_no_color B306
+11_4_2_11_enabled_disabled_reset_left_half_no_color B661
+11_4_2_12_enabled_disabled_reset_left_half_no_color B8AF
+11_4_2_13_enabled_disabled_reset_left_half_no_color D6EE
+11_4_2_14_enabled_disabled_reset_left_half_no_color D49E
+11_4_2_15_enabled_disabled_reset_left_half_no_color B743
+11_4_2_7_enabled_disabled_reset_right_half_no_color B70C
+11_4_2_8_enabled_disabled_reset_right_half_no_color 9DCD
+11_4_2_9_enabled_disabled_reset_right_half_no_color B7F0
+11_4_2_10_enabled_disabled_reset_right_half_no_color B306
+11_4_2_11_enabled_disabled_reset_right_half_no_color B661
+11_4_2_12_enabled_disabled_reset_right_half_no_color B8AF
+11_4_2_13_enabled_disabled_reset_right_half_no_color D6EE
+11_4_2_14_enabled_disabled_reset_right_half_no_color D49E
+11_4_2_15_enabled_disabled_reset_right_half_no_color B743
+11_4_2_7_enabled_disabled_reset_middle_half_no_color B70C
+11_4_2_8_enabled_disabled_reset_middle_half_no_color 9DCD
+11_4_2_9_enabled_disabled_reset_middle_half_no_color B7F0
+11_4_2_10_enabled_disabled_reset_middle_half_no_color B306
+11_4_2_11_enabled_disabled_reset_middle_half_no_color B661
+11_4_2_12_enabled_disabled_reset_middle_half_no_color B8AF
+11_4_2_13_enabled_disabled_reset_middle_half_no_color D6EE
+11_4_2_14_enabled_disabled_reset_middle_half_no_color D49E
+11_4_2_15_enabled_disabled_reset_middle_half_no_color B743
+11_4_2_7_enabled_disabled_top_half_reset_no_color 5464
+11_4_2_8_enabled_disabled_top_half_reset_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_9_enabled_disabled_top_half_reset_no_color 5548
+11_4_2_10_enabled_disabled_top_half_reset_no_color 4E66
+11_4_2_11_enabled_disabled_top_half_reset_no_color 53B9
+11_4_2_12_enabled_disabled_top_half_reset_no_color 5607
+11_4_2_13_enabled_disabled_top_half_reset_no_color !6BFD  # Lines should be numbered 1...11,19 down to the bottom margin
+11_4_2_14_enabled_disabled_top_half_reset_no_color !65EE  # Lines should be numbered 1,14...23 down to one line above the bottom margin
+11_4_2_15_enabled_disabled_top_half_reset_no_color 549B
+11_4_2_7_enabled_disabled_top_half_left_half_no_color 5464
+11_4_2_8_enabled_disabled_top_half_left_half_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_9_enabled_disabled_top_half_left_half_no_color 5548
+11_4_2_10_enabled_disabled_top_half_left_half_no_color 4E66
+11_4_2_11_enabled_disabled_top_half_left_half_no_color 53B9
+11_4_2_12_enabled_disabled_top_half_left_half_no_color 5607
+11_4_2_13_enabled_disabled_top_half_left_half_no_color !6BFD  # Lines should be numbered 1...11,19 down to the bottom margin
+11_4_2_14_enabled_disabled_top_half_left_half_no_color !65EE  # Lines should be numbered 1,14...23 down to one line above the bottom margin
+11_4_2_15_enabled_disabled_top_half_left_half_no_color 549B
+11_4_2_7_enabled_disabled_top_half_right_half_no_color 5464
+11_4_2_8_enabled_disabled_top_half_right_half_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_9_enabled_disabled_top_half_right_half_no_color 5548
+11_4_2_10_enabled_disabled_top_half_right_half_no_color 4E66
+11_4_2_11_enabled_disabled_top_half_right_half_no_color 53B9
+11_4_2_12_enabled_disabled_top_half_right_half_no_color 5607
+11_4_2_13_enabled_disabled_top_half_right_half_no_color !6BFD  # Lines should be numbered 1...11,19 down to the bottom margin
+11_4_2_14_enabled_disabled_top_half_right_half_no_color !65EE  # Lines should be numbered 1,14...23 down to one line above the bottom margin
+11_4_2_15_enabled_disabled_top_half_right_half_no_color 549B
+11_4_2_7_enabled_disabled_top_half_middle_half_no_color 5464
+11_4_2_8_enabled_disabled_top_half_middle_half_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_9_enabled_disabled_top_half_middle_half_no_color 5548
+11_4_2_10_enabled_disabled_top_half_middle_half_no_color 4E66
+11_4_2_11_enabled_disabled_top_half_middle_half_no_color 53B9
+11_4_2_12_enabled_disabled_top_half_middle_half_no_color 5607
+11_4_2_13_enabled_disabled_top_half_middle_half_no_color !6BFD  # Lines should be numbered 1...11,19 down to the bottom margin
+11_4_2_14_enabled_disabled_top_half_middle_half_no_color !65EE  # Lines should be numbered 1,14...23 down to one line above the bottom margin
+11_4_2_15_enabled_disabled_top_half_middle_half_no_color 549B
+11_4_2_7_enabled_disabled_bottom_half_reset_no_color 2174
+11_4_2_8_enabled_disabled_bottom_half_reset_no_color 1857
+11_4_2_9_enabled_disabled_bottom_half_reset_no_color 2258
+11_4_2_10_enabled_disabled_bottom_half_reset_no_color 168A
+11_4_2_11_enabled_disabled_bottom_half_reset_no_color 20C9
+11_4_2_12_enabled_disabled_bottom_half_reset_no_color !258F  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_bottom_half_reset_no_color !3D25  # Lines should be numbered 1...9 from the top margin
+11_4_2_14_enabled_disabled_bottom_half_reset_no_color !367E  # Lines should be numbered 1,13...20 from the top margin
+11_4_2_15_enabled_disabled_bottom_half_reset_no_color 21AB
+11_4_2_7_enabled_disabled_bottom_half_left_half_no_color 2174
+11_4_2_8_enabled_disabled_bottom_half_left_half_no_color 1857
+11_4_2_9_enabled_disabled_bottom_half_left_half_no_color 2258
+11_4_2_10_enabled_disabled_bottom_half_left_half_no_color 168A
+11_4_2_11_enabled_disabled_bottom_half_left_half_no_color 20C9
+11_4_2_12_enabled_disabled_bottom_half_left_half_no_color !258F  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_bottom_half_left_half_no_color !3D25  # Lines should be numbered 1...9 from the top margin
+11_4_2_14_enabled_disabled_bottom_half_left_half_no_color !367E  # Lines should be numbered 1,13...20 from the top margin
+11_4_2_15_enabled_disabled_bottom_half_left_half_no_color 21AB
+11_4_2_7_enabled_disabled_bottom_half_right_half_no_color 2174
+11_4_2_8_enabled_disabled_bottom_half_right_half_no_color 1857
+11_4_2_9_enabled_disabled_bottom_half_right_half_no_color 2258
+11_4_2_10_enabled_disabled_bottom_half_right_half_no_color 168A
+11_4_2_11_enabled_disabled_bottom_half_right_half_no_color 20C9
+11_4_2_12_enabled_disabled_bottom_half_right_half_no_color !258F  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_bottom_half_right_half_no_color !3D25  # Lines should be numbered 1...9 from the top margin
+11_4_2_14_enabled_disabled_bottom_half_right_half_no_color !367E  # Lines should be numbered 1,13...20 from the top margin
+11_4_2_15_enabled_disabled_bottom_half_right_half_no_color 21AB
+11_4_2_7_enabled_disabled_bottom_half_middle_half_no_color 2174
+11_4_2_8_enabled_disabled_bottom_half_middle_half_no_color 1857
+11_4_2_9_enabled_disabled_bottom_half_middle_half_no_color 2258
+11_4_2_10_enabled_disabled_bottom_half_middle_half_no_color 168A
+11_4_2_11_enabled_disabled_bottom_half_middle_half_no_color 20C9
+11_4_2_12_enabled_disabled_bottom_half_middle_half_no_color !258F  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_bottom_half_middle_half_no_color !3D25  # Lines should be numbered 1...9 from the top margin
+11_4_2_14_enabled_disabled_bottom_half_middle_half_no_color !367E  # Lines should be numbered 1,13...20 from the top margin
+11_4_2_15_enabled_disabled_bottom_half_middle_half_no_color 21AB
+11_4_2_7_enabled_disabled_middle_half_reset_no_color 6270
+11_4_2_8_enabled_disabled_middle_half_reset_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_9_enabled_disabled_middle_half_reset_no_color 6354
+11_4_2_10_enabled_disabled_middle_half_reset_no_color 5CC6
+11_4_2_11_enabled_disabled_middle_half_reset_no_color 61C5
+11_4_2_12_enabled_disabled_middle_half_reset_no_color !64CB  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_middle_half_reset_no_color !7485  # Lines should be numbered 1...12,19 from top margin to bottom
+11_4_2_14_enabled_disabled_middle_half_reset_no_color !7112  # Lines should be numbered 1,13...23 from top margin to one above bottom margin
+11_4_2_15_enabled_disabled_middle_half_reset_no_color 62A7
+11_4_2_7_enabled_disabled_middle_half_left_half_no_color 6270
+11_4_2_8_enabled_disabled_middle_half_left_half_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_9_enabled_disabled_middle_half_left_half_no_color 6354
+11_4_2_10_enabled_disabled_middle_half_left_half_no_color 5CC6
+11_4_2_11_enabled_disabled_middle_half_left_half_no_color 61C5
+11_4_2_12_enabled_disabled_middle_half_left_half_no_color !64CB  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_middle_half_left_half_no_color !7485  # Lines should be numbered 1...12,19 from top margin to bottom
+11_4_2_14_enabled_disabled_middle_half_left_half_no_color !7112  # Lines should be numbered 1,13...23 from top margin to one above bottom margin
+11_4_2_15_enabled_disabled_middle_half_left_half_no_color 62A7
+11_4_2_7_enabled_disabled_middle_half_right_half_no_color 6270
+11_4_2_8_enabled_disabled_middle_half_right_half_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_9_enabled_disabled_middle_half_right_half_no_color 6354
+11_4_2_10_enabled_disabled_middle_half_right_half_no_color 5CC6
+11_4_2_11_enabled_disabled_middle_half_right_half_no_color 61C5
+11_4_2_12_enabled_disabled_middle_half_right_half_no_color !64CB  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_middle_half_right_half_no_color !7485  # Lines should be numbered 1...12,19 from top margin to bottom
+11_4_2_14_enabled_disabled_middle_half_right_half_no_color !7112  # Lines should be numbered 1,13...23 from top margin to one above bottom margin
+11_4_2_15_enabled_disabled_middle_half_right_half_no_color 62A7
+11_4_2_7_enabled_disabled_middle_half_middle_half_no_color 6270
+11_4_2_8_enabled_disabled_middle_half_middle_half_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_9_enabled_disabled_middle_half_middle_half_no_color 6354
+11_4_2_10_enabled_disabled_middle_half_middle_half_no_color 5CC6
+11_4_2_11_enabled_disabled_middle_half_middle_half_no_color 61C5
+11_4_2_12_enabled_disabled_middle_half_middle_half_no_color 64CB  # Not sure whats going on here, but its wrong!
+11_4_2_13_enabled_disabled_middle_half_middle_half_no_color !7485  # Lines should be numbered 1...12,19 from top margin to bottom
+11_4_2_14_enabled_disabled_middle_half_middle_half_no_color !7112  # Lines should be numbered 1,13...23 from top margin to one above bottom margin
+11_4_2_15_enabled_disabled_middle_half_middle_half_no_color 62A7
+11_4_2_7_enabled_enabled_reset_reset_no_color B70C
+11_4_2_8_enabled_enabled_reset_reset_no_color 9DCD
+11_4_2_9_enabled_enabled_reset_reset_no_color B7F0
+11_4_2_10_enabled_enabled_reset_reset_no_color B306
+11_4_2_11_enabled_enabled_reset_reset_no_color B661
+11_4_2_12_enabled_enabled_reset_reset_no_color B8AF
+11_4_2_13_enabled_enabled_reset_reset_no_color D6EE
+11_4_2_14_enabled_enabled_reset_reset_no_color D49E
+11_4_2_15_enabled_enabled_reset_reset_no_color B743
+11_4_2_7_enabled_enabled_reset_left_half_no_color 350C
+11_4_2_8_enabled_enabled_reset_left_half_no_color !35A9  # Numbers should start at left margin, counting 1...5. Where is the column of * coming from?
+11_4_2_9_enabled_enabled_reset_left_half_no_color 35F0
+11_4_2_10_enabled_enabled_reset_left_half_no_color !30F7  # Lines of * and + should wrap at right margin
+11_4_2_11_enabled_enabled_reset_left_half_no_color 3461
+11_4_2_12_enabled_enabled_reset_left_half_no_color 36AF
+11_4_2_13_enabled_enabled_reset_left_half_no_color 472E
+11_4_2_14_enabled_enabled_reset_left_half_no_color 44DE
+11_4_2_15_enabled_enabled_reset_left_half_no_color 3543
+11_4_2_7_enabled_enabled_reset_right_half_no_color !3FD4  # Box should be to the right of the left margin
+11_4_2_8_enabled_enabled_reset_right_half_no_color !2749  # Numbers should be to the right of the left margin. Line of * should not be there.
+11_4_2_9_enabled_enabled_reset_right_half_no_color !40B8  # Box should be to the right of the left margin
+11_4_2_10_enabled_enabled_reset_right_half_no_color !3997  # Text should be to the right of the left margin, wrapping to the left margin
+11_4_2_11_enabled_enabled_reset_right_half_no_color !3F29  # All asterisks should be to the right of the left margin. The VT520 doesn't draw a box - most of the asterisks are down the screen right.
+11_4_2_12_enabled_enabled_reset_right_half_no_color !41D3  # Box should be to the right of the left margin
+11_4_2_13_enabled_enabled_reset_right_half_no_color !4FCE  # Number should be down the left margin
+11_4_2_14_enabled_enabled_reset_right_half_no_color !4E08  # Numbers should be down the right margin
+11_4_2_15_enabled_enabled_reset_right_half_no_color !400B  # Box should be to the right of the left margin
+11_4_2_7_enabled_enabled_reset_middle_half_no_color !3ACC  # Box should be in the margins
+11_4_2_8_enabled_enabled_reset_middle_half_no_color !2AE1  # Numbers should be in the margins, with a line of * down the left margin
+11_4_2_9_enabled_enabled_reset_middle_half_no_color !3BB0  # Box should be in the margins
+11_4_2_10_enabled_enabled_reset_middle_half_no_color !39F3  # Text should be in the margins, wrapping to the left margin
+11_4_2_11_enabled_enabled_reset_middle_half_no_color !3A21  # Box should be in the margins. The VT520 draws the box slightly narrower and hard up against the right margin, with a lone asterisk off to the left where the top left corner of the box is drawn on other terminals
+11_4_2_12_enabled_enabled_reset_middle_half_no_color !3CCB  # Box should be in the margins.
+11_4_2_13_enabled_enabled_reset_middle_half_no_color !4FCE  # Numbers should be in the margins
+11_4_2_14_enabled_enabled_reset_middle_half_no_color !4E08  # Numbers should be in the margins
+11_4_2_15_enabled_enabled_reset_middle_half_no_color !3B03  # Box should be in the margins.
+11_4_2_7_enabled_enabled_top_half_reset_no_color 5464
+11_4_2_8_enabled_enabled_top_half_reset_no_color 3A9D
+11_4_2_8_enabled_enabled_top_half_reset_no_color !3A9D  # Should excape bottom margin
+11_4_2_9_enabled_enabled_top_half_reset_no_color 5548
+11_4_2_10_enabled_enabled_top_half_reset_no_color 4E66
+11_4_2_11_enabled_enabled_top_half_reset_no_color 53B9
+11_4_2_12_enabled_enabled_top_half_reset_no_color 5607
+11_4_2_13_enabled_enabled_top_half_reset_no_color !6BFD  # Lines should be numbered 1...11,19 from top to bottom margin
+11_4_2_14_enabled_enabled_top_half_reset_no_color !65EE  # Lines should be numbered 1,14..23 from top to one above bottom margin
+11_4_2_15_enabled_enabled_top_half_reset_no_color 549B
+11_4_2_7_enabled_enabled_top_half_left_half_no_color 04B4
+11_4_2_8_enabled_enabled_top_half_left_half_no_color !FD99  # Lines should be numbered 1...5 within margins. Line of * should not be visible.
+11_4_2_9_enabled_enabled_top_half_left_half_no_color 0598
+11_4_2_10_enabled_enabled_top_half_left_half_no_color !FEA7  # Text should wrap within margins
+11_4_2_11_enabled_enabled_top_half_left_half_no_color 0409
+11_4_2_12_enabled_enabled_top_half_left_half_no_color 0657
+11_4_2_13_enabled_enabled_top_half_left_half_no_color !6BFD  # Lines should be numbered 1...11,19 within margins. Dots right of the right margin shouldn't be erased.
+11_4_2_14_enabled_enabled_top_half_left_half_no_color !0FAE  # Lines should be numbered 1,14...23 from top margin to one above bottom.
+11_4_2_15_enabled_enabled_top_half_left_half_no_color 04EB
+11_4_2_7_enabled_enabled_top_half_right_half_no_color !0D54  # Should be within margins
+11_4_2_8_enabled_enabled_top_half_right_half_no_color !F4F9  # Should be within margins. Column of * should not be visible
+11_4_2_9_enabled_enabled_top_half_right_half_no_color !0E38  # Should be within margins
+11_4_2_10_enabled_enabled_top_half_right_half_no_color !0747  # Should be within margins
+11_4_2_11_enabled_enabled_top_half_right_half_no_color !0CA9  # Should be within margins. The VT520 doesn't draw a box - most of the asterisks are down the right margin.
+11_4_2_12_enabled_enabled_top_half_right_half_no_color !0F53  # Should be within margins
+11_4_2_13_enabled_enabled_top_half_right_half_no_color !6BFD  # Lines should be numbered 1...11,19 within margins. Dots to the left of the left margin shouldn't be erased
+11_4_2_14_enabled_enabled_top_half_right_half_no_color !1488  # Lines should be numbered 1,14...23 from top margin to one above bottom.
+11_4_2_15_enabled_enabled_top_half_right_half_no_color !0D8B  # Should be within margins
+11_4_2_7_enabled_enabled_top_half_middle_half_no_color !0960  # Should be within margins
+11_4_2_8_enabled_enabled_top_half_middle_half_no_color !F721  # Should be within margins with *s down the left margin, and 1...5 across to the right margin
+11_4_2_9_enabled_enabled_top_half_middle_half_no_color !0A44  # Should be within margins
+11_4_2_10_enabled_enabled_top_half_middle_half_no_color !07A3  # Should be within margins
+11_4_2_11_enabled_enabled_top_half_middle_half_no_color !08B5  # Should be within margins. The VT520 draws a smaller box hard up against the right margin with a single * where other terminals would put the top-left corner.
+11_4_2_12_enabled_enabled_top_half_middle_half_no_color !0B5F  # Should be within margins
+11_4_2_13_enabled_enabled_top_half_middle_half_no_color !6BFD  # Lines should be numbered 1...11,19 within margins. Dots to the left of the left margin shouldn't be erased
+11_4_2_14_enabled_enabled_top_half_middle_half_no_color !1488  # Lines should be numbered 1,14...23 from top margin to one above bottom.
+11_4_2_15_enabled_enabled_top_half_middle_half_no_color !0997  # Should be within margins
+11_4_2_7_enabled_enabled_bottom_half_reset_no_color 2174
+11_4_2_8_enabled_enabled_bottom_half_reset_no_color 1857
+11_4_2_9_enabled_enabled_bottom_half_reset_no_color 2258
+11_4_2_10_enabled_enabled_bottom_half_reset_no_color 168A
+11_4_2_11_enabled_enabled_bottom_half_reset_no_color 20C9
+11_4_2_12_enabled_enabled_bottom_half_reset_no_color !258F  # Not sure whats going on here, but its wrong.
+11_4_2_13_enabled_enabled_bottom_half_reset_no_color !3D25  # Lines should be numbered 1...9 from top margin
+11_4_2_14_enabled_enabled_bottom_half_reset_no_color !367E  # Lines should be numbered 1,13...20 from top margin
+11_4_2_15_enabled_enabled_bottom_half_reset_no_color 21AB
+11_4_2_7_enabled_enabled_bottom_half_left_half_no_color EB3C
+11_4_2_8_enabled_enabled_bottom_half_left_half_no_color !E97A  # Should be within margins. Column of * should not be visible.
+11_4_2_9_enabled_enabled_bottom_half_left_half_no_color EC20
+11_4_2_10_enabled_enabled_bottom_half_left_half_no_color !E1E7  # Should wrap within margins
+11_4_2_11_enabled_enabled_bottom_half_left_half_no_color EA91
+11_4_2_12_enabled_enabled_bottom_half_left_half_no_color !EF07  # Not sure whats going on here, but its wrong.
+11_4_2_13_enabled_enabled_bottom_half_left_half_no_color !FC75  # Lines should be numbered 1...9 within margins
+11_4_2_14_enabled_enabled_bottom_half_left_half_no_color !F5CE  # Lines should be numbered 1,13...20 within margins
+11_4_2_15_enabled_enabled_bottom_half_left_half_no_color EB73
+11_4_2_7_enabled_enabled_bottom_half_right_half_no_color !F044  # Should be within margins
+11_4_2_8_enabled_enabled_bottom_half_right_half_no_color !E302  # Should be within margins. Column of * should not be visible.
+11_4_2_9_enabled_enabled_bottom_half_right_half_no_color !F128  # Should be within margins
+11_4_2_10_enabled_enabled_bottom_half_right_half_no_color !EA87  # Should wrap within margins
+11_4_2_11_enabled_enabled_bottom_half_right_half_no_color !EF99  # The VT520 doesn't draw a box, but rather a line of * down the right margin with a single * where other terminals would put the top-left corner.
+11_4_2_12_enabled_enabled_bottom_half_right_half_no_color !F29F  # Should be within margins, and not broken
+11_4_2_13_enabled_enabled_bottom_half_right_half_no_color !C5  # Should be numbered 1...9 within margins
+11_4_2_14_enabled_enabled_bottom_half_right_half_no_color !FEF8  # should be numbered 1,13...20 within margins
+11_4_2_15_enabled_enabled_bottom_half_right_half_no_color !F07B  # Should be within margins
+11_4_2_7_enabled_enabled_bottom_half_middle_half_no_color !EDEE  # Should be within margins
+11_4_2_8_enabled_enabled_bottom_half_middle_half_no_color !E4A0  # Should be within margins, without the column of *
+11_4_2_9_enabled_enabled_bottom_half_middle_half_no_color !EED2  # Should be within margins
+11_4_2_10_enabled_enabled_bottom_half_middle_half_no_color !EAE3 # Should wrap within margins
+11_4_2_11_enabled_enabled_bottom_half_middle_half_no_color !ED43  # Should be within margins. The VT520 draws a smaller box hard against the right margin with an * where other terminals put the box top left
+11_4_2_12_enabled_enabled_bottom_half_middle_half_no_color !F101  # Should be within margins, and not broken
+11_4_2_13_enabled_enabled_bottom_half_middle_half_no_color !C5  # Should be within margins, numbered 1...9
+11_4_2_14_enabled_enabled_bottom_half_middle_half_no_color !FDB6  # Should be within margins, numbered 1,13...20
+11_4_2_15_enabled_enabled_bottom_half_middle_half_no_color !EE25  # Should be within margins
+11_4_2_7_enabled_enabled_middle_half_reset_no_color 6270
+11_4_2_8_enabled_enabled_middle_half_reset_no_color !4857  # Should not escape bottom margin
+11_4_2_9_enabled_enabled_middle_half_reset_no_color 6354
+11_4_2_10_enabled_enabled_middle_half_reset_no_color 5CC6
+11_4_2_11_enabled_enabled_middle_half_reset_no_color 61C5
+11_4_2_12_enabled_enabled_middle_half_reset_no_color !64CB  # Should be within margins, and not broken.
+11_4_2_13_enabled_enabled_middle_half_reset_no_color !7485  # Should be numbered 1...19 within margins
+11_4_2_14_enabled_enabled_middle_half_reset_no_color !7112  # Should be numbered 1,13...23 within margins
+11_4_2_15_enabled_enabled_middle_half_reset_no_color 62A7
+11_4_2_7_enabled_enabled_middle_half_left_half_no_color 0B90
+11_4_2_8_enabled_enabled_middle_half_left_half_no_color !0504  # Should be within margins, column of * should not be visible
+11_4_2_9_enabled_enabled_middle_half_left_half_no_color 0C74
+11_4_2_10_enabled_enabled_middle_half_left_half_no_color !05D7  # Should wrap within margins
+11_4_2_11_enabled_enabled_middle_half_left_half_no_color 0AE5
+11_4_2_12_enabled_enabled_middle_half_left_half_no_color !0DEB  # Should be within margins, and not broken
+11_4_2_13_enabled_enabled_middle_half_left_half_no_color !1E45  # Should be within margins, numbered 1...19
+11_4_2_14_enabled_enabled_middle_half_left_half_no_color !13A2  # should be within margins, numbered 1,13..23
+11_4_2_15_enabled_enabled_middle_half_left_half_no_color 0BC7
+11_4_2_7_enabled_enabled_middle_half_right_half_no_color !148C  # Should be within margins
+11_4_2_8_enabled_enabled_middle_half_right_half_no_color !FBAC  # Should be within margins, column of * should not be visible
+11_4_2_9_enabled_enabled_middle_half_right_half_no_color !1570  # Should be within margins
+11_4_2_10_enabled_enabled_middle_half_right_half_no_color !0E77  # Should wrap within margins
+11_4_2_11_enabled_enabled_middle_half_right_half_no_color !13E1  # Should be within margins. The VT520 doesn't draw a box, instead it puts asterisks down 7 lines on the right margin, an * where other terminals put the top-left corner, and another asterisk on the left margin further down.
+11_4_2_12_enabled_enabled_middle_half_right_half_no_color !168B  # Should be within margins, and not broken
+11_4_2_13_enabled_enabled_middle_half_right_half_no_color !2433  # Lines should be numbered 1...19 within margins
+11_4_2_14_enabled_enabled_middle_half_right_half_no_color !1BB8  # Lines should be numbered 1,13...23 within margins.
+11_4_2_15_enabled_enabled_middle_half_right_half_no_color !14C3  # Should be within margins
+11_4_2_7_enabled_enabled_middle_half_middle_half_no_color !106A  # Should be within margins
+11_4_2_8_enabled_enabled_middle_half_middle_half_no_color !FE02  # Should be within margins. Column of * on left margin, followed by 1...5.
+11_4_2_9_enabled_enabled_middle_half_middle_half_no_color !114E  # Should be within margins
+11_4_2_10_enabled_enabled_middle_half_middle_half_no_color !0ED3  # Should wrap within margins
+11_4_2_11_enabled_enabled_middle_half_middle_half_no_color !0FBF  # Should be within margins
+11_4_2_12_enabled_enabled_middle_half_middle_half_no_color !12C5  # should be within margins, and not broken
+11_4_2_13_enabled_enabled_middle_half_middle_half_no_color !2433  # Should be numbered 1...19 within margins
+11_4_2_14_enabled_enabled_middle_half_middle_half_no_color !1BB8  # Should be numbered 1,13...23 within margins
+11_4_2_15_enabled_enabled_middle_half_middle_half_no_color !10A1  # Should be within margins
+
+
+
+
+
+
+# TODO:
 #	test_11_4_5_vt520_reporting_functions
 #	test_11_4_6_v520_screen_display
 #	test_11_5_ecma48_cursor_movement
