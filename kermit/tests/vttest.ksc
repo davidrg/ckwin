@@ -76,8 +76,8 @@ local mono_tests line_drawing_chars
 # What image format to use?
 .image_format = "png"
 
-# Record checksums to checksums.dat?
-.record_checksums = 1
+# Record debug log? These are *big*, and producing them slows down the tests.
+.debug_logging = 0
 
 # Some tests are available in both color and mono versions. Which should be 
 # run? Selecting only colour tests with line drawing characters can cut down
@@ -164,15 +164,19 @@ def test_procedure {
 # The dot syntax and :=, ::=, is described here:
 #	https://www.columbia.edu/kermit/ckermit70.html#x7.9
 #
-local vttest_version \&a[] \&b[] \%c \%d \%f \%l \%n \%o \%p \%r \%s \%u \%v
-local line test checksum_file
+local vttest_version \&a[] \&b[] \%c \%d \%e \%f \%g \%h \%i \%l \%n \%o \%p
+local \%r \%s \%u \%v line test checksum_file
 
 # Single letter variables used at the script level:
 # \&a - menu title stack
 # \&b - temporary array 
 # \%c - checksum file
 # \%d - output data file
+# \%e - last session log snapshot file
 # \%f - test fail count
+# \%g - session log snapshot counter
+# \%h - last debug log snapshot file
+# \%i - debug log snapshot counter
 # \%l - log file
 # \%n - checksum note/comment
 # \%o - output file
@@ -201,6 +205,14 @@ array declare \&a[10]
 
 # Record current seconds since midnight for calculating execution time
 .%r ::= \v(ntime)
+
+# Session log snapshotting
+.%e := ""
+.%g := 0
+
+# Debug log snapshotting
+.%h := ""
+.%i := 0
 
 ##############################################################################
 # Base Macros ################################################################
@@ -235,6 +247,30 @@ def init_terminal {
 def screenshot {
 	save terminal screen /format:\M(image_format) \m(output_directory)/\%1.\m(image_format)
 	save terminal screen /format:text \m(output_directory)/\%1.txt
+}
+
+# Starts recording a new session log snapshot. The previous snapshot filename is
+# available in \%e. The file pointed to by \%e will be deleted next time this
+# macro is called if it still exists so callers should move/rename it if they
+# want to keep it.
+def snapshot_session_log {
+    if exist "\%e" {
+        delete "\%e"
+    }
+    .%e := \m(output_directory)/session-snapshot\%g.log
+    .%g ::= \%g + 1
+    log session \m(output_directory)/session-snapshot\%g.log
+}
+
+
+# Like with the session log snapshots, but for the debug log
+def snapshot_debug_log {
+    if exist "\%h" {
+        delete "\%h"
+    }
+    .%h := \m(output_directory)/debug-snapshot\%i.log
+    .%i ::= \%i + 1
+    log debug \m(output_directory)/debug-snapshot\%i.log
 }
 
 # Output to HTML file
@@ -421,6 +457,7 @@ def get_test_checksum {
 	.%v := ""
 	.%n := ""
 	.line := ""
+	array undeclare &b
 	
 	# Fall back to the checksum file
 	if > \flength(\m(checksum_file)) 0 {
@@ -448,14 +485,12 @@ def get_test_checksum {
 				echo test checksum: \%v
 				
 				# Grab the comment if any
-				#if = \m(record_checksums) 1 {
-					.%2 := \findex(\{35},\m(line))
-					echo comment at: \%2
-					if > \%2 0 {
-						.%n := \fsubstring(\m(line),\%2)
-						echo comment: \%n
-					}
-				#}
+                .%2 := \findex(\{35},\m(line))
+                echo comment at: \%2
+                if > \%2 0 {
+                    .%n := \fsubstring(\m(line),\%2)
+                    echo comment: \%n
+                }
 				
 				return
 			}
@@ -483,6 +518,26 @@ def add_test_result {
 	get_test_checksum \m(checksum_id)
     .pass_checksum := \%v
     .comment := \fsubstring(\%n, 2)
+
+    # Grab a snapshot of data received since last test
+    snapshot_session_log
+    if exist "\%e" {
+        if exist "\m(output_directory)/\%1.log" {
+            delete "\m(output_directory)/\%1.log"
+        }
+        rename "\%e" "\m(output_directory)/\%1.log"
+    }
+
+    if = \m(debug_logging) 1 {
+        # Also grab a copy of the debug log
+       snapshot_debug_log
+       if exist "\%h" {
+            if exist "\m(output_directory)/\%1-debug.log" {
+               delete "\m(output_directory)/\%1-debug.log"
+           }
+           rename "\%h" "\m(output_directory)/\%1-debug.log"
+       }
+    }
 
     # Evaluate the checksum
     # Results:
@@ -544,6 +599,12 @@ def add_test_result {
 	putout {	<tr>}
 	putout {		<td><a href="\%1.\m(image_format)"><img src="\%1.\m(image_format)"></a><br>}
 	putout {			<tt>\m(checksum_id) \m(checksum)</tt> <a href="\%1.txt">text</a>}
+	if exist \m(output_directory)/\%1.log {
+	    putout {				<a href="\%1.log">log</a>}
+	}
+	if exist "\m(output_directory)/\%1-debug.log" {
+	    putout {				<a href="\%1-debug.log">debug</a>}
+	}
 	if ( equal \m(result) 0 ) {
         # Unknown result. Add some more lines of output for easily updating
         # the data file
@@ -563,7 +624,6 @@ def add_test_result {
         if ( equal "\fleft(\m(pass_checksum),1)" "!" ) {
             putout {			(currently recorded checksum for this test (<tt>\fright(\m(pass_checksum),\flength(\m(pass_checksum)) - 1)</tt>) is marked as a failure)}
         }
-
     }
 	putout {		</td>}
 
@@ -741,8 +801,10 @@ def start_vttest {
     fwrite /line \%l {Test-ID\{9}Result\{9}Note\{9}Picture-File\{9}Comment}
 
 	# Start logging
-	#log session \m(output_directory)/session.log
-	#log debug \m(output_directory)/debug.log
+	snapshot_session_log
+	if = \m(debug_logging) 1 {
+       snapshot_debug_log
+    }
 
 	# Start VTTEST
 	lineout \m(vttest_name)
@@ -818,6 +880,8 @@ def close_output {
 	fclose \%o
 	fclose \%d
     fclose \%l
+    close session
+    close debug
 }
 
 # Exits VTTEST
@@ -832,9 +896,6 @@ def exit_vttest {
 	for \%i \%s 1 -1 {
 		pop_menu 1
 	}
-
-	close session-log
-	close debug-log
 
 	# if the menu stack hasn't been cleared, we haven't exited.
 	if > \%s 0 {
