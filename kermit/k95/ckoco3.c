@@ -5697,9 +5697,20 @@ cursorup(int wrap) {
         prtline( wherey[VTERM], LF ) ;
     }
     if ( decsasd == SASD_TERMINAL ) {
-        if ((relcursor ? vscrn_c_page_margin_top(VTERM) : 1) != wherey[VTERM])
+		/* ISVT100: Prior to K95 3.0 beta 8 the logic here was wrong. On
+		 * a VT100 or newer (confirmed on a VT520 and via vttest), the cursor
+		 * can not pass from inside to outside the margins via CUU. This
+		 * function is also called by a bunch of other emulations for which I
+		 * have no physical example or test suite. For those other emulations
+		 * the prior behaviour is retained in case it happens to be correct for
+		 * them.  -- DG, 2026-03-08  */
+		if ((ISVT100(tt_type_mode) &&
+				(vscrn_c_page_margin_top(VTERM) < wherey[VTERM] ||
+				 vscrn_c_page_margin_top(VTERM) > wherey[VTERM]) ) ||
+			(!ISVT100(tt_type_mode) &&
+				(relcursor ? vscrn_c_page_margin_top(VTERM) : 1) != wherey[VTERM])) {
             lgotoxy(VTERM, wherex[VTERM], wherey[VTERM] - 1);
-        else if ( wrap ||
+        } else if ( wrap ||
                   ISWYSE(tt_type_mode) ||
                   ISTVI(tt_type_mode) ||
                   ISHZL(tt_type_mode) ||
