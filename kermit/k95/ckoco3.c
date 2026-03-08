@@ -5726,16 +5726,19 @@ cursorup(int wrap) {
 /* ------------------------------------------------------------------ */
 /* CursorDown -                                                       */
 /* ------------------------------------------------------------------ */
+/* wrap: If the cursor should wrap to the top of the screen
+ * obey_margins: If margins should be obeyed or not (VT100-compatible emulations
+ * 				 only.
+ */
 void
-cursordown(int wrap) {
+cursordownex(int wrap, int obey_margins) {
     if ( decsasd == SASD_TERMINAL ) {
 		/* As with cursorup (above), the logic here was wrong for DEC VT
 		 * terminals prior to K95 3.0 beta 8. I'm not sure if the previous logic
 		 * was correct for some other emulation I can't test that also uses this
 		 * function, so prior behaviour is retained for non-VT emulations */
         if ( (ISVT100(tt_type_mode) &&
-				(vscrn_c_page_margin_bot(VTERM) > wherey[VTERM] ||
-				 vscrn_c_page_margin_bot(VTERM) < wherey[VTERM]) ) ||
+				(vscrn_c_page_margin_bot(VTERM) != wherey[VTERM] || !obey_margins)) ||
 			 (!ISVT100(tt_type_mode) && (relcursor ? vscrn_c_page_margin_bot(VTERM) :
              	 VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM]))
         {
@@ -5762,6 +5765,11 @@ cursordown(int wrap) {
     }
     if ( wrapit )
         wrapit = FALSE;
+}
+
+void
+cursordown(int wrap) {
+	cursordownex(wrap, 1);
 }
 
 /* ------------------------------------------------------------------ */
@@ -19974,9 +19982,10 @@ vtcsi(void)
                 break;
             case 'e':
                 /* VPR - Vertical Position Relative */
-                /* moves active position pn[1] rows down */
+                /* moves active position pn[1] rows down.
+				 * Only obeys margins if DECOM is set */
                 do {
-                    cursordown(0);
+                    cursordownex(0,relcursor);
                     pn[1] = pn[1] - 1;
                 } while (pn[1] > 0);
                 break;
