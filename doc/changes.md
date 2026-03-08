@@ -445,8 +445,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    could result in garbage being saved as the font face name in the registry
    resulting in an odd font selection next time K95G is run.
  - Fixed crash opening serial ports on Windows NT 3.1
- - VT-compatible emulations: Fixed CUU not obeying the top margin while mode
-   DECOM is reset
+ - VT-compatible emulations: 
+   - Fixed CUU not obeying the top margin while mode DECOM is reset
+   - Fixed CUD not obeying the bottom margin while mode DECOM is reset
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

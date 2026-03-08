@@ -5729,8 +5729,15 @@ cursorup(int wrap) {
 void
 cursordown(int wrap) {
     if ( decsasd == SASD_TERMINAL ) {
-        if ((relcursor ? vscrn_c_page_margin_bot(VTERM) :
-              VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM])
+		/* As with cursorup (above), the logic here was wrong for DEC VT
+		 * terminals prior to K95 3.0 beta 8. I'm not sure if the previous logic
+		 * was correct for some other emulation I can't test that also uses this
+		 * function, so prior behaviour is retained for non-VT emulations */
+        if ( (ISVT100(tt_type_mode) &&
+				(vscrn_c_page_margin_bot(VTERM) > wherey[VTERM] ||
+				 vscrn_c_page_margin_bot(VTERM) < wherey[VTERM]) ) ||
+			 (!ISVT100(tt_type_mode) && (relcursor ? vscrn_c_page_margin_bot(VTERM) :
+             	 VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM]))
         {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
