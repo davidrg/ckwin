@@ -20103,13 +20103,24 @@ vtcsi(void)
                     pn[1] = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                 if (pn[2] == 0)
                     pn[2] = 1;
-                if (isdoublewidth(pn[1])) {
-                    if (pn[2] > VscrnGetWidth(VTERM)/2)
-                        pn[2] = VscrnGetWidth(VTERM)/2;
-                    }
-                    else if (pn[2] > VscrnGetWidth(VTERM))
-                        pn[2] = VscrnGetWidth(VTERM);
-                    wrapit = FALSE;
+				if (relcursor)
+					pn[2] += vscrn_c_page_margin_left(VTERM) - 1;
+
+				{
+					/* Ensure coordinates are to the left of screen right, or
+					 * if DECOM is set, the right margin */
+					int r = (relcursor ? vscrn_c_page_margin_right(VTERM)
+									   : VscrnGetWidth(VTERM));
+
+					/* if this line is double width, then its half length */
+                	if (isdoublewidth(pn[1])) {
+						r / 2;
+					}
+
+					if (pn[2] > r) pn[2] = r;
+				}
+
+                wrapit = FALSE;
 
                 /* SNI 97801 - If the cursor is addressed to the */
                 /* status line when SSDT_HOST_WRITABLE, we must  */

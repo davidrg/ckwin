@@ -5172,7 +5172,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="cup" mnemonic="CUP" title="Cursor Position">
             <ref src="e48:50"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps-H.1D86"/>
-            <ref src="070:306"/>
+            <ref src="070:304"/>
             <ref src="wy370:120"/>
             <ref src="vt100:CUP"/>
             <ref src="vt132:82"/>
@@ -5182,6 +5182,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:CUP.html"/>
             <ref src="vt52x:162"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
+            <implchk std070="true"/>
             <ctlseq>CSI <param-single/> ; <param-single/> H</ctlseq>
             <p>Send cursor to row;column. Default is 1;1. Implementation is
             shared with <a href="#hvp">HVP</a></p>
@@ -7307,9 +7308,13 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:HVP.html"/>
             <ref src="vt52x:337"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
+            <implchk std070="true"/>
             <ctlseq>CSI <param-single/> ; <param-single/> f</ctlseq>
-            <p>Send cursor to row;column. Default is 1;1.
-                Clears the <a href="#lcf">Last Column Flag</a>.</p>
+            <p>Send cursor to row;column. Default is 1;1. Clears the
+                <a href="#lcf">Last Column Flag</a>. This control sequence is
+                implemented for compatibility with printing terminals.
+                Applications should use <a href="#cup">CUP</a> instead.
+            </p>
             <p badges="s97801">
                 If DECSASD is set to the status line, it is reset to terminal.
             </p>
