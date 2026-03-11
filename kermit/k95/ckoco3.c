@@ -25879,63 +25879,45 @@ vtescape( void )
                 restorecurpos(VTERM, 1);
             break;
         case '9':  
-              if ( ISAAA(tt_type_mode) ) {
-                  /* zCGR - Change Graphic Rendition to Qualified Area */
-		  /* Default area goes from Current Cursor position to End of Screen */
-		  /* Lawrence A Deck - Raytheon 1 Nov 2002 */
+            if ( ISAAA(tt_type_mode) ) {
+                /* zCGR - Change Graphic Rendition to Qualified Area */
+		  		/* Default area goes from Current Cursor position to End of Screen */
+		  		/* Lawrence A Deck - Raytheon 1 Nov 2002 */
 
-		  int start_x, start_y, end_x, end_y, x, y;
-		  int h = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
-		  int w = VscrnGetWidth(VTERM);
+		  		int start_x, start_y, end_x, end_y, x, y;
+		  		int h = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
+		  		int w = VscrnGetWidth(VTERM);
 		      
-		  start_x = wherex[VTERM];
-		  start_y = wherey[VTERM];
-		  end_x = w;
-		  end_y = h;
+		  		start_x = wherex[VTERM];
+		  		start_y = wherey[VTERM];
+		  		end_x = w;
+		  		end_y = h;
 
-		  for ( x=start_x; 
-			x < (start_y == end_y ? end_x : MAXTERMCOL); 
-			x++ ) {
-		      viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1, FALSE);
-		      pcell->video_attr = attribute;
-		      VscrnWrtCell( VTERM, *pcell, attrib,
-				    start_y - 1,
-				    x - 1);
-		  }
-		  if ( start_y != end_y ) {
-		      for ( y=start_y+1; y<end_y; y++) {
-			  for ( x=0; x<MAXTERMCOL; x++ ) {
-			      viocell * pcell = VscrnGetCell(VTERM,x-1,y-1, FALSE);
-			      pcell->video_attr = attribute;
-			      VscrnWrtCell( VTERM, *pcell, attrib,
-					    y - 1,
-					    x - 1);
-			  }
-		      }
-		      for ( x=0; 
-			    x <= end_x; 
-			    x++ ) {
-			  viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1, FALSE);
-			  pcell->video_attr = attribute;
-			  VscrnWrtCell( VTERM, *pcell, attrib,
-					end_y - 1,
-					x - 1);
-		      }
-		  }
-              } else if (ISVT100(tt_type_mode)) { 
-                  /* DECFI - Forward Index */
-                  if ( wherex[VTERM] < VscrnGetWidth(VTERM) )
-                      cursorright(0);
-                  else {
-                      blankvcell.c = SP;
-                      blankvcell.video_attr = geterasecolor(VTERM);
-                      VscrnScrollLf(VTERM,
-                                 wherey[VTERM] - 1,
-                                 0,
-                                 wherey[VTERM] - 1,
-                                 VscrnGetWidth(VTERM) - 1,
-                                 1, blankvcell);
-                  }
+		  		for ( x=start_x;
+					x < (start_y == end_y ? end_x : MAXTERMCOL);
+					x++ ) {
+		      		viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1, FALSE);
+		      		pcell->video_attr = attribute;
+		      		VscrnWrtCell( VTERM, *pcell, attrib, start_y - 1, x - 1);
+		  		}
+		  		if ( start_y != end_y ) {
+		      		for ( y=start_y+1; y<end_y; y++) {
+			  			for ( x=0; x<MAXTERMCOL; x++ ) {
+			    	  		viocell * pcell = VscrnGetCell(VTERM,x-1,y-1, FALSE);
+				      		pcell->video_attr = attribute;
+				      		VscrnWrtCell( VTERM, *pcell, attrib, y - 1, x - 1);
+			  			}
+		      		}
+		      		for ( x=0;
+			    		x <= end_x;
+			    		x++ ) {
+			  		viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1, FALSE);
+			  		pcell->video_attr = attribute;
+			  		VscrnWrtCell( VTERM, *pcell, attrib,
+						end_y - 1,
+						x - 1);
+		      		}
+				}
               }
 	          if (cursor_on_visible_page(VTERM)) {
                   VscrnIsDirty(VTERM);
