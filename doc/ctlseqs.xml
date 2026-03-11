@@ -3116,9 +3116,18 @@ DECTSR		462
             <ref src="vt510:DECBI.html"/>
             <ref src="vt52x:180"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
-            <p>Moves the cursor left. If the cursor is already at the
-                left margin, then all data on the screen is moved one column to the right.
-                Clears the <a href="#lcf">Last Column Flag</a>.</p>
+            <implchk std070="true"/>
+            <p>Moves the cursor left and clears the
+                <a href="#lcf">Last Column Flag</a>. If the cursor is already at
+                the left margin, then all data within the margins is moved one
+                column to the right. If the cursor is outside the margins, and
+                it hits the left edge of the screen then no action is taken.
+            </p>
+            <p>
+                When data within the margins is scrolled, lines with the
+                double-height or double-wide attributes set will scroll twice as
+                fast as lines without those attributes set.
+            </p>
         </section>
         <section role="ctlseq" id="scp" mnemonic="SCP" ctlseq="ESC 7"
                  title="Save Cursor (ANSI)" groups="isansi" badges="aaa">

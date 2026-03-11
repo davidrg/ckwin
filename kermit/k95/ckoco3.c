@@ -5816,7 +5816,9 @@ cursorleft(int wrap) {
             lgotoxy( VSTATUS, wherex[VSTATUS] - 1, 1);
     }
     else {
-        if (wherex[VTERM] > 1)
+        if (wherex[VTERM] > 1 &&
+				(!relcursor && wherex[VTERM] != vscrn_c_page_margin_left(VTERM)
+				|| relcursor && wherex[VTERM] > vscrn_c_page_margin_left(VTERM)))
             lgotoxy( VTERM,
                      wherex[VTERM] - 1,
                      wherey[VTERM]);
@@ -20114,7 +20116,7 @@ vtcsi(void)
 
 					/* if this line is double width, then its half length */
                 	if (isdoublewidth(pn[1])) {
-						r / 2;
+						r = r / 2;
 					}
 
 					if (pn[2] > r) pn[2] = r;
@@ -24409,6 +24411,8 @@ vtcsi(void)
 					if (k < 1) left = 1;
 					else left = pn[1];
 
+					if (left < 1) left = 1;
+
 					if (k < 2) right = VscrnGetWidth(VTERM);
 					else right = pn[2];
 
@@ -25838,20 +25842,24 @@ vtescape( void )
         case '6':  
             if ( ISAAA(tt_type_mode) ) {
                 /* AnnArbor: zTI - Toggle IRM */
-            } else if (ISVT100(tt_type_mode)) {
+            } else if (ISVT100(tt_type_mode)) { /* TODO: Should be ISVT420 */
                 /* DECBI - Back Index */
-                if ( wherex[VTERM] > 1 )
-                    cursorleft(0);
-                else {
+				if ( wherex[VTERM] == vscrn_c_page_margin_left(VTERM) &&
+						wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+						wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) ) {
+					int leftcol = vscrn_c_page_margin_left(VTERM) - 1;
+					int rightcol = vscrn_c_page_margin_right(VTERM) - 1;
                     blankvcell.c = SP;
                     blankvcell.video_attr = geterasecolor(VTERM);
-                    VscrnScrollRt(VTERM,
-                               wherey[VTERM] - 1,
-                               0,
-                               wherey[VTERM] - 1,
-                               VscrnGetWidth(VTERM) - 1,
-                               1, blankvcell);
-                }
+                    VscrnScrollRt(VTERM,				 /* VMODE */
+                               vscrn_c_page_margin_top(VTERM) - 1,  /* TopRow */
+                               leftcol,			    	 /* LeftCol */
+                               vscrn_c_page_margin_bot(VTERM) - 1,  /* BotRow */
+                               rightcol,                 /* RightCol */
+                               1, blankvcell);			 /* Columns, Cell */
+                } else if (wherex[VTERM] > 1) {
+					cursorleft(0);
+				}
             }
             break;
         case '7':
