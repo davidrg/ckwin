@@ -7821,8 +7821,10 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:188"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
-                <p>Switches the screen to 132 columns and moves homes the cursor.
-                    Clears the <a href="#lcf">Last Column Flag</a>.</p>
+                <p>Switches the screen to 132 columns, clears margins, disables
+                    <a href="#decvssm">DECVSSM/DECLRMM</a>, and homes the
+                    cursor clearing the <a href="#lcf">Last Column Flag</a>.
+                </p>
             </section>
             <section role="parameter" id="decsclm" mnemonic="DECSCLM" title="Smooth scroll">
                 <ctlseq><param-single/> = 4 </ctlseq>
@@ -9826,8 +9828,10 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:188"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty dtterm wt"/>
-                <p>Switches to 80 column mode. Clears the screen, homes the
-                    cursor and clears the <a href="#lcf">Last Column Flag</a>.</p>
+                <p>Switches the screen to 80 columns, clears margins, disables
+                    <a href="#decvssm">DECVSSM/DECLRMM</a>, and homes the
+                    cursor clearing the <a href="#lcf">Last Column Flag</a>.
+                </p>
             </section>
             <section role="parameter" id="r-decsclm" mnemonic="DECSCLM" title="Jump scrolling">
                 <ctlseq><param-single/> = 4</ctlseq>

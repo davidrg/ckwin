@@ -20254,6 +20254,7 @@ vtcsi(void)
                             killcursor(VTERM);
                             deccolm = TRUE;
                             Set132Cols(VTERM);
+                            set_declrmm(FALSE);
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
                             if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
@@ -20760,6 +20761,7 @@ vtcsi(void)
                                 killcursor(VTERM);
                                 deccolm = TRUE;
                                 Set132Cols(VTERM);
+                                set_declrmm(FALSE);
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
                                 if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
@@ -20881,6 +20883,7 @@ vtcsi(void)
                                     killcursor(VTERM);
                                     deccolm = TRUE;
                                     Set132Cols(VTERM);
+                                    set_declrmm(FALSE);
 #ifdef TCPSOCKET            
 #ifdef CK_NAWS              
                                     if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
@@ -20951,6 +20954,7 @@ vtcsi(void)
                                 killcursor(VTERM);
                                 deccolm = FALSE;
                                 Set80Cols(VTERM);
+                                set_declrmm(FALSE);
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
                                 if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
@@ -21429,6 +21433,7 @@ vtcsi(void)
                                    killcursor(VTERM);
                                    deccolm = FALSE;
                                    Set80Cols(VTERM);
+                                   set_declrmm(FALSE);
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
                                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
@@ -21553,6 +21558,7 @@ vtcsi(void)
                                    killcursor(VTERM);
                                    deccolm = FALSE;
                                    Set80Cols(VTERM);
+                                   set_declrmm(FALSE);
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
                                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
