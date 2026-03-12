@@ -1611,14 +1611,15 @@ DECTSR		462
             <b>Build Date:</b> <k95info val="version-date"/>
         </p>
         <p>
-            This document doesn't <em>really</em> attempt to list
+            This document doesn't <em>really</em> list
             <em>All Known Control Sequences</em>, nor does it aim to &mdash; that
             would be a large job indeed. But the XML document from which
             <a href="ctlseqs.html">Kermit 95's Control Sequences Documentation</a>
             is generated does contain basic information on a great many
             additional control sequences. Many of these are unlikely ever to be
-            supported by Kermit 95 for one reason or another, but it's still
-            useful to know they exist. Hence, this document.
+            supported by <a href="https://davidrg.github.io/ckwin/">Kermit 95</a>
+            for one reason or another, but it's still useful to know they exist.
+            Hence, this document.
         </p>
         <p>
             The criteria for inclusion here is similar to the criteria for
@@ -1627,7 +1628,7 @@ DECTSR		462
             shipped in some hardware, or the terminal emulators that currently
             support it have an apparent commitment to backwards compatibility
             and are wide-spread enough to discourage other terminal emulators
-            from being incompatible.
+            from being incompatible in problematic ways.
         </p>
         <p>
             Rows highlighted in yellow indicate control sequences (or parameters)
@@ -1635,6 +1636,25 @@ DECTSR		462
             supported by Kermit 95 have links to documentation describing
             Kermit 95s implementation of that feature.
         </p>
+
+        <p>
+            If you see any errors in this document (or K95s control sequences
+            manual), or you think there is something that <em>should</em> be
+            here but isn't feel free to raise it over on
+            <a href="https://github.com/davidrg/ckwin/discussions">github discussions</a>.
+        </p>
+
+        <p>Other related documents which may be of interest include:
+        </p>
+        <ul>
+            <li><a href="ctlseqs.html">Kermit 95 ANSI Control Sequences Manual</a></li>
+            <li><a href="term-ctlseqs.html">A comparison of some terminal emulators and hardware terminals</a></li>
+            <li><a href="https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf">
+                DEC STD 070 Video Systems Reference Manual</a> - DECs internal
+                documentation for how their terminal products <em>should</em>
+                behave.
+            </li>
+        </ul>
 
     </section>
 
@@ -15449,6 +15469,26 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-multi/> u</ctlseq>
             <termsupp first="la100" series="print" additional=""/>
             <ref src="dap:135"/>
+        </section>
+        <section role="ctlseq" id="kkp-set" not-implemented="true" todo="true"
+                title="Kitty Keyboard Set">
+            <ctlseq>CSI = <param-single/> ; <param-single/> u</ctlseq>
+            <termsupp first="wt" series="wt" additional=""/>
+        </section>
+        <section role="ctlseq" id="kkp-query" not-implemented="true" todo="true"
+                title="Kitty Keyboard Query">
+            <ctlseq>CSI ? <param-single/> u</ctlseq>
+            <termsupp first="wt" series="wt" additional=""/>
+        </section>
+        <section role="ctlseq" id="kkp-push" not-implemented="true" todo="true"
+                 title="Kitty Keyboard Push">
+            <ctlseq>CSI &gt; <param-single/> u</ctlseq>
+            <termsupp first="wt" series="wt" additional=""/>
+        </section>
+        <section role="ctlseq" id="kkp-pop" not-implemented="true" todo="true"
+                 title="Kitty Keyboard Pop">
+            <ctlseq>CSI &lt; <param-single/> u</ctlseq>
+            <termsupp first="wt" series="wt" additional=""/>
         </section>
         <section role="ctlseq" id="decfnvr" not-implemented="true" todo="true"
                  mnemonic="DECFNVR" title="Loading Factory NVR settings">
