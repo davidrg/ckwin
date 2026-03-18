@@ -5775,15 +5775,33 @@ cursordown(int wrap) {
 /* ------------------------------------------------------------------ */
 /* CursorRight -                                                      */
 /* ------------------------------------------------------------------ */
+/* wrap: If the cursor should wrap to the top of the screen
+ * obey_margins: If margins should be obeyed or not.
+ */
 void
-cursorright(int wrap) {
+cursorrightex(int wrap, int obey_margins) {
     if ( decsasd == SASD_STATUS ) {
         if (wherex[VSTATUS] < VscrnGetWidth(VTERM))
            lgotoxy(VSTATUS, wherex[VSTATUS]+1,1);
     }
     else {
-        char dwl = isdoublewidth(wherey[VTERM]) ;
-        if (wherex[VTERM] < ( dwl ? VscrnGetWidth(VTERM) / 2 : VscrnGetWidth(VTERM)))
+        int margin_right = VscrnGetWidth(VTERM);
+
+        /* Only obey the right margin if we're told to, and if the cursor is
+         * within the vertical scrol region */
+        if (obey_margins &&
+            (wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+             wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM)) )
+        {
+            margin_right = vscrn_c_page_margin_right(VTERM);
+        }
+
+        if (isdoublewidth(wherey[VTERM]))
+        {
+            margin_right /= 2;
+        }
+
+        if (wherex[VTERM] < margin_right )
             lgotoxy( VTERM, wherex[VTERM] + 1, wherey[VTERM]);
         else if ( wrap ||
                   ISUNIXCON(tt_type_mode) ||
@@ -5802,6 +5820,13 @@ cursorright(int wrap) {
     }
     if ( wrapit )
         wrapit = FALSE;
+}
+
+
+void
+cursorright(int wrap)
+{
+    cursorrightex(wrap, 1);
 }
 
 /* ------------------------------------------------------------------ */
@@ -19688,9 +19713,9 @@ vtcsi(void)
             case 'a':
                 /* HPR - Horizontal Position Relative */
                 /* moves active position pn[1] characters */
-                /* to the right */
+                /* to the right. Only obeys margins if DECOM is set. */
                 do {
-                    cursorright(0);
+                    cursorrightex(0, relcursor);
                     pn[1] = pn[1] - 1;
                 } while (pn[1] > 0);
                 break;
@@ -25923,6 +25948,24 @@ vtescape( void )
 						end_y - 1,
 						x - 1);
 		      		}
+				}
+            } else if (ISVT100(tt_type_mode)) {  /* TODO: Should be ISVT420 */
+                /* DECFI - Forward Index */
+				if (wherex[VTERM] == vscrn_c_page_margin_right(VTERM) &&
+				       wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+				       wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) ) {
+					int leftcol = vscrn_c_page_margin_left(VTERM) - 1;
+					int rightcol = vscrn_c_page_margin_right(VTERM) - 1;
+					blankvcell.c = SP;
+					blankvcell.video_attr = geterasecolor(VTERM);
+					VscrnScrollLf(VTERM,						   /* VMODE */
+                               vscrn_c_page_margin_top(VTERM) - 1, /* TopRow */
+                               leftcol,							   /* LeftCol */
+                               vscrn_c_page_margin_bot(VTERM) - 1, /* BotRow */
+                               rightcol,		                  /* RightCol */
+                               1, blankvcell);				/* Columns, Cell */
+				} else if (wherex[VTERM] < VscrnGetWidth(VTERM)) {
+					cursorright(0);
 				}
               }
 	          if (cursor_on_visible_page(VTERM)) {

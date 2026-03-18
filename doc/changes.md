@@ -448,9 +448,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - VT-compatible emulations: 
    - Fixed CUU not obeying the top margin while mode DECOM is reset
    - Fixed CUD not obeying the bottom margin while mode DECOM is reset
- - Fixed DECBI only scrolling the line the cursor is on instead of the entire
-   area within the margins as it should. And also fixed it scrolling the screen
-   when the cursor is outside the margins.
+ - Fixed DECBI and DECFI only scrolling the line the cursor is on instead of the
+   entire area within the margins as it should. And also fixed DECBI and DECFI 
+   scrolling the screen when the cursor is outside the margins.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

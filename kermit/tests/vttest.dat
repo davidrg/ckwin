@@ -287,15 +287,15 @@
 11_3_2_9_disabled_enabled_reset_reset_color ?0
 11_3_2_10_disabled_enabled_reset_reset_color ?0
 11_3_2_7_disabled_enabled_reset_left_half_no_color 452E
-11_3_2_8_disabled_enabled_reset_left_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_reset_left_half_no_color !9B58  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_reset_left_half_no_color !9AA1  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_left_half_no_color 440C
+11_3_2_9_disabled_enabled_reset_left_half_no_color 9BD0
+11_3_2_10_disabled_enabled_reset_left_half_no_color 9B61
 11_3_2_7_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_reset_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_reset_right_half_no_color 452E
-11_3_2_8_disabled_enabled_reset_right_half_no_color !4A84   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_right_half_no_color 440C
 11_3_2_9_disabled_enabled_reset_right_half_no_color 9DA2
 11_3_2_10_disabled_enabled_reset_right_half_no_color !9D3D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -303,8 +303,8 @@
 11_3_2_9_disabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_reset_middle_half_no_color 452E
-11_3_2_8_disabled_enabled_reset_middle_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_reset_middle_half_no_color !9CEC   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_reset_middle_half_no_color 440C
+11_3_2_9_disabled_enabled_reset_middle_half_no_color 9D52
 11_3_2_10_disabled_enabled_reset_middle_half_no_color !9BCF   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -318,15 +318,15 @@
 11_3_2_8_disabled_enabled_top_half_reset_color !0  # TODO: Failed (screenshot taken too soon?)
 11_3_2_10_disabled_enabled_top_half_reset_color ?0
 11_3_2_7_disabled_enabled_top_half_left_half_no_color 12DE
-11_3_2_8_disabled_enabled_top_half_left_half_no_color !15D9 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_top_half_left_half_no_color !2ADC  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_top_half_left_half_no_color !1F3D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_left_half_no_color 11BC
+11_3_2_9_disabled_enabled_top_half_left_half_no_color 226E
+11_3_2_10_disabled_enabled_top_half_left_half_no_color 1F9D
 11_3_2_7_disabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_top_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_top_half_left_half_color !0  		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_top_half_right_half_no_color 12DE
-11_3_2_8_disabled_enabled_top_half_right_half_no_color !1834 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_right_half_no_color 11BC
 11_3_2_9_disabled_enabled_top_half_right_half_no_color 226E
 11_3_2_10_disabled_enabled_top_half_right_half_no_color !1F71  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -334,8 +334,8 @@
 11_3_2_9_disabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_top_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_top_half_middle_half_no_color 12DE
-11_3_2_8_disabled_enabled_top_half_middle_half_no_color !15D9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_top_half_middle_half_no_color !2ACA 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_top_half_middle_half_no_color 11BC
+11_3_2_9_disabled_enabled_top_half_middle_half_no_color 226E
 11_3_2_10_disabled_enabled_top_half_middle_half_no_color !1EFD  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -349,15 +349,15 @@
 11_3_2_9_disabled_enabled_bottom_half_reset_color !0 		# TODO: Currently broken
 11_3_2_10_disabled_enabled_bottom_half_reset_color ?0
 11_3_2_7_disabled_enabled_bottom_half_left_half_no_color F61E
-11_3_2_8_disabled_enabled_bottom_half_left_half_no_color !F919 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_bottom_half_left_half_no_color !97DB 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_bottom_half_left_half_no_color !8D4D	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_left_half_no_color F4FC
+11_3_2_9_disabled_enabled_bottom_half_left_half_no_color 8E24
+11_3_2_10_disabled_enabled_bottom_half_left_half_no_color 8DA9
 11_3_2_7_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_bottom_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_right_half_no_color F61E
-11_3_2_8_disabled_enabled_bottom_half_right_half_no_color !FB74 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_right_half_no_color F4FC
 11_3_2_9_disabled_enabled_bottom_half_right_half_no_color 8E24
 11_3_2_10_disabled_enabled_bottom_half_right_half_no_color !8D81 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -365,8 +365,8 @@
 11_3_2_9_disabled_enabled_bottom_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_bottom_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_middle_half_no_color F61E
-11_3_2_8_disabled_enabled_bottom_half_middle_half_no_color !F919 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_bottom_half_middle_half_no_color !9241 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_bottom_half_middle_half_no_color F4FC
+11_3_2_9_disabled_enabled_bottom_half_middle_half_no_color 8E24
 11_3_2_10_disabled_enabled_bottom_half_middle_half_no_color !8D11 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_bottom_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_bottom_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -381,15 +381,15 @@
 11_3_2_9_disabled_enabled_middle_half_reset_color !0 		# TODO: Currently broken
 11_3_2_10_disabled_enabled_middle_half_reset_color ?0
 11_3_2_7_disabled_enabled_middle_half_left_half_no_color 1A0E
-11_3_2_8_disabled_enabled_middle_half_left_half_no_color !1D09 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_middle_half_left_half_no_color !C830 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_disabled_enabled_middle_half_left_half_no_color !8D4D 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_left_half_no_color 18EC
+11_3_2_9_disabled_enabled_middle_half_left_half_no_color BF60
+11_3_2_10_disabled_enabled_middle_half_left_half_no_color 8DA9
 11_3_2_7_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_middle_half_left_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_right_half_no_color 1A0E
-11_3_2_8_disabled_enabled_middle_half_right_half_no_color !1F64 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_right_half_no_color 18EC
 11_3_2_9_disabled_enabled_middle_half_right_half_no_color BF60
 11_3_2_10_disabled_enabled_middle_half_right_half_no_color !8D81 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -397,8 +397,8 @@
 11_3_2_9_disabled_enabled_middle_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_disabled_enabled_middle_half_right_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_middle_half_no_color 1A0E
-11_3_2_8_disabled_enabled_middle_half_middle_half_no_color !1D09 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_disabled_enabled_middle_half_middle_half_no_color !C864 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_disabled_enabled_middle_half_middle_half_no_color 18EC
+11_3_2_9_disabled_enabled_middle_half_middle_half_no_color BF60
 11_3_2_10_disabled_enabled_middle_half_middle_half_no_color !8D11 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_disabled_enabled_middle_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_disabled_enabled_middle_half_middle_half_color !0 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -541,15 +541,15 @@
 11_3_2_9_enabled_enabled_reset_reset_color ?0
 11_3_2_10_enabled_enabled_reset_reset_color ?0
 11_3_2_7_enabled_enabled_reset_left_half_no_color 452E
-11_3_2_8_enabled_enabled_reset_left_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_reset_left_half_no_color !9B58  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_reset_left_half_no_color !9AA1  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_left_half_no_color 440C
+11_3_2_9_enabled_enabled_reset_left_half_no_color 9BD0
+11_3_2_10_enabled_enabled_reset_left_half_no_color 9B61
 11_3_2_7_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_reset_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_reset_right_half_no_color 452E
-11_3_2_8_enabled_enabled_reset_right_half_no_color !48B3  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_right_half_no_color 440C
 11_3_2_9_enabled_enabled_reset_right_half_no_color 9DA2
 11_3_2_10_enabled_enabled_reset_right_half_no_color !3A8D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -557,8 +557,8 @@
 11_3_2_9_enabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_reset_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_reset_middle_half_no_color 452E
-11_3_2_8_enabled_enabled_reset_middle_half_no_color !4829  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_reset_middle_half_no_color !EE00  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_reset_middle_half_no_color 440C
+11_3_2_9_enabled_enabled_reset_middle_half_no_color 9D52
 11_3_2_10_enabled_enabled_reset_middle_half_no_color !EBD9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_reset_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -573,15 +573,15 @@
 11_3_2_9_enabled_enabled_top_half_reset_color ?0
 11_3_2_10_enabled_enabled_top_half_reset_color ?0
 11_3_2_7_enabled_enabled_top_half_left_half_no_color 12DE
-11_3_2_8_enabled_enabled_top_half_left_half_no_color !15D9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_top_half_left_half_no_color !BD6E  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_top_half_left_half_no_color !BA9D  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_left_half_no_color 11BC
+11_3_2_9_enabled_enabled_top_half_left_half_no_color BDCE
+11_3_2_10_enabled_enabled_top_half_left_half_no_color BAFD
 11_3_2_7_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_top_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_top_half_right_half_no_color 12DE
-11_3_2_8_enabled_enabled_top_half_right_half_no_color !1663  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_right_half_no_color 11BC
 11_3_2_9_enabled_enabled_top_half_right_half_no_color BDCE
 11_3_2_10_enabled_enabled_top_half_right_half_no_color !0EB5  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -589,8 +589,8 @@
 11_3_2_9_enabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_top_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_top_half_middle_half_no_color 12DE
-11_3_2_8_enabled_enabled_top_half_middle_half_no_color !15D9  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_top_half_middle_half_no_color !E88E  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_top_half_middle_half_no_color 11BC
+11_3_2_9_enabled_enabled_top_half_middle_half_no_color BDCE
 11_3_2_10_enabled_enabled_top_half_middle_half_no_color !E5BD  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_top_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -605,15 +605,15 @@
 11_3_2_9_enabled_enabled_bottom_half_reset_color ?0
 11_3_2_10_enabled_enabled_bottom_half_reset_color ?0
 11_3_2_7_enabled_enabled_bottom_half_left_half_no_color F61E
-11_3_2_8_enabled_enabled_bottom_half_left_half_no_color !F919  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_bottom_half_left_half_no_color !8DC8  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_bottom_half_left_half_no_color !8D4D 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_left_half_no_color F4FC
+11_3_2_9_enabled_enabled_bottom_half_left_half_no_color 8E24
+11_3_2_10_enabled_enabled_bottom_half_left_half_no_color 8DA9
 11_3_2_7_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_bottom_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_bottom_half_right_half_no_color F61E
-11_3_2_8_enabled_enabled_bottom_half_right_half_no_color !F9A3 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_right_half_no_color F4FC
 11_3_2_9_enabled_enabled_bottom_half_right_half_no_color 8E24
 11_3_2_10_enabled_enabled_bottom_half_right_half_no_color !E867	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_bottom_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -621,8 +621,8 @@
 11_3_2_9_enabled_enabled_bottom_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_bottom_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_bottom_half_middle_half_no_color F61E
-11_3_2_8_enabled_enabled_bottom_half_middle_half_no_color !F919 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_bottom_half_middle_half_no_color !BC80  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_bottom_half_middle_half_no_color F4FC
+11_3_2_9_enabled_enabled_bottom_half_middle_half_no_color 8E24
 11_3_2_10_enabled_enabled_bottom_half_middle_half_no_color !BC05  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_bottom_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_bottom_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -637,15 +637,15 @@
 11_3_2_9_enabled_enabled_middle_half_reset_color ?0
 11_3_2_10_enabled_enabled_middle_half_reset_color ?0
 11_3_2_7_enabled_enabled_middle_half_left_half_no_color 1A0E
-11_3_2_8_enabled_enabled_middle_half_left_half_no_color !1D09  	    # DECLRMM not implemented by K95  - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_middle_half_left_half_no_color !BF04   	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_10_enabled_enabled_middle_half_left_half_no_color !8D4D	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_left_half_no_color 18EC
+11_3_2_9_enabled_enabled_middle_half_left_half_no_color BF60
+11_3_2_10_enabled_enabled_middle_half_left_half_no_color 8DA9
 11_3_2_7_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_9_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_middle_half_left_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_middle_half_right_half_no_color 1A0E
-11_3_2_8_enabled_enabled_middle_half_right_half_no_color !1D93 	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_right_half_no_color 18EC
 11_3_2_9_enabled_enabled_middle_half_right_half_no_color BF60
 11_3_2_10_enabled_enabled_middle_half_right_half_no_color !E867	    # DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_middle_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -653,8 +653,8 @@
 11_3_2_9_enabled_enabled_middle_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_10_enabled_enabled_middle_half_right_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_middle_half_middle_half_no_color 1A0E
-11_3_2_8_enabled_enabled_middle_half_middle_half_no_color !1D09  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_2_9_enabled_enabled_middle_half_middle_half_no_color !EDBC  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_2_8_enabled_enabled_middle_half_middle_half_no_color 18EC
+11_3_2_9_enabled_enabled_middle_half_middle_half_no_color BF60
 11_3_2_10_enabled_enabled_middle_half_middle_half_no_color !BC05  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_7_enabled_enabled_middle_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
 11_3_2_8_enabled_enabled_middle_half_middle_half_color !0  	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
@@ -1674,7 +1674,7 @@
 11_4_2_7_disabled_enabled_reset_left_half_no_color 3767
 11_4_2_8_disabled_enabled_reset_left_half_no_color 240E
 11_4_2_9_disabled_enabled_reset_left_half_no_color 384B
-11_4_2_10_disabled_enabled_reset_left_half_no_color !30F7  # Lines with * or + should pass right margin
+11_4_2_10_disabled_enabled_reset_left_half_no_color !30F7  # Lines with * or + should not pass right margin
 11_4_2_11_disabled_enabled_reset_left_half_no_color 36BC
 11_4_2_12_disabled_enabled_reset_left_half_no_color 395E
 11_4_2_13_disabled_enabled_reset_left_half_no_color 472E
@@ -1878,7 +1878,7 @@
 11_4_2_13_enabled_disabled_top_half_middle_half_no_color !6BFD  # Lines should be numbered 1...11,19 down to the bottom margin
 11_4_2_14_enabled_disabled_top_half_middle_half_no_color !65EE  # Lines should be numbered 1,14...23 down to one line above the bottom margin
 11_4_2_15_enabled_disabled_top_half_middle_half_no_color 549B
-11_4_2_7_enabled_disabled_bottom_half_reset_no_color 4774
+11_4_2_7_enabled_disabled_bottom_half_reset_no_color 2174
 11_4_2_8_enabled_disabled_bottom_half_reset_no_color 1857
 11_4_2_9_enabled_disabled_bottom_half_reset_no_color 2258
 11_4_2_10_enabled_disabled_bottom_half_reset_no_color 168A

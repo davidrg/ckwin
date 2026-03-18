@@ -6808,7 +6808,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> a</ctlseq>
             <p>
                 Horizontal Position Relative - moves active position
-                <param-single/> characters to the right. Clears the <a href="#lcf">Last Column Flag</a>.
+                <param-single/> characters to the right clearing the
+                <a href="#lcf">Last Column Flag</a>. Only obeys the right margin
+                if <a href="#decom">DECOM</a> is set. When the cursor hits the
+                right margin (DECOM set) or right edge of the screen (DECOM
+                reset) the cursor stops and does not wrap.
             </p>
         </section>
         <section role="ctlseq" mnemonic="TALE" title="Tabulation Aligned Leading Edge"
