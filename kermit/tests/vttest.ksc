@@ -31,7 +31,8 @@
 #  - SAVE TERMINAL SCREEN /FORMAT:TEXT should probably save as unicode
 #  - Compute a hash of the text output and store that alongside the checksum, as
 #    the terminal checksum only tells us *what* characters are on the screen but
-#    tells us nothing about their order.
+#    tells us nothing about their order - this has resulted in a few failing
+#    tests being marked as a pass already.
 #  - The various tests that loop through a bunch of margin combinations aren't
 #	 getting enough time to render the menus properly either.
 #  - more outputs: separate pages for passing/failing/unknown results in
@@ -444,13 +445,14 @@ def choose_submenu_option {
 	}
 }
 
-# Fetches the checksum for a test
+# Fetches the checksum for a test, reading the file internally
 # Parameters:
 #	1 - Test ID
 # Returns:
 # 	Passing checksum via \%v
+#   Comments via \%n
 #
-def get_test_checksum {
+def get_test_checksum_int {
 	local pass_checksum line n test
 	.pass_checksum := ""
 	
@@ -501,6 +503,31 @@ def get_test_checksum {
 	return
 }
 
+# Fetches the checksum for a test, reading the file using rexx which is a little
+# faster and more reliable than doing it strictly in kermit script.
+# Parameters:
+#	1 - Test ID
+# Returns:
+# 	Passing checksum via \%v
+#   Comments via \%n
+#
+def get_test_checksum_rexx {
+    .%v := ""
+	.%n := ""
+    rexx call vttest_lookup \%1
+}
+
+# Fetches the checksum for a test
+# Parameters:
+#	1 - Test ID
+# Returns:
+# 	Passing checksum via \%v
+#   Comments via \%n
+#
+def get_test_checksum {
+    if rexx get_test_checksum_rexx \%1
+    else get_test_checksum_int \%1
+}
 
 # Records a test result to the HTML file. Assumes the test has already been
 # completed and is ready for screenshotting, etc.
@@ -637,7 +664,7 @@ def add_test_result {
 	} else if ( equal \m(result) 0 ) {
         # Unknown/unevaluated result
         fwrite /line \%l {\m(checksum_id)\{9}UNKNOWN\{9}\{9}\%1.\m(image_format)\{9}\m(comment)}
-        putout {		<td bgcolor="khaki" title="\m(note)">}
+        putout {		<td bgcolor="khaki" title="\m(note)">Unknown or Unevaluated}
         .%u ::= \%u + 1
 	} else {
 	    # Failure result.
