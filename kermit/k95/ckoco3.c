@@ -8788,7 +8788,7 @@ home_cursor(int vmode)
          * its status line, and it only has the one status line so no DECSTBM
          * too, meaning that on the status line home is always 1,1.
          */
-        lgotoxy( VSTATUS, 1, 1 );
+        lgotoxy( decsasd == SASD_STATUS ? VSTATUS : VTERM, 1, 1 );
     }
     else  /* relcursor */
     {
