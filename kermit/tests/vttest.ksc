@@ -351,7 +351,7 @@ def screen_contains_string {
 	local \%i \%l
 
 	; First check if its already on screen
-	for \%i 1 25 1 {
+	for \%i 0 25 1 {
 		if > \findex({\%1},\fscrnstr(\%i,0,80)) 0 {
 			; Found it on the screen already - no need to wait.
 			return 1
@@ -360,7 +360,7 @@ def screen_contains_string {
 	
 	#echo \nString [\%1] not found in the following screen:
 	#echo {-----------------------------------------------}
-	#for \%i 1 25 1 {
+	#for \%i 0 25 1 {
 	#	echo \fscrnstr(\%i,0,80)
 	#}
 	#echo {-----------------------------------------------}
@@ -2338,27 +2338,27 @@ def test_11_3_3_v420_es_tests {
 	putout {		<td colspan="2"> Menu 11.3.3: \fjoin(&a[2:\%s],-) - Settings: DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5</td>}
 	putout {	</tr>}
 
-	choose_multi_test_option 9 "11.3.3.9.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete column (DECIC, DECDC) 1/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "are on column" 1
-	do_test "11.3.3.9.2-\%1-\%2-\%3-\%4-\%5" "Test insert/delete column (DECIC, DECDC) 2/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "column" 1
+	choose_multi_test_option 9 "11.3.3.9.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete column (DECIC, DECDC) 1/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
+	do_test "11.3.3.9.2-\%1-\%2-\%3-\%4-\%5" "Test insert/delete column (DECIC, DECDC) 2/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 	wait_for_menu_prompt
 	
-	choose_multi_test_option 10 "11.3.3.10.1-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	choose_multi_test_option 10 "11.3.3.10.1-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 	do_test "11.3.3.10.2-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at top."
-	do_test "11.3.3.10.3-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	do_test "11.3.3.10.3-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 	do_test "11.3.3.10.4-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at bottom."
 	wait_for_menu_prompt
 	
-	choose_multi_test_option 11 "11.3.3.11.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	choose_multi_test_option 11 "11.3.3.11.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 	do_test "11.3.3.11.2-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at bottom."
-	do_test "11.3.3.11.3-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	do_test "11.3.3.11.3-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 	do_test "11.3.3.11.4-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at top."
 	wait_for_menu_prompt
 	
-	choose_multi_test_option 12 "11.3.3.12.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete char (ICH, DCH) (1/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "column" 1
+	choose_multi_test_option 12 "11.3.3.12.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete char (ICH, DCH) (1/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 	do_test "11.3.3.12.2-\%1-\%2-\%3-\%4-\%5" "Test insert/delete char (ICH, DCH) (2/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "column"
 	wait_for_menu_prompt
 	
-	choose_single_test_option 13 "11.3.3.13-\%1-\%2-\%3-\%4-\%5" "Test ASCII formatting (BS, CR, TAB) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "margins"
+	choose_single_test_option 13 "11.3.3.13-\%1-\%2-\%3-\%4-\%5" "Test ASCII formatting (BS, CR, TAB) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 }
 
 def test_11_3_3_v420_editing_sequences {
