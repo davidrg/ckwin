@@ -2354,8 +2354,7 @@ DECTSR		462
             <ref src="vt52x:110"/>
             <ref src="vt52x:336"/>
             <termsupp first="vt100" series="vt" additional="vt330 vt340 putty tt dtterm wt"/>
-            <p>Horizontal Tab—sends the cursor to the next tabstop. Clears the
-                <a href="#lcf">Last Column Flag</a>.</p>
+            <p>Horizontal Tab—sends the cursor to the next tabstop. </p>
         </section>
         <section id="vt" role="ctlchar" mnemonic="VT" ctlseq="VT" title="Vertical Tab">
             <ref src="e48:88"/>
@@ -5224,7 +5223,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:127"/>
             <termsupp first="vt510" series="vt" additional="tt wt"/>
             <ctlseq>CSI <param-single/> I</ctlseq>
-            <p>Cursor Horizontal Tab <param-single/> tab stops. Clears the <a href="#lcf">Last Column Flag</a>.</p>
+            <p>Moves the cursor forward <param-single/> (default = 1) tab stops.
+                This is equivalent to sending the specified number of
+                <a href="#tab">HT (TAB)</a> characters.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="SSU" title="Select Size Unit"
                  not-implemented="true" todo="true">

@@ -5788,10 +5788,11 @@ cursorrightex(int wrap, int obey_margins) {
         int margin_right = VscrnGetWidth(VTERM);
 
         /* Only obey the right margin if we're told to, and if the cursor is
-         * within the vertical scrol region */
+         * within the vertical scroll region */
         if (obey_margins &&
             (wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
-             wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM)) )
+             wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) &&
+             wherex[VTERM] <= vscrn_c_page_margin_right(VTERM)) )
         {
             margin_right = vscrn_c_page_margin_right(VTERM);
         }
@@ -5827,6 +5828,31 @@ void
 cursorright(int wrap)
 {
     cursorrightex(wrap, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* CursorTab  -                                                       */
+/* ------------------------------------------------------------------ */
+/* Moves the cursor one or more tab stops to the right. Used for both
+ * HT (one tab stop) or, on the VT520, CHT (one or more tab stops).   */
+void
+cursortab(int count)
+{
+    int i = wherex[VTERM];
+    while ( count ) {
+        if (i < cursor_right_margin(VTERM))
+        {
+            do {
+                i++;
+                cursorright(0);
+            } while ((htab[i] != 'T') &&
+                      (i <= cursor_right_margin(VTERM)-1));
+        }
+        count--;
+    }
+    if (cursor_on_visible_page(VTERM)) {
+        VscrnIsDirty(VTERM);
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -8799,6 +8825,60 @@ home_cursor(int vmode)
             vscrn_c_page_margin_top(VTERM));
     }
 }
+
+/* Returns the right margin that is currently in effect given the cursors
+ * current location.
+ *
+ * For DEC terminals this depends on if the cursor is within the scroll region
+ * or not and, for models supporting left and right margins, if it is already
+ * past the right margin or not.
+ *
+ * Double-width lines are also taken into account.
+ */
+int
+cursor_right_margin(int vmode)
+{
+    /* Normally the right margin is the right edge of the screen */
+    int rmargin = VscrnGetWidth(vmode);
+
+    /* Double-width lines halve the length of the line. As double-width lines
+     * are cleared and disabled on entering DECLRMM, if we encounter one then
+     * we know that DECLRMM is disabled so no need to go any further. */
+    if (isdoublewidth(wherey[vmode])) return rmargin / 2;
+
+    /* But if we're within the scroll region on a terminal that supports setting
+     * the right margin, then its the set right margin. For all terminals that
+     * *don't* support setting the right margin, the right margin will always be
+     * set to the right edge of the screen so no need to check term type.
+     */
+    if (wherey[vmode] >= vscrn_c_page_margin_top(vmode) &&
+        wherey[vmode] <= vscrn_c_page_margin_bot(vmode) &&
+        wherex[vmode] <= vscrn_c_page_margin_right(vmode)) {
+        rmargin = vscrn_c_page_margin_right(vmode);
+    }
+
+    return rmargin;
+}
+
+/* Returns the left margin that is currently in effect given the cursors
+ * current location.
+ *
+ * For DEC terminals this depends on if the cursor is within
+ * the scroll region or not.
+ */
+int
+cursor_left_margin(int vmode)
+{
+    if (relcursor ||
+        wherey[vmode] >= vscrn_c_page_margin_top(vmode) &&
+        wherey[vmode] <= vscrn_c_page_margin_bot(vmode) &&
+        wherex[vmode] > vscrn_c_page_margin_left(vmode)) {
+        return vscrn_c_page_margin_left(vmode);
+    }
+
+    return 1;
+}
+
 void
 savecurpos(int vmode, int x) {          /* x: 0 = cursor X/Y only, 1 = all */
     int i ;
@@ -16652,6 +16732,7 @@ wrtch(unsigned short ch) {
         }
         else    /* We are in character attribute mode */
         {
+            int rmargin = cursor_right_margin(vmode);
             cell.c = ch;
             cell.video_attr = attribute;
 
@@ -16672,7 +16753,7 @@ wrtch(unsigned short ch) {
                     if ( !vta.unerasable )  /* MSVC 5.0 bug */
                         break;
                     if ( ++wherex[vmode] > width ) {
-                        if ( ++wherey[vmode] >= vscrn_c_page_margin_bot(VTERM) ) {
+                        if ( ++wherey[vmode] >= vscrn_c_page_margin_bot(vmode) ) {
                             wherex[vmode]-- ;
                             wherey[vmode]-- ;
                             return ;    /* Can't write this character */
@@ -16686,7 +16767,7 @@ wrtch(unsigned short ch) {
 
             if (insertmode) {
                 VscrnScrollRt(vmode, wherey[vmode] - 1,
-                               wherex[vmode] - 1, wherey[VTERM] - 1,
+                               wherex[vmode] - 1, wherey[vmode] - 1,
                                VscrnGetWidth(vmode) - 1, 1, cell);
                 /* VscrnScrollRt() doesn't apply the current attribute */
                 VscrnWrtCell(vmode, cell, attrib,
@@ -16700,20 +16781,20 @@ wrtch(unsigned short ch) {
 
             literal_ch = FALSE;
             /* don't wrap if autowrap is off */
-            if ( tt_wrap || wherex[vmode] < VscrnGetWidth(vmode) ) {
-                if (++wherex[vmode] > VscrnGetWidth(vmode) && decsasd == SASD_TERMINAL) {
+            if (tt_wrap || wherex[vmode] < rmargin ) {
+                if (++wherex[vmode] > rmargin && decsasd == SASD_TERMINAL) {
                     if ( IS97801(tt_type_mode) ) {
                         if ( !sni_pagemode ) {
                             wherex[vmode] = 1;
                             wrtch((char) LF);
                         }
                         else {  /* Page Mode */
-                            lgotoxy(VTERM,1,vscrn_c_page_margin_top(VTERM));
+                            lgotoxy(VTERM,1,vscrn_c_page_margin_top(vmode));
                         }
 
                     }
                     else if ( autoscroll && !protect || wherey[vmode] < vscrn_c_page_margin_bot(VTERM) ) {
-                        wherex[vmode] = 1;
+                        wherex[vmode] = cursor_left_margin(vmode);
                         wrtch((char) LF);
                     }
                 }
@@ -16760,9 +16841,9 @@ wrtch(unsigned short ch) {
         case CK_CR:
             if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) &&
                  vmode == VTERM )
-                wherex[vmode] = vscrn_c_page_margin_left(vmode);
+                wherex[vmode] = cursor_left_margin(vmode);
             else
-                wherex[vmode] = 1;
+                wherex[vmode] = cursor_left_margin(vmode);
             if ( !(ISANSI(tt_type_mode) || ISHFT(tt_type_mode)) )
                 wrapit = FALSE;
             break;
@@ -20186,23 +20267,9 @@ vtcsi(void)
                 }
                 else {
                     /* CHT - Cursor Horizontal Tab */
-                    if ( k < 1 )
+                    if ( k < 1 || pn[1] < 1)
                         pn[1] = 1;
-                    i = wherex[VTERM];
-                    while ( pn[1] ) {
-                        if (i < VscrnGetWidth(VTERM))
-                        {
-                            do {
-                                i++;
-                                cursorright(0);
-                            } while ((htab[i] != 'T') &&
-                                      (i <= VscrnGetWidth(VTERM)-1));
-                        }
-                        pn[1]--;
-                    }
-                    if (cursor_on_visible_page(VTERM)) {
-                        VscrnIsDirty(VTERM);
-                    }
+                    cursortab(pn[1]);
                 }
                 break;
             case 'g':
@@ -26935,18 +27002,7 @@ vt100(unsigned short vtch) {
                  sendchars(answerback,strlen(answerback)) ;
              break;
          case HT:               /* Horizontal tab */
-             i = wherex[vmode];
-             if (i < VscrnGetWidth(vmode))
-             {
-                 do {
-                     i++;
-                     cursorright(0);
-                  } while ((htab[i] != 'T') &&
-                            (i <= VscrnGetWidth(vmode)-1));
-                 if (cursor_on_visible_page(VTERM)) {
-                     VscrnIsDirty(VTERM);
-                 }
-             }
+             cursortab(1);
              break;
          case SYN:      /* Ctrl-V - AVATAR AVTCODE */
              if ( ISAVATAR(tt_type_mode) )
@@ -26973,6 +27029,8 @@ vt100(unsigned short vtch) {
             /* End of Control Character */
       } else {
          if (vtch != DEL) {             /* Normal character. */
+            int rmargin = cursor_right_margin(vmode);
+
             if (ISVT100(tt_type_mode)) {
                 if ( vtch == 35 &&
                      GNOW->designation == TX_BRITISH &&
@@ -26995,9 +27053,7 @@ vt100(unsigned short vtch) {
             }
 
             /* On the right margin? */
-            if (wherex[vmode] != (isdoublewidth(wherey[vmode]) ?
-                                   VscrnGetWidth(vmode)/2 :
-                                   VscrnGetWidth(vmode)))
+            if (wherex[vmode] != rmargin)
             {
                 wrtch(vtch);    /* Not on right margin */
                 wrapit = FALSE;
@@ -27017,12 +27073,7 @@ vt100(unsigned short vtch) {
                 } else {                /* Not time to wrap */
                     cell.c = vtch;
                     cell.video_attr = attribute ;
-                    if (isdoublewidth(wherey[vmode]))
-                        VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1,
-                                      VscrnGetWidth(vmode)/2-1);
-                    else
-                        VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1,
-                                      VscrnGetWidth(vmode)-1) ;
+                    VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1, rmargin-1);
                     if (cursor_on_visible_page(VTERM)) {
                         VscrnIsDirty(VTERM);
                     }

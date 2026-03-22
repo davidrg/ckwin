@@ -451,6 +451,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed DECBI and DECFI only scrolling the line the cursor is on instead of the
    entire area within the margins as it should. And also fixed DECBI and DECFI 
    scrolling the screen when the cursor is outside the margins.
+ - Fixed CHT being ignored if a zero was passed as the parameter
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
