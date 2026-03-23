@@ -20053,6 +20053,7 @@ vtcsi(void)
             case 'd':
                 /* VPA - Vertical Position Absolute */
                 /* moves active position to row pn[1] */
+                if (relcursor) pn[1] += vscrn_c_page_margin_top(VTERM) - 1;
                 if ( decsasd == SASD_TERMINAL )
                     lgotoxy( VTERM, wherex[VTERM], pn[1] ) ;
                 break;
