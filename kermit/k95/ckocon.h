@@ -1520,14 +1520,12 @@ _PROTOTYP( ULONG VscrnGetPageBegin, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetBegin, ( BYTE, BOOL, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetPageEnd, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetEnd, ( BYTE, BOOL, BOOL ) ) ;
-_PROTOTYP( LONG VscrnSetPageTop, ( BYTE, LONG, BOOL, int ) ) ;
+_PROTOTYP( LONG VscrnSetPageTop, ( BYTE, LONG, BOOL, int, BOOL ) ) ;
 _PROTOTYP( LONG VscrnSetTop, ( BYTE, LONG, BOOL, BOOL ) ) ;
 _PROTOTYP( LONG VscrnSetScrollTop, ( BYTE, LONG ) ) ;
 /*_PROTOTYP( LONG VscrnSetScrollHorz, ( BYTE, LONG ) ) ;*/
 _PROTOTYP( LONG VscrnSetPageBegin, ( BYTE, LONG, int ) ) ;
-_PROTOTYP( LONG VscrnSetBegin, ( BYTE, LONG, BOOL ) ) ;
 _PROTOTYP( LONG VscrnSetPageEnd, ( BYTE, LONG, int ) ) ;
-_PROTOTYP( LONG VscrnSetEnd, ( BYTE, LONG, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetPageBufferSize, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetBufferSize, ( BYTE, BOOL, BOOL ) ) ;
 _PROTOTYP( VOID VscrnSetWidth, ( BYTE, int ) ) ;
