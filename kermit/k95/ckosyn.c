@@ -73,7 +73,9 @@ UINT htimVscrn[VNUM] = {(UINT) 0, (UINT) 0, (UINT) 0} ;
 
 HANDLE hevVscrnTimer[VNUM] = { (HANDLE) 0, (HANDLE) 0,(HANDLE) 0 } ;
 
+#ifndef KUIDIRTY
 HANDLE hevVscrnDirty[VNUM] = { (HANDLE) 0, (HANDLE) 0,(HANDLE) 0 } ;
+#endif /* KUIDIRTY */
 
 #ifndef KUI
 HANDLE hevVscrnUpdate[VNUM][2] = {{(HANDLE) NULL, (HANDLE) NULL},
@@ -159,7 +161,9 @@ HEV  hevTermScrnUpdThreadDown = (HEV) 0 ;
 HEV  hevKeyMapInit = (HEV) 0 ;
 HEV  hevKbdThread = (HEV) 0 ;
 HEV  hevVscrnTimer[VNUM] = { (HEV) 0, (HEV) 0, (HEV) 0 } ;
+#ifndef KUIDIRTY
 HEV  hevVscrnDirty[VNUM] = { (HEV) 0, (HEV) 0, (HEV) 0 } ;
+#endif /* KUIDIRTY */
 HEV  hevCtrlC[4]   = { (HEV) 0,(HEV) 0,(HEV) 0,(HEV) 0 } ;
 HEV  hevAlarmSig[4] = { (HEV) 0,(HEV) 0,(HEV) 0,(HEV) 0 } ;
 
@@ -529,6 +533,7 @@ CreateVscrnDirtyMutex( BOOL owned )
    return 0;
 }
 
+#ifdef OLDDIRTY
 APIRET
 RequestVscrnDirtyMutex( int vmode, ULONG timo )
 {
@@ -575,7 +580,7 @@ CloseVscrnDirtyMutex( void )
    }
    return 0;
 }
-
+#endif /* OLDDIRTY */
 
 APIRET
 CreateConnectModeMutex( BOOL owned )
@@ -1985,6 +1990,7 @@ CloseVscrnTimerSem( void )
    return 0;
 }
 
+#ifndef KUIDIRTY
 APIRET
 CreateVscrnDirtySem( BOOL posted )
 {
@@ -2107,6 +2113,7 @@ CloseVscrnDirtySem( void )
    }
    return 0;
 }
+#endif /* KUIDIRTY */
 
 #ifndef KUI
 APIRET

@@ -1780,6 +1780,14 @@ VscrnIsDirty( int vmode )
     extern int k95stdout;
     if ( k95stdout )
         return 0;
+#ifdef KUIDIRTY
+   /* Just having a number that constantly changes is a bit cheaper than
+    * semaphores. KUI is on a different thread, so it just needs to check if the
+    * number has changed since last it checked to know if its dirty. KUI never
+    * waited on the semaphore, so there wasn't much value in the extra overhead
+    * it has. */
+   vscrn[vmode].dirty++;
+#else /* KUIDIRTY */
 #ifdef OLDDIRTY
    RequestVscrnDirtyMutex( vmode, SEM_INDEFINITE_WAIT );
    if ( !isdirty[vmode] )
@@ -1790,11 +1798,13 @@ VscrnIsDirty( int vmode )
    ReleaseVscrnDirtyMutex(vmode);
 #else
     rc = PostVscrnDirtySem(vmode) ;
-#endif 
+#endif
+#endif /* KUIDIRTY */
    return rc ;
 }
 
 
+#ifndef KUIDIRTY
 APIRET
 IsVscrnDirty( int vmode )
 {
@@ -1824,9 +1834,11 @@ VscrnClean( int vmode )
 #else
     rc = IsVscrnDirty(vmode);
     ResetVscrnDirtySem(vmode);
-#endif 
+#endif
     return rc ;
 }
+#endif /* KUIDIRTY */
+
 /*----------------------------------------------------------+----------------*/
 /* VscrnScrollLf                                            | Page: Cursor   */
 /*----------------------------------------------------------+----------------*/

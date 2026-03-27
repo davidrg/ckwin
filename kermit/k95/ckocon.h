@@ -1316,6 +1316,9 @@ typedef struct vscrn_struct {
     int           display_height;
     BOOL          page_cursor_coupling;
     BOOL          allow_alt_buf; /* Allow switching to alternate buffer? */
+#ifdef KUIDIRTY
+	int           dirty;
+#endif /* KUI */
 } vscrn_t;
 
 /* Multiple Page support

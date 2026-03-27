@@ -52,7 +52,6 @@ int tt_old_update;
 extern int tt_sync_output;  /* ckoco3.c */
 extern int tt_sync_output_timeout;
 
-extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
 extern DWORD VscrnIsDirty( int );
 
@@ -62,6 +61,29 @@ extern cell_video_attr_t  colorcursor;  /* ckoco3.c */
 #ifdef CK_COLORS_DEBUG
 extern ULONG RGBTable256[256];
 #endif /* CK_COLORS_DEBUG */
+
+#ifndef KUIDIRTY
+extern DWORD VscrnClean( int vmode );
+#else /* KUIDIRTY */
+static int vscrn_dirty[VNUM] = {-1, -1, -1, -1};
+
+DWORD VscrnClean(int vmode) {
+	// This value changes each time the vscrn is marked as dirty
+	int newval = vscrn[vmode].dirty;
+
+	// If the value is different from the last time we saw it, then the
+	// contents of the vscrn has probably changed.
+	DWORD dirty = 0;
+	if (newval != vscrn_dirty[vmode]) {
+		dirty = 1;
+	}
+
+	// Make a note of the new value so we can tell if it changes later.
+	vscrn_dirty[vmode] = newval;
+
+	return dirty;
+}
+#endif /* KUIDIRTY */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
