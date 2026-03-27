@@ -18,6 +18,12 @@
 #include "ckuusr.h"             /* needed for Priority definitions */
 #include <signal.h>
 
+#ifndef NT
+#ifdef CK_CRITICAL_SECTIONS
+#undef CK_CRITICAL_SECTIONS
+#endif /* CK_CRITICAL_SECTIONS */
+#endif /* !NT */
+
 #ifdef NT
 #include <windows.h>
 #ifdef CK_TAPI
@@ -29,8 +35,10 @@
 #include "ckocon.h"
 
 HANDLE hmtxKeyStroke[VNUM] = {(HANDLE) 0,(HANDLE) 0,(HANDLE) 0}  ;
+#ifndef CK_CRITICAL_SECTIONS
 HANDLE hmtxLocalEcho = (HANDLE) 0 ;
 HANDLE hmtxTCPIP = (HANDLE) 0 ;
+#endif /* CK_CRITICAL_SECTIONS */
 HANDLE hmtxComm = (HANDLE) 0;
 #ifdef NETCMD
 HANDLE hmtxNetCmd = (HANDLE) 0 ;
@@ -39,7 +47,9 @@ HANDLE hmtxKeyboard  = (HANDLE) 0 ;
 HANDLE hmtxAlarm = (HANDLE) 0 ;
 HANDLE hmtxScreen = (HANDLE) 0 ;
 HANDLE hmtxVscrn[VNUM] = { (HANDLE) 0,(HANDLE) 0, (HANDLE) 0} ;
+#ifdef OLDDIRTY
 HANDLE hmtxVscrnDirty[VNUM] = { (HANDLE) 0, (HANDLE) 0, (HANDLE) 0 } ;
+#endif /* OLDDIRTY */
 HANDLE hmtxConnectMode = (HANDLE) 0 ;
 HANDLE hmtxDebug = (HANDLE) 0;
 HANDLE hmtxTelnet = (HANDLE) 0;
@@ -189,6 +199,10 @@ int CtrlCCount = -1 ;
 int AlarmSigCount = -1 ;
 #define MAXALARMSIG 3
 
+#ifdef CK_CRITICAL_SECTIONS
+CRITICAL_SECTION csTCPIP ;
+CRITICAL_SECTION csLocalEcho ;
+#endif /* CK_CRITICAL_SECTIONS */
 
 /* Semaphore functions */
 
@@ -506,6 +520,7 @@ CloseVscrnMutex( void )
    return 0;
 }
 
+#ifdef OLDDIRTY
 APIRET
 CreateVscrnDirtyMutex( BOOL owned )
 {
@@ -533,7 +548,7 @@ CreateVscrnDirtyMutex( BOOL owned )
    return 0;
 }
 
-#ifdef OLDDIRTY
+
 APIRET
 RequestVscrnDirtyMutex( int vmode, ULONG timo )
 {
@@ -3409,6 +3424,10 @@ CloseRichEditMutex( void )
 APIRET
 CreateLocalEchoMutex( BOOL owned )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    InitializeCriticalSection(&csLocalEcho);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
     if ( hmtxLocalEcho )
 #ifdef NT
         CloseHandle( hmtxLocalEcho ) ;
@@ -3420,11 +3439,16 @@ CreateLocalEchoMutex( BOOL owned )
     DosCreateMutexSem( NULL, &hmtxLocalEcho, 0, owned ) ;
 #endif /* NT */
     return 0;
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 RequestLocalEchoMutex( ULONG timo )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    EnterCriticalSection(&csLocalEcho);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     DWORD rc = 0 ;
 
@@ -3433,11 +3457,16 @@ RequestLocalEchoMutex( ULONG timo )
 #else /* not NT */
     return DosRequestMutexSem( hmtxLocalEcho, timo ) ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 ReleaseLocalEchoMutex( void )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    LeaveCriticalSection(&csLocalEcho);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     BOOL rc = 0 ;
 
@@ -3446,11 +3475,16 @@ ReleaseLocalEchoMutex( void )
 #else /* not NT */
     return DosReleaseMutexSem( hmtxLocalEcho ) ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 CloseLocalEchoMutex( void )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    DeleteCriticalSection(&csLocalEcho);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     BOOL rc = 0 ;
     rc = CloseHandle( hmtxLocalEcho ) ;
@@ -3462,6 +3496,7 @@ CloseLocalEchoMutex( void )
     hmtxLocalEcho = 0 ;
     return rc ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 
@@ -3723,6 +3758,10 @@ CloseNetCmdAvailSem( void )
 APIRET
 CreateTCPIPMutex( BOOL owned )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    InitializeCriticalSection(&csTCPIP);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
     if ( hmtxTCPIP )
 #ifdef NT
         CloseHandle( hmtxTCPIP ) ;
@@ -3734,11 +3773,16 @@ CreateTCPIPMutex( BOOL owned )
     DosCreateMutexSem( NULL, &hmtxTCPIP, 0, owned ) ;
 #endif /* NT */
     return 0;
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 RequestTCPIPMutex( ULONG timo )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    EnterCriticalSection(&csTCPIP);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     DWORD rc = 0 ;
 
@@ -3747,11 +3791,16 @@ RequestTCPIPMutex( ULONG timo )
 #else /* not NT */
     return DosRequestMutexSem( hmtxTCPIP, timo ) ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 ReleaseTCPIPMutex( void )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    LeaveCriticalSection(&csTCPIP);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     BOOL rc = 0 ;
 
@@ -3760,11 +3809,16 @@ ReleaseTCPIPMutex( void )
 #else /* not NT */
     return DosReleaseMutexSem( hmtxTCPIP ) ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 CloseTCPIPMutex( void )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    DeleteCriticalSection(&csTCPIP);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     BOOL rc = 0 ;
     rc = CloseHandle( hmtxTCPIP ) ;
@@ -3776,6 +3830,7 @@ CloseTCPIPMutex( void )
     hmtxTCPIP = 0 ;
     return rc ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
