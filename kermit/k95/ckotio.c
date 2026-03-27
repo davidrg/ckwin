@@ -4400,6 +4400,10 @@ le_inbuf( void ) {
     return rc ;
 }
 
+int le_hasdata() {
+	return LocalEchoData;
+}
+
 int
 le_putstr( CHAR * s )
 {
