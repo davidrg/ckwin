@@ -1860,7 +1860,11 @@ DECTSR		462
             <ref src="vt52x:345"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <!-- 0x85 -->
-            <p>Next Line. Clears the <a href="#lcf">Last Column Flag</a>.</p>
+            <p>Move the cursor to the left margin on the next line, or to screen
+                left if the cursor is outside the margins. If the cursor is
+                within the margins and on the bottom margin, the scrollable
+                region scrolls up one line and the cursor remains on the bottom
+                margin. Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" id="ssa" ctlseq="ESC F" mnemonic="SSA" title="Start Selected Area"
                  not-implemented="true" todo="true">
@@ -5089,7 +5093,9 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:121"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> E</ctlseq>
-            <p>Cursor next line <param-single/> times (default = 1). Clears the
+            <p>Moves the cursor down <param-single/> lines (default = 1). Unlike
+                <a href="#nel">NEL</a>, when the cursor hits the bottom margin
+                the page does <em>not</em> scroll. Clears the
                 <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="TSS" title="Thin Space Specification"

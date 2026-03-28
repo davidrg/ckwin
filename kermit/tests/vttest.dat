@@ -1974,7 +1974,7 @@
 11_4_2_10_disabled_disabled_top_half_reset_no_color 4E91
 11_4_2_11_disabled_disabled_top_half_reset_no_color 5ADA
 11_4_2_12_disabled_disabled_top_half_reset_no_color 5D56
-11_4_2_13_disabled_disabled_top_half_reset_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_13_disabled_disabled_top_half_reset_no_color 67FA
 11_4_2_14_disabled_disabled_top_half_reset_no_color 65EE
 11_4_2_15_disabled_disabled_top_half_reset_no_color 5BBC
 11_4_2_7_disabled_disabled_top_half_left_half_no_color 5B85
@@ -1983,7 +1983,7 @@
 11_4_2_10_disabled_disabled_top_half_left_half_no_color 4E91
 11_4_2_11_disabled_disabled_top_half_left_half_no_color 5ADA
 11_4_2_12_disabled_disabled_top_half_left_half_no_color 5D56
-11_4_2_13_disabled_disabled_top_half_left_half_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_13_disabled_disabled_top_half_left_half_no_color 67FA
 11_4_2_14_disabled_disabled_top_half_left_half_no_color 65EE
 11_4_2_15_disabled_disabled_top_half_left_half_no_color 5BBC
 11_4_2_7_disabled_disabled_top_half_right_half_no_color 5B85
@@ -1992,7 +1992,7 @@
 11_4_2_10_disabled_disabled_top_half_right_half_no_color 4E91
 11_4_2_11_disabled_disabled_top_half_right_half_no_color 5ADA
 11_4_2_12_disabled_disabled_top_half_right_half_no_color 5D56
-11_4_2_13_disabled_disabled_top_half_right_half_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_13_disabled_disabled_top_half_right_half_no_color 67FA
 11_4_2_14_disabled_disabled_top_half_right_half_no_color 65EE
 11_4_2_15_disabled_disabled_top_half_right_half_no_color 5BBC
 11_4_2_7_disabled_disabled_top_half_middle_half_no_color 5B85
@@ -2001,7 +2001,7 @@
 11_4_2_10_disabled_disabled_top_half_middle_half_no_color 4E91
 11_4_2_11_disabled_disabled_top_half_middle_half_no_color 5ADA
 11_4_2_12_disabled_disabled_top_half_middle_half_no_color 5D56
-11_4_2_13_disabled_disabled_top_half_middle_half_no_color !6BFD  # Lines should be numbered 1,...,11,19
+11_4_2_13_disabled_disabled_top_half_middle_half_no_color 67FA
 11_4_2_14_disabled_disabled_top_half_middle_half_no_color 65EE
 11_4_2_15_disabled_disabled_top_half_middle_half_no_color 5BBC
 11_4_2_7_disabled_disabled_bottom_half_reset_no_color 2205
@@ -2046,7 +2046,7 @@
 11_4_2_10_disabled_disabled_middle_half_reset_no_color 6985
 11_4_2_11_disabled_disabled_middle_half_reset_no_color 603E
 11_4_2_12_disabled_disabled_middle_half_reset_no_color 628C
-11_4_2_13_disabled_disabled_middle_half_reset_no_color 747E
+11_4_2_13_disabled_disabled_middle_half_reset_no_color 74B1
 11_4_2_14_disabled_disabled_middle_half_reset_no_color !7112  # Lines should be numbered 1,7...20
 11_4_2_15_disabled_disabled_middle_half_reset_no_color 6120
 11_4_2_7_disabled_disabled_middle_half_left_half_no_color 60E9
@@ -2055,7 +2055,7 @@
 11_4_2_10_disabled_disabled_middle_half_left_half_no_color 6985
 11_4_2_11_disabled_disabled_middle_half_left_half_no_color 603E
 11_4_2_12_disabled_disabled_middle_half_left_half_no_color 628C
-11_4_2_13_disabled_disabled_middle_half_left_half_no_color 747E
+11_4_2_13_disabled_disabled_middle_half_left_half_no_color 74B1
 11_4_2_14_disabled_disabled_middle_half_left_half_no_color !7112  # Lines should be numbered 1,7...20
 11_4_2_15_disabled_disabled_middle_half_left_half_no_color 6120
 11_4_2_7_disabled_disabled_middle_half_right_half_no_color 60E9
@@ -2064,7 +2064,7 @@
 11_4_2_10_disabled_disabled_middle_half_right_half_no_color 6985
 11_4_2_11_disabled_disabled_middle_half_right_half_no_color 603E
 11_4_2_12_disabled_disabled_middle_half_right_half_no_color 628C
-11_4_2_13_disabled_disabled_middle_half_right_half_no_color 747E
+11_4_2_13_disabled_disabled_middle_half_right_half_no_color 74B1
 11_4_2_14_disabled_disabled_middle_half_right_half_no_color !7112  # Lines should be numbered 1,7...20
 11_4_2_15_disabled_disabled_middle_half_right_half_no_color 6120
 11_4_2_7_disabled_disabled_middle_half_middle_half_no_color 60E9
@@ -2073,7 +2073,7 @@
 11_4_2_10_disabled_disabled_middle_half_middle_half_no_color 6985
 11_4_2_11_disabled_disabled_middle_half_middle_half_no_color 603E
 11_4_2_12_disabled_disabled_middle_half_middle_half_no_color 628C
-11_4_2_13_disabled_disabled_middle_half_middle_half_no_color 747E
+11_4_2_13_disabled_disabled_middle_half_middle_half_no_color 74B1
 11_4_2_14_disabled_disabled_middle_half_middle_half_no_color !7112  # Lines should be numbered 1,7...20
 11_4_2_15_disabled_disabled_middle_half_middle_half_no_color 6120
 11_4_2_7_disabled_enabled_reset_reset_no_color B729
@@ -2118,7 +2118,7 @@
 11_4_2_10_disabled_enabled_top_half_reset_no_color 4E91
 11_4_2_11_disabled_enabled_top_half_reset_no_color 5ADA
 11_4_2_12_disabled_enabled_top_half_reset_no_color 5D56
-11_4_2_13_disabled_enabled_top_half_reset_no_color !6BFD   # Top lines should be numbered 1...11,19
+11_4_2_13_disabled_enabled_top_half_reset_no_color 67FA
 11_4_2_14_disabled_enabled_top_half_reset_no_color 65EE
 11_4_2_15_disabled_enabled_top_half_reset_no_color 5BBC
 11_4_2_7_disabled_enabled_top_half_left_half_no_color 09C3
@@ -2127,7 +2127,7 @@
 11_4_2_10_disabled_enabled_top_half_left_half_no_color FC70
 11_4_2_11_disabled_enabled_top_half_left_half_no_color 0918
 11_4_2_12_disabled_enabled_top_half_left_half_no_color 0BBA
-11_4_2_13_disabled_enabled_top_half_left_half_no_color !6BFD  # Dots on the right of the right margin are missing. Lines should be numbered 1...19 down the screen.
+11_4_2_13_disabled_enabled_top_half_left_half_no_color 11BA
 11_4_2_14_disabled_enabled_top_half_left_half_no_color 0FAE
 11_4_2_15_disabled_enabled_top_half_left_half_no_color 09FA
 11_4_2_7_disabled_enabled_top_half_right_half_no_color 0A1F
@@ -2136,7 +2136,7 @@
 11_4_2_10_disabled_enabled_top_half_right_half_no_color 0575
 11_4_2_11_disabled_enabled_top_half_right_half_no_color 0974
 11_4_2_12_disabled_enabled_top_half_right_half_no_color 0C16
-11_4_2_13_disabled_enabled_top_half_right_half_no_color !6BFD  # Dots to left of left margin are missing. First line should have 1 on the screen left, subsequent lines should be numbered on the left margin 2...11,19
+11_4_2_13_disabled_enabled_top_half_right_half_no_color 1216
 11_4_2_14_disabled_enabled_top_half_right_half_no_color 1488
 11_4_2_15_disabled_enabled_top_half_right_half_no_color 0A56
 11_4_2_7_disabled_enabled_top_half_middle_half_no_color 0687
@@ -2145,7 +2145,7 @@
 11_4_2_10_disabled_enabled_top_half_middle_half_no_color 0503  # The VT520 v2.1 does not behave this way, likely due to a bug
 11_4_2_11_disabled_enabled_top_half_middle_half_no_color 05DC
 11_4_2_12_disabled_enabled_top_half_middle_half_no_color 0886
-11_4_2_13_disabled_enabled_top_half_middle_half_no_color !6BFD  # Dots left of left margin are missing. Line 1 should be numbered 1 on the screen left. Lines 2..12 should be numbered 2..12 on the left margin. Remaining lines should be numbered 13..19
+11_4_2_13_disabled_enabled_top_half_middle_half_no_color 1216
 11_4_2_14_disabled_enabled_top_half_middle_half_no_color 1488
 11_4_2_15_disabled_enabled_top_half_middle_half_no_color 06C6
 11_4_2_7_disabled_enabled_bottom_half_reset_no_color 2205
@@ -2172,7 +2172,7 @@
 11_4_2_10_disabled_enabled_bottom_half_right_half_no_color EDBD
 11_4_2_11_disabled_enabled_bottom_half_right_half_no_color ECB4
 11_4_2_12_disabled_enabled_bottom_half_right_half_no_color EF56
-11_4_2_13_disabled_enabled_bottom_half_right_half_no_color !BE  # Numbers from 12 should be within margins
+11_4_2_13_disabled_enabled_bottom_half_right_half_no_color FC6E
 11_4_2_14_disabled_enabled_bottom_half_right_half_no_color !FEF8  # Should be 1,13...20 in the bottom half according to the VT520 and xterm. WT numbers lines 1..20 ignoring the top margin.
 11_4_2_15_disabled_enabled_bottom_half_right_half_no_color ED96
 11_4_2_7_disabled_enabled_bottom_half_middle_half_no_color E9C7
@@ -2181,7 +2181,7 @@
 11_4_2_10_disabled_enabled_bottom_half_middle_half_no_color EDAD
 11_4_2_11_disabled_enabled_bottom_half_middle_half_no_color E91C
 11_4_2_12_disabled_enabled_bottom_half_middle_half_no_color EBC6
-11_4_2_13_disabled_enabled_bottom_half_middle_half_no_color !BE  # Should be numbered 1...11 down screen left, then 12...19 from the left margin
+11_4_2_13_disabled_enabled_bottom_half_middle_half_no_color FC6E
 11_4_2_14_disabled_enabled_bottom_half_middle_half_no_color !FDB6  # Should be 1...20 down screen left
 11_4_2_15_disabled_enabled_bottom_half_middle_half_no_color EA06
 11_4_2_7_disabled_enabled_middle_half_reset_no_color 60E9
@@ -2190,7 +2190,7 @@
 11_4_2_10_disabled_enabled_middle_half_reset_no_color 6985
 11_4_2_11_disabled_enabled_middle_half_reset_no_color 603E
 11_4_2_12_disabled_enabled_middle_half_reset_no_color 628C
-11_4_2_13_disabled_enabled_middle_half_reset_no_color 747E
+11_4_2_13_disabled_enabled_middle_half_reset_no_color 74B1
 11_4_2_14_disabled_enabled_middle_half_reset_no_color !7112  # Lines should be numbered 1,7...20 from the top margin
 11_4_2_15_disabled_enabled_middle_half_reset_no_color 6120
 11_4_2_7_disabled_enabled_middle_half_left_half_no_color 0C47
@@ -2199,7 +2199,7 @@
 11_4_2_10_disabled_enabled_middle_half_left_half_no_color 0D8E
 11_4_2_11_disabled_enabled_middle_half_left_half_no_color 0B9C
 11_4_2_12_disabled_enabled_middle_half_left_half_no_color 0E3E
-11_4_2_13_disabled_enabled_middle_half_left_half_no_color 1E3E
+11_4_2_13_disabled_enabled_middle_half_left_half_no_color 1741
 11_4_2_14_disabled_enabled_middle_half_left_half_no_color !13A2  # Lines should be numbered 1,7...20 from the top margin
 11_4_2_15_disabled_enabled_middle_half_left_half_no_color 0C7E
 11_4_2_7_disabled_enabled_middle_half_right_half_no_color 0CFF
@@ -2208,7 +2208,7 @@
 11_4_2_10_disabled_enabled_middle_half_right_half_no_color 0FB3
 11_4_2_11_disabled_enabled_middle_half_right_half_no_color 0C54
 11_4_2_12_disabled_enabled_middle_half_right_half_no_color 0EF6
-11_4_2_13_disabled_enabled_middle_half_right_half_no_color !242C  # Lines should be numbered 1..5 on screen left, then 6...19 down the left margin.
+11_4_2_13_disabled_enabled_middle_half_right_half_no_color 1741
 11_4_2_14_disabled_enabled_middle_half_right_half_no_color !1BB8  # Lines should be numbered 1...20 down screen left - top margin should be ignored as we're outside the left margin
 11_4_2_15_disabled_enabled_middle_half_right_half_no_color 0D36
 11_4_2_7_disabled_enabled_middle_half_middle_half_no_color 05CF
@@ -2217,7 +2217,7 @@
 11_4_2_10_disabled_enabled_middle_half_middle_half_no_color 0FA3
 11_4_2_11_disabled_enabled_middle_half_middle_half_no_color 0524
 11_4_2_12_disabled_enabled_middle_half_middle_half_no_color 07CE
-11_4_2_13_disabled_enabled_middle_half_middle_half_no_color !242C  # Lines should be numbered 1...5 down screen left, then 6...18 down left margin, finally 19 on screen left.
+11_4_2_13_disabled_enabled_middle_half_middle_half_no_color 1741
 11_4_2_14_disabled_enabled_middle_half_middle_half_no_color !1BB8  # Lines should be numbered 1...20 down screen left as its outside the margins
 11_4_2_15_disabled_enabled_middle_half_middle_half_no_color 060E
 11_4_2_7_enabled_disabled_reset_reset_no_color B70C

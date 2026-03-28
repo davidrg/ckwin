@@ -5631,17 +5631,25 @@ isdoublewidth( unsigned short y )     /* based from 1 */
     return VscrnGetLineVtAttr(VTERM,y-1) & VT_LINE_ATTR_DOUBLE_WIDE ;
 }
 
-/* ------------------------------------------------------------------ */
-/* CursorNextLine -                                                   */
-/* ------------------------------------------------------------------ */
+/*---------------------------------------------------------------------------*/
+/* CursorNextLine -                                         | Page: Cursor   */
+/*---------------------------------------------------------------------------*/
+/* Moves the cursor to the first position on the next line. This will
+ * be screen left if the cursor is outside the margins, or the left
+ * margin if the cursor is inside the margins.
+ *
+ * Parameters:
+ *     scroll       If the scrollable area should scroll at the bottom margin.
+ */
 void
-cursornextline() {
+cursornextline(BOOL scroll) {
     if ( decsasd == SASD_TERMINAL ) {
         /* Due to a log from dcombeer I am no longer sure that */
         /* cursornextline() or cursorprevline() is affected by */
         /* Origin mode                                         */
 
         if (vscrn_c_page_margin_bot(VTERM) > wherey[VTERM]) {
+            int margin_left = 1;
             int y = wherey[VTERM] + 1;
             if (relcursor && wherey[VTERM] < vscrn_c_page_margin_top(VTERM))
             {
@@ -5651,14 +5659,21 @@ cursornextline() {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
-            lgotoxy(VTERM, cursor_left_margin(VTERM), y);
+
+            if (y >= vscrn_c_page_margin_top(VTERM) &&
+                y <= vscrn_c_page_margin_bot(VTERM)) {
+                margin_left = vscrn_c_page_margin_left(VTERM);
+            }
+
+            lgotoxy(VTERM, margin_left, y);
         } else if ( wy_autopage ) {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
             lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
         } else if (ISVT100(tt_type_mode) || ISANSI(tt_type_mode)) {
-            if (!(relcursor && wherey[VTERM] == vscrn_c_page_margin_bot(VTERM)))
+            if (!(relcursor && wherey[VTERM] == vscrn_c_page_margin_bot(VTERM)
+                    && scroll))
             {
                 wrtch(CK_CR);
                 wrtch(LF);
@@ -5666,7 +5681,7 @@ cursornextline() {
         }
     }
     else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) && autoscroll
-              && !protect ){
+              && !protect && scroll){
         wrtch(CK_CR);
         wrtch(LF);
     }
@@ -5821,7 +5836,7 @@ cursorrightex(int wrap, int obey_margins) {
                   ISHFT(tt_type_mode) ||
 #endif /* COMMENT */
                   ISDG200(tt_type_mode)) {
-            cursornextline();
+            cursornextline(TRUE);
             if ( wrapit ) {
                 cursorright(0);
                 wrapit = FALSE ;
@@ -18433,7 +18448,7 @@ vtcsi(void)
             }
             else {
                 /* CNL - Cursor Next Line */
-                cursornextline();
+                cursornextline(FALSE);
             }
             break;
         case 'F':
@@ -20116,9 +20131,10 @@ vtcsi(void)
                     /* moves active position pn[1] rows down */
                     if (pn[1] < 1) pn[1] = 1;
                     do {
-                        cursornextline();
+                        cursornextline(FALSE);
                         pn[1] = pn[1] - 1;
-                    } while (pn[1] > 0);
+                    } while (pn[1] > 0 &&
+                        wherey[VTERM] < vscrn_c_page_margin_bot(VTERM));
                 }
                 break;
             case 'e':
@@ -26148,7 +26164,7 @@ vtescape( void )
                 lgotoxy(VTERM,1,1);       /* and home the cursor */
             }
             else {                      /* NEL - Next Line */
-                cursornextline();
+                cursornextline(TRUE);
             }
             break;
         case 'F':
