@@ -15,11 +15,15 @@ do while lines(filename) = 1
     if substr(curlin,1,1) <> "#" then do
         /* Data line */
         parse var curlin id checksum rest
+        comment_start = index(curlin, '#')
+        if comment_start <> 0 then
+            rest = substr(curlin, comment_start)
+        else rest = ''
 
         if id = testid then do
             /* Match found - return the details to K95 by setting variables */
             ".%v := """checksum""""
-            ".%n := \ftrim("rest")"
+            ".%n := """rest""""
             leave
         end
     end
