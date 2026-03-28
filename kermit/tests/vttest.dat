@@ -2104,7 +2104,7 @@
 11_4_2_14_disabled_enabled_reset_right_half_no_color 4E08
 11_4_2_15_disabled_enabled_reset_right_half_no_color 3856
 11_4_2_7_disabled_enabled_reset_middle_half_no_color 30EF
-11_4_2_8_disabled_enabled_reset_middle_half_no_color !240E  # Numbers should start on the left margin: 1, 4...10
+11_4_2_8_disabled_enabled_reset_middle_half_no_color 212A
 11_4_2_9_disabled_enabled_reset_middle_half_no_color 31D3
 11_4_2_10_disabled_enabled_reset_middle_half_no_color 3753    # The VT520 v2.1 does not behave this way, likely due to a bug: if the cursor crosses the left margin normally (rather than being moved there via something like CUP), lines wrap to (and CR moves to) screen left - not the left margin.
 11_4_2_11_disabled_enabled_reset_middle_half_no_color 3044
@@ -2131,7 +2131,7 @@
 11_4_2_14_disabled_enabled_top_half_left_half_no_color 0FAE
 11_4_2_15_disabled_enabled_top_half_left_half_no_color 09FA
 11_4_2_7_disabled_enabled_top_half_right_half_no_color 0A1F
-11_4_2_8_disabled_enabled_top_half_right_half_no_color !EF96 # Lines on the top half should start on the left margin. Lines on the bottom half should start on the screen left.
+11_4_2_8_disabled_enabled_top_half_right_half_no_color F0FE
 11_4_2_9_disabled_enabled_top_half_right_half_no_color 0B03
 11_4_2_10_disabled_enabled_top_half_right_half_no_color 0575
 11_4_2_11_disabled_enabled_top_half_right_half_no_color 0974
@@ -2140,7 +2140,7 @@
 11_4_2_14_disabled_enabled_top_half_right_half_no_color 1488
 11_4_2_15_disabled_enabled_top_half_right_half_no_color 0A56
 11_4_2_7_disabled_enabled_top_half_middle_half_no_color 0687
-11_4_2_8_disabled_enabled_top_half_middle_half_no_color !F1BE  # Lines on top half should start on left margin, bottom half should start on page left
+11_4_2_8_disabled_enabled_top_half_middle_half_no_color F002
 11_4_2_9_disabled_enabled_top_half_middle_half_no_color 076B
 11_4_2_10_disabled_enabled_top_half_middle_half_no_color 0503  # The VT520 v2.1 does not behave this way, likely due to a bug
 11_4_2_11_disabled_enabled_top_half_middle_half_no_color 05DC
@@ -2167,7 +2167,7 @@
 11_4_2_14_disabled_enabled_bottom_half_left_half_no_color !F5CE  # Lines should be numbered 1,14...20 in the bottom half.
 11_4_2_15_disabled_enabled_bottom_half_left_half_no_color ED3A
 11_4_2_7_disabled_enabled_bottom_half_right_half_no_color ED5F
-11_4_2_8_disabled_enabled_bottom_half_right_half_no_color !DD42  # Bottom half should be within margins, numbered 1, 7...10
+11_4_2_8_disabled_enabled_bottom_half_right_half_no_color DE50
 11_4_2_9_disabled_enabled_bottom_half_right_half_no_color EE43
 11_4_2_10_disabled_enabled_bottom_half_right_half_no_color EDBD
 11_4_2_11_disabled_enabled_bottom_half_right_half_no_color ECB4
@@ -2176,7 +2176,7 @@
 11_4_2_14_disabled_enabled_bottom_half_right_half_no_color !FEF8  # Should be 1,13...20 in the bottom half according to the VT520 and xterm. WT numbers lines 1..20 ignoring the top margin.
 11_4_2_15_disabled_enabled_bottom_half_right_half_no_color ED96
 11_4_2_7_disabled_enabled_bottom_half_middle_half_no_color E9C7
-11_4_2_8_disabled_enabled_bottom_half_middle_half_no_color !DEE0  # Bottom half should be numbered 1, 4...10 starting from the left margin
+11_4_2_8_disabled_enabled_bottom_half_middle_half_no_color DD93
 11_4_2_9_disabled_enabled_bottom_half_middle_half_no_color EAAB
 11_4_2_10_disabled_enabled_bottom_half_middle_half_no_color EDAD
 11_4_2_11_disabled_enabled_bottom_half_middle_half_no_color E91C
@@ -2203,7 +2203,7 @@
 11_4_2_14_disabled_enabled_middle_half_left_half_no_color !13A2  # Lines should be numbered 1,7...20 from the top margin
 11_4_2_15_disabled_enabled_middle_half_left_half_no_color 0C7E
 11_4_2_7_disabled_enabled_middle_half_right_half_no_color 0CFF
-11_4_2_8_disabled_enabled_middle_half_right_half_no_color !F5B2  # Middle lines should be numbered 1,7..10 from the left margin
+11_4_2_8_disabled_enabled_middle_half_right_half_no_color F738
 11_4_2_9_disabled_enabled_middle_half_right_half_no_color 0DE3
 11_4_2_10_disabled_enabled_middle_half_right_half_no_color 0FB3
 11_4_2_11_disabled_enabled_middle_half_right_half_no_color 0C54
@@ -2212,7 +2212,7 @@
 11_4_2_14_disabled_enabled_middle_half_right_half_no_color !1BB8  # Lines should be numbered 1...20 down screen left - top margin should be ignored as we're outside the left margin
 11_4_2_15_disabled_enabled_middle_half_right_half_no_color 0D36
 11_4_2_7_disabled_enabled_middle_half_middle_half_no_color 05CF
-11_4_2_8_disabled_enabled_middle_half_middle_half_no_color !F808  # Middle lines should be numbered 1,4...10 from the left margin
+11_4_2_8_disabled_enabled_middle_half_middle_half_no_color F627
 11_4_2_9_disabled_enabled_middle_half_middle_half_no_color 06B3
 11_4_2_10_disabled_enabled_middle_half_middle_half_no_color 0FA3
 11_4_2_11_disabled_enabled_middle_half_middle_half_no_color 0524
@@ -2374,7 +2374,7 @@
 11_4_2_14_enabled_enabled_reset_reset_no_color D49E
 11_4_2_15_enabled_enabled_reset_reset_no_color B743
 11_4_2_7_enabled_enabled_reset_left_half_no_color 350C
-11_4_2_8_enabled_enabled_reset_left_half_no_color !35A9  # Numbers should start at left margin, counting 1...5. Where is the column of * coming from?
+11_4_2_8_enabled_enabled_reset_left_half_no_color 26F9
 11_4_2_9_enabled_enabled_reset_left_half_no_color 35F0
 11_4_2_10_enabled_enabled_reset_left_half_no_color 2EC0
 11_4_2_11_enabled_enabled_reset_left_half_no_color 3461
@@ -2392,7 +2392,7 @@
 11_4_2_14_enabled_enabled_reset_right_half_no_color !4E08  # Numbers should be down the right margin
 11_4_2_15_enabled_enabled_reset_right_half_no_color 3543
 11_4_2_7_enabled_enabled_reset_middle_half_no_color !3ACC  # Box should be in the margins
-11_4_2_8_enabled_enabled_reset_middle_half_no_color !2AE1  # Numbers should be in the margins, with a line of * down the left margin
+11_4_2_8_enabled_enabled_reset_middle_half_no_color !23B1  # Numbers should be in the margins, with a line of * down the left margin
 11_4_2_9_enabled_enabled_reset_middle_half_no_color !3BB0  # Box should be in the margins
 11_4_2_10_enabled_enabled_reset_middle_half_no_color 2E95
 11_4_2_11_enabled_enabled_reset_middle_half_no_color 3461  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR

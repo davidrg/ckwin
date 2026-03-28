@@ -5876,9 +5876,19 @@ cursorleft(int wrap) {
             lgotoxy( VSTATUS, wherex[VSTATUS] - 1, 1);
     }
     else {
-        if (wherex[VTERM] > 1 &&
-				(!relcursor && wherex[VTERM] != vscrn_c_page_margin_left(VTERM)
-				|| relcursor && wherex[VTERM] > vscrn_c_page_margin_left(VTERM)))
+        int margin_left = 1;
+        if (wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+             wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) &&
+             wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) )
+        {
+            margin_left = vscrn_c_page_margin_left(VTERM);
+            if (dwl)
+            {
+                margin_left /= 2;
+            }
+        }
+
+        if (wherex[VTERM] > margin_left)
             lgotoxy( VTERM,
                      wherex[VTERM] - 1,
                      wherey[VTERM]);
@@ -8883,7 +8893,7 @@ cursor_pos_left_margin(int vmode, int y, int x)
         y <= vscrn_c_page_margin_bot(vmode) &&
         x >= vscrn_c_page_margin_left(vmode)) {
         return vscrn_c_page_margin_left(vmode);
-        }
+    }
 
     return 1;
 }
@@ -25122,14 +25132,14 @@ vtcsi(void)
                 else {
                     /* Cursor Backward Tabulation (CBT) */
                     /* moves active position back n tabstops */
-                    if (k < 1) pn[1] = 1;
+                    if (k < 1 || pn[1] < 1) pn[1] = 1;
                     i = wherex[VTERM];
                     while (pn[1]) {
-                        if (i > 1) {
+                        if (i > cursor_left_margin(VTERM)) {
                             do {
                                 i--;
                                 cursorleft(0);
-                            } while ((htab[i] != 'T') && (i >= 2));
+                            } while ((htab[i] != 'T') && (i >= cursor_left_margin(VTERM) + 1));
                         }
                         pn[1]--;
                     }
