@@ -5642,18 +5642,27 @@ cursornextline() {
         /* Origin mode                                         */
 
         if (vscrn_c_page_margin_bot(VTERM) > wherey[VTERM]) {
+            int y = wherey[VTERM] + 1;
+            if (relcursor && wherey[VTERM] < vscrn_c_page_margin_top(VTERM))
+            {
+                y = vscrn_c_page_margin_top(VTERM) + 1;
+            }
+
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
-            lgotoxy(VTERM,1, wherey[VTERM] + 1);
+            lgotoxy(VTERM, cursor_left_margin(VTERM), y);
         } else if ( wy_autopage ) {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
             lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
         } else if (ISVT100(tt_type_mode) || ISANSI(tt_type_mode)) {
-            wrtch(CK_CR);
-            wrtch(LF);
+            if (!(relcursor && wherey[VTERM] == vscrn_c_page_margin_bot(VTERM)))
+            {
+                wrtch(CK_CR);
+                wrtch(LF);
+            }
         }
     }
     else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) && autoscroll
@@ -8860,6 +8869,25 @@ cursor_right_margin(int vmode)
     return rmargin;
 }
 
+/* Returns the left margin that is currently in effect at the specfied
+ * coordinates.
+ *
+ * For DEC terminals this depends on if the cursor is within
+ * the scroll region or not.
+ */
+int
+cursor_pos_left_margin(int vmode, int y, int x)
+{
+    if (relcursor ||
+        y >= vscrn_c_page_margin_top(vmode) &&
+        y <= vscrn_c_page_margin_bot(vmode) &&
+        x >= vscrn_c_page_margin_left(vmode)) {
+        return vscrn_c_page_margin_left(vmode);
+        }
+
+    return 1;
+}
+
 /* Returns the left margin that is currently in effect given the cursors
  * current location.
  *
@@ -8869,14 +8897,7 @@ cursor_right_margin(int vmode)
 int
 cursor_left_margin(int vmode)
 {
-    if (relcursor ||
-        wherey[vmode] >= vscrn_c_page_margin_top(vmode) &&
-        wherey[vmode] <= vscrn_c_page_margin_bot(vmode) &&
-        wherex[vmode] > vscrn_c_page_margin_left(vmode)) {
-        return vscrn_c_page_margin_left(vmode);
-    }
-
-    return 1;
+    return cursor_pos_left_margin(vmode, wherey[vmode], wherex[vmode]);
 }
 
 void
@@ -16868,7 +16889,7 @@ wrtch(unsigned short ch) {
                 }
             }
             else {
-                if (wherex[vmode] > 1)
+                if (wherex[vmode] > cursor_pos_left_margin(vmode, wherey[vmode], wherex[vmode]))
                     wherex[vmode]--;
             }
             if ( !(ISANSI(tt_type_mode) || ISHFT(tt_type_mode)) )
@@ -20083,6 +20104,7 @@ vtcsi(void)
                 else {
                     /* CNL - Cursor next line */
                     /* moves active position pn[1] rows down */
+                    if (pn[1] < 1) pn[1] = 1;
                     do {
                         cursornextline();
                         pn[1] = pn[1] - 1;
