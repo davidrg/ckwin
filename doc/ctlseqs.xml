@@ -6795,6 +6795,7 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <p>
                 Moves active position to column <param-single/>.
+                Obeys <a href="#decom">DECOM</a>.
                 Clears the <a href="#lcf">Last Column Flag</a>.
             </p>
         </section>

@@ -19802,8 +19802,15 @@ vtcsi(void)
                 /* moves active position to column pn[1] */
                 if ( decsasd == SASD_STATUS )
                     lgotoxy( VSTATUS, pn[1], 1 );
-                else
+                else if (!relcursor)
                     lgotoxy( VTERM, pn[1], wherey[VTERM] ) ;
+                else
+                {
+                    lgotoxy(
+                        VTERM,
+                        pn[1] + vscrn_c_page_margin_left(VTERM) - 1,
+                        wherey[VTERM] ) ;
+                }
                 break;
             case 'A':
                 /* ANSI - Set Border Color */
