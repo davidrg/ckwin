@@ -455,6 +455,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed NEL and CNL not obeying DECOM
  - Fixed VPA not obeying DECOM
  - Fixed CNL causing a scroll at the bottom margin
+ - Fixed HVP/CUP not obeying DECOM properly
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

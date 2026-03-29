@@ -5703,10 +5703,22 @@ cursorprevline() {
         /* cursornextline() or cursorprevline() is affected by */
         /* Origin mode                                         */
 
-        if (vscrn_c_page_margin_top(VTERM) != wherey[VTERM])
-            lgotoxy(VTERM, 1, wherey[VTERM] - 1);
+        int y = wherey[VTERM];
+        int margin_left = cursor_left_margin(VTERM);
+        int margin_top = 1;
+
+        if (wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) &&
+            y >= vscrn_c_page_margin_top(VTERM))
+        {
+            margin_top = vscrn_c_page_margin_top(VTERM);
+        }
+
+        if (margin_top != wherey[VTERM])
+            y -= 1;
         else if ( wy_autopage )
-            lgotoxy(VTERM, 1, vscrn_c_page_margin_bot(VTERM));
+            y = vscrn_c_page_margin_bot(VTERM);
+
+        lgotoxy(VTERM, margin_left, y);
     }
     if ( wrapit )
         wrapit = FALSE;
@@ -20255,7 +20267,13 @@ vtcsi(void)
                 if (pn[1] == 0)
                     pn[1] = 1;
                 if (relcursor)
+                {
                     pn[1] += vscrn_c_page_margin_top(VTERM) - 1;
+                    if (pn[1] > vscrn_c_page_margin_bot(VTERM))
+                    {
+                        pn[1] = vscrn_c_page_margin_bot(VTERM);
+                    }
+                }
                 if (pn[1] > VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0))
                     pn[1] = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                 if (pn[2] == 0)
