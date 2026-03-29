@@ -669,10 +669,14 @@
 11_3_3_7_top D78E
 11_3_3_7_bottom D6A4
 11_3_3_7_middle D778
-11_3_3_8_reset D77A
-11_3_3_8_left !D77A 		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_3_8_right !D77A 		# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
-11_3_3_8_middle !D77A 	# DECLRMM not implemented by K95 - <a href=https://github.com/davidrg/ckwin/issues/232">#232</a>
+11_3_3_8_off_reset D77A
+11_3_3_8_off_left D77A
+11_3_3_8_off_right D77A
+11_3_3_8_off_middle D77A
+11_3_3_8_on_reset D77A
+11_3_3_8_on_left D782
+11_3_3_8_on_right D692
+11_3_3_8_on_middle D69A
 11_3_3_9_1_disabled_disabled_reset_reset_no_color !D01A
 11_3_3_9_2_disabled_disabled_reset_reset_no_color !D056
 11_3_3_10_1_disabled_disabled_reset_reset_no_color AAC0

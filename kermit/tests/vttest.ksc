@@ -2429,15 +2429,25 @@ def test_11_3_3_v420_editing_sequences {
 	choose_single_test_option 7 "11.3.3.7-middle" "Show DECRQSS response for DECSTBM - DECSTBM middle" "<27> ["	
 	choose_toggle_option 3 # Reset
 	
-	# On a real VT520, the DECSLRM response is the same whether DECSLRMM is on or not
-	choose_single_test_option 8 "11.3.3.8-reset" "Show DECRQSS response for DECSLRM - DECSLRM reset" "<27> ["
+	choose_single_test_option 8 "11.3.3.8-off-reset" "Show DECRQSS response for DECSLRM - DECLRMM off, DECSLRM reset" "<27> ["
 	choose_toggle_option 4 # Left
-	choose_single_test_option 8 "11.3.3.8-left" "Show DECRQSS response for DECSLRM - DECSLRM left half" "<27> ["	
+	choose_single_test_option 8 "11.3.3.8-off-left" "Show DECRQSS response for DECSLRM - DECLRMM off, DECSLRM left half" "<27> ["
 	choose_toggle_option 4 # Right
-	choose_single_test_option 8 "11.3.3.8-right" "Show DECRQSS response for DECSLRM - DECSLRM right half" "<27> ["	
+	choose_single_test_option 8 "11.3.3.8-off-right" "Show DECRQSS response for DECSLRM - DECLRMM off, DECSLRM right half" "<27> ["
 	choose_toggle_option 4 # Middle
-	choose_single_test_option 8 "11.3.3.8-middle" "Show DECRQSS response for DECSLRM - DECSLRM middle" "<27> ["	
+	choose_single_test_option 8 "11.3.3.8-off-middle" "Show DECRQSS response for DECSLRM - DECLRMM off, DECSLRM middle" "<27> ["
 	choose_toggle_option 4 # Reset
+
+    choose_toggle_option 2 # Turn DECLRMM on
+    choose_single_test_option 8 "11.3.3.8-on-reset" "Show DECRQSS response for DECSLRM - DECLRMM on, DECSLRM reset" "<27> ["
+    choose_toggle_option 4 # Left
+    choose_single_test_option 8 "11.3.3.8-on-left" "Show DECRQSS response for DECSLRM - DECLRMM on, DECSLRM left half" "<27> ["
+    choose_toggle_option 4 # Right
+    choose_single_test_option 8 "11.3.3.8-on-right" "Show DECRQSS response for DECSLRM - DECLRMM on, DECSLRM right half" "<27> ["
+    choose_toggle_option 4 # Middle
+    choose_single_test_option 8 "11.3.3.8-on-middle" "Show DECRQSS response for DECSLRM - DECLRMM on, DECSLRM middle" "<27> ["
+    choose_toggle_option 4 # Reset
+    choose_toggle_option 2 # Turn DECLRMM back off
 	
 
 	local decom declrmm tbmargin lrmargin color run_test
