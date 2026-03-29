@@ -5168,7 +5168,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:119"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco xterm putty dtterm wt"/>
             <ctlseq>CSI <param-single/> G</ctlseq>
-            <p>Move cursor to column <param-single/>. Clears the <a href="#lcf">Last Column Flag</a>.</p>
+            <p>Synonym for <a href="#hpa">HPA</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="SPI" title="Spacing Increment"
                  not-implemented="true" todo="true">

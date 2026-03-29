@@ -5690,6 +5690,36 @@ cursornextline(BOOL scroll) {
         wrapit = FALSE;
 }
 
+/*---------------------------------------------------------------------------*/
+/* CursorHPA                                                | Page: Cursor   */
+/*---------------------------------------------------------------------------*/
+/* Horizontal Position Absolute (HPA). Also, Cursor Horizontal Absolite (CHA).
+ * Move cursor to specified horizontal position
+ *
+ * Parameters:
+ *     x        Column to move cursor to
+ */
+void
+cursorhpa(int x)
+{
+    int rmargin = VscrnGetWidth(VTERM);
+    if ( x < 1 ) x = 1;
+    if ( x > rmargin ) x = rmargin;
+
+    if ( decsasd == SASD_STATUS )
+        lgotoxy( VSTATUS, x, 1 );
+    else
+    {
+        if (relcursor) {
+            x += vscrn_c_page_margin_left(VTERM) - 1;
+            rmargin = cursor_right_margin(VTERM);
+        }
+
+        if ( x > rmargin ) x = rmargin;
+        lgotoxy( VTERM, x, wherey[VTERM] ) ;
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /* CursorPrevLine -                                                   */
 /* ------------------------------------------------------------------ */
@@ -19798,20 +19828,12 @@ vtcsi(void)
                 } /* '*' */
                 break;
             case '`':
-                /* Horizontal Position Absolute (HPA) */
-                /* moves active position to column pn[1] */
-                if ( decsasd == SASD_STATUS )
-                    lgotoxy( VSTATUS, pn[1], 1 );
-                else if (!relcursor)
-                    lgotoxy( VTERM, pn[1], wherey[VTERM] ) ;
-                else
                 {
-                    lgotoxy(
-                        VTERM,
-                        pn[1] + vscrn_c_page_margin_left(VTERM) - 1,
-                        wherey[VTERM] ) ;
+                    /* Horizontal Position Absolute (HPA) */
+                    /* moves active position to column pn[1] */
+                    cursorhpa(pn[1]);
+                    break;
                 }
-                break;
             case 'A':
                 /* ANSI - Set Border Color */
                 if ( ansiext ) {
@@ -20250,9 +20272,7 @@ vtcsi(void)
                          ISANSI(tt_type_mode) ||
                          ISVT520(tt_type_mode) ||
                          ISXTERM(tt_type_mode)) {
-                        if ( pn[1] < 1 || pn[1] > VscrnGetWidth(VTERM) )
-                            break;
-                        lgotoxy(VTERM,pn[1],wherey[VTERM]);
+                        cursorhpa(pn[1]);
                     }
                 }
                 break;

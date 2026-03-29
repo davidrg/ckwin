@@ -2384,7 +2384,7 @@
 11_4_2_15_enabled_enabled_reset_left_half_no_color 3543
 11_4_2_7_enabled_enabled_reset_right_half_no_color 350C
 11_4_2_8_enabled_enabled_reset_right_half_no_color 26F9
-11_4_2_9_enabled_enabled_reset_right_half_no_color !40B8  # Box should be to the right of the left margin
+11_4_2_9_enabled_enabled_reset_right_half_no_color 35F0
 11_4_2_10_enabled_enabled_reset_right_half_no_color 2EC0
 11_4_2_11_enabled_enabled_reset_right_half_no_color 3461   # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_reset_right_half_no_color 36AF
@@ -2393,7 +2393,7 @@
 11_4_2_15_enabled_enabled_reset_right_half_no_color 3543
 11_4_2_7_enabled_enabled_reset_middle_half_no_color 350C
 11_4_2_8_enabled_enabled_reset_middle_half_no_color 23B1
-11_4_2_9_enabled_enabled_reset_middle_half_no_color !3BB0  # Box should be in the margins
+11_4_2_9_enabled_enabled_reset_middle_half_no_color 35F0
 11_4_2_10_enabled_enabled_reset_middle_half_no_color 2E95
 11_4_2_11_enabled_enabled_reset_middle_half_no_color 3461  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_reset_middle_half_no_color 36AF
@@ -2420,7 +2420,7 @@
 11_4_2_15_enabled_enabled_top_half_left_half_no_color 04EB
 11_4_2_7_enabled_enabled_top_half_right_half_no_color 04B4
 11_4_2_8_enabled_enabled_top_half_right_half_no_color F571
-11_4_2_9_enabled_enabled_top_half_right_half_no_color !0E38  # Should be within margins
+11_4_2_9_enabled_enabled_top_half_right_half_no_color 0598
 11_4_2_10_enabled_enabled_top_half_right_half_no_color FC70
 11_4_2_11_enabled_enabled_top_half_right_half_no_color 0409  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_top_half_right_half_no_color 0657
@@ -2429,7 +2429,7 @@
 11_4_2_15_enabled_enabled_top_half_right_half_no_color 04EB
 11_4_2_7_enabled_enabled_top_half_middle_half_no_color 04B4
 11_4_2_8_enabled_enabled_top_half_middle_half_no_color F379
-11_4_2_9_enabled_enabled_top_half_middle_half_no_color !0A44  # Should be within margins
+11_4_2_9_enabled_enabled_top_half_middle_half_no_color 0598
 11_4_2_10_enabled_enabled_top_half_middle_half_no_color FC45
 11_4_2_11_enabled_enabled_top_half_middle_half_no_color 0409  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_top_half_middle_half_no_color 0657
@@ -2456,7 +2456,7 @@
 11_4_2_15_enabled_enabled_bottom_half_left_half_no_color EB73
 11_4_2_7_enabled_enabled_bottom_half_right_half_no_color EB3C
 11_4_2_8_enabled_enabled_bottom_half_right_half_no_color E2DE
-11_4_2_9_enabled_enabled_bottom_half_right_half_no_color !F128  # Should be within margins
+11_4_2_9_enabled_enabled_bottom_half_right_half_no_color EC20
 11_4_2_10_enabled_enabled_bottom_half_right_half_no_color E082
 11_4_2_11_enabled_enabled_bottom_half_right_half_no_color EA91  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_bottom_half_right_half_no_color ED09
@@ -2465,7 +2465,7 @@
 11_4_2_15_enabled_enabled_bottom_half_right_half_no_color EB73
 11_4_2_7_enabled_enabled_bottom_half_middle_half_no_color EB3C
 11_4_2_8_enabled_enabled_bottom_half_middle_half_no_color E164
-11_4_2_9_enabled_enabled_bottom_half_middle_half_no_color !EED2  # Should be within margins
+11_4_2_9_enabled_enabled_bottom_half_middle_half_no_color EC20
 11_4_2_10_enabled_enabled_bottom_half_middle_half_no_color E02D
 11_4_2_11_enabled_enabled_bottom_half_middle_half_no_color EA91  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_bottom_half_middle_half_no_color ED09
@@ -2492,7 +2492,7 @@
 11_4_2_15_enabled_enabled_middle_half_left_half_no_color 0BC7
 11_4_2_7_enabled_enabled_middle_half_right_half_no_color 0B90
 11_4_2_8_enabled_enabled_middle_half_right_half_no_color FBA2
-11_4_2_9_enabled_enabled_middle_half_right_half_no_color !1570  # Should be within margins
+11_4_2_9_enabled_enabled_middle_half_right_half_no_color 0C74
 11_4_2_10_enabled_enabled_middle_half_right_half_no_color 03A0
 11_4_2_11_enabled_enabled_middle_half_right_half_no_color 0AE5  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_middle_half_right_half_no_color 0D33
@@ -2501,7 +2501,7 @@
 11_4_2_15_enabled_enabled_middle_half_right_half_no_color 0BC7
 11_4_2_7_enabled_enabled_middle_half_middle_half_no_color 0B90
 11_4_2_8_enabled_enabled_middle_half_middle_half_no_color F980
-11_4_2_9_enabled_enabled_middle_half_middle_half_no_color !114E  # Should be within margins
+11_4_2_9_enabled_enabled_middle_half_middle_half_no_color 0C74
 11_4_2_10_enabled_enabled_middle_half_middle_half_no_color 0375
 11_4_2_11_enabled_enabled_middle_half_middle_half_no_color 0AE5  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
 11_4_2_12_enabled_enabled_middle_half_middle_half_no_color 0D33
