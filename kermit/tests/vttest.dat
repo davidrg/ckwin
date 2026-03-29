@@ -2257,7 +2257,7 @@
 11_4_2_14_enabled_disabled_reset_middle_half_no_color D49E
 11_4_2_15_enabled_disabled_reset_middle_half_no_color B743
 11_4_2_7_enabled_disabled_top_half_reset_no_color 5464
-11_4_2_8_enabled_disabled_top_half_reset_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_8_enabled_disabled_top_half_reset_no_color 3CBD
 11_4_2_9_enabled_disabled_top_half_reset_no_color 5548
 11_4_2_10_enabled_disabled_top_half_reset_no_color 4E91
 11_4_2_11_enabled_disabled_top_half_reset_no_color 53B9
@@ -2266,7 +2266,7 @@
 11_4_2_14_enabled_disabled_top_half_reset_no_color 6518
 11_4_2_15_enabled_disabled_top_half_reset_no_color 549B
 11_4_2_7_enabled_disabled_top_half_left_half_no_color 5464
-11_4_2_8_enabled_disabled_top_half_left_half_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_8_enabled_disabled_top_half_left_half_no_color 3CBD
 11_4_2_9_enabled_disabled_top_half_left_half_no_color 5548
 11_4_2_10_enabled_disabled_top_half_left_half_no_color 4E91
 11_4_2_11_enabled_disabled_top_half_left_half_no_color 53B9
@@ -2275,7 +2275,7 @@
 11_4_2_14_enabled_disabled_top_half_left_half_no_color 6518
 11_4_2_15_enabled_disabled_top_half_left_half_no_color 549B
 11_4_2_7_enabled_disabled_top_half_right_half_no_color 5464
-11_4_2_8_enabled_disabled_top_half_right_half_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_8_enabled_disabled_top_half_right_half_no_color 3CBD
 11_4_2_9_enabled_disabled_top_half_right_half_no_color 5548
 11_4_2_10_enabled_disabled_top_half_right_half_no_color 4E91
 11_4_2_11_enabled_disabled_top_half_right_half_no_color 53B9
@@ -2284,7 +2284,7 @@
 11_4_2_14_enabled_disabled_top_half_right_half_no_color 6518
 11_4_2_15_enabled_disabled_top_half_right_half_no_color 549B
 11_4_2_7_enabled_disabled_top_half_middle_half_no_color 5464
-11_4_2_8_enabled_disabled_top_half_middle_half_no_color !3A9D  # Shouldn't escape lower margin - screen should scroll. Lower half should just be dots.
+11_4_2_8_enabled_disabled_top_half_middle_half_no_color 3CBD
 11_4_2_9_enabled_disabled_top_half_middle_half_no_color 5548
 11_4_2_10_enabled_disabled_top_half_middle_half_no_color 4E91
 11_4_2_11_enabled_disabled_top_half_middle_half_no_color 53B9
@@ -2329,7 +2329,7 @@
 11_4_2_14_enabled_disabled_bottom_half_middle_half_no_color 3B1C
 11_4_2_15_enabled_disabled_bottom_half_middle_half_no_color 21AB
 11_4_2_7_enabled_disabled_middle_half_reset_no_color 6270
-11_4_2_8_enabled_disabled_middle_half_reset_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_8_enabled_disabled_middle_half_reset_no_color 48DF
 11_4_2_9_enabled_disabled_middle_half_reset_no_color 6354
 11_4_2_10_enabled_disabled_middle_half_reset_no_color 5CF1
 11_4_2_11_enabled_disabled_middle_half_reset_no_color 61C5
@@ -2338,7 +2338,7 @@
 11_4_2_14_enabled_disabled_middle_half_reset_no_color 72E6
 11_4_2_15_enabled_disabled_middle_half_reset_no_color 62A7
 11_4_2_7_enabled_disabled_middle_half_left_half_no_color 6270
-11_4_2_8_enabled_disabled_middle_half_left_half_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_8_enabled_disabled_middle_half_left_half_no_color 48DF
 11_4_2_9_enabled_disabled_middle_half_left_half_no_color 6354
 11_4_2_10_enabled_disabled_middle_half_left_half_no_color 5CF1
 11_4_2_11_enabled_disabled_middle_half_left_half_no_color 61C5
@@ -2347,7 +2347,7 @@
 11_4_2_14_enabled_disabled_middle_half_left_half_no_color 72E6
 11_4_2_15_enabled_disabled_middle_half_left_half_no_color 62A7
 11_4_2_7_enabled_disabled_middle_half_right_half_no_color 6270
-11_4_2_8_enabled_disabled_middle_half_right_half_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_8_enabled_disabled_middle_half_right_half_no_color 48DF
 11_4_2_9_enabled_disabled_middle_half_right_half_no_color 6354
 11_4_2_10_enabled_disabled_middle_half_right_half_no_color 5CF1
 11_4_2_11_enabled_disabled_middle_half_right_half_no_color 61C5
@@ -2356,7 +2356,7 @@
 11_4_2_14_enabled_disabled_middle_half_right_half_no_color 72E6
 11_4_2_15_enabled_disabled_middle_half_right_half_no_color 62A7
 11_4_2_7_enabled_disabled_middle_half_middle_half_no_color 6270
-11_4_2_8_enabled_disabled_middle_half_middle_half_no_color !4857  # Numbers shouldn't escape the bottom margin
+11_4_2_8_enabled_disabled_middle_half_middle_half_no_color 48DF
 11_4_2_9_enabled_disabled_middle_half_middle_half_no_color 6354
 11_4_2_10_enabled_disabled_middle_half_middle_half_no_color 5CF1
 11_4_2_11_enabled_disabled_middle_half_middle_half_no_color 61C5
@@ -2392,7 +2392,7 @@
 11_4_2_14_enabled_enabled_reset_right_half_no_color 44DE
 11_4_2_15_enabled_enabled_reset_right_half_no_color 3543
 11_4_2_7_enabled_enabled_reset_middle_half_no_color !3ACC  # Box should be in the margins
-11_4_2_8_enabled_enabled_reset_middle_half_no_color !23B1  # Numbers should be in the margins, with a line of * down the left margin
+11_4_2_8_enabled_enabled_reset_middle_half_no_color 23B1
 11_4_2_9_enabled_enabled_reset_middle_half_no_color !3BB0  # Box should be in the margins
 11_4_2_10_enabled_enabled_reset_middle_half_no_color 2E95
 11_4_2_11_enabled_enabled_reset_middle_half_no_color 3461  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
@@ -2410,7 +2410,7 @@
 11_4_2_14_enabled_enabled_top_half_reset_no_color 6518
 11_4_2_15_enabled_enabled_top_half_reset_no_color 549B
 11_4_2_7_enabled_enabled_top_half_left_half_no_color 04B4
-11_4_2_8_enabled_enabled_top_half_left_half_no_color !F4A9  # Lines should be numbered 1...5 within margins. Line of * should not be visible.
+11_4_2_8_enabled_enabled_top_half_left_half_no_color F571
 11_4_2_9_enabled_enabled_top_half_left_half_no_color 0598
 11_4_2_10_enabled_enabled_top_half_left_half_no_color FC70
 11_4_2_11_enabled_enabled_top_half_left_half_no_color 0409
@@ -2419,7 +2419,7 @@
 11_4_2_14_enabled_enabled_top_half_left_half_no_color 0ED8
 11_4_2_15_enabled_enabled_top_half_left_half_no_color 04EB
 11_4_2_7_enabled_enabled_top_half_right_half_no_color !0D54  # Should be within margins
-11_4_2_8_enabled_enabled_top_half_right_half_no_color !F4A9  # Should be within margins. Column of * should not be visible
+11_4_2_8_enabled_enabled_top_half_right_half_no_color F571
 11_4_2_9_enabled_enabled_top_half_right_half_no_color !0E38  # Should be within margins
 11_4_2_10_enabled_enabled_top_half_right_half_no_color FC70
 11_4_2_11_enabled_enabled_top_half_right_half_no_color 0409  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
@@ -2428,7 +2428,7 @@
 11_4_2_14_enabled_enabled_top_half_right_half_no_color 0ED8
 11_4_2_15_enabled_enabled_top_half_right_half_no_color 04EB
 11_4_2_7_enabled_enabled_top_half_middle_half_no_color !0960  # Should be within margins
-11_4_2_8_enabled_enabled_top_half_middle_half_no_color !F2D1  # Should be within margins with *s down the left margin, and 1...5 across to the right margin
+11_4_2_8_enabled_enabled_top_half_middle_half_no_color F379
 11_4_2_9_enabled_enabled_top_half_middle_half_no_color !0A44  # Should be within margins
 11_4_2_10_enabled_enabled_top_half_middle_half_no_color FC45
 11_4_2_11_enabled_enabled_top_half_middle_half_no_color 0409  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
@@ -2464,7 +2464,7 @@
 11_4_2_14_enabled_enabled_bottom_half_right_half_no_color FA6C
 11_4_2_15_enabled_enabled_bottom_half_right_half_no_color EB73
 11_4_2_7_enabled_enabled_bottom_half_middle_half_no_color !EDEE  # Should be within margins
-11_4_2_8_enabled_enabled_bottom_half_middle_half_no_color !E164  # Should be within margins, without the column of *
+11_4_2_8_enabled_enabled_bottom_half_middle_half_no_color E164
 11_4_2_9_enabled_enabled_bottom_half_middle_half_no_color !EED2  # Should be within margins
 11_4_2_10_enabled_enabled_bottom_half_middle_half_no_color E02D
 11_4_2_11_enabled_enabled_bottom_half_middle_half_no_color EA91  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
@@ -2473,7 +2473,7 @@
 11_4_2_14_enabled_enabled_bottom_half_middle_half_no_color FA6C
 11_4_2_15_enabled_enabled_bottom_half_middle_half_no_color EB73
 11_4_2_7_enabled_enabled_middle_half_reset_no_color 6270
-11_4_2_8_enabled_enabled_middle_half_reset_no_color !4857  # Should not escape bottom margin
+11_4_2_8_enabled_enabled_middle_half_reset_no_color 48DF
 11_4_2_9_enabled_enabled_middle_half_reset_no_color 6354
 11_4_2_10_enabled_enabled_middle_half_reset_no_color 5CF1
 11_4_2_11_enabled_enabled_middle_half_reset_no_color 61C5
@@ -2482,7 +2482,7 @@
 11_4_2_14_enabled_enabled_middle_half_reset_no_color 72E6
 11_4_2_15_enabled_enabled_middle_half_reset_no_color 62A7
 11_4_2_7_enabled_enabled_middle_half_left_half_no_color 0B90
-11_4_2_8_enabled_enabled_middle_half_left_half_no_color !FB70  # Should be within margins
+11_4_2_8_enabled_enabled_middle_half_left_half_no_color FBA2
 11_4_2_9_enabled_enabled_middle_half_left_half_no_color 0C74
 11_4_2_10_enabled_enabled_middle_half_left_half_no_color 03A0
 11_4_2_11_enabled_enabled_middle_half_left_half_no_color 0AE5
@@ -2491,7 +2491,7 @@
 11_4_2_14_enabled_enabled_middle_half_left_half_no_color 1576
 11_4_2_15_enabled_enabled_middle_half_left_half_no_color 0BC7
 11_4_2_7_enabled_enabled_middle_half_right_half_no_color !148C  # Should be within margins
-11_4_2_8_enabled_enabled_middle_half_right_half_no_color !FB70  # Should be within margins
+11_4_2_8_enabled_enabled_middle_half_right_half_no_color FBA2
 11_4_2_9_enabled_enabled_middle_half_right_half_no_color !1570  # Should be within margins
 11_4_2_10_enabled_enabled_middle_half_right_half_no_color 03A0
 11_4_2_11_enabled_enabled_middle_half_right_half_no_color 0AE5  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
@@ -2500,7 +2500,7 @@
 11_4_2_14_enabled_enabled_middle_half_right_half_no_color 1576
 11_4_2_15_enabled_enabled_middle_half_right_half_no_color 0BC7
 11_4_2_7_enabled_enabled_middle_half_middle_half_no_color !106A  # Should be within margins
-11_4_2_8_enabled_enabled_middle_half_middle_half_no_color !F956  # Should be within margins. Column of * on left margin, followed by 1...5.
+11_4_2_8_enabled_enabled_middle_half_middle_half_no_color F980
 11_4_2_9_enabled_enabled_middle_half_middle_half_no_color !114E  # Should be within margins
 11_4_2_10_enabled_enabled_middle_half_middle_half_no_color 0375
 11_4_2_11_enabled_enabled_middle_half_middle_half_no_color 0AE5  # The VT520 (fw 2.1) does not pass this test due to a bug in its implementation of HPR
