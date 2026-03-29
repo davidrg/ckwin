@@ -25348,6 +25348,7 @@ vtcsi(void)
                         cell.c = SP ;
                         cell.video_attr = geterasecolor(VTERM) ;
                         if ( k < 1 || pn[0] == 0 )
+                        if ( k < 1 || pn[1] == 0 )
                             pn[1] = 1;
                         else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
                             pn[1] = VscrnGetWidth(VTERM)-1 ;
