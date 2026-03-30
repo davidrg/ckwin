@@ -3583,6 +3583,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     static CHAR last_fillchar = 0;
     static cell_video_attr_t last_cellcolor = cell_video_attr_init_vio_attribute(0);
     static viocell blank_cells[MAXTERMCOL];
+    static vt_char_attr_t blank_attrs[MAXTERMCOL];
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -3600,6 +3601,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
         !cell_video_attr_equal(cellcolor, last_cellcolor)) {
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             blank_cells[x] = blankcell ;
+            blank_attrs[x] = VT_CHAR_ATTR_ERASED;
         }
         last_fillchar = fillchar;
         last_cellcolor = cellcolor ;
@@ -3672,10 +3674,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     }
                     line->width = vs_width  ;
                     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                    for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
-                        line->cells[x] = blankcell ;
-                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
-                    }
+                    memcpy(line->cells, blank_cells,
+                            sizeof(viocell) * MAXTERMCOL);
+                    memcpy(line->vt_char_attrs, blank_attrs,
+                            sizeof(vt_char_attr_t) * MAXTERMCOL);
                 }
 
                 VscrnSetPageTop( vmode,ntop, TRUE, page ) ;
@@ -3726,17 +3728,17 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     if (!lrmm) {
                         line->width = vs_width  ;
                         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                        for ( x = 0 ; x < MAXTERMCOL ; x++ )
-                        {
-                            line->cells[x] = blankcell ;
-                            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
-                        }
+                        memcpy(line->cells, blank_cells,
+                            sizeof(viocell) * MAXTERMCOL);
+                        memcpy(line->vt_char_attrs, blank_attrs,
+                                sizeof(vt_char_attr_t) * MAXTERMCOL);
                     } else {
                         memcpy(line->cells+leftmargin - 1,
                                blank_cells+leftmargin - 1,
                                sizeof(viocell) * (rightmargin-leftmargin+1));
-                        memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
-                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+                        memcpy(line->vt_char_attrs+leftmargin - 1,
+                               blank_attrs+leftmargin - 1,
+                               sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                     }
                 }
             }
@@ -3794,17 +3796,18 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                 {
                     line->width = vs_width  ;
                     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                    for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
-                        line->cells[x] = blankcell ;
-                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
-                    }
+                    memcpy(line->cells, blank_cells,
+                            sizeof(viocell) * MAXTERMCOL);
+                    memcpy(line->vt_char_attrs, blank_attrs,
+                            sizeof(vt_char_attr_t) * MAXTERMCOL);
                 } else
                 {
                     memcpy(line->cells+leftmargin - 1,
                            blank_cells+leftmargin - 1,
                            sizeof(viocell) * (rightmargin-leftmargin+1));
-                    memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
-                        sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+                    memcpy(line->vt_char_attrs+leftmargin - 1,
+                           blank_attrs+leftmargin - 1,
+                           sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                 }
             }
             break;
