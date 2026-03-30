@@ -3672,10 +3672,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     }
                     line->width = vs_width  ;
                     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                    memcpy(line->cells, blank_cells,
-                            sizeof(viocell) * MAXTERMCOL);
-                    memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
-                            sizeof(vt_char_attr_t) * MAXTERMCOL);
+                    for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
+                        line->cells[x] = blankcell ;
+                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+                    }
                 }
 
                 VscrnSetPageTop( vmode,ntop, TRUE, page ) ;
@@ -3726,10 +3726,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     if (!lrmm) {
                         line->width = vs_width  ;
                         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                        memcpy(line->cells, blank_cells,
-                            sizeof(viocell) * MAXTERMCOL);
-                        memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
-                                sizeof(vt_char_attr_t) * MAXTERMCOL);
+                        for ( x = 0 ; x < MAXTERMCOL ; x++ )
+                        {
+                            line->cells[x] = blankcell ;
+                            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+                        }
                     } else {
                         memcpy(line->cells+leftmargin - 1,
                                blank_cells+leftmargin - 1,
@@ -3793,10 +3794,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                 {
                     line->width = vs_width  ;
                     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                    memcpy(line->cells, blank_cells,
-                            sizeof(viocell) * MAXTERMCOL);
-                    memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
-                            sizeof(vt_char_attr_t) * MAXTERMCOL);
+                    for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
+                        line->cells[x] = blankcell ;
+                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+                    }
                 } else
                 {
                     memcpy(line->cells+leftmargin - 1,

@@ -460,6 +460,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - only ever inserting/deleting a single column regardless of parameter
    - operating outside margins
    - not operating at the left of the screen (DECIC)
+ - Fixed IL and DL operating outside the page margins, and not sending the 
+   cursor to the left margin.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

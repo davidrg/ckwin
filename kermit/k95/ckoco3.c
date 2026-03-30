@@ -24243,17 +24243,24 @@ vtcsi(void)
                     if ( ISVT102(tt_type_mode) ||
                          ISANSI(tt_type_mode)) {
                         /* IL - Insert lines */
-                        if ( IS97801(tt_type_mode) ) {
+                        /* DEC STD 070 says: "IL is ignored if the active
+                         * position is outside the scroll area". So I'm not sure
+                         * why this was previously restricted to SNI-97801 - did
+                         * some earlier VT model not follow this rule?
+                         *      - DG, 2026-03-30                            */
+                         /*if ( IS97801(tt_type_mode) ) {*/
                             /* ignored if outside scroll region */
                             if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
-                                 wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
+                                 wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) ||
+                                 wherex[VTERM] < vscrn_c_page_margin_left(VTERM) ||
+                                 wherex[VTERM] > vscrn_c_page_margin_right(VTERM))
                                 break;
-                        }
+                        /*}*/
                         for (i = 1; i <= pn[1]; ++i) {
                             VscrnScrollPage(VTERM,
                                          DOWNWARD,
                                          wherey[VTERM]-1,
-                                         vscrn_c_page_margin_bot(VTERM)+1,
+                                         vscrn_c_page_margin_bot(VTERM)-1,
                                          vscrn_c_page_margin_left(VTERM),
                                          vscrn_c_page_margin_right(VTERM),
                                          1,
@@ -24261,6 +24268,7 @@ vtcsi(void)
                                          SP,
                                          vscrn_current_page_number(vmode, FALSE) );
                         }
+                        wherex[VTERM] = vscrn_c_page_margin_left(VTERM);
                     }
                 }
                 break;
@@ -24367,6 +24375,11 @@ vtcsi(void)
                     if ( ISVT102(tt_type_mode) ||
                          ISANSI(tt_type_mode)) {
                         /* DL - Delete lines */
+                        if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                             wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) ||
+                             wherex[VTERM] < vscrn_c_page_margin_left(VTERM) ||
+                             wherex[VTERM] > vscrn_c_page_margin_right(VTERM))
+                            break;
                         for (i = 1; i <= pn[1]; ++i) {
                             VscrnScrollPage(VTERM,
                                          UPWARD,
@@ -24379,6 +24392,9 @@ vtcsi(void)
                                          SP,
                                          vscrn_current_page_number(vmode, FALSE));
                         }
+                        lgotoxy(VTERM,
+                            vscrn_c_page_margin_left(VTERM),
+                            wherey[VTERM]);
                     }
                 }
                 break;

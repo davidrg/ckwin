@@ -5932,7 +5932,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:126"/>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> L</ctlseq>
-            <p>Insert <param-single/> lines.</p>
+            <p>Insert <param-single/> empty lines at the cursors location and
+                send the cursor to the left margin. Lines below the cursor
+                scroll down. If the cursor is outside the page margins, IL is
+                ignored.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="SVS" title="Select Line Spacing"
                  not-implemented="true" todo="true">
@@ -6055,7 +6059,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:126"/>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> M</ctlseq>
-            <p>Delete <param-single/> lines.</p>
+            <p>Delete <param-single/> line at the cursors location, and send the
+                cursor to the left margin. Lines below the cursor scroll up. If
+                the cursor is outside the page margins, DL is ignored.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="IGS" title="Identify Graphic Subrepertoire"
                  not-implemented="true" todo="true">
