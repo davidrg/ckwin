@@ -6373,6 +6373,12 @@ DCS $ q 3 , } ST</pre>
             <p>
                 Scrolls the characters up <param-single/> lines.
             </p>
+            <p>
+                It should be noted that the current implementation is not
+                correct and is subject to change in the future. The correct
+                behaviour would be more similar to operating the scroll bar - it
+                is not supposed to alter any data on screen (like clearing lines).
+            </p>
         </section>
         <section role="ctlseq" mnemonic="SPD" title="Select Presentation Directions"
                  not-implemented="true" todo="true">
@@ -6438,6 +6444,12 @@ DCS $ q 3 , } ST</pre>
             <p>
                 Scroll down <param-single/> lines. The top
                 <param-single/> lines are cleared to blanks.
+            </p>
+            <p>
+                It should be noted that the current implementation is not
+                correct and is subject to change in the future. The correct
+                behaviour would be more similar to operating the scroll bar - it
+                is not supposed to alter any data on screen (like clearing lines).
             </p>
         </section>
         <section role="ctlseq" id="xthimouse" mnemonic="XTHIMOUSE"
@@ -9446,7 +9458,11 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="ilu" title="Insert line up">
             <ctlseq>CSI = ? l</ctlseq>
             <ctlseq>CSI ? = l</ctlseq>
-            <p>Insert line up</p>
+            <p>Insert line up.</p>
+            <p>It is currently unknown which terminal this control sequence
+                comes from, but its not anything from DEC. As such it does not
+                obey <a href="#decvssm">DECVSSM/DECLRMM</a>.
+            </p>
         </section>
         <section role="ctlseq" id="rm" mnemonic="RM" title="Reset Mode">
             <ctlseq>CSI <param-multi/> l</ctlseq>
@@ -11137,6 +11153,10 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI ? = }</ctlseq>
             <ctlseq>CSI = ? m</ctlseq>
             <ctlseq>CSI ? = m</ctlseq>
+            <p>It is currently unknown which terminal this control sequence
+                comes from, but its not anything from DEC. As such it does not
+                obey <a href="#decvssm">DECVSSM/DECLRMM</a>.
+            </p>
         </section>
         <section badges="scoansi" role="ctlseq" id="ssm" mnemonic="SSM"
                  title="Set margin to specified value">

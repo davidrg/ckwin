@@ -3566,16 +3566,23 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 /*---------------------------------------------------------------------------*/
 /* VscrnScrollPage                                          | Page: Specified*/
 /*---------------------------------------------------------------------------*/
+/* Scrolls the page up or down.
+ * */
 void
 VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
-             int nlines, int savetobuffer, CHAR fillchar, int page) {
+             int leftmargin, int rightmargin, int nlines, int savetobuffer,
+             CHAR fillchar, int page) {
     /* topmargin and bottommargin are zero based */
     viocell blankcell;
     videoline * line ;
     videoline   linetodelete ;
-    int i,x;
+    int i, x, vs_width, lrmm;
     long  obeg, oend, otop, nbeg, nend, ntop ;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
+
+    static CHAR last_fillchar = 0;
+    static cell_video_attr_t last_cellcolor = cell_video_attr_init_vio_attribute(0);
+    static viocell blank_cells[MAXTERMCOL];
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -3585,6 +3592,18 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
     blankcell.c = fillchar ;
     blankcell.video_attr = cellcolor ;
+
+    /* As this function usually ends up needing a line of blank cells, just keep
+     * a copy handy so we can memcpy it, rather than creating a fresh one every
+     * time */
+    if (fillchar != last_fillchar ||
+        !cell_video_attr_equal(cellcolor, last_cellcolor)) {
+        for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
+            blank_cells[x] = blankcell ;
+        }
+        last_fillchar = fillchar;
+        last_cellcolor = cellcolor ;
+    }
 
     if ( updmode == TTU_SMOOTH )
         msleep(1) ;
@@ -3598,10 +3617,17 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F101,"VscrnScroll requests VscrnMutex","",vmode);
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
+    vs_width = VscrnGetWidth(vmode);
+
+    if (leftmargin < 0) leftmargin = 1;
+    if (rightmargin < 1 || rightmargin > vs_width) rightmargin = vs_width;
+    lrmm = (leftmargin != 1 || rightmargin != vs_width) &&
+        leftmargin < rightmargin;
+
     debug(F101,"VscrnScroll has VscrnMutex","",vmode);
     switch (updown) {
         case UPWARD:
-            if (savetobuffer && topmargin == 0) {
+            if (savetobuffer && topmargin == 0 && !lrmm) {
                 if (topmargin) {
                     debug(F101,"WARNING scroll: savetobuffer but topmargin not zero","",topmargin);
                 }
@@ -3644,53 +3670,75 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         debug(F100,"VscrnScroll to buffer - line->vt_char_attrs = NULL","",0);
                         break;
                     }
-                    line->width = VscrnGetWidth(vmode)  ;
+                    line->width = vs_width  ;
                     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                    for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
-                        line->cells[x] = blankcell ;
-                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
-                    }
+                    memcpy(line->cells, blank_cells,
+                            sizeof(viocell) * MAXTERMCOL);
+                    memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
+                            sizeof(vt_char_attr_t) * MAXTERMCOL);
                 }
 
                 VscrnSetPageTop( vmode,ntop, TRUE, page ) ;
                 if ( bottommargin != VscrnGetHeight(vmode)
                                         -(tt_status[vmode]?2:1) )
                     VscrnScrollPage(vmode,DOWNWARD, bottommargin, VscrnGetHeight(vmode)
-                                 -(tt_status[vmode]?2:1), 1, FALSE, fillchar, page) ;
+                                 -(tt_status[vmode]?2:1), -1, -1, 1, FALSE, fillchar, page) ;
             }
-            else {
+            else
+            {
                 vscrn_page_t *p = &vscrn[vmode].pages[page];
 
                 for ( i = topmargin ; i <= bottommargin - nlines ; i++ ) {
-                    /* save line to be deleted */
-                    linetodelete = *VscrnGetPageLineFromTop(vmode, i, page) ;
+                    if (!lrmm) {
+                        /* save line to be deleted */
+                        linetodelete = *VscrnGetPageLineFromTop(vmode, i, page) ;
 
-                    /* then copy back a line */
-                    line = VscrnGetPageLineFromTop(vmode, nlines+i, page) ;
-                    if ( line == NULL )
-                        break;
-                    p->lines[(p->top+i)%p->linecount] = *line ;
-                    line->cells = linetodelete.cells ;
-                    line->vt_char_attrs = linetodelete.vt_char_attrs ;
+                        /* then copy back a line */
+                        line = VscrnGetPageLineFromTop(vmode, nlines+i, page) ;
+                        if ( line == NULL )
+                            break;
+                        p->lines[(p->top+i)%p->linecount] = *line ;
+                        line->cells = linetodelete.cells ;
+                        line->vt_char_attrs = linetodelete.vt_char_attrs ;
+                    }
+                    else {
+                        videoline this_line = *VscrnGetPageLineFromTop(vmode, i, page);
+                        videoline next_line = *VscrnGetPageLineFromTop(vmode, i+1, page);
+
+                        memcpy(this_line.cells+leftmargin - 1,
+                               next_line.cells+leftmargin - 1,
+                               sizeof(viocell) * rightmargin-leftmargin);
+                        memcpy(this_line.vt_char_attrs+leftmargin - 1,
+                               next_line.vt_char_attrs+leftmargin - 1,
+                               sizeof(vt_char_attr_t) * rightmargin-leftmargin);
+                    }
                 }
 
-                for ( i = nlines-1 ; i >= 0 ; i-- ) {
+                for ( i = nlines-1 ; i >= 0 ; i-- )
+                {
                     line = VscrnGetPageLineFromTop(vmode, bottommargin-i, page) ;
                     if (line == NULL || line->cells == NULL) {
                         debug(F100,"VscrnScroll to buffer - line->cells = NULL","",0);
-                        }
+                    }
                     if (line->vt_char_attrs == NULL) {
                         debug(F100,"VscrnScroll to buffer - line->vt_char_attrs = NULL","",0);
-                        }
-                    line->width = VscrnGetWidth(vmode)  ;
-                    line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                    for ( x = 0 ; x < MAXTERMCOL ; x++ )
-                        {
-                        line->cells[x] = blankcell ;
-                        line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
-                        }
+                    }
+                    if (!lrmm) {
+                        line->width = vs_width  ;
+                        line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
+                        memcpy(line->cells, blank_cells,
+                            sizeof(viocell) * MAXTERMCOL);
+                        memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
+                                sizeof(vt_char_attr_t) * MAXTERMCOL);
+                    } else {
+                        memcpy(line->cells+leftmargin - 1,
+                               blank_cells+leftmargin - 1,
+                               sizeof(viocell) * (rightmargin-leftmargin+1));
+                        memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
+                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                     }
                 }
+            }
 #ifndef NOKVERBS
             if ( scrollstatus[vmode] && !tt_roll[vmode] && !markmodeflag[vmode] ) {
                 if ( (VscrnGetPageTop(vmode, TRUE, page)+VscrnGetHeight(vmode)
@@ -3706,18 +3754,31 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
             vscrn_page_t *p = &vscrn[vmode].pages[page];
 
             for ( i = bottommargin ; i >= topmargin+nlines ; i-- ) {
-                /* save line to be deleted */
-                linetodelete = *VscrnGetPageLineFromTop(vmode, i, page) ;
+                if (!lrmm)
+                {
+                    /* save line to be deleted */
+                    linetodelete = *VscrnGetPageLineFromTop(vmode, i, page) ;
 
-                /* then copy back a line */
-                line = VscrnGetPageLineFromTop(vmode, i-nlines, page) ;
-                if ( line == NULL )
-                    break;
+                    /* then copy back a line */
+                    line = VscrnGetPageLineFromTop(vmode, i-nlines, page) ;
+                    if ( line == NULL )
+                        break;
 
-                p->lines[(p->top+i)%p->linecount] = *line ;
+                    p->lines[(p->top+i)%p->linecount] = *line ;
 
-                line->cells = linetodelete.cells ;
-                line->vt_char_attrs = linetodelete.vt_char_attrs ;
+                    line->cells = linetodelete.cells ;
+                    line->vt_char_attrs = linetodelete.vt_char_attrs ;
+                } else {
+                    videoline this_line = *VscrnGetPageLineFromTop(vmode, i, page);
+                    videoline prev_line = *VscrnGetPageLineFromTop(vmode, i-1, page);
+
+                    memcpy(this_line.cells+leftmargin - 1,
+                           prev_line.cells+leftmargin - 1,
+                           sizeof(viocell) * (rightmargin-leftmargin+1));
+                    memcpy(this_line.vt_char_attrs+leftmargin - 1,
+                           prev_line.vt_char_attrs+leftmargin - 1,
+                           sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+                }
             }
 
             for ( i = 0 ; i < nlines ; i++ ) {
@@ -3728,11 +3789,21 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                 if (line->vt_char_attrs == NULL) {
                     debug(F100,"VscrnScroll to buffer - line->vt_char_attrs = NULL","",0);
                 }
-                line->width = VscrnGetWidth(vmode)  ;
-                line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
-                for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
-                    line->cells[x] = blankcell ;
-                    line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+                if (!lrmm)
+                {
+                    line->width = vs_width  ;
+                    line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
+                    memcpy(line->cells, blank_cells,
+                            sizeof(viocell) * MAXTERMCOL);
+                    memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
+                            sizeof(vt_char_attr_t) * MAXTERMCOL);
+                } else
+                {
+                    memcpy(line->cells+leftmargin - 1,
+                           blank_cells+leftmargin - 1,
+                           sizeof(viocell) * (rightmargin-leftmargin+1));
+                    memset(line->vt_char_attrs, VT_CHAR_ATTR_ERASED,
+                        sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                 }
             }
             break;
@@ -3752,7 +3823,8 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
              int nlines, int savetobuffer, CHAR fillchar, BOOL view_page) {
 
 	VscrnScrollPage(
-		vmode,updown, topmargin, bottommargin, nlines, savetobuffer, fillchar,
+		vmode,updown, topmargin, bottommargin, -1, -1,
+		nlines, savetobuffer, fillchar,
 		vscrn_current_page_number(vmode, view_page));
 }
 
@@ -5637,7 +5709,7 @@ VscrnInit( BYTE vmode )
             	if ( sz > tt_rows[vmode] )
             	{
                 	if ( !VscrnIsClear(vmode, p ) ) {
-                    	VscrnScrollPage( vmode, UPWARD, 0, sz-1, sz-1, TRUE, SP, p ) ;
+                    	VscrnScrollPage( vmode, UPWARD, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}
             	}
@@ -5645,7 +5717,7 @@ VscrnInit( BYTE vmode )
             	else if ( tt_szchng[vmode] == 2 ) /* Status Line Turned On */
             	{
                 	if (!VscrnIsClear(vmode, p)) {
-                    	VscrnScrollPage( vmode, UPWARD, 0, sz, sz, TRUE, SP, p ) ;
+                    	VscrnScrollPage( vmode, UPWARD, 0, sz, -1, -1, sz, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}
                 	else {

@@ -6388,6 +6388,7 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
     if ( IS97801(tt_type_mode) ) {
         VscrnScrollPage(vmode,UPWARD,vscrn_page_margin_top(VTERM,page)-1,
                      	vscrn_c_page_margin_bot(VTERM)-1,
+                     	-1, -1,
                      	vscrn_c_page_margin_bot(VTERM)-vscrn_page_margin_top(VTERM,page)+1,
                      	vscrn_c_page_margin_top(VTERM)==1 &&
                      	vscrn_c_page_margin_bot(VTERM)==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
@@ -6397,6 +6398,7 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
     else {
         VscrnScrollPage(vmode,UPWARD,
                      	0,VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
+                     	-1, -1,
                      	VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
                      	TRUE,fillchar, page);
     }
@@ -16908,8 +16910,17 @@ wrtch(unsigned short ch) {
                         else /* Page Mode */
                             wherex[VTERM] = 1;
                     } else if ( autoscroll && !protect ) {
-                        VscrnScroll(vmode,UPWARD, vscrn_c_page_margin_top(VTERM) - 1, vscrn_c_page_margin_bot(VTERM) - 1, 1,
-                                     (vscrn_c_page_margin_top(VTERM) == 1), SP, FALSE ) ;
+                        VscrnScrollPage(
+                            vmode,
+                            UPWARD,
+                            vscrn_c_page_margin_top(VTERM) - 1,
+                            vscrn_c_page_margin_bot(VTERM) - 1,
+                            vscrn_c_page_margin_left(VTERM),
+                            vscrn_c_page_margin_right(VTERM),
+                            1,
+                            vscrn_c_page_margin_top(VTERM) == 1,
+                            SP,
+                            vscrn_current_page_number(vmode, FALSE) ) ;
                     } else if ( wherex[vmode] > VscrnGetWidth(vmode) )
                         wherex[vmode] = VscrnGetWidth(vmode);
                 } else {
@@ -24239,14 +24250,16 @@ vtcsi(void)
                                 break;
                         }
                         for (i = 1; i <= pn[1]; ++i) {
-                            VscrnScroll(VTERM,
+                            VscrnScrollPage(VTERM,
                                          DOWNWARD,
-                                         wherey[VTERM] - 1,
-                                         vscrn_c_page_margin_bot(VTERM) - 1,
+                                         wherey[VTERM]-1,
+                                         vscrn_c_page_margin_bot(VTERM)+1,
+                                         vscrn_c_page_margin_left(VTERM),
+                                         vscrn_c_page_margin_right(VTERM),
                                          1,
                                          FALSE,
                                          SP,
-                                         FALSE);
+                                         vscrn_current_page_number(vmode, FALSE) );
                         }
                     }
                 }
@@ -24355,14 +24368,16 @@ vtcsi(void)
                          ISANSI(tt_type_mode)) {
                         /* DL - Delete lines */
                         for (i = 1; i <= pn[1]; ++i) {
-                            VscrnScroll(VTERM,
+                            VscrnScrollPage(VTERM,
                                          UPWARD,
                                          wherey[VTERM] - 1,
                                          vscrn_c_page_margin_bot(VTERM) - 1,
+                                         vscrn_c_page_margin_left(VTERM),
+                                         vscrn_c_page_margin_right(VTERM),
                                          1,
                                          FALSE,
                                          SP,
-                                         FALSE);
+                                         vscrn_current_page_number(vmode, FALSE));
                         }
                     }
                 }
@@ -24535,6 +24550,16 @@ vtcsi(void)
                                          SP,
                                          FALSE);
                         } else { /* Roll Mode */
+                            /* TODO:
+                             * This is wrong - STD 070 says "This control
+                             * affects what is visible on the physical display
+                             * only. No movement of data within the Logical
+                             * Display occurs. The Active Position does not
+                             * change". So the correct behaviour of this would
+                             * be more like clicking the up button on the scroll
+                             * bar if K95 supported a smaller physical window
+                             * than the page (as the console version does for
+                             * the horizontal dimension). */
                             VscrnScroll(VTERM, UPWARD,
                                          vscrn_c_page_margin_top(VTERM)-1, vscrn_c_page_margin_bot(VTERM)-1,
                                          pn[1],
@@ -26221,14 +26246,16 @@ vtescape( void )
                 cursorleft(0);
             else if ( ISVT100(tt_type_mode) ) {/* IND - Index */
                 if (wherey[VTERM] == vscrn_c_page_margin_bot(VTERM)) {
-                    VscrnScroll(VTERM,
+                    VscrnScrollPage(VTERM,
                                  UPWARD,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
+                                 vscrn_c_page_margin_left(VTERM),
+                                 vscrn_c_page_margin_right(VTERM),
                                  1,
                                  (vscrn_c_page_margin_top(VTERM)==1),
                                  SP,
-                                 FALSE);
+                                 vscrn_current_page_number(vmode, FALSE));
                 } else
                     cursordown(0);
             }
@@ -26338,14 +26365,16 @@ vtescape( void )
             /* RI - Reverse Index, VT102 */
             if (ISVT100(tt_type_mode)) {
                 if (vscrn_c_page_margin_top(VTERM) == wherey[VTERM])
-                    VscrnScroll(VTERM,
+                    VscrnScrollPage(VTERM,
                                  DOWNWARD,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
+                                 vscrn_c_page_margin_left(VTERM),
+                                 vscrn_c_page_margin_right(VTERM),
                                  1,
-                                  FALSE,
-                                  SP,
-                                 FALSE );
+                                 FALSE,
+                                 SP,
+                                 vscrn_current_page_number(vmode, FALSE) );
                 else
                     cursorup(0);
             }
