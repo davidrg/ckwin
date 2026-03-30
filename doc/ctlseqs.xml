@@ -17245,7 +17245,11 @@ DCS $ q 3 , } ST</pre>
                 available to VT320-compatible terminal types. In the future,
                 this will only be available to VT420 and higher emulations.
             </p>
-            <p>Insert <param-single/> columns (default 1).</p>
+            <p>Insert <param-single/> blank columns (default 1) at the cursors
+                current location, with all columns between the cursor and the
+                right margin shifting right. If the cursor is outside the page
+                margins, DECIC is ignored.
+            </p>
         </section>
         <section role="ctlseq" id="decsasd"
                  mnemonic="DECSASD" title="Select Active Status Display">
