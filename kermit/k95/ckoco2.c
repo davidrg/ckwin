@@ -3567,12 +3567,27 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 /* VscrnScrollPage                                          | Page: Specified*/
 /*---------------------------------------------------------------------------*/
 /* Scrolls the page up or down.
- * */
+ *
+ * Parameters:
+ *     vmode        vscreen to scroll
+ *     updown       Scroll UPWARD or DOWNWARD
+ *     topmargin    Top line of region to scroll. Zero based.
+ *     bottommargin Bottom line of region to scroll. Zero based.
+ *     leftmargin   Left column of region to scroll. Use -1 for entire line.
+ *     rightmargin  Right column of region to scroll. Use -1 for entire line.
+ *     nlines       Number of line to scroll up or down
+ *     savetobuffer If lines scrolled out of view should be saved to the buffer.
+ *                  Only available when topmargin is 0 and left/right margins
+ *                  are 1/VscrnGetWidth() or -1/-1
+ *     fillchar     Character to fill new empty lines with
+ *     page         Which page should be scrolled.
+ */
 void
 VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
              int leftmargin, int rightmargin, int nlines, int savetobuffer,
              CHAR fillchar, int page) {
-    /* topmargin and bottommargin are zero based */
+    /* topmargin and bottommargin are zero based, leftmargin and rightmargin are
+     * not.*/
     viocell blankcell;
     videoline * line ;
     videoline   linetodelete ;

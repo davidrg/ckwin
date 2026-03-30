@@ -24403,16 +24403,23 @@ vtcsi(void)
                      ISANSI(tt_type_mode) &&
                      private == FALSE &&
                      ansiext == FALSE ) {
+
+                    /* DEC STD 070 says this is ignored if outside the
+                     * left/right margins */
+                    if ( wherex[VTERM] < cursor_left_margin(VTERM) ||
+                         wherex[VTERM] > cursor_right_margin(VTERM))
+                        break;
+
                     blankvcell.c = SP;
                     blankvcell.video_attr = attribute;
-                    if (pn[1] > VscrnGetWidth(VTERM) + 1 -
+                    if (pn[1] > cursor_right_margin(VTERM) + 1 -
                          wherex[VTERM])
-                        pn[1] = VscrnGetWidth(VTERM) + 1 -
+                        pn[1] = cursor_right_margin(VTERM) + 1 -
                             wherex[VTERM];
                     VscrnScrollRt(VTERM, wherey[VTERM] - 1,
                                    wherex[VTERM] - 1,
                                    wherey[VTERM] - 1,
-                                   VscrnGetWidth(VTERM) - 1,
+                                   cursor_right_margin(VTERM) - 1,
                                    pn[1],
                                    blankvcell
                                    );
@@ -24503,16 +24510,23 @@ vtcsi(void)
                        ISANSI(tt_type_mode)) &&
                      private == FALSE &&
                      ansiext == FALSE ) {
+
+                    /* DEC STD 070 says this is ignored if outside the
+                     * left/right margins */
+                    if ( wherex[VTERM] < cursor_left_margin(VTERM) ||
+                         wherex[VTERM] > cursor_right_margin(VTERM))
+                        break;
+
                     blankvcell.c = SP;
                     blankvcell.video_attr = geterasecolor(VTERM);
-                    if (pn[1] > VscrnGetWidth(VTERM) + 1 -
+                    if (pn[1] > cursor_right_margin(VTERM) + 1 -
                          wherex[VTERM])
-                        pn[1] = VscrnGetWidth(VTERM) + 1 -
+                        pn[1] = cursor_right_margin(VTERM) + 1 -
                             wherex[VTERM];
                     VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                    wherex[VTERM] - 1,
                                    wherey[VTERM] - 1,
-                                   VscrnGetWidth(VTERM) - 1,
+                                   cursor_right_margin(VTERM) - 1,
                                    pn[1],
                                    blankvcell
                                    ) ;
