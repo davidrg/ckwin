@@ -456,10 +456,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed VPA not obeying DECOM
  - Fixed CNL causing a scroll at the bottom margin
  - Fixed HVP/CUP not obeying DECOM properly
- - Fixed DECIC, which was:
-   - only ever inserting a single column regardless of parameter
+ - Fixed DECIC and DECIC, which was:
+   - only ever inserting/deleting a single column regardless of parameter
    - operating outside margins
-   - not operating at the left of the screen
+   - not operating at the left of the screen (DECIC)
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

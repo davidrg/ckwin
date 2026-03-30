@@ -17451,7 +17451,11 @@ DCS $ q 3 , } ST</pre>
                 available to VT320-compatible terminal types. In the future,
                 this will only be available to VT420 and higher emulations.
             </p>
-            <p>Delete <param-single/> columns (default 1).</p>
+            <p>Delete <param-single/> columns (default 1), shifting columns from
+                the right margin towards the cursor. One or more empty columns
+                are inserted at the right margin. If the cursor is outside the
+                page margins, DECDC is ignored.
+            </p>
         </section>
         <section role="ctlseq" id="decssdt"
                  mnemonic="DECSSDT" title="Select Status Line Type">

@@ -25322,32 +25322,43 @@ vtcsi(void)
                 case '~':
                     if ( ISVT420(tt_type_mode) ) {
                         /* DECDC - Delete Column */
-                        viocell cell ;
-                        cell.c = SP ;
-                        cell.video_attr = geterasecolor(VTERM) ;
-                        if ( k < 1 || pn[0] == 0 )
-                            pn[1] = 1;
-                        else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
-                            pn[1] = VscrnGetWidth(VTERM)-1 ;
 
-                        VscrnScrollLf( VTERM,
-                                       relcursor ? vscrn_c_page_margin_top(VTERM) - 1 : 0, /* top row */
-                                       wherex[VTERM], /* left col */
-                                       relcursor ? vscrn_c_page_margin_bot(VTERM) - 1 :
-                                       VscrnGetHeight(VTERM)
-                                       -(tt_status[VTERM]?2:1), /* bot row */
-                                       VscrnGetWidth(VTERM)-1,  /* right col */
-                                       pn[1],
-                                       cell);
+
+                        /* "DECDC is ignored if the active position is outside
+                         * the Scroll Area" - STD 070 */
+                        if (wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) &&
+                            wherex[VTERM] <= vscrn_c_page_margin_right(VTERM) &&
+                            wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+                            wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM))
+                        {
+                            viocell cell ;
+                            int top_row, bot_row, left_col, right_col;
+                            cell.c = SP ;
+                            cell.video_attr = geterasecolor(VTERM) ;
+                            if ( k < 1 || pn[1] == 0 )
+                                pn[1] = 1;
+                            else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
+                                pn[1] = VscrnGetWidth(VTERM)-1 ;
+
+
+                            top_row = vscrn_c_page_margin_top(VTERM) - 1;
+                            bot_row = vscrn_c_page_margin_bot(VTERM) - 1;
+                            left_col = wherex[VTERM] - 1;
+                            right_col = vscrn_c_page_margin_right(VTERM) - 1;
+
+                            VscrnScrollLf( VTERM,
+                                           top_row, /* top row */
+                                           left_col, /* left col */
+                                           bot_row, /* bot row */
+                                           right_col,  /* right col */
+                                           pn[1],
+                                           cell);
+                        }
                     }
                     break;
                 case '}':
                     if ( ISVT420(tt_type_mode) ) {
                         /* DECIC - Insert Column */
-                        viocell cell ;
-                        int top_row, bot_row, left_col, right_col;
-                        cell.c = SP ;
-                        cell.video_attr = geterasecolor(VTERM) ;
 
                         /* "DECIC is ignored if the active position is outside
                          * the Scroll Area" - STD 070 */
@@ -25356,6 +25367,10 @@ vtcsi(void)
                             wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
                             wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM))
                         {
+                            viocell cell ;
+                            int top_row, bot_row, left_col, right_col;
+                            cell.c = SP ;
+                            cell.video_attr = geterasecolor(VTERM) ;
 
                             if ( k < 1 || pn[1] == 0 )
                                 pn[1] = 1;
