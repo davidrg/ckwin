@@ -6935,16 +6935,33 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
     /* Okay, so now we have scrolled the screen.  But the protected */
     /* fields need to be copied back to the new current screen      */
 
+    /* According to DEC STD 070, for VT terminals *all* attributes have to be
+     * copied back: for DECSED, "The character rendition and attributes
+     * associated with each position do not change"   - DG, 2026-03-31
+     */
+
     for ( y = linecount - VscrnGetHeight(vmode) + (tt_status[vmode]?1:0) ;
           y < linecount ; y++,y2++ ) {
         line = VscrnGetLineFromTop( vmode, y, FALSE ) ;
         newline = VscrnGetLineFromTop( vmode, y2, FALSE ) ;
-        for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
-            if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
-                newline->cells[x] = line->cells[x] ;
+        for ( x = 0 ; x < MAXTERMCOL ; x++ )
+        {
+            /* I don't know if other emulations using this function behave as
+             * DEC terminals do, so for now they get they prior behaviour */
+            if (ISVT220(tt_type_mode)) {
+                if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
+                    newline->cells[x] = line->cells[x] ;
+                }
                 newline->vt_char_attrs[x] = line->vt_char_attrs[x] ;
+                newline->vt_line_attr = line->vt_line_attr;
+            }
+            else {
+                if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
+                    newline->cells[x] = line->cells[x] ;
+                    newline->vt_char_attrs[x] = line->vt_char_attrs[x] ;
                 }
             }
+        }
         }
 }
 
@@ -6962,14 +6979,20 @@ selclrtoeoln( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
 
     /* take care of current line */
     line = VscrnGetLineFromTop( vmode, wherey[vmode]-1, FALSE ) ;
-    for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
-        {
+    for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ ) {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
+            {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
+    }
 }
 
 void
@@ -6994,24 +7017,34 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
-            }
-        }
 
-    /* now take care of additional lines */
-    for ( y=wherey[vmode] ; y<VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ; y++ )
-        {
-        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
-        for ( x=0 ; x <MAXTERMCOL ; x++ )
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
             {
-            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
-                line->cells[x].c = fillchar ;
                 line->cells[x].video_attr = cellcolor;
                 line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            }
+        }
+    }
+
+    /* now take care of additional lines */
+    for ( y=wherey[vmode] ; y<VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ; y++ ) {
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
+        for ( x=0 ; x <MAXTERMCOL ; x++ ) {
+            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
+                line->cells[x].c = fillchar ;
+                /* See DEC STD 070 comment above */
+                if (!ISVT220(tt_type_mode))
+                {
+                    line->cells[x].video_attr = cellcolor;
+                    line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                 }
             }
         }
+    }
 }
 
 void
@@ -7026,29 +7059,35 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
         vmode = VSTATUS ;
 
     /* now take care of first wherey[vmode]-1 lines */
-    for ( y=0 ; y<wherey[vmode]-1 ; y++ )
-        {
+    for ( y=0 ; y<wherey[vmode]-1 ; y++ ) {
         line = VscrnGetLineFromTop(vmode, y, FALSE) ;
-        for ( x=0 ; x <MAXTERMCOL ; x++ )
-            {
+        for ( x=0 ; x <MAXTERMCOL ; x++ ) {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+                /* DEC STD 070 says: "The character rendition and attributes
+                 * associated with each position do not change". I don't know if
+                 * other emulations using this function behave the same way or not,
+                 * so for now they get the prior behaviour of erasing everything */
+                if (!ISVT220(tt_type_mode)) {
+                    line->cells[x].video_attr = cellcolor;
+                    line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                 }
             }
         }
+    }
 
     /* take care of current line */
     line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
-    for ( x=0 ; x < wherex[vmode] ; x++ )
-        {
+    for ( x=0 ; x < wherex[vmode] ; x++ ) {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* See DEC STD 070 comment above */
+            if (!ISVT220(tt_type_mode)) {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
+    }
 }
 
 void
@@ -7068,10 +7107,17 @@ selclrbol_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
+            {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
+    }
 }
 
 void
@@ -7087,12 +7133,18 @@ selclrline_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
 
     /* take care of current line */
     line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
-    for ( x=0 ; x < MAXTERMCOL ; x++ )
-    {
+    for ( x=0 ; x < MAXTERMCOL ; x++ ) {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
+            {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            }
         }
     }
 }
@@ -7172,8 +7224,22 @@ selclrrect_escape( BYTE vmode, int top, int left, int bot, int right,
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED) &&
                  line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED ) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+
+                /* From the VT525 manual:
+                 *   DECSERA does not change:
+                 *      - Visual attributes set by the select graphic rendition
+                 *        (SGR) function
+                 *      - Protection attributes set by DECSCA
+                 *      - Line attributes
+                 * I'm unsure if the wyse emulation that also uses this function
+                 * also behaves the same way, so for now it gets the prior
+                 * behaviour
+                 */
+                if (!ISVT420(tt_type_mode))
+                {
+                    line->cells[x].video_attr = cellcolor;
+                    line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                }
             }
         }
     }
@@ -19657,7 +19723,7 @@ vtcsi(void)
                         if ( k < 1 || pn[1] < 1 )
                             pn[1] = 1 ;
                         clrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], NUL ) ;
+                                        pn[3], pn[4], SP ) ;
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }
@@ -24411,7 +24477,7 @@ vtcsi(void)
                         break;
 
                     blankvcell.c = SP;
-                    blankvcell.video_attr = attribute;
+                    blankvcell.video_attr = geterasecolor(VTERM);
                     if (pn[1] > cursor_right_margin(VTERM) + 1 -
                          wherex[VTERM])
                         pn[1] = cursor_right_margin(VTERM) + 1 -

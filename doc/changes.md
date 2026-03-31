@@ -438,8 +438,6 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    is produced by a real VT420/520 using the ISO Latin 1 character set, and
    should be correct for the VT525 too. The calculation doesn't currently handle
    other character sets, so for those the result will be incorrect.
- - Fixed DECFRA accepting invalid fill character specifications
- - Fixed DECFRA not using the selected remote character set for the fill character
  - Fixed K95G attempting to save a null font face name to the registry when the
    registry key isn't present and the user has never selected a font. This
    could result in garbage being saved as the font face name in the registry
@@ -462,6 +460,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - not operating at the left of the screen (DECIC)
  - Fixed IL and DL operating outside the page margins, and not sending the 
    cursor to the left margin.
+ - Fixed DECSERA, DECSEL and DECSED erasing visual and line attributes when they
+   shouldn't.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

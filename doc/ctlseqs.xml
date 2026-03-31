@@ -5530,6 +5530,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:283"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm wt"/>
             <ctlseq>CSI ? <param-single/> J</ctlseq>
+            <p>Erases only characters that do not have the protected attribute
+                set. Any existing visual attributes set by <a href="#sgr">SGR</a>,
+                protection attributes, and line attributes are unaffected.
+            </p>
             <section role="parameter" id="decsed-0" title="Selective erase to end of screen">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="wy370:124"/>
@@ -5879,6 +5883,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:285"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm wt"/>
             <ctlseq>CSI ? <param-single/> K</ctlseq>
+            <p>Erases only characters that do not have the protected attribute
+                set. Any existing visual attributes set by <a href="#sgr">SGR</a>,
+                protection attributes, and line attributes are unaffected.
+            </p>
             <section role="parameter" id="decsel-0" title="Selective erase to end of line">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-K:Ps-=-0.1E49"/>
@@ -16824,11 +16832,17 @@ DCS $ q 3 , } ST</pre>
                 available to VT320-compatible terminal types. In the future,
                 this will only be available to VT420 and higher emulations.
             </p>
-            <p> <tt><param-single symbol="Pt"/> ;
+            <p> Erases all unerased characters in the specified rectangle with
+                the Space character unless those characters have the protected
+                attribute set. The rectangle is defined by
+                <tt><param-single symbol="Pt"/> ;
                     <param-single symbol="Pl"/> ;
                     <param-single symbol="Pb"/> ;
-                    <param-single symbol="Pr"/></tt> is the rectangle to selectively
-                erase
+                    <param-single symbol="Pr"/></tt>.
+            </p>
+            <p>
+                Any existing visual attributes set by <a href="#sgr">SGR</a>,
+                protection attributes, and line attributes are unaffected.
             </p>
         </section>
         <section role="ctlseq" id="decstglt" mnemonic="DECSTGLT"
