@@ -8407,7 +8407,7 @@ DCS $ q 3 , } ST</pre>
                 <p>Called DECVSSM (Vertial Split Screen Mode) in the VT420
                     manual, and DECLRMM (Left Right Margin Mode) in the VT5xx.
                     Whatever you call it, this enables or disables the
-                    <a href="#decslrmm">DECSLRMM</a> control sequence. When
+                    <a href="#decslrm">DECSLRM</a> control sequence. When
                     DECSLRMM is enabled, <a href="#decdhl">DECDHL</a> and
                     <a href="#decdwl">DECDWL</a> are disabled and all lines on
                     all pages are reset to single with, single height.

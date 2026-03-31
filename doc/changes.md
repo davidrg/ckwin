@@ -365,6 +365,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
    - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages
    - [DECSNLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsnls) - Set number of lines per screen
+ - Left/Right Margins
+   - [DECLRMM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decvssm) - Set/reset left/right margin mode
+   - [DECSLRM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decslrm) - Set left/right margins
  - [XTVERSION](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtversion) (k95 terminal type only)
 
 ### Fixed Bugs
