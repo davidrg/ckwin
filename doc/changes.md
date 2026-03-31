@@ -465,6 +465,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    cursor to the left margin.
  - Fixed DECSERA, DECSEL and DECSED erasing visual and line attributes when they
    shouldn't.
+ - Fixed ICH inserting characters with the current attribute, rather than
+   current erase colour
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
