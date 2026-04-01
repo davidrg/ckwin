@@ -95,14 +95,13 @@
 11_2_5_2_5 !0 			# TODO: Currently failing - not supported by K95?
 11_2_5_2_6 !0 			# TODO: Currently failing - not supported by K95?
 11_2_5_2_7 DC22
-11_2_5_3_1_7 !0 			# TODO: Currently failing - not supported by K95?
-11_2_5_3_2_1 !0 			# TODO: Currently failing - not supported by K95?
-11_2_5_3_2_2 !0 			# TODO: Currently failing - not supported by K95?
-11_2_5_3_2_3 !0 			# TODO: Currently failing - not supported by K95?
-11_2_5_3_2_4 !0 			# TODO: Currently failing - not supported by K95?
-11_2_5_3_2_5 !0 			# TODO: Currently failing - not supported by K95?
-11_2_5_3_2_6 !0 			# TODO: Currently failing - not supported by K95?
-11_2_5_3_2_7 !0 			# TODO: Currently failing - not supported by K95?
+11_2_5_3_2_8 BED5
+11_2_5_3_2_7 BE37
+11_2_5_3_2_6 B9EB
+11_2_5_3_2_5 B647
+11_2_5_3_2_4 AF40
+11_2_5_3_2_10 C223
+11_2_5_3_2_9 C02B
 11_2_5_3_3_1 18A6 		# DECRPM ANSI - TODO: compare to real terminal
 11_2_5_3_3_2_1 EE73 	# DECRPM 1/2  - TODO: compare to real terminal
 11_2_5_3_3_2_2 35D5    # DECRPM 2/2  - TODO: compare to real terminal

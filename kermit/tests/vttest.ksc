@@ -2004,10 +2004,21 @@ def test_11_2_5_vt320_reporting_functions {
     #      3. Tab Stop Report (DECTABSR)
 	choose_submenu_option 2 "11.2.5.3.2" "Tab Stop Report (DECTABSR)"
 	local \%i
-	for \%i 1 7 1 {
-		choose_single_test_option 3 {11.2.5.3.2.\%i} {Tab Stop Report - \%i} 3
-		choose_toggle_option 2
-	}
+    choose_single_test_option 3 {11.2.5.3.2.8} {Tab Stop Report - 8} 3
+    choose_toggle_option 2
+    choose_single_test_option 3 {11.2.5.3.2.7} {Tab Stop Report - 7} 3
+    choose_toggle_option 2
+    choose_single_test_option 3 {11.2.5.3.2.6} {Tab Stop Report - 6} 3
+    choose_toggle_option 2
+    choose_single_test_option 3 {11.2.5.3.2.5} {Tab Stop Report - 5} 3
+    choose_toggle_option 2
+    choose_single_test_option 3 {11.2.5.3.2.4} {Tab Stop Report - 4} 3
+    choose_toggle_option 2
+    choose_single_test_option 3 {11.2.5.3.2.10} {Tab Stop Report - 10} 3
+    choose_toggle_option 2
+    choose_single_test_option 3 {11.2.5.3.2.9} {Tab Stop Report - 9} 3
+    choose_toggle_option 2
+
 	choose toggles 1
 	pop_menu # Tab Stop Report (DECTABSR)
 
@@ -2025,7 +2036,8 @@ def test_11_2_5_vt320_reporting_functions {
 	wait_for_menu_prompt
 	pop_menu # Request Mode (DECRQM)/Report Mode (DECRPM)
 	
-	choose_single_test_option 4 "11.2.5.3.4" "Restore Presentation State (DECRSPS): cursor" "(DECRSPS): cursor"
+	choose_multi_test_option 4 "11.2.5.3.4.1" "Restore Presentation State (DECRSPS): cursor" "(DECRSPS): cursor - rendition" 3
+	do_test "11.2.5.3.4.2" "Restore Presentation State (DECRSPS): cursor" "(DECRSPS): cursor - flags and modes" 15
 	choose_single_test_option 5 "11.2.5.3.5" " Restore Presentation State (DECRSPS): tabstops" "tabstops" 5
 	
 	

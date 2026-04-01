@@ -104,6 +104,7 @@ extern int tcp_incoming;
 
 _PROTOTYP(void vtescape, (void));
 _PROTOTYP(void vt100, (unsigned short vtch));
+char* csetchar(enum charsetsize size, int cset);
 #endif /* NOLOCAL */
 
 #ifdef KUI
@@ -7493,6 +7494,141 @@ terminal_state_report() {
      * terminal emulators. The only question is... what to include? */
 }
 
+/*----------------------------------------------------------+----------------*/
+/* presentation_state_report                                | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+/* Produces one of two Presentation State Reports:
+ *      1       Cursor Information Report
+ *      2       Tabstop Report
+ */
+void
+presentation_state_report(int report) {  /* DECRQPSR */
+    char response[100];
+    char* decrqpsr = NULL;
+
+    response[0] = '\0';
+
+    switch (report) {
+    case 1: {   /* DECCIR - Cursor Information Report */
+        char srend, satt, sflag, scss, pgl, pgr;
+
+        /* Response is:
+         *   Pr ; Pc ; Pp ; Srend ; Satt ; Sflag ; Pg1 ; Pgr ; Scss ; Sdesig
+         * Where:
+         *   Pr,Pc  Cursor position (eg, 5;20)
+         *   Pp     Current page number (eg, 3)
+         *   Srend  Bit field of graphic renditions
+         *
+         * My VT520 in power on state gives:
+         * 1;1;1;@;@;@;0;2;@;BB<<
+         */
+
+        srend = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        if (attrib.invisible) srend += 16;      /* bit 5 */
+        if (attrib.reversed) srend += 8;        /* bit 4 */
+        if (attrib.blinking) srend += 4;        /* bit 3 */
+        if (attrib.underlined) srend += 2;      /* bit 2 */
+        if (attrib.bold) srend += 1;            /* bit 1 */
+
+        satt = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        /* bits 5, 4, 3, 2 - reserved for future use */
+        /* bit 1 - selectively erasable attribute */
+        if (attrib.unerasable) satt += 1;  /* bit 1 */
+
+        sflag = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        /* bit 5 - reserved */
+        if (wrapit) sflag += 8; /* bit 4 - autowrap pending */
+        /* bit 3 - SS3 pending */
+        if (SSGL != NULL && SSGL == &G[3]) sflag += 4;
+        /* bit 2 - SS2 pending */
+        if (SSGL != NULL && SSGL == &G[2]) sflag += 2;
+        if (relcursor) sflag += 1; /* bit 1 - origin mode */
+
+        if (GL == &G[0]) pgl = '0';
+        else if (GL == &G[1]) pgl = '1';
+        else if (GL == &G[2]) pgl = '2';
+        else if (GL == &G[3]) pgl = '3';
+
+        if (GR == &G[0]) pgr = '0';
+        else if (GR == &G[1]) pgr = '1';
+        else if (GR == &G[2]) pgr = '2';
+        else if (GR == &G[3]) pgr = '3';
+
+        scss = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        /* bit 5 - reserved */
+        if (G[3].size != cs94) scss += 8;
+        if (G[2].size != cs94) scss += 4;
+        if (G[1].size != cs94) scss += 2;
+        if (G[0].size != cs94) scss += 1;
+
+        _snprintf(response, 100,
+            "%d;%d;%d;%c;%c;%c;%c;%c;%c;%s%s%s%s",
+            wherey[VTERM] - (relcursor ? vscrn_c_page_margin_top(VTERM) - 1: 0),
+            wherex[VTERM] - (relcursor ? vscrn_c_page_margin_left(VTERM) - 1: 0),
+            vscrn_current_page_number(VTERM, FALSE) + 1,
+            srend,
+            satt,
+            sflag,
+            pgl,
+            pgr,
+            scss,
+            csetchar(G[0].size, G[0].designation),
+            csetchar(G[1].size, G[1].designation),
+            csetchar(G[2].size, G[2].designation),
+            csetchar(G[3].size, G[3].designation)
+            );
+        break;
+    }
+    case 2: { /* DECTABSR - Tabulation Stop Report */
+        int tabpos = 2;
+        /* There is usually a tabstop at column 1, but we
+         * don't report that here as the VT520 doesn't let
+         * you place a tabstop a column 1, and K95 won't tab
+         * to a tabstop in column 1 (unless its backtab,
+         * which is probably what its there for) */
+        for (int i = 2; i < VscrnGetWidth(VTERM); i++) {
+            if (htab[i] == 'T') {
+                if (response[0] != '\0') strcat(response, "/");
+                strcat(response, ckitoa(tabpos));
+            }
+            tabpos++;
+        }
+        break;
+    }
+    case 0: /* Ignored, nothing sent */
+    default:
+        break;
+    }
+
+    if (response[0] != '\0') {
+        int buflen = strlen(response) + 10;
+        decrqpsr = malloc(buflen);
+
+        /* Send DCS pn[1] $ u response ST */
+        if ( send_c1 )
+            _snprintf(decrqpsr, buflen, "%c%d$u%s%c",
+                _DCS, report, response, _ST8);
+        else
+            _snprintf(decrqpsr, buflen, "%cP%d$u%s%c\\",
+                ESC, report, response, ESC);
+        sendchars(decrqpsr,strlen(decrqpsr));
+
+        free(decrqpsr);
+    }
+}
+
 
 /*----------------------------------------------------------+----------------*/
 /* color_table_report                                       | Page: n/a      */
@@ -10728,6 +10864,107 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
         pG->ltoi = NULL ;
     }
     return cs ;
+}
+
+/* This function tries to turn a TX_ character set identifier back into the
+ * character(s) used to designate it. Its implemented for the benefit of the
+ * VT320 Cursor Information Report, so charactersets specific to non-VT
+ * emulations aren't fully represented here and may just produce a "?".
+ * Result will always be one or two characters.
+ *
+ * TODO: DECUPSS
+ */
+char*
+csetchar(enum charsetsize size, int cset) {
+    char result[2] = {'\0', '\0'};
+    switch (size) {
+    case cs94: {
+        switch (cset) {
+        case TX_BRITISH:
+            return "A";     /* Or @ */
+        case TX_ASCII:
+            return "B";
+        case TX_FINNISH:
+            return "5";
+        case TX_NORWEGIAN:
+            return "`";
+        case TX_SWEDISH:
+            return "7";
+        case TX_GERMAN:
+            return "K";
+        case TX_CN_FRENCH:
+            return "9";
+        case TX_FRENCH:
+            return "R";
+        case TX_ITALIAN:
+            return "Y";
+        case TX_SPANISH:
+            return "Z";
+        case TX_DECSPEC:
+            return "0";
+        case TX_DECTECH:
+            return ">";
+        case TX_DUTCH:
+            return "4";
+        case TX_DECMCS:
+            if (!ISVT320(tt_type_mode)) {
+                return "<";
+            }
+            return "%5";
+        case TX_SWISS:
+            return "=";
+        case TX_PORTUGUESE:
+            return "%6";  /* or L */
+        case TX_HUNGARIAN:
+            return "i";
+        case TX_J201R:
+            return "J";
+        case TX_J201K:
+            return "I";
+        case TX_IBMC0GRPH:
+            return "*";
+        case TX_APL1:
+            return "e";
+        default:
+            break;
+        }
+
+        break;
+    }
+    case cs96: {
+        switch (cset) {
+        case TX_8859_1:
+            return "A";
+        case TX_8859_2:
+            return "B";
+        case TX_8859_3:
+            return "C";
+        case TX_8859_4:
+            return "D";
+        case TX_8859_7:
+            return "@";
+        case TX_8859_6:
+            return "G";
+        case TX_8859_8:
+            return "H";
+        case TX_8859_5:
+            return "L";
+        case TX_8859_9:
+            return "M";
+        case TX_DECMCS:
+            return "%5";
+        case TX_IBMC0GRPH:
+            return "*";
+        case TX_8859_15:
+            return "b";
+        default:
+            break;
+        }
+
+        break;
+        }
+    }
+    return "?";
 }
 
 void
@@ -19011,7 +19248,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_X10) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 10:        /* DECEDM - Block mode off */
@@ -19020,16 +19257,16 @@ vtcsi(void)
                                 /* Default to permanently reset in case not KUI
                                  * or NOTOOLBAR */
                                 pn[2] = 4;
- #ifdef KUI
- #ifndef NOTOOLBAR
+#ifdef KUI
+#ifndef NOTOOLBAR
                                 pn[2] = KuiGetProperty(KUI_GUI_TOOLBAR_VIS, 0L) ? 1 : 2;
- #endif
- #endif
+#endif
+#endif
                             }
                             break;
-						case 12: /* AT&T 610/xterm - cursor blinking */
-							pn[2] = tt_cursor_blink == 1 ? 1 : 2;
-							break;
+                        case 12: /* AT&T 610/xterm - cursor blinking */
+                            pn[2] = tt_cursor_blink == 1 ? 1 : 2;
+                            break;
                         case 18: /* DECPFF */
                             pn[2] = xprintff ? 1 : 2 ;
                             break;
@@ -19042,10 +19279,10 @@ vtcsi(void)
                         case 42: /* DECNRCM */
                             pn[2] = decnrcm ? 1 : 2 ;
                             break;
-						case 64: /* DECPCCM */
+                        case 64: /* DECPCCM */
                             /* Page cursor coupling */
                             if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
-							    pn[2] = vscrn[VTERM].page_cursor_coupling ? 1 : 2;
+                                pn[2] = vscrn[VTERM].page_cursor_coupling ? 1 : 2;
                             } else {
                                 pn[2] = 3; /* permanently set */
                             }
@@ -19059,12 +19296,12 @@ vtcsi(void)
                         case 68: /* DECKBUM */
                             pn[2] = 3 ; /* permanently set */
                             break;
-						case 69: /* DECLRMM aka DECVSSM */
-							if (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode)
-									|| ISK95(tt_type_mode)) {
-								pn[2] = declrmm ? 1 : 2;
-							}
-							break;
+                        case 69: /* DECLRMM aka DECVSSM */
+                            if (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode)
+                                    || ISK95(tt_type_mode)) {
+                                pn[2] = declrmm ? 1 : 2;
+                                    }
+                            break;
                         case 114: /* DECATCUM */
                             pn[2] = decatcum ? 1 : 2;
                             break;
@@ -19087,7 +19324,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_X11) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1002:
@@ -19099,7 +19336,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_BTNEVENT) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1003:
@@ -19111,7 +19348,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_ANYEVENT) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1004:
@@ -19130,7 +19367,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_SGR) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1011:
@@ -19145,15 +19382,15 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_URXVT) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
-						case 1034:  /* xterm - Interpret "meta" key */
-							pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
-							break;
-						case 1036:  /* xterm - Send esc when Meta modifies a key */
-							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
-							break;
+                        case 1034:  /* xterm - Interpret "meta" key */
+                            pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
+                            break;
+                        case 1036:  /* xterm - Send esc when Meta modifies a key */
+                            pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
+                            break;
                         case 1042:  /* xterm - urgency window hint on bell */
 #ifdef KUI
                             pn[2] = tt_bell_flash ? 1 : 2;
@@ -19388,7 +19625,7 @@ vtcsi(void)
                                         }
                                         line->vt_char_attrs[x] = a;
                                     }
-                                }
+                                      }
                             }
                         }
                         if (cursor_on_visible_page(VTERM)) {
@@ -19511,7 +19748,7 @@ vtcsi(void)
                                         }
                                         line->vt_char_attrs[x] = a;
                                     }
-                                }
+                                      }
                             }
                         }
                         if (cursor_on_visible_page(VTERM)) {
@@ -19534,7 +19771,7 @@ vtcsi(void)
                                     (ISVT525(tt_type_mode)
                                      || ISK95(tt_type_mode)) ) {
                                 color_table_report(pn[2]);
-                            }
+                                     }
                             break;
                         }
                     }
@@ -19543,10 +19780,10 @@ vtcsi(void)
                     if ( ISVT420( tt_type_mode) )
                     {
                         USHORT * data = NULL;
-						cell_video_attr_t *color_data = NULL;
-						USHORT * attr_data = NULL;
+                        cell_video_attr_t *color_data = NULL;
+                        USHORT * attr_data = NULL;
                         int w, h, x, y;
-						int src_page, dest_page, max_page;
+                        int src_page, dest_page, max_page;
 
                         /* Area to be copied:
                          * pn[1] - top-line border      default=1
@@ -19580,34 +19817,34 @@ vtcsi(void)
                         if ( pn[3] < pn[1] || pn[4] < pn[2] )
                             break;
 
-						src_page = pn[5] - 1;
-						dest_page = pn[8] - 1;
-						max_page = term_max_page(VTERM);
-						if (src_page < 0) src_page = 0;
-						if (src_page > max_page) src_page = max_page;
-						if (dest_page < 0) dest_page = 0;
-						if (dest_page > max_page) dest_page = max_page;
+                        src_page = pn[5] - 1;
+                        dest_page = pn[8] - 1;
+                        max_page = term_max_page(VTERM);
+                        if (src_page < 0) src_page = 0;
+                        if (src_page > max_page) src_page = max_page;
+                        if (dest_page < 0) dest_page = 0;
+                        if (dest_page > max_page) dest_page = max_page;
 
                         if (on_alternate_buffer(VTERM)) {
                             src_page = dest_page = ALTERNATE_BUFFER_PAGE(VTERM);
                         }
 
-						if (relcursor) { /* DECOM enabled? */
+                        if (relcursor) { /* DECOM enabled? */
                             int src_margintop, src_marginleft, dest_margintop, dest_marginleft;
                             src_margintop = vscrn_page_margin_top(VTERM, src_page);
                             src_marginleft = vscrn_page_margin_left(VTERM, src_page);
                             dest_margintop = vscrn_page_margin_top(VTERM, dest_page);
                             dest_marginleft = vscrn_page_margin_left(VTERM, dest_page);
 
-							pn[1] += src_margintop - 1;  /* Top border */
-							pn[2] += src_marginleft - 1; /* Left border */
-							pn[3] += src_margintop - 1;  /* Bottom border */
-							pn[4] += src_marginleft - 1; /* Right border */
-							/* pn[5] - source page */
-							pn[6] += dest_margintop - 1;  /* Top border */
-							pn[7] += dest_marginleft - 1; /* left border */
+                            pn[1] += src_margintop - 1;  /* Top border */
+                            pn[2] += src_marginleft - 1; /* Left border */
+                            pn[3] += src_margintop - 1;  /* Bottom border */
+                            pn[4] += src_marginleft - 1; /* Right border */
+                            /* pn[5] - source page */
+                            pn[6] += dest_margintop - 1;  /* Top border */
+                            pn[7] += dest_marginleft - 1; /* left border */
                             /* pn[7] - dest page */
-						}
+                        }
 
                         w = pn[4] - pn[2] + 1;
                         h = pn[3] - pn[1] + 1;
@@ -19616,36 +19853,36 @@ vtcsi(void)
                         if ( !data )	/* sizeof(viocell.c) */
                             break;
 
-						color_data = malloc(sizeof(cell_video_attr_t) * w * h);
+                        color_data = malloc(sizeof(cell_video_attr_t) * w * h);
                         if ( !color_data ) { /* sizeof(viocell.video_attr) */
                             if ( data ) free(data);
                             break;
                         }
 
-						attr_data = malloc(sizeof(USHORT) * w * h);
+                        attr_data = malloc(sizeof(USHORT) * w * h);
                         if ( !attr_data ) {/* sizeof(videoline.vt_char_attrs) */
                             if ( data ) free(data);
                             if (color_data) free(color_data);
                             break;
                         }
 
-						/* Read data from source page */
+                        /* Read data from source page */
                         for ( y=0; y<h; y++ ) {
                             videoline * line = VscrnGetPageLineFromTop(VTERM, pn[1]+y-1, src_page);
                             for ( x=0; x<w; x++ ) {
                                 data[y*w + x] = line->cells[pn[2]+x-1].c;
-								color_data[y*w + x] = line->cells[pn[2]+x-1].video_attr;
-								attr_data[y*w + x] = line->vt_char_attrs[pn[2]+x-1];
+                                color_data[y*w + x] = line->cells[pn[2]+x-1].video_attr;
+                                attr_data[y*w + x] = line->vt_char_attrs[pn[2]+x-1];
                             }
                         }
 
-						/* Write out to destination page */
+                        /* Write out to destination page */
                         for ( y=0; y<h; y++ ) {
                             videoline * line = VscrnGetPageLineFromTop(VTERM, pn[6]+y-1, dest_page);
                             for ( x=0; x<w && (pn[7]+x <= VscrnGetWidth(VTERM)); x++ ) {
                                 line->cells[pn[7]+x-1].c = data[y*w + x];
-								line->cells[pn[7]+x-1].video_attr = color_data[y*w + x];
-								line->vt_char_attrs[pn[7]+x-1] = attr_data[y*w + x];
+                                line->cells[pn[7]+x-1].video_attr = color_data[y*w + x];
+                                line->vt_char_attrs[pn[7]+x-1] = attr_data[y*w + x];
                             }
                         }
                         free(data);
@@ -19654,6 +19891,15 @@ vtcsi(void)
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }
+                    }
+                    break;
+
+                case 'w':
+                    if (ISVT320(tt_type_mode)) {  /* DECRQPSR - Request Presentation State Report */
+                        if (k < 1 || pn[1] < 1 || pn[1] > 2)
+                            pn[1] = 0;
+
+                        presentation_state_report(pn[1]);
                     }
                     break;
                 case 'x':       /* DECFRA - Fill Rect Area */

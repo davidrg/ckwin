@@ -2504,7 +2504,8 @@ DECTSR		462
             <ref src="vt510:DECDHL.html"/>
             <ref src="vt52x:192"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty dtterm wt"/>
-            <p>DEC double-height line, top half</p>
+            <p>DEC double-height line, top half.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="decdhl-bottom" ctlseq="ESC # 4" mnemonic="DECDHL" title="double-height line, bottom half">
             <ref src="070:354"/>
@@ -2518,7 +2519,8 @@ DECTSR		462
             <ref src="vt510:DECDHL.html"/>
             <ref src="vt52x:192"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty wt"/>
-            <p>DEC double-height line, bottom half</p>
+            <p>DEC double-height line, bottom half.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="decswl" ctlseq="ESC # 5" mnemonic="DECSWL" title="single width line">
             <ref src="070:351"/>
@@ -2531,7 +2533,8 @@ DECTSR		462
             <ref src="vt420:166"/>
             <ref src="vt510:DECSWL.html"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty dtterm wt"/>
-            <p>DEC Single Width line</p>
+            <p>DEC Single Width line.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="decdwl" ctlseq="ESC # 6" mnemonic="DECDWL" title="double width line">
             <ref src="070:352"/>
@@ -2545,7 +2548,8 @@ DECTSR		462
             <ref src="vt510:DECDWL.html"/>
             <ref src="vt52x:202"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty dtterm wt"/>
-            <p>DEC Double Width line</p>
+            <p>DEC Double Width line.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="vt100-hardcopy" ctlseq="ESC # 7"
                  mnemonic="DECHCP" title="Hard Copy (DEC Private)" not-implemented="true">
@@ -4326,15 +4330,97 @@ DECTSR		462
             <termsupp first="vt520" series="vt" additional="tt"/>
         </section>
 
+        <section role="ctlseq" id="deccir" mnemonic="DECCIR"
+                 title="Cursor Information Report (Terminal to Host)"
+                 groups="isvt320">
+            <ctlseq>DCS 1 $ u D...D ST</ctlseq>
+            <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w:Ps-=-2.1E5C"/>
+            <ref src="070:455"/>
+            <ref src="wy370:141"/>
+            <ref src="vt340:224"/>
+            <ref src="vt420:270"/>
+            <ref src="vt510:DECCIR.html"/>
+            <ref src="vt52x:184"/>
+            <termsupp first="vt340" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>
+                Produced in response to a
+                <a href="#decrqpsr">Presentation State Request (DECRQPSR)</a>,
+                the Cursor Information Report contains detailed information
+                about the curosr including:
+            </p>
+            <ul>
+                <li>Coordinates (Y, X, Page)</li>
+                <li>Reverse video, blink, underline, bold and protected
+                    attributes</li>
+                <li>last column flag (auto-wrap pending), SS3 pending,
+                    SS2 pending, DECOM setting</li>
+                <li>Character sets currently invoked into GL and GR</li>
+                <li>Sizes of G0, G1, G2 and G3 (94 or 96 characters)</li>
+                <li>Character sets designated into G0, G1, G2, and G3</li>
+            </ul>
+            <p>The encoding a little quite complex so best to check DEC STD 070
+                or the VT420 manual (The VT520 and VT52x manuals don't cover it)
+                for the full details. But in summary, D...D is <tt>Pr ; Pc ; Pp ; Srend ; Satt ; Sflag ; Spgl ; Spgr ; Scss ; Sdesig</tt> where:
+            </p>
+            <ul>
+                <li>Pr and Pc are the row and column the cursor is currently on</li>
+                <li>Pp is the page the cursor is currently on</li>
+                <li>Srend is a single byte in the ASCII range where bit 1
+                    indicates bold, bit 2 is underline, bit 3 is blink,
+                    bit 4 is reverse video, and bit 5 is invisible.
+                </li>
+                <li>Satt is a single byte in the ASCII range where bit 1
+                    indicates if the protected attribute is set</li>
+                <li>Sflag is a single byte in the ASCII range where bit 1
+                    indicates <a href="#decom">DECOM</a> is set,
+                    bit 2 indicates <a href="ssg2l">SS2</a> is pending,
+                    bit 3 indicates <a href="ssg3l">SS3</a> is pending,
+                    and bit 4 indicates the last column flag is set.
+                </li>
+                <li>Spgl is a number from 0 to 3 indicating which of G0, G1, G2 or G3 is invoked into GL</li>
+                <li>Spgr is a number from 0 to 3 indicating which of G0, G1, G2 or G3 is invoked into GR</li>
+                <li>Scss is a single byte in the ASCII range where bits 1-4
+                    indicate if G0-G3 is a 96-character character set (bit is set)
+                    or a 94-character character set (bit is cleared)
+                </li>
+                <li>Sdesig are the intermediate and final characters for the
+                    character sets designed as G0 through G3
+                </li>
+            </ul>
+            <p>
+                For Srend, Satt, Sflag and Scss bit 8 is always cleared and bit
+                7 is always set. And bit 6 indicates another byte of information
+                follows (K95 never sends additional bytes, so never sets this
+                bit). Its not clear if any DEC terminal sets bit 6 either.
+            </p>
+            <p>For example, a Cursor Information Report might look like:
+                <tt><cc>DCS</cc> 1 $ u 1 ; 1 ; 1 ; @ ; @ ; @ ; 0 ; 2 ; N ; BAAA <cc>ST</cc></tt>
+            </p>
+
+        </section>
+
         <section role="ctlseq" id="dectabsr" mnemonic="DECTABSR"
-                 title="Tab Stop Report"
-                 not-implemented="true" todo="true">
+                 title="Tab Stop Report (Terminal to Host)"
+                 groups="isvt320">
             <ctlseq>DCS 2 $ u D...D ST</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w:Ps-=-2.1E5C"/>
             <ref src="070:459"/>
+            <ref src="wy370:144"/>
+            <ref src="vt340:230"/>
+            <ref src="vt420:276"/>
             <ref src="vt510:DECTABSR.html"/>
             <ref src="vt52x:311"/>
-            <termsupp first="vt510" series="vt" additional=""/>
+            <termsupp first="vt340" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>Produced in response to a
+                <a href="#decrqpsr">Presentation State Request (DECRQPSR)</a>,
+                the Tab Stop Report contains the positions of all horizontal tab
+                stops. <tt>D...D</tt> consists of column numbers separated by the
+                forward slash character (/).
+            </p>
+            <p>
+                For example:
+                <tt><cc>DCS</cc> 2 $ u 9 / 17 / 25 / 33 / 41 / 49 / 57 / 65 / 73 <cc>ST</cc></tt>
+            </p>
         </section>
 
         <section role="ctlseq" id="k95link" mnemonic="K95LINK"
@@ -8408,9 +8494,9 @@ DCS $ q 3 , } ST</pre>
                     manual, and DECLRMM (Left Right Margin Mode) in the VT5xx.
                     Whatever you call it, this enables or disables the
                     <a href="#decslrm">DECSLRM</a> control sequence. When
-                    DECSLRMM is enabled, <a href="#decdhl">DECDHL</a> and
+                    DECSLRMM is enabled, <a href="#decdhl-top">DECDHL</a> and
                     <a href="#decdwl">DECDWL</a> are disabled and all lines on
-                    all pages are reset to single with, single height.
+                    all pages are reset to single width, single height.
                 </p>
                 <p badges="k95 xterm">
                     When this mode is enabled, the <a href="#scosc">SCOSC</a>
@@ -10428,7 +10514,7 @@ DCS $ q 3 , } ST</pre>
                     manual, and DECLRMM (Left Right Margin Mode) in the VT5xx.
                     Whatever you call it, this enables or disables the
                     <a href="#decslrmm">DECSLRMM</a> control sequence. When
-                    DECSLRMM is enabled, <a href="#decdhl">DECDHL</a> and
+                    DECSLRMM is enabled, <a href="#decdhl-top">DECDHL</a> and
                     <a href="#decdwl">DECDWL</a> are disabled.
                 </p>
             </section>
@@ -15109,16 +15195,16 @@ DCS $ q 3 , } ST</pre>
                 specified for the right margin, and the right margin is less
                 than or equal to the width of the page.
             </p>
+            <p>
+                The current Left/Right margin setting can be queried with
+                <a href="#decrqss">DECRQSS</a>.
+            </p>
             <p groups="isvt420" badges="k95">
                 <!-- TODO: XTERM does not do this - STD070 doesn't specify it,
                           but it is how the VT420 and VT520 behave -->
                 This control sequence is ignored when the cursor is on the
                 host-writable status line (see: <a href="#decssdt">DECSSDT</a>,
                 <a href="#decsasd">DECSASD</a>).
-            </p>
-            <p>
-                The current Left/Right margin setting can be queried with
-                <a href="#decrqss">DECRQSS</a>.
             </p>
         </section>
         <section role="ctlseq" mnemonic="DECSPRTT" id="decsprtt"
@@ -15977,7 +16063,7 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="decrqpsr" mnemonic="DECRQPSR"
                  title="Request Presentation State Report"
-                 not-implemented="true" todo="true">
+                 groups="isvt320">
             <ctlseq>CSI <param-single/> $ w</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w.1D08"/>
             <ref src="vt340:224"/>
@@ -15986,6 +16072,34 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:265"/>
             <ref src="wy370:140"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>Request a presentation state report. <param-single/> is the
+                report being requested.
+            </p>
+            <section role="parameter" id="decrqpsr-ignored" title="Ignored">
+                <ctlseq><param-single/> = 0</ctlseq>
+            </section>
+            <section role="parameter" id="decrqpsr-deccir" title="Cursor Information Report (DECCIR)">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w.1D08"/>
+                <ref src="vt340:224"/>
+                <ref src="vt420:270"/>
+                <ref src="vt510:DECRQPSR.html"/>
+                <ref src="vt52x:265"/>
+                <ref src="wy370:140"/>
+                <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+                <p>Requests a <a href="#deccir">Cursor Information Report (DECCIR)</a></p>
+            </section>
+            <section role="parameter" id="decrqpsr-tadectabsr" title="Tab Stop Report (DECTABSR)">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w.1D08"/>
+                <ref src="vt340:224"/>
+                <ref src="vt420:270"/>
+                <ref src="vt510:DECRQPSR.html"/>
+                <ref src="vt52x:265"/>
+                <ref src="wy370:140"/>
+                <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+                <p>Requests a <a href="#dectabsr">Tab Stop Report (DECTABSR)</a></p>
+            </section>
         </section>
         <section role="ctlseq" id="decefr" mnemonic="DECEFR"
                  title="Enable Filter Rectangle"

@@ -369,6 +369,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECLRMM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decvssm) - Set/reset left/right margin mode
    - [DECSLRM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decslrm) - Set left/right margins
  - [XTVERSION](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtversion) (k95 terminal type only)
+ - [DECRQPSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqpsr) (VT320 and up)
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
