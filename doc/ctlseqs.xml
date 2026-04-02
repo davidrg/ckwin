@@ -4755,7 +4755,7 @@ DECTSR		462
                     the response would be <tt><cc>DCS</cc> 1 $ r 2 * x <cc>ST</cc></tt>
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsnls"
+            <section role="parameter" id="decrqss-decsnls"
                      mnemonic="DECSNLS" title="Set Number of Lines per Screen">
                 <ctlseq><param-text/> = * |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
