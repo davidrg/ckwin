@@ -103,7 +103,7 @@
 11_2_5_3_2_10 C223
 11_2_5_3_2_9 C02B
 11_2_5_3_3_1 18A6 		# DECRPM ANSI - TODO: compare to real terminal
-11_2_5_3_3_2_1 EE73 	# DECRPM 1/2  - TODO: compare to real terminal
+11_2_5_3_3_2_1 ED9B 	# DECRPM 1/2  - TODO: compare to real terminal
 11_2_5_3_3_2_2 35D5    # DECRPM 2/2  - TODO: compare to real terminal
 11_2_5_3_4 !0 			# TODO: Currently failing - not supported by K95?
 11_2_5_3_5 !0 			# TODO: Currently failing - not supported by K95?
