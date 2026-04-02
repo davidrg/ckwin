@@ -1,5 +1,5 @@
 #  +-------------------+------------------+-------------------------------+
-#  | File Version:   1 | Date: 2025-05-21 | Kermit 95 Version: 3.0 beta.8 |
+#  | File Version:   1 | Date: 2026-04-02 | Kermit 95 Version: 3.0 beta.8 |
 #  +-------------------+------------------+-------------------------------+
 #
 ########### HELP WANTED ######################################################
@@ -29,14 +29,13 @@
 # terminfo manpage and Kermit 95 control sequences document was used to copy
 # relevant capabilities over with adjustments as necessary.
 #
-# The plan is to slowly evolve the k95 terminal type towards the vt520 feature
+# The plan is to slowly evolve the k95 terminal type towards the vt525 feature
 # level with more extensions from xterm and elsewhere if they don't conflict.
 #
 # Differences from xterm-256color:
-#  Not many! In general, if an application doesn't need L/R margins then
-#  TERM=xterm-256color shouldn't break anything. The main differences are:
-#   - No support for left/right margins yet    | Both of these are
-#   - No title stack                           | high-priority features
+#  Not many! In general TERM=xterm-256color shouldn't break anything, but the
+#  results may not match xterm exactly. The main differences are:
+#   - No title stack                           | high-priority feature
 #   - K95 has a status line (later versions of xterm seem to as well though)
 #   - Cursor normal and very visible is set via DECSCUSR (VT520) to change its
 #     shape from the default blinking underline to a blinking block
@@ -254,11 +253,8 @@ k95|Kermit 95 v3.0.0 beta 8,
 # supports them too.
 	meml=\El,
 	memu=\Em,
-#######
-# TODO: Clear left/right margins
-# TODO: K95 doesn't implement DECSLRMM yet
-# TODO:	mgc=\E[?69l,
-#######
+# Clear left/right margins
+	mgc=\E[?69l,
 # Modify clipboard
 	Ms=\E]52;%p1%s;%p2%s\E\\,
 # Newline (behave like CR+LF)
@@ -328,19 +324,12 @@ k95|Kermit 95 v3.0.0 beta 8,
 # Enter alternate screen mode
 # TODO: Add \E[22;0;0t to push the title on the stack (when we have one)
     smcup=\E[?1049h,
-#######
-# TODO: Set left margin at column p1
-# TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
-# TODO:	smglp=\E[?69h\E[%i%p1%ds
-#
-# TODO: Set left and right margins at columns p1 and p2
-# TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
-# TODO:	smglr=\E[?69h\E[%i%p1%d;%p2%ds,
-#
-# TODO: Set right margin at column p1
-# TODO: K95 doesn't support DECSLRMM yet (its on the todo list)
-# TODO:	smgrp=\E[?69h\E[%i;%p1%ds,
-#######
+# Set left margin at column p1
+	smglp=\E[?69h\E[%i%p1%ds
+# Set left and right margins at columns p1 and p2
+	smglr=\E[?69h\E[%i%p1%d;%p2%ds,
+# Set right margin at column p1
+	smgrp=\E[?69h\E[%i;%p1%ds,
 # Enter insert mode
 	smir=\E[4h,
 # Enter keyboard transmit mode (application/normla cursor keys)
