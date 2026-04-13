@@ -2402,6 +2402,8 @@ VscrnSetWidth( BYTE vmode, int width )
         if ( page->lines == NULL )
             return;
 
+        if (page->marginright > width) page->marginright = width;
+
         if (page->linecount && page->lines != NULL) {
             for ( y=0;y<vscrn[vmode].height;y++ ) {
                 pline = &page->lines[(page->top+y)%page->linecount];
