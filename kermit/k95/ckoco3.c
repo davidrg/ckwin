@@ -7855,6 +7855,30 @@ set_declrmm(bool enabled) {
 	}
 }
 
+
+/*---------------------------------------------------------------------------*/
+/* naws                                                                      */
+/*---------------------------------------------------------------------------*/
+/* Negotiate About Window Size - let the remote host (if there is one) know the
+ * window size has changed. How this is done depends on the protocol in use. */
+void
+naws() {
+#ifdef TCPSOCKET
+#ifdef CK_NAWS
+    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
+        tn_snaws();
+#ifdef RLOGCODE
+        rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+        ssh_snaws();
+#endif /* SSHBUILTIN */
+    }
+#endif /* CK_NAWS */
+#endif /* TCPSOCKET */
+}
+
+
 void
 udkreset( void )
 {
@@ -9506,20 +9530,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
         SmoothScroll();
     if (vmode==VTERM)
         SetCols(VTERM) ;
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0)
-    {
-        tn_snaws();
-#ifdef RLOGCODE
-        rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-        ssh_snaws();
-#endif /* SSHBUILTIN */
-    }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+    naws();
     ipadl25();
 
     decsace = FALSE;
@@ -16977,20 +16988,7 @@ scrninit() {
     else
       SetCols(VTERM) ;
 
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0)
-   {
-       tn_snaws();
-#ifdef RLOGCODE
-       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-       ssh_snaws();
-#endif /* SSHBUILTIN */
-   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+    naws();
 
     setborder();
     VscrnIsDirty(VTERM);
@@ -17810,37 +17808,13 @@ settermstatus( int y )
             tt_szchng[VTERM] = 2 ;
             tt_rows[VTERM]--;
             VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                tn_snaws();
-#ifdef RLOGCODE
-                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                ssh_snaws();
-#endif /* SSHBUILTIN */
-            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+            naws();
         }
         else {
             tt_szchng[VTERM] = 1 ;
             tt_rows[VTERM]++;
             VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                tn_snaws();
-#ifdef RLOGCODE
-                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                ssh_snaws();
-#endif /* SSHBUILTIN */
-            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+            naws();
         }
     }
 }
@@ -18392,19 +18366,7 @@ set_term_height(int rows) {
         tt_szchng[VTERM] = 1 ;
         tt_rows[VTERM] = rows ;
         VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-        if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-            tn_snaws();
-#ifdef RLOGCODE
-            rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-            ssh_snaws();
-#endif /* SSHBUILTIN */
-        }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+        naws();
     }
 }
 
@@ -20764,19 +20726,7 @@ vtcsi(void)
                             deccolm = TRUE;
                             Set132Cols(VTERM);
                             set_declrmm(FALSE);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                tn_snaws();
-#ifdef RLOGCODE
-                                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                ssh_snaws();
-#endif /* SSHBUILTIN */
-                            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                            naws();
                             setborder();
                             newcursor(VTERM);
                             clrscreen(VTERM,SP);
@@ -20988,19 +20938,7 @@ vtcsi(void)
                                 tt_szchng[VTERM] = 1 ;
                                 tt_cols[VTERM] = 161 ;
                                 VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                    tn_snaws();
-#ifdef RLOGCODE
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                                }
-#endif /* TCPSOCKET */
-#endif /* CK_NAWS */
+                                naws();
                             }
                             break;
                             case 83:    /* WY52 - 52 line mode */
@@ -21271,19 +21209,7 @@ vtcsi(void)
                                 deccolm = TRUE;
                                 Set132Cols(VTERM);
                                 set_declrmm(FALSE);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                    tn_snaws();
-#ifdef RLOGCODE
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                                }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                naws();
                                 setborder();
                                 newcursor(VTERM);
                                 clrscreen(VTERM,SP);
@@ -21393,19 +21319,7 @@ vtcsi(void)
                                     deccolm = TRUE;
                                     Set132Cols(VTERM);
                                     set_declrmm(FALSE);
-#ifdef TCPSOCKET            
-#ifdef CK_NAWS              
-                                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                        tn_snaws();
-#ifdef RLOGCODE             
-                                        rlog_naws();
-#endif /* RLOGCODE */       
-#ifdef SSHBUILTIN           
-                                        ssh_snaws();
-#endif /* SSHBUILTIN */     
-                                    }
-#endif /* CK_NAWS */        
-#endif /* TCPSOCKET */      
+                                    naws();
                                     setborder();
                                     newcursor(VTERM);
                                     clrscreen(VTERM,SP);
@@ -21464,26 +21378,14 @@ vtcsi(void)
                                 deccolm = FALSE;
                                 Set80Cols(VTERM);
                                 set_declrmm(FALSE);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                    tn_snaws();
-#ifdef RLOGCODE
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                   ssh_snaws();
-#endif /* SSHBUILTIN */
-                               }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
-                               setborder();
-                               newcursor(VTERM);
-                               clrscreen(VTERM,SP);
-                               lgotoxy(VTERM,1,1);       /* and home the cursor */
-                               ipadl25();
-                               ReleaseScreenMutex();
-                               break;
+                                naws();
+                                setborder();
+                                newcursor(VTERM);
+                                clrscreen(VTERM,SP);
+                                lgotoxy(VTERM,1,1);       /* and home the cursor */
+                                ipadl25();
+                                ReleaseScreenMutex();
+                                break;
                            case 4: /* DECSCLM - Jump scrolling */
                                JumpScroll() ;
                                break;
@@ -21660,19 +21562,7 @@ vtcsi(void)
                                    tt_szchng[VTERM] = 1 ;
                                    tt_cols[VTERM] = 80 ;
                                    VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                       tn_snaws();
-#ifdef RLOGCODE
-                                       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                       ssh_snaws();
-#endif /* SSHBUILTIN */
-                                   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                   naws();
                                }
                                break;
                            case 83:        /* WY52 - 24 line mode */
@@ -21943,19 +21833,7 @@ vtcsi(void)
                                    deccolm = FALSE;
                                    Set80Cols(VTERM);
                                    set_declrmm(FALSE);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                       tn_snaws();
-#ifdef RLOGCODE
-                                       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                       ssh_snaws();
-#endif /* SSHBUILTIN */
-                                   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                   naws();
                                    setborder();
                                    newcursor(VTERM);
                                    clrscreen(VTERM,SP);
@@ -22068,19 +21946,7 @@ vtcsi(void)
                                    deccolm = FALSE;
                                    Set80Cols(VTERM);
                                    set_declrmm(FALSE);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                       tn_snaws();
-#ifdef RLOGCODE
-                                       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                       ssh_snaws();
-#endif /* SSHBUILTIN */
-                                   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                   naws();
                                    setborder();
                                    newcursor(VTERM);
                                    clrscreen(VTERM,SP);
@@ -22482,19 +22348,7 @@ vtcsi(void)
                         tt_cols[VTERM] = pn[5];
                     VscrnInit( VTERM ) ;  /* Height set here */
                     VscrnSetDisplayHeight(VTERM, pn[1] != pn[4] ? pn[4] : 0);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                        tn_snaws();
-#ifdef RLOGCODE
-                        rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                        ssh_snaws();
-#endif /* SSHBUILTIN */
-                    }
-#endif /* TCPSOCKET */
-#endif /* CK_NAWS */
+                    naws();
                     break;
                 } else if ( ISSUN(tt_type_mode) ) {
                     /* 
@@ -25202,19 +25056,7 @@ vtcsi(void)
                             tt_cols[VTERM] = pn[3]%2 ? pn[3]+1 : pn[3] ;
                             VscrnInit( VTERM ) ; /* Size is set here */
                             msleep(50);
-#ifdef TCPSOCKET    
-#ifdef CK_NAWS      
-                            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                tn_snaws();
-#ifdef RLOGCODE     
-                                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                ssh_snaws();
-#endif /* SSHBUILTIN */
-                            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                            naws();
                         }
                         break;
                     case 9: {
