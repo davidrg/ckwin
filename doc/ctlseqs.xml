@@ -8573,12 +8573,17 @@ DCS $ q 3 , } ST</pre>
             <!-- TODO: Mode 90 - DECTHAISCM - Thai Space Compensating Mode -->
             <section role="parameter" id="decncsm" mnemonic="DECNCSM"
                      title="No Clearing Screen on Column Change Mode"
-                     not-implemented="true" todo="true">
+                     groups="isvt520 isxterm">
                 <ctlseq><param-single/> = 95</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-9-5.1ECB"/>
                 <ref src="vt510:DECNCSM.html"/>
                 <ref src="vt52x:228"/>
                 <termsupp first="vt510" series="vt" additional=""/>
+                <p>
+                    Disables clearing of the terminal screen when the size is
+                    changed. This is equivalent to
+                    <tt>SET TERM CLEAR-ON-RESIZE OFF</tt>
+                </p>
             </section>
             <section role="parameter" id="decrlcm" mnemonic="DECRLCM"
                      title="Right-to-Left Copy Mode"
@@ -10580,12 +10585,17 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="r-decncsm" mnemonic="DECNCSM"
                      title="No Clearing Screen on Column Change Mode"
-                     not-implemented="true" todo="true">
+                     groups="isvt520 isxterm">
                 <ctlseq><param-single/> = 95</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-9-5.1ECF"/>
                 <ref src="vt510:DECNCSM.html"/>
                 <ref src="vt52x:228"/>
                 <termsupp first="vt510" series="vt" additional=""/>
+                <p>
+                    Enables clearing of the screen when the terminal size is
+                    changed. This does not affect <a href="decscpp">DECSCPP</a>.
+                    This is equivalent to <tt>SET TERM CLEAR-ON-RESIZE ON</tt>
+                </p>
             </section>
             <section role="parameter" id="r-decrlcm" mnemonic="DECRLCM"
                      title="Right-to-Left Copy Mode"
@@ -13926,12 +13936,15 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="decrqm-95" mnemonic="DECNCSM"
                          title="No clearing screen on column change"
-                         not-implemented="true" todo="true">
+                         groups="isvt520 isxterm">
                     <ctlseq><param-single/> = 95</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-9-5.1ECB"/>
                     <ref src="vt510:DECRQM.html#T5-8"/>
                     <ref src="vt52x:264"/>
                     <termsupp first="vt510" series="vt" additional=""/>
+                    <p>
+                        Reports whether the screen will be cleared on reisze.
+                    </p>
                 </section>
                 <section role="parameter" id="decrqm-96" mnemonic="DECRLCM"
                          title="Cursor right to left"

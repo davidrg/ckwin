@@ -5729,7 +5729,8 @@ VscrnInit( BYTE vmode )
                		+ VscrnGetPageBufferSize(vmode, FALSE,p) + 1)%VscrnGetPageBufferSize(vmode,FALSE,p) ;
             	if ( sz > tt_rows[vmode] )
             	{
-                	if ( !VscrnIsClear(vmode, p ) ) {
+            	    extern bool decncsm;
+                	if ( !VscrnIsClear(vmode, p ) && !decncsm ) {
                     	VscrnScrollPage( vmode, UPWARD, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}
@@ -5737,7 +5738,8 @@ VscrnInit( BYTE vmode )
 #ifdef COMMENT
             	else if ( tt_szchng[vmode] == 2 ) /* Status Line Turned On */
             	{
-                	if (!VscrnIsClear(vmode, p)) {
+            	    extern bool decncsm;
+                	if (!VscrnIsClear(vmode, p) && !decncsm) {
                     	VscrnScrollPage( vmode, UPWARD, 0, sz, -1, -1, sz, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}

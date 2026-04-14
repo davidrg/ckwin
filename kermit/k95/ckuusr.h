@@ -1344,6 +1344,7 @@ struct stringint {			/* String and (wide) integer */
 #define     P_PCCM    0
 #define     P_COUNT   1
 #define     P_ACTIVE  2
+#define   XYTCLRRS  70  /* SET TERM CLEAR-ON-RESIZE */
 #endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */

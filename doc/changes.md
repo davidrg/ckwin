@@ -162,6 +162,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Windows Enhanced Metafile (.emf)
    - PNG (Windows XP+ only)
    - GIF (Windows XP+ only)
+ - New option to not clear the terminal screen when it is resized: 
+   `SET TERM CLEAR-ON-RESIZE { ON, OFF }` 
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -337,6 +339,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
+   - [95](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decncsm): No Clearing Screen On Column Change (VT520)
    - [117](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm): Erase Color Mode
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
@@ -365,7 +368,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
    - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages
    - [DECSNLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsnls) - Set number of lines per screen
- - Left/Right Margins
+ - Left/Right Margins (VT420)
    - [DECLRMM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decvssm) - Set/reset left/right margin mode
    - [DECSLRM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decslrm) - Set left/right margins
  - [XTVERSION](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtversion) (k95 terminal type only)

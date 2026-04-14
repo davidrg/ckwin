@@ -535,6 +535,8 @@ int      decssdt = SSDT_INDICATOR ;     /* Status Display Type */
 bool     decssdt_override = FALSE;      /* Render SSDT_INDICATOR regardless of decssdt */
 bool     deckbum = FALSE ;              /* Keyboard (Typewriter/DP) */
 bool     decsace = FALSE;               /* DECSACE */
+bool     decncsm = FALSE;               /* No clearing screen on column change */
+bool     decncsm_usr = FALSE;           /* User setting for DECNCSM */
 int      savdecbkm = 0 ;                /* User default Backspace Mode */
 bool     erm = FALSE ;                  /* Erasure Mode  VT300 */
 bool     crm = FALSE ;                  /* Control Mode  VT300 */
@@ -9446,6 +9448,8 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     bracketed_paste[VTERM] = FALSE;     /* Bracketed paste off */
 
     erasemode = user_erasemode;
+
+    decncsm = decncsm_usr;
 
     /* Restore DEC VT Graphic Set translation functions */
     for ( i = 0 ; i < 4 ; i++ )
@@ -19262,7 +19266,12 @@ vtcsi(void)
                             if (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode)
                                     || ISK95(tt_type_mode)) {
                                 pn[2] = declrmm ? 1 : 2;
-                                    }
+                            }
+                            break;
+                        case 95:
+                            if (ISVT520(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                pn[2] = decncsm ? 1 : 2;
+                            }
                             break;
                         case 114: /* DECATCUM */
                             pn[2] = decatcum ? 1 : 2;
@@ -20960,6 +20969,11 @@ vtcsi(void)
                                 /* color */
                                 ;
                             break;
+                        case 95:       /* DECNCSM */
+                            if (ISVT520(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                decncsm = TRUE;
+                            }
+                            break;
                         case 114:      /* DECATCUM */
                             decatcum = TRUE;
                             break;
@@ -21583,6 +21597,11 @@ vtcsi(void)
                                    /* color map background color   */
                                    ;
                                break;
+                           case 95:
+                                if (ISVT520(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                    decncsm = FALSE;
+                                }
+                                break;
                            case 114:      /* DECATCUM */
                                decatcum = FALSE;
                                break;
