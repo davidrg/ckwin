@@ -787,6 +787,7 @@ DECTSR		462
         <badge-def sort-order="61" name="dtc01" colour="" comment="DEC DTC01"/> <!-- Not implemented -->
         <badge-def sort-order="61" name="la75" colour="" comment="DEC LA75 ANSI printer"/> <!-- Not implemented -->
         <badge-def sort-order="62" name="vt382" colour="" comment="DEC VT382 Kanji Display Terminal"/> <!-- Not implemented -->
+        <badge-def sort-order="63" name="vtstar" colour="" comment="Multia VTstar"/>
     </badges>
     <!--
      Badge groups should be kept in sync with the matching macros in ckuusr.h
@@ -10593,7 +10594,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt510" series="vt" additional=""/>
                 <p>
                     Enables clearing of the screen when the terminal size is
-                    changed. This does not affect <a href="decscpp">DECSCPP</a>.
+                    changed. This does not affect <a href="#decscpp">DECSCPP</a>.
                     This is equivalent to <tt>SET TERM CLEAR-ON-RESIZE ON</tt>
                 </p>
             </section>
@@ -17079,14 +17080,24 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:279"/>
             <ref src="vws:108"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 v510 putty"/>
+            <implchk std070="true"/>
             <p>
                 The parameter <param-single/> specifies the new width of the
-                terminal. If no width is specified, or the width specified is
-                less than 80, then the terminal will be set to 80 columns.
+                terminal. VT emulations treat any width less than 80 as 80, and
+                any width above 80 as 132.
             </p>
             <p>DECSCPP is unaffected by <a href="#decncsm">DECNCSM</a> and it
                 never clears the entire screen. When the width is reduced, the
                 area beyond the new last column is erased however.
+            </p>
+            <!-- decterm and vtstar behaviour confirmed -->
+            <p badges="k95 decterm vtstar">
+                Any reasonable width may be chosen. If <param-single/> is 42,
+                you will get a with of 42. If <param-single/> is 193 you will
+                get a width of 193.
+            </p>
+            <p badges="xterm"> <!-- as of xterm(390) -->
+                Any value other than 80 or 132 is ignored.
             </p>
             <section style="group" role="group">
                 <section title="80 columns" id="decscpp-0" role="parameter">

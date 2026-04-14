@@ -18383,6 +18383,39 @@ set_term_height(int rows) {
 /* Sets the terminal width in columns without clearing the screen  */
 void
 decscpp(int columns) {
+    /* - VTStar, DECterm and K95 emulations allow any number of columns to be
+     *   set.
+     * - The VT520 and up treat any value greater than 80 as 132, and any value
+     *   less than 80 as 80.
+     * - Xterm ignores any value that isn't 80 or 132.
+     */
+    if (columns > 80) {
+        switch(tt_type_mode) {
+        case TT_XTERM:
+            if (columns != 132) return;
+            break;
+        case TT_VTSTAR:
+        case TT_DECTERM:
+        case TT_K95:
+            break; /* Any width is OK */
+        default:
+            columns = 132;
+            break;
+        }
+    } else if (columns < 80) {
+        switch(tt_type_mode) {
+        case TT_XTERM:
+            return;
+        case TT_VTSTAR:
+        case TT_DECTERM:
+        case TT_K95:
+            break; /* Any width is OK */
+        default:
+            columns = 80;
+            break;
+        }
+    }
+
     /* DECSCPP should not clear the screen, regardless of the DECNCSM setting.
      * VscrnInit is the thing that actually does the resizing and clearing, but
      * its called by someone else possibly asynchronously (KClient in GUI
@@ -18392,13 +18425,15 @@ decscpp(int columns) {
      * VscrnInit will reset the flag back to False once its done its job. */
     decscpp_resize = TRUE;
 
-    if (columns < 80) columns = 80;
-
     if (columns < tt_cols[VTERM]) {
         /* DECSCPP should also erase the part of the screen that is being
          * hidden */
         clrrect_escape(VTERM, 1, columns+1,
             VscrnGetHeight(VTERM), VscrnGetWidth(VTERM), SP);
+    }
+
+    if (wherex[VTERM] > columns) {
+        lgotoxy(VTERM, columns, wherey[VTERM]);
     }
 
     tt_cols[VTERM] = columns;
