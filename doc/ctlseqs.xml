@@ -7324,17 +7324,21 @@ DCS $ q 3 , } ST</pre>
             -->
             <!-- TODO: This will need changing when we get support for more
                  VT420 or VT520 escapes
-                 The first parameter is the identification code:
+                 The first parameter is the Product ID:
                          1 - VT220
+                         2 - VT240
                         18 - VT330
                         19 - VT340
                         24 - VT320
                         28 - DECterm
+                        32 - VT382J
                         41 - VT420
                         42 - VT1000 terminal emulator
+                        44 - VT382T
                         61 - VT510
                         64 - VT520
                         65 - VT525
+                        66 - VTStar
             -->
             <p>
                 Secondary Device Attributes Report Request. If <param-single/>
