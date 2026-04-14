@@ -17084,6 +17084,10 @@ DCS $ q 3 , } ST</pre>
                 terminal. If no width is specified, or the width specified is
                 less than 80, then the terminal will be set to 80 columns.
             </p>
+            <p>DECSCPP is unaffected by <a href="#decncsm">DECNCSM</a> and it
+                never clears the entire screen. When the width is reduced, the
+                area beyond the new last column is erased however.
+            </p>
             <section style="group" role="group">
                 <section title="80 columns" id="decscpp-0" role="parameter">
                     <ctlseq><param-single/> = 0</ctlseq>

@@ -537,6 +537,7 @@ bool     deckbum = FALSE ;              /* Keyboard (Typewriter/DP) */
 bool     decsace = FALSE;               /* DECSACE */
 bool     decncsm = FALSE;               /* No clearing screen on column change */
 bool     decncsm_usr = FALSE;           /* User setting for DECNCSM */
+bool     decscpp_resize = FALSE;        /* Resize initiated by DECSCPP */
 int      savdecbkm = 0 ;                /* User default Backspace Mode */
 bool     erm = FALSE ;                  /* Erasure Mode  VT300 */
 bool     crm = FALSE ;                  /* Control Mode  VT300 */
@@ -9450,6 +9451,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     erasemode = user_erasemode;
 
     decncsm = decncsm_usr;
+    decscpp_resize = FALSE;
 
     /* Restore DEC VT Graphic Set translation functions */
     for ( i = 0 ; i < 4 ; i++ )
@@ -18374,6 +18376,37 @@ set_term_height(int rows) {
     }
 }
 
+
+/*---------------------------------------------------------------------------*/
+/* decscpp                                                                   */
+/*---------------------------------------------------------------------------*/
+/* Sets the terminal width in columns without clearing the screen  */
+void
+decscpp(int columns) {
+    /* DECSCPP should not clear the screen, regardless of the DECNCSM setting.
+     * VscrnInit is the thing that actually does the resizing and clearing, but
+     * its called by someone else possibly asynchronously (KClient in GUI
+     * builds), and calling it here directly doesn't prevent it from being
+     * called again later. So we need a way to signal to VscrnInit that we want
+     * the screen contents preserved. This flag is ugly, but it does the job.
+     * VscrnInit will reset the flag back to False once its done its job. */
+    decscpp_resize = TRUE;
+
+    if (columns < 80) columns = 80;
+
+    if (columns < tt_cols[VTERM]) {
+        /* DECSCPP should also erase the part of the screen that is being
+         * hidden */
+        clrrect_escape(VTERM, 1, columns+1,
+            VscrnGetHeight(VTERM), VscrnGetWidth(VTERM), SP);
+    }
+
+    tt_cols[VTERM] = columns;
+    VscrnSetWidth( VTERM, columns);
+    naws();
+}
+
+
 /* Gets the VT525 Alternate Colour index to use when the terminal is in
  * Alternate Color mode. */
 int get_alternate_color_index(USHORT vtattr) {
@@ -18966,19 +18999,7 @@ vtcsi(void)
                 setdecssdt( SSDT_BLANK );
                 break;
             case '|':   /* DECSCPP */
-                tt_cols[VTERM] = 80;
-                VscrnSetWidth( VTERM, 80);
-#ifdef TCPSOCKET
-                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                    tn_snaws();
-#ifdef RLOGCODE
-                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                }
-#endif /* TCPSOCKET */
+                decscpp(80);
                 break;
             case 'u':    /* DECRQTSR - default is ignored */
                 break;
@@ -19157,20 +19178,7 @@ vtcsi(void)
                     break;
                 case '|':
                     /* DECSCPP - Set Columns Per Page */
-                    if (pn[1] < 80) pn[1] = 80;
-                    tt_cols[VTERM] = pn[1];
-                    VscrnSetWidth( VTERM, pn[1]);
-#ifdef TCPSOCKET
-                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                        tn_snaws();
-#ifdef RLOGCODE
-                        rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                        ssh_snaws();
-#endif /* SSHBUILTIN */
-                    }
-#endif /* TCPSOCKET */
+                    decscpp(k < 1 ? 80 : pn[1]);
                     break;
                 case 'p': {     /* DECRQM (from host) */
                     char buf[16] ;

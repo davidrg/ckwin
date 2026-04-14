@@ -439,7 +439,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed DECXCPR response - it was leaving the '?' character out
  - Fixed DECSCPP parameter not being optional, and setting the terminal to maximum
    width if the parameters value is 0. Any value less than 80 will now produce an
-   80 column terminal.
+   80 column terminal. Also fixed it clearing the screen when it shouldn't, and
+   not erasing the area past the new last column when it should. 
  - Fixed crash writing to unopened file
  - Mostly fixed incorrect DECRQCRA calculation. The result will now match what
    is produced by a real VT420/520 using the ISO Latin 1 character set, and

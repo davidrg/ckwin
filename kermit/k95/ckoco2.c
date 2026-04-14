@@ -2372,6 +2372,7 @@ VscrnSetWidth( BYTE vmode, int width )
     int y=0;
     int i=0;
     videoline * pline = NULL;
+    extern bool declrmm;
 
     /* If we end up in here while the cursor is on the status line
        (DECSASD_STATUS), then we end up setting the width of the status line
@@ -2402,7 +2403,10 @@ VscrnSetWidth( BYTE vmode, int width )
         if ( page->lines == NULL )
             return;
 
-        if (page->marginright > width) page->marginright = width;
+        if (!declrmm) {
+            page->marginright = width;
+        }
+        else if (page->marginright > width) page->marginright = width;
 
         if (page->linecount && page->lines != NULL) {
             for ( y=0;y<vscrn[vmode].height;y++ ) {
@@ -5628,6 +5632,7 @@ VscrnInit( BYTE vmode )
    CK_VIDEOMODEINFO m;
 #endif /* KUI */
     int old_height, old_width;
+    extern bool decscpp_resize;
 
     /* Because a bunch of Vscrn functions act on VSTATUS rather than VTERM when
      * DECSASD is SASD_STATUS, if we want to be sure everything acts on VTERM
@@ -5730,7 +5735,7 @@ VscrnInit( BYTE vmode )
             	if ( sz > tt_rows[vmode] )
             	{
             	    extern bool decncsm;
-                	if ( !VscrnIsClear(vmode, p ) && !decncsm ) {
+                	if ( !VscrnIsClear(vmode, p ) && !decncsm && !decscpp_resize) {
                     	VscrnScrollPage( vmode, UPWARD, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}
@@ -5739,7 +5744,7 @@ VscrnInit( BYTE vmode )
             	else if ( tt_szchng[vmode] == 2 ) /* Status Line Turned On */
             	{
             	    extern bool decncsm;
-                	if (!VscrnIsClear(vmode, p) && !decncsm) {
+                	if (!VscrnIsClear(vmode, p) && !decncsm && !decscpp_resize) {
                     	VscrnScrollPage( vmode, UPWARD, 0, sz, -1, -1, sz, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}
@@ -5805,6 +5810,8 @@ VscrnInit( BYTE vmode )
 
     /* Restore DECSASD status */
     decsasd = decsasd_backup;
+
+    decscpp_resize = FALSE;
 
     return 0;
 }
