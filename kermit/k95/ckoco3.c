@@ -6872,8 +6872,9 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar 
 {
     int startx, starty, endx, endy, l, x ;
     videoline * line = NULL ;
-    bool erase = FALSE;
-    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
+    bool fill = TRUE;
+    cell_video_attr_t cellcolor = attribute ;
+    int cell_attrib = vtattrib_to_int(attrib);
 
     if ( left < right ) {
         startx = left - 1 ;
@@ -6894,8 +6895,11 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar 
     }
 
     if ( fillchar == NUL ) {
-        fillchar = SP ;
-        erase = TRUE;
+        fillchar = SP ;  /* VT420+ DECERA erases with Space characer */
+        cell_attrib = VT_CHAR_ATTR_NORMAL;
+        cellcolor = geterasecolor(vmode);
+
+        fill = FALSE;
     }
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
@@ -6913,13 +6917,14 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar 
         line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
-            /* If we're erasing, then ignore already erased cells. If we're just
-             * filling, then fill everything. */
-            if (line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED || !erase) {
+            /* If we're erasing, then leave erased cells as erased. If we're
+             * just filling, then fill everything. */
+            if (line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED || fill) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                line->vt_char_attrs[x] = cell_attrib ;
             }
+            /* Erased cells still get their colour updated */
+            line->cells[x].video_attr = cellcolor;
         }
 
     }
@@ -20003,7 +20008,7 @@ vtcsi(void)
                         if ( k < 1 || pn[1] < 1 )
                             pn[1] = 1 ;
                         clrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], SP ) ;
+                                        pn[3], pn[4], NUL ) ;
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }

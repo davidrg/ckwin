@@ -16575,6 +16575,10 @@ DCS $ q 3 , } ST</pre>
                 this will only be available to VT420 and higher emulations.
             </p>
             <p>
+                Fills the specified rectangular area with the specified
+                character using the current SGR attributes.
+            </p>
+            <p>
                 <tt><param-single symbol="Pt"/> ;
                     <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                     <param-single symbol="Pr"/></tt> is the rectangle to fill.
@@ -16843,7 +16847,9 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pr"/></tt> is the rectangle to erase.
             </p>
             <p>Pt is the top line, Pb is the bottom line, Pl is the left column,
-                and Pr is the right column.
+                and Pr is the right column. Any erased cells within the
+                rectangle are skipped aside from having their background color
+                updated to the current erase color.
             </p>
         </section>
         <section role="ctlseq" id="decelr" mnemonic="DECELR"
