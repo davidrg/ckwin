@@ -142,6 +142,10 @@ VOID setpcterm(int);                /* ckokey.c */
 int prtcfg(HANDLE);                 /* ckotio.c */
 #endif /* NT */
 
+int cursor_right_margin(int);
+int cursor_left_margin(int);
+bool cursor_in_margins(int);
+
 /*
  *
  * =============================externals=====================================
@@ -5767,6 +5771,7 @@ cursorup(int wrap) {
         prtline( wherey[VTERM], LF ) ;
     }
     if ( decsasd == SASD_TERMINAL ) {
+        int margin_top = 1;
 		/* ISVT100: Prior to K95 3.0 beta 8 the logic here was wrong. On
 		 * a VT100 or newer (confirmed on a VT520 and via vttest), the cursor
 		 * can not pass from inside to outside the margins via CUU. This
@@ -5774,11 +5779,12 @@ cursorup(int wrap) {
 		 * have no physical example or test suite. For those other emulations
 		 * the prior behaviour is retained in case it happens to be correct for
 		 * them.  -- DG, 2026-03-08  */
-		if ((ISVT100(tt_type_mode) &&
-				(vscrn_c_page_margin_top(VTERM) < wherey[VTERM] ||
-				 vscrn_c_page_margin_top(VTERM) > wherey[VTERM]) ) ||
-			(!ISVT100(tt_type_mode) &&
-				(relcursor ? vscrn_c_page_margin_top(VTERM) : 1) != wherey[VTERM])) {
+		if ((ISVT100(tt_type_mode) && cursor_in_margins(VTERM)) ||
+			(!ISVT100(tt_type_mode) && relcursor)) {
+		    margin_top = vscrn_c_page_margin_top(VTERM);
+		}
+
+        if (margin_top != wherey[VTERM]) {
             lgotoxy(VTERM, wherex[VTERM], wherey[VTERM] - 1);
         } else if ( wrap ||
                   ISWYSE(tt_type_mode) ||
@@ -5803,14 +5809,17 @@ cursorup(int wrap) {
 void
 cursordownex(int wrap, int obey_margins) {
     if ( decsasd == SASD_TERMINAL ) {
+        bool in_lr_margins = wherex[vmode] >= vscrn_c_page_margin_left(vmode) &&
+            wherex[vmode] <= vscrn_c_page_margin_right(vmode);
 		/* As with cursorup (above), the logic here was wrong for DEC VT
 		 * terminals prior to K95 3.0 beta 8. I'm not sure if the previous logic
 		 * was correct for some other emulation I can't test that also uses this
 		 * function, so prior behaviour is retained for non-VT emulations */
         if ( (ISVT100(tt_type_mode) &&
-				(vscrn_c_page_margin_bot(VTERM) != wherey[VTERM] || !obey_margins)) ||
-			 (!ISVT100(tt_type_mode) && (relcursor ? vscrn_c_page_margin_bot(VTERM) :
-             	 VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM]))
+                (vscrn_c_page_margin_bot(VTERM) != wherey[VTERM] || !in_lr_margins
+                    || !obey_margins)) ||
+             (!ISVT100(tt_type_mode) && (relcursor ? vscrn_c_page_margin_bot(VTERM) :
+                  VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM]))
         {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
@@ -9165,6 +9174,17 @@ cursor_right_margin(int vmode)
     }
 
     return rmargin;
+}
+
+bool
+cursor_in_margins(int vmode) {
+    if (wherey[vmode] >= vscrn_c_page_margin_top(vmode) &&
+        wherey[vmode] <= vscrn_c_page_margin_bot(vmode) &&
+        wherex[vmode] >= vscrn_c_page_margin_left(vmode) &&
+        wherex[vmode] <= vscrn_c_page_margin_right(vmode)) {
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /* Returns the left margin that is currently in effect at the specfied
