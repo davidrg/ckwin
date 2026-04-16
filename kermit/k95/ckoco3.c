@@ -19569,6 +19569,18 @@ vtcsi(void)
                             k = 5;
                         }
 
+                        if (relcursor) {
+                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
+                                pn[3] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
+                                pn[4] = vscrn_c_page_margin_right(VTERM);
+                        }
+
                         if ( pn[3] < pn[1] || pn[4] < pn[2] )
                             break;
 
@@ -19623,8 +19635,10 @@ vtcsi(void)
                         } else {                /* stream */
                             for ( y=0; y<h; y++ ) {
                                 videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
-                                for ( x = (y==0 ? pn[2] - 1 : 0);
-                                      x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
+                                int rlimit = relcursor ? vscrn_c_page_margin_right(VTERM) : VscrnGetWidth(VTERM);
+                                int llimit = relcursor ? vscrn_c_page_margin_left(VTERM)-1 : 0;
+                                for ( x = (y==0 ? pn[2] - 1 : llimit);
+                                      x < ((y==h-1) ? pn[4] : rlimit);
                                       x++ ) {
                                     if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
                                         /* In stream mode, DECCARA doesn't affect
@@ -19763,8 +19777,10 @@ vtcsi(void)
                         } else {                /* stream */
                             for ( y=0; y<h; y++ ) {
                                 videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
-                                for ( x = (y==0 ? pn[2] - 1 : 0);
-                                      x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
+                                int rlimit = relcursor ? vscrn_c_page_margin_right(VTERM) : VscrnGetWidth(VTERM);
+                                int llimit = relcursor ? vscrn_c_page_margin_left(VTERM)-1 : 0;
+                                for ( x = (y==0 ? pn[2] - 1 : llimit);
+                                      x < ((y==h-1) ? pn[4] : rlimit);
                                       x++ ) {
                                     if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
                                         /* In stream mode, DECRARA doesn't affect
