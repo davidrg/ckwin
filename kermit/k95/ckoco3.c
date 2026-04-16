@@ -19962,6 +19962,21 @@ vtcsi(void)
                         if ( k < 1 )
                             pn[1] = SP ;
 
+                        if (relcursor) {
+                            pn[2] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[3] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[4] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[5] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[4] > vscrn_c_page_margin_bot(VTERM))
+                                pn[4] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[5] > vscrn_c_page_margin_right(VTERM))
+                                pn[5] = vscrn_c_page_margin_right(VTERM);
+                        }
+
+                        if (pn[2] > pn[4]) break;
+                        if (pn[3] > pn[5]) break;
+
                         /*  GL---------------------------   GR & BMP -------- */
                         if (pn[1] >= 32 && (pn[1] <= 126 || pn[1] >= 160)
                                 && (pn[1] <= 255 || (tt_utf8 && pn[1] <= 65535))) {
