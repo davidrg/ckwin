@@ -2569,7 +2569,10 @@ DECTSR		462
             <ref src="vt510:DECALN.html"/>
             <ref src="vt52x:171"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty dtterm wt"/>
-            <p>Fills the screen with "E". Clears the <a href="#lcf">Last Column Flag</a> </p>
+            <p>Fills the screen with "E".
+                Clears the <a href="#lcf">Last Column Flag</a>, margins and
+                SGR attributes. Turns of DECLRMM.
+            </p>
         </section>
         <section role="ctlseq" id="decfpp" ctlseq="ESC # 9" todo="true"
                  mnemonic="DECFPP" title="Positioning" not-implemented="true">

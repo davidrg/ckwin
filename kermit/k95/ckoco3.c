@@ -26975,11 +26975,28 @@ vtescape( void )
                 break;
             case '7': /* Hardcopy (vt100) */
                 break;
-            case '8': /* Screen Alignment Display */
+            case '8': /* DECALN - Screen Alignment Display */
                 {
                     videoline * line ;
                     viocell cell;
                     short x,y ;
+
+                    /* STD 070 says we reset SGR attributes. VT420 does this,
+                     * VT5xx doesn't (bug probably). */
+                    attrib.blinking = FALSE;
+                    attrib.italic = FALSE;              /* No italic */
+                    attrib.bold = FALSE;
+                    attrib.invisible = FALSE;
+                    attrib.underlined = FALSE;
+                    attrib.reversed = FALSE;
+                    attrib.dim = FALSE ;
+                    attrib.graphic = FALSE ;
+                    attrib.wyseattr = FALSE ;
+                    attrib.crossedout = FALSE ;
+                    attrib.erased = FALSE;
+                    attrib.hyperlink = FALSE;
+                    attrib.linkid = 0;
+                    resetcolors(0);
 
                     cell.c = 'E';
                     cell.video_attr = defaultattribute; /* was 0x07 */
@@ -26994,6 +27011,11 @@ vtescape( void )
                         line->vt_line_attr = VT_LINE_ATTR_NORMAL;
                     }
                     setmargins(1, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+
+                    /* Note: Only the VT5xx does this: the VT420 probably
+                     * *should*, but it doesn't */
+                    set_declrmm(FALSE);  /* TODO: Not if TT_VT420? */
+
                     if ( decsasd == SASD_STATUS )
                         lgotoxy( VSTATUS, 1, 1 );
                     else
