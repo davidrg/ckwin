@@ -476,7 +476,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    current erase colour
  - Fixed DECFRA not filling with current SGR or protection attributes, and not
    obeying DECOM
- - Fixed DECERA and DECRARA not obeying DECOM
+ - Fixed DECERA, DECSERA and DECRARA not obeying DECOM
 
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
