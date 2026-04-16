@@ -19702,6 +19702,18 @@ vtcsi(void)
                             k = 5;
                         }
 
+                        if (relcursor) {
+                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
+                                pn[3] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
+                                pn[4] = vscrn_c_page_margin_right(VTERM);
+                        }
+
                         if ( pn[3] < pn[1] || pn[4] < pn[2] )
                             break;
 
