@@ -16847,9 +16847,15 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pr"/></tt> is the rectangle to erase.
             </p>
             <p>Pt is the top line, Pb is the bottom line, Pl is the left column,
-                and Pr is the right column. Any erased cells within the
-                rectangle are skipped aside from having their background color
-                updated to the current erase color.
+                and Pr is the right column.
+                These coordinates are affected by <a href="#decom">DECOM</a>.
+                The left column can not be greater than the right, and the top
+                can not be greater than the bottom.
+            </p>
+            <p>
+                Any erased cells within the rectangle are skipped aside from
+                having their background color updated to the current erase
+                color.
             </p>
         </section>
         <section role="ctlseq" id="decelr" mnemonic="DECELR"

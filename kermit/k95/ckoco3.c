@@ -20007,6 +20007,22 @@ vtcsi(void)
                             pn[2] = 1 ;
                         if ( k < 1 || pn[1] < 1 )
                             pn[1] = 1 ;
+
+                        if (relcursor) {
+                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
+                                pn[3] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
+                                pn[4] = vscrn_c_page_margin_right(VTERM);
+                        }
+
+                        if (pn[1] > pn[3]) break;
+                        if (pn[2] > pn[4]) break;
+
                         clrrect_escape( VTERM, pn[1], pn[2],
                                         pn[3], pn[4], NUL ) ;
                         if (cursor_on_visible_page(VTERM)) {
