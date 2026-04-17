@@ -7041,7 +7041,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>K95</td>
-                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 3 2 ; 4 4 ; 5 2 c</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 3 2 ; 4 2 ; 4 4 ; 5 2 c</td>
                 </tr>
             </table>
 
@@ -7219,8 +7219,8 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">41</dt>    <!-- ? -->
                 <dd>unknown</dd>
 
-                <dt not-implemented="true">42</dt>  <!-- vt510 -->
-                <dd>ISO Latin-2 character set</dd>      <!-- TODO: Do we really not have this? -->
+                <dt>42</dt>  <!-- vt510 -->
+                <dd>ISO Latin-2 character set</dd>
 
                 <dt not-implemented="true">43</dt>    <!-- DECterm -->
                 <dd>Ruled Lines</dd>

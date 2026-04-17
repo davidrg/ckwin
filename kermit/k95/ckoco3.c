@@ -5,6 +5,7 @@
              Columbia University Academic Information Systems, New York City.
            Jeffrey E Altman (jaltman@secure-endpoints.com)
              Secure Endpoints Inc., New York City
+           David Goodwin (david@zx.net.nz)
 
   Copyright (C) 1985, 2004, Trustees of Columbia University in the City of
   New York.  All rights reserved.  This copyright notice must not be removed,
@@ -651,12 +652,11 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;22;28;32;44c",     /* Kermit 95 self-personality */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;22;28;32;42;44c",     /* Kermit 95 self-personality */
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
-				ansi-color;rectangular-editing;text-macros;PCTerm
-                TODO: do we *really* not have extension 42? ISO Latin-2 seems to be supported...
+				ansi-color;rectangular-editing;text-macros;latin-2;PCTerm
             */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
