@@ -86,7 +86,7 @@ local mono_tests line_drawing_chars
 .color_tests = 1
 .mono_tests = 1
 .line_drawing_chars = 1
-.no_line_drawing_chars = 1
+.no_line_drawing_chars = 0
 
 # What tests should run?
 def test_procedure {
@@ -126,7 +126,7 @@ def test_procedure {
 	test_11_3_3_v420_editing_sequences
 	#test_11_3_4_v420_keyboard_control  # Not implemented (needs keyboard input)
 	#test_11_3_5_v420_macros			# Not implemented by VTTEST
-	test_11_3_6_v420_rectangular_operations  # This one says "should not work" - is the test wrong in some way?
+	test_11_3_6_v420_rectangular_operations  # This one says "should not work" - maybe because of its use of DECALN?
 	test_11_3_7_vt420_reporting_functions
 	test_11_3_8_v420_screen_display
 	
@@ -230,6 +230,7 @@ local init_terminal push_menu pop_menu start_vttest exit_vttest screenshot
 local putout screen_contains_string wait_for_menu_prompt add_test_result
 local choose_single_test_option choose_multi_test_option choose_submenu_option
 local wait_for_push_return_prompt do_test finish close_output fail_and_stop
+local launch_vttest
 
 # Setup the terminal emulator for testing
 # Parameters:
@@ -369,6 +370,21 @@ def screen_contains_string {
 	return 0
 }
 
+def wait_for_exit {
+	echo "-- Waiting for vttest exit --"
+	screen_contains_string {That's all, folks!}
+	if = \v(return) 1 {
+		# Found it in the screen already.
+		return
+	}
+
+	# Not on screen - wait up to two seconds for it to arrive.
+	input 5 {That's all, folks!}
+	if fail {
+		fail_and_stop 5 "Timeout waiting for vttest exit"
+	}
+}
+
 
 # Checks if the menu prompt is currently on screen. If it is not, it waits for
 # it to arrive.
@@ -409,6 +425,7 @@ def wait_for_push_return_prompt {
 #   1 - Option number 
 #	2 - Submenu ID
 #	3 - Submenu Name. This must appear on the menu screen!
+#   4 - Suppress adding to HTML file
 def choose_submenu_option {
 	echo "-- choose submenu \%1 - \%3 --"
 	# Make sure we're currently at a menu before trying to select something
@@ -435,13 +452,15 @@ def choose_submenu_option {
 	
 	# Push it on to the stack
 	push_menu \%2 \%3
-	
-	# And add it to the HTML file. But only if it has an ID. 
-	if > \flength(\%2) 0 {
-		putout {	<tr>}
-		putout {		<td><a href="\menu-\%2.\m(image_format)"><img src="menu-\%2.\m(image_format)"></a></td>}
-		putout {		<td colspan="2"> Menu \%2: \fjoin(&a[2:\%s],-)</td>}
-		putout {	</tr>}
+
+	if != \%4 1 {
+        # And add it to the HTML file. But only if it has an ID.
+        if > \flength(\%2) 0 {
+            putout {	<tr>}
+            putout {		<td><a href="\menu-\%2.\m(image_format)"><img src="menu-\%2.\m(image_format)"></a></td>}
+            putout {		<td colspan="2"> Menu \%2: \fjoin(&a[2:\%s],-)</td>}
+            putout {	</tr>}
+        }
 	}
 }
 
@@ -792,6 +811,29 @@ def choose_toggle_option {
 	wait_for_menu_prompt
 }
 
+# Starts vttest and waits for it to be ready
+# Paramters:
+#   1 - Anything extra to pass to vttest
+def launch_vttest {
+    # Start VTTEST
+	lineout \m(vttest_name) \%1
+
+	# Continue processing the connection while VTTEST starts up, as it asks
+	# the terminal emulator a few questions which need answering
+	input /nomatch 1
+
+	# Sometimes a DA response gets dumped into the menu prompt for some reason.
+	# Delete it.
+	for \%i 1 30 1 {
+		output \{127}
+	}
+
+	# Wait for the menu to display
+	wait_for_menu_prompt
+
+	# Add the main menu onto the menu stack
+	push_menu main "Main Menu"
+}
 
 
 # Starts VTTEST
@@ -833,24 +875,7 @@ def start_vttest {
        snapshot_debug_log
     }
 
-	# Start VTTEST
-	lineout \m(vttest_name)
-	
-	# Continue processing the connection while VTTEST starts up, as it asks
-	# the terminal emulator a few questions which need answering
-	input /nomatch 1
-	
-	# Sometimes a DA response gets dumped into the menu prompt for some reason.
-	# Delete it.
-	for \%i 1 30 1 {
-		output \{127}
-	}
-
-	# Wait for the menu to display
-	wait_for_menu_prompt
-	
-	# Add the main menu onto the menu stack
-	push_menu main "Main Menu"
+	launch_vttest
 	
 	# Take a screenshot and grab the VTTEST version string
 	.vttest_version := \fscrnstr(2,37,22)
@@ -879,7 +904,7 @@ def start_vttest {
 	putout {        process not designed for automation.</p>}
 	putout {	<p>As this process is automated, tests that require keyboard}
 	putout {   		interaction are skipped</p>}
-	putout {    <p>Test results have been verfied manually, with some spot-checking}
+	putout {    <p>Test results have been verified manually, with some spot-checking}
 	putout {		on a DEC VT520 terminal. As there are <i>thousands</i> of often}
 	putout {        very similar looking test results there are no doubt some tests}
 	putout {        that have been mis-classified as passing or failing when they}
@@ -2653,9 +2678,76 @@ def test_11_3_5_v420_macros {
 #          7. Test reporting functions
 #          8. Test screen-display functions
 local test_11_3_6_v420_rectangular_operations test_11_3_6_v420_ro_tests
+local test_11_3_6_re_navigate test_11_3_6_restore_settings
+
+# Navigates back to menu 11.3.6 after restarting vttest
+def test_11_3_6_re_navigate {
+	choose_submenu_option 11 "11" "Non-VT100 Tests" 1
+	choose_submenu_option 3 "11.3" "VT420 Tests" 1
+	choose_submenu_option 6 "11.3.6" "VT420 Rectangular Area Tests" 1
+}
+
+# Restores settings after restarting vttest
+def test_11_3_6_restore_settings {
+
+    echo
+    echo Restoring settings...
+    echo DECOM: \%1
+    echo DECLRMM: \%2
+    echo TBM: \%3
+    echo LRM: \%4
+    echo Color: \%5
+    echo Lines: \%6
+
+    if equal "\%1" "enabled" {
+        # Enable DECOM
+        choose_toggle_option 1
+    }
+
+    if equal "\%2" "enabled" {
+        # Enable DECLRMM
+        choose_toggle_option 2
+    }
+
+    if equal "\%3" "top half" {
+        choose_toggle_option 3
+    }
+    else if equal "\%3" "bottom half" {
+        choose_toggle_option 3
+        choose_toggle_option 3
+    }
+    else if equal "\%3" "middle half" {
+        choose_toggle_option 3
+        choose_toggle_option 3
+        choose_toggle_option 3
+    }
+
+    if equal "\%4" "left half" {
+        choose_toggle_option 4
+    }
+    else if equal "\%4" "right half" {
+        choose_toggle_option 4
+        choose_toggle_option 4
+    }
+    else if equal "\%4" "middle half" {
+        choose_toggle_option 4
+        choose_toggle_option 4
+        choose_toggle_option 4
+    }
+
+    if equal "\%5" "color" {
+        choose_toggle_option 5
+    }
+
+    if equal "\%6" "lines" {
+        choose_toggle_option 6
+    }
+}
 
 # Helper macro to run all five VT420 rectangular operation tests. VTTEST should
-# already be in menu 11.3.6.
+# already be in menu 11.3.6. This test will restart vttest occasionally in order
+# to change terminal dimensions, as test 8 requires at least a 42 line by 132
+# column display when margins are enabled.
 # Parameters:
 #	1 - DECOM on/off
 #	2 - DECLRMM on/off
@@ -2664,17 +2756,20 @@ local test_11_3_6_v420_rectangular_operations test_11_3_6_v420_ro_tests
 #   5 - Color setting 
 #   6 - Line drawing characters
 def test_11_3_6_v420_ro_tests {
+    .restart_vttest = 0
 
 	# Screenshot the menu to show the state of all the settings
 	wait_for_menu_prompt
-	screenshot "menu-11.3.3-\%1-\%2-\%3-\%4-\%5-\%6"
+	screenshot "menu-11.3.6-\%1-\%2-\%3-\%4-\%5-\%6"
 	putout {	<tr>}
 	putout {		<td><a href="menu-11.3.3-\%1-\%2-\%3-\%4-\%5-\%6.\m(image_format)"><img src="menu-11.3.3-\%1-\%2-\%3-\%4-\%5-\%6.\m(image_format)"></a></td>}
 	putout {		<td colspan="2"> Menu 11.3.3: \fjoin(&a[2:\%s],-) - Settings: DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6</td>}
 	putout {	</tr>}
 
 	# Change-Attributes in Rectangular Area
+	# 11.3.6.7.1 calls DECALN once
 	choose_multi_test_option 7 "11.3.6.7.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Change-Attributes in Rectangular Area (DECCARA) 1/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "reverse-video E's"
+	# And 11.3.6.7.2 also calls DECALN
 	do_test "11.3.6.7.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Change-Attributes in Rectangular Area (DECCARA) 2/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "the margins."
 	wait_for_menu_prompt
 	
@@ -2688,23 +2783,96 @@ def test_11_3_6_v420_ro_tests {
 	#choose_multi_test_option 8 "11.3.6.8.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "right 4)"
 	screen_contains_string "The screen is too small"
 	if = \v(return) 1 {
-		# An error!
-		do_test "11.3.6.8.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6"
+	    echo
+	    echo ----- Restarting vttest with a larger screen size...
+
+		# An error! Screen is too small.
 		wait_for_push_return_prompt
 		lineout
+		lineout
 		wait_for_menu_prompt
-	} else {
-		# No error - do remaining tests
-		do_test "11.3.6.8.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6"
-		do_test "11.3.6.8.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "overlapping (down 3, right 4)"
-		do_test "11.3.6.8.3-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "copied (down 3, right 4)"
-		do_test "11.3.6.8.4-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" " overlapping (down 3, right 4)"
-		wait_for_menu_prompt
+
+        # Back out of vttest
+        pop_menu 0
+        pop_menu 0
+        pop_menu 0
+        pop_menu 0
+        wait_for_exit
+
+        echo
+	    echo "----- vttest exited, restarting...."
+
+		# Start vttest again, but with a larger screen. 42x132 is a realistic
+		# size for a VT520, and enough for vttest.
+		launch_vttest 42x132
+
+        echo
+        echo ----- Updating dimensions...
+
+        # This has to be done before launching vttest, as it turns of DECCOLM
+        # on start.
+        set term clear-on-resize off
+        set term size 132 42
+
+        echo
+        echo ----- Returning to test menu...
+
+        # Navigate back to the rectangular area operations tests
+        test_11_3_6_re_navigate
+
+        echo
+        echo ----- Restoring test settings...
+
+        # Restore settings
+        test_11_3_6_restore_settings \%1 \%2 \%3 \%4 \%5 \%6
+
+        echo
+        echo ----- Continuing with test
+
+        # Run test
+        wait_for_menu_prompt
+        lineout 8
+        minput 2 "right 4)" "too small"
+
+        # Remember to restart vttest back to our normal dimensions later.
+        .restart_vttest = 1
+	}
+
+    # No error - do remaining tests
+    do_test "11.3.6.8.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6"
+    do_test "11.3.6.8.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "overlapping (down 3, right 4)"
+    do_test "11.3.6.8.3-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "copied (down 3, right 4)"
+    do_test "11.3.6.8.4-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" " overlapping (down 3, right 4)"
+    wait_for_menu_prompt
+
+	if = \m(restart_vttest) 1 {
+	    echo ----- Restarting vttest with a normal screen size
+        # Back out of vttest
+        pop_menu 0
+        pop_menu 0
+        pop_menu 0
+        pop_menu 0
+        wait_for_exit
+
+        set term size 80 24
+        set term clear-on-resize on
+
+        # Start vttest again
+        launch_vttest
+
+        # Navigate back to the rectangular area operations tests
+        test_11_3_6_re_navigate
+
+        # Restore settings
+        test_11_3_6_restore_settings \%1 \%2 \%3 \%4 \%5 \%6
+
+        .restart_vttest = 0
 	}
 	
 	# Test Erase Rectangular area (DECERA)
 	# This one has an extra step when in colour
 	if equal "\%5" "no-color" {
+	    # Calls DECALN
 		choose_single_test_option 9 "11.3.6.9-\%1-\%2-\%3-\%4-\%5-\%6" "Test Erase Rectangular area (DECERA) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "."
 	} else {
 		choose_multi_test_option 9 "11.3.6.9.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Erase Rectangular area (DECERA) (1/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "."
@@ -2732,9 +2900,12 @@ def test_11_3_6_v420_ro_tests {
 }
 
 def test_11_3_6_v420_rectangular_operations {
-	choose_submenu_option 11 "11" "Non-VT100 Tests"
-	choose_submenu_option 3 "11.3" "VT420 Tests"
-	choose_submenu_option 6 "11.3.6" "VT420 Rectangular Area Tests"
+    # Test 11.3.6.8 needs at least a 42 line display when top/bottom margins are
+    # in use, and a 132 column display when L/R margins are in use.
+
+    choose_submenu_option 11 "11" "Non-VT100 Tests"
+    choose_submenu_option 3 "11.3" "VT420 Tests"
+    choose_submenu_option 6 "11.3.6" "VT420 Rectangular Area Tests"
 	
 	#	 Menu 11.3.6: VT420 Rectangular Area Tests (should not work)
 	#
@@ -2821,38 +2992,39 @@ def test_11_3_6_v420_rectangular_operations {
 				
 					# Colour
 					for \%5 0 1 1 {
-						.run_test = 1
+						.run_test_color = 1
 						if = \%5 0 {  # Default State
 							.color = "no-color"
 							if = \m(mono_tests) 0 {
-								.run_test = 0
+								.run_test_color = 0
 							}
 						} else {
 							.color = "color"
 							choose_toggle_option 5
 							if = \m(color_tests) 0 {
-								.run_test = 0
+								.run_test_color = 0
 							}
 						}
 					
 						# Line drawing characters
 						for \%6 0 1 1 {
+						    .run_test_lines = 1
 							if = \%6 0 {  # Default State
 								.lines = "no-lines"
 								if = \m(no_line_drawing_chars) 0 {
-									.run_test = 0
+									.run_test_lines = 0
 								}
 							} else {
 								.lines = "lines"
 								choose_toggle_option 6
 								if = \m(line_drawing_chars) 0 {
-									.run_test = 0
+									.run_test_lines = 0
 								}
 							}
 					
 							# Run tests
-							if = \m(run_test) 1 {
-								test_11_3_6_v420_ro_tests \m(decom) \m(declrmm) \m(tbmargin) \m(lrmargin) "\m(color)" "\m(lines)"
+							if ( = \m(run_test_color) 1 && = \m(run_test_lines) 1 ) {
+                                test_11_3_6_v420_ro_tests \m(decom) \m(declrmm) \m(tbmargin) \m(lrmargin) "\m(color)" "\m(lines)"
 							}
 						
 							.%7 ::= \%7 - 1
