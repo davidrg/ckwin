@@ -1865,7 +1865,8 @@ DECTSR		462
                 left if the cursor is outside the margins. If the cursor is
                 within the margins and on the bottom margin, the scrollable
                 region scrolls up one line and the cursor remains on the bottom
-                margin. Clears the <a href="#lcf">Last Column Flag</a>.</p>
+                margin. Clears the <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
         </section>
         <section role="ctlseq" id="ssa" ctlseq="ESC F" mnemonic="SSA" title="Start Selected Area"
                  not-implemented="true" todo="true">
@@ -5015,6 +5016,7 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> A</ctlseq>
             <p>Cursor Up <param-single/> lines (default = 1).
                 Clears the <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.
             </p>
 
             <p badges="s97801">Ignored if outside scroll region</p>
@@ -5066,7 +5068,8 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> B</ctlseq>
             <p>Cursor Down <param-single/> lines (default = 1).
-                Clears the <a href="#lcf">Last Column Flag</a></p>
+                Clears the <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
             <p badges="s97801">Ignored if outside scroll region</p>
             <p groups="isansi">
                 The <a href="#lcf">Last Column Flag</a> is not cleared.
@@ -5195,7 +5198,8 @@ DCS $ q 3 , } ST</pre>
             <p>Moves the cursor down <param-single/> lines (default = 1). Unlike
                 <a href="#nel">NEL</a>, when the cursor hits the bottom margin
                 the page does <em>not</em> scroll. Clears the
-                <a href="#lcf">Last Column Flag</a>.</p>
+                <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="TSS" title="Thin Space Specification"
                  not-implemented="true" todo="true">
@@ -5298,7 +5302,8 @@ DCS $ q 3 , } ST</pre>
             <implchk std070="true"/>
             <ctlseq>CSI <param-single/> ; <param-single/> H</ctlseq>
             <p>Send cursor to row;column. Default is 1;1. Implementation is
-            shared with <a href="#hvp">HVP</a></p>
+            shared with <a href="#hvp">HVP</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
             <p badges="s97801">
                 If DECSASD is set to the status line, it is reset to terminal.
             </p>
@@ -7419,6 +7424,7 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> d</ctlseq>
             <p>Vertical Position Absolute: Moves active position to row <param-single/>.
+                Affected by <a href="#decom">DECOM</a>.
                 Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="TSR" title="Tabulation Stop Remove"
@@ -7438,7 +7444,7 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> e</ctlseq>
             <p>Vertical Position Relative—moves active position <param-single/>
-                rows down</p>
+                rows down. Affected by <a href="#decom">DECOM</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="SCO" title="Select Character Orientation"
                  not-implemented="true" todo="true">
@@ -14982,6 +14988,7 @@ DCS $ q 3 , } ST</pre>
                 <param-single symbol="Pl"/> ;
                 <param-single symbol="Pb"/> ; <param-single symbol="Pr"/></tt> is
                 the rectangle (top line, left column, bottom line, right column).
+                DECCARA is affected by <a href="#decom">DECOM</a>.
                 If <a href="#decsace">DECSACE</a> is off (1 or 0) then the
                 DECCARA affects the
                 stream of characters between the first and second character positions
@@ -15651,7 +15658,8 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pr"/></tt> is
                 the rectangle. If <a href="#decsace">DECSACE</a> is off (1 or 0) then the DECRARA affects the
                 stream of characters between the first and second character positions
-                specified. The <param-single symbol="Pm"/> is the SGR attributes
+                specified. Coordinates are affected by <a href="#decom">DECOM</a>.
+                The <param-single symbol="Pm"/> is the SGR attributes
                 to change, one of:
             </p>
             <table>
@@ -16031,7 +16039,9 @@ DCS $ q 3 , } ST</pre>
                 <tt><param-single symbol="Ptd"/> ;
                     <param-single symbol="Pld"/></tt> is the destination
                 rectangle (top, left) and <param-single symbol="Ppd"/> is the
-                destination page.
+                destination page. Coordinates are affected by
+                <a href="#decom">DECOM</a> (source and destination pages may
+                have different margins set).
             </p>
             <p>
                 If the source or destination page is less than 1, then the first
@@ -16594,6 +16604,7 @@ DCS $ q 3 , } ST</pre>
                 <tt><param-single symbol="Pt"/> ;
                     <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                     <param-single symbol="Pr"/></tt> is the rectangle to fill.
+                Coordinates are affected by <a href="#decom">DECOM</a>.
             </p>
             <p>
                 <param-single symbol="Pc"/> is an integer referring to a
@@ -16995,6 +17006,7 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pl"/> ;
                     <param-single symbol="Pb"/> ;
                     <param-single symbol="Pr"/></tt>.
+                Coordinates are affected by <a href="#decom">DECOM</a>.
             </p>
             <p>
                 Any existing visual attributes set by <a href="#sgr">SGR</a>,
