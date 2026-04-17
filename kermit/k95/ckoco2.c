@@ -3730,10 +3730,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
                         memcpy(this_line.cells+leftmargin - 1,
                                next_line.cells+leftmargin - 1,
-                               sizeof(viocell) * (rightmargin-leftmargin));
+                               sizeof(viocell) * (rightmargin-leftmargin+1));
                         memcpy(this_line.vt_char_attrs+leftmargin - 1,
                                next_line.vt_char_attrs+leftmargin - 1,
-                               sizeof(vt_char_attr_t) * (rightmargin-leftmargin));
+                               sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                     }
                 }
 
