@@ -2571,7 +2571,16 @@ DECTSR		462
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty dtterm wt"/>
             <p>Fills the screen with "E".
                 Clears the <a href="#lcf">Last Column Flag</a>, margins and
-                SGR attributes. Turns of DECLRMM.
+                SGR attributes. Turns of <a href="#decvssm">DECLRMM</a> and
+                <a href="#decom">DECOM</a>.
+            </p>
+            <p>
+                The VT420 (v1.4) does not correctly turn of DECLRMM. K95 does
+                not currently implement this behaviour as it is deemed to be a
+                bug. Rather it behaves as the VT520 does. Additionally, while
+                DEC STD 070 says SGR attribute should be cleared no tested
+                hardware terminal appears to do this. DECterm does though, so
+                K95 does as STD 070 specifies and DECterm does.
             </p>
         </section>
         <section role="ctlseq" id="decfpp" ctlseq="ESC # 9" todo="true"
