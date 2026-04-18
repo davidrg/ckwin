@@ -7609,13 +7609,13 @@ presentation_state_report(int report) {  /* DECRQPSR */
         break;
     }
     case 2: { /* DECTABSR - Tabulation Stop Report */
-        int tabpos = 2;
+        int tabpos = 2, i;
         /* There is usually a tabstop at column 1, but we
          * don't report that here as the VT520 doesn't let
          * you place a tabstop a column 1, and K95 won't tab
          * to a tabstop in column 1 (unless its backtab,
          * which is probably what its there for) */
-        for (int i = 2; i < VscrnGetWidth(VTERM); i++) {
+        for (i = 2; i < VscrnGetWidth(VTERM); i++) {
             if (htab[i] == 'T') {
                 if (response[0] != '\0') strcat(response, "/");
                 strcat(response, ckitoa(tabpos));
@@ -7863,8 +7863,9 @@ set_declrmm(bool enabled) {
 				}
 			}
 		} else {
+		    int p;
 			/* Reset margins on all pages to the far left/right */
-			for (int p = 0; p < vscrn[VTERM].page_count; p++) {
+			for (p = 0; p < vscrn[VTERM].page_count; p++) {
 				vscrn_set_page_margin_left(VTERM, p, 1);
 				vscrn_set_page_margin_right(VTERM, p, VscrnGetWidth(VTERM));
 			}
