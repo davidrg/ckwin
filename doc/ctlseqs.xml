@@ -116,7 +116,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <!ELEMENT termsupp EMPTY>
         <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print|wz|dtc) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt22z|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -778,6 +778,7 @@ DECTSR		462
         <badge-def sort-order="61" name="dtc01" colour="" comment="DEC DTC01"/> <!-- Not implemented -->
         <badge-def sort-order="61" name="la75" colour="" comment="DEC LA75 ANSI printer"/> <!-- Not implemented -->
         <badge-def sort-order="62" name="vt382" colour="" comment="DEC VT382 Kanji Display Terminal"/> <!-- Not implemented -->
+        <badge-def sort-order="63" name="vt22z" colour="" comment="DEC VT220-Z"/> <!-- Not implemented -->
     </badges>
     <!--
      Badge groups should be kept in sync with the matching macros in ckuusr.h
@@ -6340,7 +6341,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:203"/>
             <ref src="vt510:SU.html"/>
             <ref src="vt52x:361"/>
-            <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 tt putty dtterm wt"/>
+            <termsupp first="vt22z" series="vt" additional="vt330 vt340 vt420 vt510 tt putty dtterm wt"/>
             <ctlseq>CSI <param-single/> S</ctlseq>
             <p>
                 Scrolls the characters up <param-single/> lines.
@@ -6405,7 +6406,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:204"/>
             <ref src="vt510:SD.html"/>
             <ref src="vt52x:354"/>
-            <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 tt putty dtterm wt"/>
+            <termsupp first="vt22z" series="vt" additional="vt330 vt340 vt420 vt510 tt putty dtterm wt"/>
             <ctlseq>CSI <param-single/> T</ctlseq>
             <p>
                 Scroll down <param-single/> lines. The top
