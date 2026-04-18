@@ -14,6 +14,8 @@
 # the following exceptions:
 #  * No colour at all
 #  * No crossed-out or italic attributes
+# When run on a VT320 or VT220 (assuming $TERM is set properly), features not
+# supported by those terminals will be turned off.
 #
 # In most other terminal emulators, the output will appear fairly broken due to
 # missing or incorrectly implemented features, especially those from the VT420.
@@ -252,6 +254,7 @@ BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
 
 # Features - some aren't supported by K95 yet, and none of them are available
 #            in releases prior to beta 8.
+F_STATUS_LINE=1    # New in 1.1.8 (November 1996)
 F_TRUE_COLOR=1     # New in beta 8
 F_STRIKETHROUGH=1  # New in beta 8
 F_RULED_LINES=0    # -- not supported -- | When turning one of these on, check
@@ -284,6 +287,12 @@ if [[ $IS_K95 == "true" ]]; then
     # Rectangular area features should be present but a little buggy
     F_PAGING=0
   fi
+elif [[ $TERM == "vt320" ]]; then
+    F_VT420_FEATURES=0
+elif [[ $TERM == "vt220" ]]; then
+    F_VT420_FEATURES=0
+    F_STATUS_LINE=0
+    F_SOFT_FONT=0  # TODO: Current font is incompatible
 fi
 
 if [ "$F_VT420_FEATURES" != "1" ]; then
@@ -403,6 +412,8 @@ if [ "$F_SOFT_FONT" = "1" ]; then
 
 	printf ' * VT220 '
 
+  # TODO: Use an alternate font for VT220
+
 	# Download the Jetpac font by Paul Flo Williams
 	# https://vt100.net/dec/vt320/fonts (no license stated)
 	# This is a VT320 font, converted to a 10x16 VT520 font by j4james
@@ -471,7 +482,9 @@ if [ "$F_SOFT_FONT" = "1" ]; then
 	printf '\x1b%%G'
 fi
 
-printf ' * VT320 host-programmable status line (see the bottom of the terminal)\n'
+if [ "$F_STATUS_LINE" = "1" ]; then
+  printf ' * VT320 host-programmable status line (see the bottom of the terminal)\n'
+fi
 
 # Do a bit of pre-work for the VT420 line - we'll come back to it later
 FRA_1=""
@@ -669,28 +682,30 @@ printf 'and 32bit IBM OS/2 Systems\n'
 #   timer.
 # -------------------------------------------------------------------
 
-# Status line type to host-writable
-printf '\x1b[2$~'
+if [ "$F_STATUS_LINE" = "1" ]; then
+  # Status line type to host-writable
+  printf '\x1b[2$~'
 
-# Move to the status line
-printf '\x1b[1$}'
+  # Move to the status line
+  printf '\x1b[1$}'
 
-# Move to the start of the status line
-printf '\x1b[0`'
+  # Move to the start of the status line
+  printf '\x1b[0`'
 
-# Output some demo text to the status line
-if [ "$F_TRUE_COLOR" = "1" ]; then
-	for ((i = 255 ; i > 0; i -= 37)); do printf '\x1b[48:2:0:0:0:%dm ' $i; done
-	printf '\x1b[0mHost-programmable status line!'
-	for ((i = 0 ; i <= 255; i += 6)); do printf '\x1b[48:2:0:0:0:%dm ' $i; done
-else
-	printf ' >>> Host-programmable status line! <<<'
+  # Output some demo text to the status line
+  if [ "$F_TRUE_COLOR" = "1" ]; then
+  	for ((i = 255 ; i > 0; i -= 37)); do printf '\x1b[48:2:0:0:0:%dm ' $i; done
+  	printf '\x1b[0mHost-programmable status line!'
+  	for ((i = 0 ; i <= 255; i += 6)); do printf '\x1b[48:2:0:0:0:%dm ' $i; done
+  else
+	  printf ' >>> Host-programmable status line! <<<'
+  fi
+
+  printf '\x1b[0m'
+
+  # Move back to the terminal screen
+  printf '\x1b[0$}'
 fi
-
-printf '\x1b[0m'
-
-# Move back to the terminal screen
-printf '\x1b[0$}'
 
 # Put a blank line between the feature list and the "press any key" prompt if
 # there is space available to do so.
