@@ -48,6 +48,7 @@ HANDLE hmtxThreadMgmt = (HANDLE) 0 ;
 #ifdef CK_SSL
 HANDLE hmtxSSL = (HANDLE) 0;
 #endif /* CK_SSL */
+CRITICAL_SECTION csDRCSBuffer;
 
 HANDLE hevEventAvail[VNUM] = {(HANDLE) 0,(HANDLE) 0,(HANDLE) 0} ;
 HANDLE hevLocalEchoAvail = (HANDLE) 0 ;
@@ -3828,6 +3829,33 @@ CloseCommMutex( void )
     return rc ;
 #endif /* NT */
 }
+
+#ifdef KUI
+void
+CreateDRCSBufferCriticalSection()
+{
+    InitializeCriticalSection(&csDRCSBuffer);
+    return 0;
+}
+
+void
+EnterDRCSBufferCriticalSection()
+{
+    EnterCriticalSection(&csDRCSBuffer);
+}
+
+void
+LeaveDRCSBufferCriticalSection()
+{
+    LeaveCriticalSection(&csDRCSBuffer);
+}
+
+void
+CloseDRCSBufferCriticalSection()
+{
+    DeleteCriticalSection(&csDRCSBuffer);
+}
+#endif /* KUI */
 
 #ifdef CK_SSL
 APIRET

@@ -1318,6 +1318,72 @@ typedef struct vscrn_struct {
     BOOL          allow_alt_buf; /* Allow switching to alternate buffer? */
 } vscrn_t;
 
+
+/* VT level 2 DRCS Support
+ * ------------------------
+ *
+ */
+#define DRCS_MAX_CELL_HEIGHT 20
+typedef struct _drcs_glyph_t {
+    /* Enough for cells 16 pixels wide, 20 high, the max for the VT340 */
+    unsigned short pixels[DRCS_MAX_CELL_HEIGHT];
+    char undefined;
+} drcs_glyph_t;
+
+#define DRCS_RENDER_HINT_NONE           0x00
+#define DRCS_RENDER_HINT_VT220          0x01
+#define DRCS_RENDER_HINT_VT320          0x02
+#define DRCS_RENDER_HINT_RES_F          0x04
+#define DRCS_RENDER_HINT_RES_E          0x08
+#define DRCS_RENDER_HINT_RES_D          0x10
+#define DRCS_RENDER_HINT_RES_C          0x20
+#define DRCS_RENDER_HINT_RES_B          0x40
+#define DRCS_RENDER_HINT_RES_A          0x80
+
+typedef struct _drcs_t {
+    char name[3];
+    drcs_glyph_t glyphs[96];
+    char cell_height;
+    char cell_width;
+    char is_96_chars;
+    char cell_count;
+    char full_cell;
+    char start_character;
+    char render_hints;
+    char serial; /* So we can track changes - this is an incrementing number. */
+} drcs_t;
+
+/* To increase this number:
+ *   - Update the macros below
+ *   - The soft font painting code in kclient.cxx will need updating to
+ *     deal with the additional font buffers
+ *   - A new TX_DRCS_x define needed in ckcuni.h, along with new entries in
+ *     txrinfo, xl_u and xl_tx in ckcuni.c
+ *   - update the charset and rtolxlat functions in ckoco3.c (search for
+ *     TX_DRCS_1 for the places to update - should be obvious enough).   */
+#define DRCS_BUFFERS 2
+
+#define DRCS_1_START 0xEF20
+#define DRCS_2_START 0xEF80
+
+#define IN_DRCS_RANGE(x) ((x) >= DRCS_1_START && (x) <= 0xEFDF)
+#define IN_DRCS_1_RANGE(x) ((x) >= DRCS_1_START && (x) <= 0xEF7F)
+#define IN_DRCS_2_RANGE(x) ((x) >= DRCS_2_START && (x) <= 0xEFDF)
+
+/* Gets the font buffer number the supplied character (in the Unicode PUA range)
+ * should reside in. Returns 0 if not a soft font. */
+#define DRCS_BUFFER_ID(x) ( \
+    IN_DRCS_1_RANGE((x)) ? 1 : \
+    IN_DRCS_2_RANGE((x)) ? 2 : \
+    0 \
+)
+
+#define DRCS_START(buffer) ( \
+    (buffer) == 1 ? DRCS_1_START : \
+    (buffer) == 2 ? DRCS_2_START : \
+    0 \
+)
+
 /* Multiple Page support
  * ---------------------
  * There are at all times *two* current pages which may or may not be the same

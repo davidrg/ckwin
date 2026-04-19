@@ -6130,6 +6130,45 @@ struct x_to_unicode u_c1pics = {
 #endif /* KERMITFONT */
 
 
+/* Soft-font buffers are given codepoints from the Private Use Area in the
+ * Base Multilingual Plane (U+E000–U+F8FF).  First one starts at the same
+ * codepoint as Windows Terminal, 0xEF20, to reduce the chances of it colliding
+ * with something else. Second one follows starting at 0xEF80.
+ */
+struct x_to_unicode u_drcs_1 = {
+    96, 32, X2U_DEC, 0, "Soft-font 1", "drcs1", 0, NULL,
+    0xEF20, 0xEF21, 0xEF22, 0xEF23, 0xEF24, 0xEF25, 0xEF26, 0xEF27,
+    0xEF28, 0xEF29, 0xEF2A, 0xEF2B, 0xEF2C, 0xEF2D, 0xEF2E, 0xEF2F,
+    0xEF30, 0xEF31, 0xEF32, 0xEF33, 0xEF34, 0xEF35, 0xEF36, 0xEF37,
+    0xEF38, 0xEF39, 0xEF3A, 0xEF3B, 0xEF3C, 0xEF3D, 0xEF3E, 0xEF3F,
+    0xEF40, 0xEF41, 0xEF42, 0xEF43, 0xEF44, 0xEF45, 0xEF46, 0xEF47,
+    0xEF48, 0xEF49, 0xEF4A, 0xEF4B, 0xEF4C, 0xEF4D, 0xEF4E, 0xEF4F,
+    0xEF50, 0xEF51, 0xEF52, 0xEF53, 0xEF54, 0xEF55, 0xEF56, 0xEF57,
+    0xEF58, 0xEF59, 0xEF5A, 0xEF5B, 0xEF5C, 0xEF5D, 0xEF5E, 0xEF5F,
+    0xEF60, 0xEF61, 0xEF62, 0xEF63, 0xEF64, 0xEF65, 0xEF66, 0xEF67,
+    0xEF68, 0xEF69, 0xEF6A, 0xEF6B, 0xEF6C, 0xEF6D, 0xEF6E, 0xEF6F,
+    0xEF70, 0xEF71, 0xEF72, 0xEF73, 0xEF74, 0xEF75, 0xEF76, 0xEF77,
+    0xEF78, 0xEF79, 0xEF7A, 0xEF7B, 0xEF7C, 0xEF7D, 0xEF7E, 0xEF7F
+};
+
+/* Soft-font buffers are given codepoints from the Private Use Area in the
+ * Base Multilingual Plane (U+E000–U+F8FF). */
+struct x_to_unicode u_drcs_2 = {
+    96, 32, X2U_DEC, 0, "Soft-font 2", "drcs2", 0, NULL,
+    0xEF80, 0xEF81, 0xEF82, 0xEF83, 0xEF84, 0xEF85, 0xEF86, 0xEF87,
+    0xEF88, 0xEF89, 0xEF8A, 0xEF8B, 0xEF8C, 0xEF8D, 0xEF8E, 0xEF8F,
+    0xEF90, 0xEF91, 0xEF92, 0xEF93, 0xEF94, 0xEF95, 0xEF96, 0xEF97,
+    0xEF98, 0xEF99, 0xEF9A, 0xEF9B, 0xEF9C, 0xEF9D, 0xEF9E, 0xEF9F,
+    0xEFA0, 0xEFA1, 0xEFA2, 0xEFA3, 0xEFA4, 0xEFA5, 0xEFA6, 0xEFA7,
+    0xEFA8, 0xEFA9, 0xEFAA, 0xEFAB, 0xEFAC, 0xEFAD, 0xEFAE, 0xEFAF,
+    0xEFB0, 0xEFB1, 0xEFB2, 0xEFB3, 0xEFB4, 0xEFB5, 0xEFB6, 0xEFB7,
+    0xEFB8, 0xEFB9, 0xEFBA, 0xEFBB, 0xEFBC, 0xEFBD, 0xEFBE, 0xEFBF,
+    0xEFC0, 0xEFC1, 0xEFC2, 0xEFC3, 0xEFC4, 0xEFC5, 0xEFC6, 0xEFC7,
+    0xEFC8, 0xEFC9, 0xEFCA, 0xEFCB, 0xEFCC, 0xEFCD, 0xEFCE, 0xEFCF,
+    0xEFD0, 0xEFD1, 0xEFD2, 0xEFD3, 0xEFD4, 0xEFD5, 0xEFD6, 0xEFD7,
+    0xEFD8, 0xEFD9, 0xEFDA, 0xEFDB, 0xEFDC, 0xEFDD, 0xEFDE, 0xEFDF
+};
+
 /* Blah-to-Unicode functions */
 
 USHORT
@@ -7491,6 +7530,42 @@ c1pics_u(c) CHAR c;
       return(c);
     else
       return(u_c1pics.map[c - u_c1pics.offset]);
+}
+
+USHORT
+#ifdef CK_ANSIC
+drcs_1_u(CHAR c)
+#else
+drcs_1_u(c) CHAR c;
+#endif /* CK_ANSIC */
+{
+    if (c >= 0x80 && c < 0xa0)
+        return(c);
+    c &= 0x7f;
+    if (c < u_drcs_1.offset)
+        return(c);
+    else if (c >= u_drcs_1.offset + u_drcs_1.size)
+        return(c);
+    else
+        return(u_drcs_1.map[c - u_drcs_1.offset]);
+}
+
+USHORT
+#ifdef CK_ANSIC
+drcs_2_u(CHAR c)
+#else
+drcs_2_u(c) CHAR c;
+#endif /* CK_ANSIC */
+{
+    if (c >= 0x80 && c < 0xa0)
+        return(c);
+    c &= 0x7f;
+    if (c < u_drcs_2.offset)
+        return(c);
+    else if (c >= u_drcs_2.offset + u_drcs_2.size)
+        return(c);
+    else
+        return(u_drcs_2.map[c - u_drcs_2.offset]);
 }
 
 #ifdef KANJI                            /* Kanji/Unicode functions */
@@ -15373,7 +15448,9 @@ txrinfo[MAXTXSETS+1] = {
     &u_apl2,                            /* 107 APL 2 (Dyadic) */
     &u_apl3,                            /* 108 APL 3 (Plus) */
     &u_apl4,                            /* 108 APL 4 (IBM) */
-    &u_apl5                             /* 110 APL 5 (2741) */
+    &u_apl5,                            /* 110 APL 5 (2741) */
+    &u_drcs_1,                          /* 110 First DRCS font buffer */
+    &u_drcs_2                           /* 111 Second DRCS font buffer */
 };
 
 /*
@@ -15497,7 +15574,9 @@ USHORT
     apl2_u,                             /* 107 APL 2 (AIX) */
     apl3_u,                             /* 108 APL 3 (Plus) */
     apl4_u,                             /* 109 APL 4 (IBM) */
-    apl5_u                              /* 110 APL 5 (2741) */
+    apl5_u,                             /* 110 APL 5 (2741) */
+    drcs_1_u,                           /* 111 DRCS font buffer 1 */
+    drcs_2_u                            /* 112 DRCS font buffer 2 */
 };
 /*
   Table of Unicode-to-Blah translation functions.
@@ -15621,7 +15700,9 @@ int
     tx_apl2,                            /* 107 APL 2 (AIX) */
     tx_apl3,                            /* 108 APL 3 (Plus) */
     tx_apl4,                            /* 108 APL 4 (IBM) */
-    tx_apl5                             /* 110 APL 5 (2741) */
+    tx_apl5,                            /* 110 APL 5 (2741) */
+    NULL,       /* Display only */      /* 111 DRCS font buffer 1 */
+    NULL        /* Display only */      /* 112 DRCS font buffer 2 */
 };
 
 /*

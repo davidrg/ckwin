@@ -730,6 +730,458 @@ int sni_bitmode = 8;                    /* 97801 CH.CODE 8-bit mode */
 CHAR sni_kbd_firmware[7]="920031";      /* 97801 Keyboard Firmware Version */
 CHAR sni_term_firmware[7]="830851";     /* 97801 Terminal Firmware Version */
 
+
+/* VT level 2 DRCS Support
+ * ------------------------
+ * TODO: - Support multiple renditions for those terminals that support it
+ *       - Have erase_font_buffer set the pixels to a reverse question mark
+ *       - Rendering!
+ *       - Mark it all as KUI-only
+ */
+drcs_t *drcsbuf[DRCS_BUFFERS] = {NULL, NULL};
+
+void
+erase_font_buffer(drcs_t *drcs) {
+    int i, j;
+    /* TODO: instead of the undefined flag, fill the pixels with a
+     *       reverse question mark pattern */
+    for (i = 0; i < 96; i++) {
+        for (j = 0; j < 20; j++) {
+            drcs->glyphs[i].pixels[0] = 0;
+        }
+        drcs->glyphs[i].undefined = 1;
+    }
+}
+
+void
+decdld(int font_number, int starting_character, int erase_control,
+       int width, int font_set_size, int usage, int height,
+       int character_set_size, const char* definition, int length) {
+    drcs_t *drcs;
+    int i=0, j=0, start=0;
+    int max_font_buffers;
+    int cell_height, cell_width, used_height = 0;
+    int h_offset = 0, v_offset = 0;
+    int lines = 24, columns = 80;
+    BOOL is_132cols, is_full_cell, is_vt220_font = FALSE, erased=FALSE;
+    BOOL default_height = FALSE, default_width = FALSE;
+    int glyph = 0, row = 0, column = 0;
+    char name[3] = {0, 0, 0};
+
+    is_132cols = font_set_size == 2 || font_set_size == 12 ||
+        font_set_size == 22;
+    is_full_cell = usage == 2;
+
+    /* Figure out how many font buffers we should allow access to based on
+     * current terminal emulation. No DEC terminals support more than two, but
+     * their printers all support at least 3 if they support any at all. */
+    switch (tt_type_mode) {
+        case TT_VT220:
+        case TT_VT220PC:
+        case TT_VT320:     /* The VT300 and VT420 actually have two - one for */
+        case TT_VT320PC:   /* each session. So from the hosts POV, only one  */
+        case TT_VT420:
+        case TT_WY370:
+            max_font_buffers = 1;
+            break;
+            /*case TT_VT510:*/
+        case TT_VT520:
+        case TT_VT525:
+        case TT_K95:
+            max_font_buffers = 2;
+            break;
+        default:
+            return; /* DECDLD not supported by this terminal type */
+    }
+
+    /* And max cell dimensions */
+    switch (tt_type_mode) {
+        case TT_VT220:
+        case TT_VT220PC:
+            cell_height = 10;
+            cell_width = 10;
+            break;
+        case TT_VT320:
+        case TT_VT320PC:
+#ifdef COMMENT
+            /* Not sure where I got this from, but it doesn't seem to be right
+             * for the available VT320 fonts. */
+            if (is_full_cell) {
+                /* full cell */
+                cell_height = is_132cols ? 9 : 15;
+            } else { /* text cell */
+                cell_height = is_132cols ? 7 : 12;
+            }
+#else
+            cell_height = 12;
+#endif
+            cell_width = 15;
+            break;
+        case TT_VT340:
+            if (is_full_cell) { /* full cell */
+                cell_width = is_132cols ? 6 : 10;
+            } else { /* text cell */
+                cell_width = is_132cols ? 5 : 9;
+            }
+            cell_height = 20;  /* The docs say so, but it feels wrong */
+            break;
+        case TT_K95:
+            /* We don't *really* care about 80/132-column modes */
+            cell_width = 16;
+            cell_height = 20;
+            break;
+        case TT_VT420:
+            /*case TT_VT510:*/
+        case TT_VT520:
+        case TT_VT525:
+        case TT_WY370:
+        default:
+            if (is_full_cell) { /* full cell */
+                cell_width = 10;
+            } else { /* text cell */
+                cell_width = is_132cols ? 6 : 9;
+            }
+            cell_height = 16;
+            break;
+    }
+
+
+    /* VT420 supports six renditions per font:
+     *   80 columns, 24/36/48 lines
+     *   132 columns, 24/36/48 lines
+     * The VT5xx only supports two I think: 80columns or 132columns
+     * For now we're not storing additional renditions though, as K95 does not
+     * yet support a compressed/narrow font for DECCOLM.
+     */
+
+    /******* Validate Parameters *******/
+    /* Which are:
+     *  Pfn ; Pcn ; Pe ; Pcmw ; Pss ; Pu ; Pcmh ; Pcss
+     * Printers use:
+     *  Pfn ; Pcn ; Pe ; Pcmw ; Pss ; Pu ; Pcmh ; Pcss ; Psgr
+     */
+
+    /* Pfn - font number
+     * If font number is 0, then we pick the first empty font buffer, or the
+     * first font buffer. */
+    if (font_number > max_font_buffers) return;
+
+
+    /* Pcn - Starting Character
+     * This defines the first glyph we're expecting to receive */
+    if (starting_character > (character_set_size == 1 ? 95 : 93)) {
+        return;
+    }
+    glyph = starting_character;
+
+    /* Pe - Erase Control
+     * One of three values:
+     *     0 - erase everything
+     *     1 - erase only characters being reloaded
+     *     2 - erase all renditions (normal, bold, 80-column, 132-column)
+     * The VT220 docs say this erases all font buffers, but it only has one so
+     * that's probably meaningless
+     */
+    if (erase_control > 2) return;
+
+    /* Pcmw - Character Matrix Width
+     * One of these values:
+     *     0 - Default
+     *          VT220: 7x10
+     *          VT420: 10 wide for 80 columns, 6 wide for 132 columns
+     *     1 -  VT220: Not used/Illegal
+     *     2 -  VT220 compatible: 5 wide, 10 high
+     *     3 -  VT220 compatible: 6 wide, 10 high
+     *     4 -  VT220 compatible: 7 wide, 10 high
+     *     5...16: Character matrix width.
+     *       EK-VT320-UU says values up to 15.
+     *       EK-VT3XX-TP says values up to 10
+     *       EK-VT420-RM says "must be less than 10. Any Pcmw value over 10 is illegal"
+     *       EK-VT510-RM says values up to 10
+     *       EK-VT520-RM says values up to 10
+     *       WY-370 supports up to 16 wide
+     * For the VT510, if Pu != 2, then the limits are:
+     *    9 wide for 80 columns
+     *    6 wide for 132 columns
+     * VT52x seems to be the same.
+     *
+     * The VT220 doesn't constrain glyphs to this size - even if a width of 5
+     * specified (Pcmw=2), you can still define glyphs up to 8 wide, though the
+     * 8th column is doubled.
+     * */
+    switch (width) {
+        case 0:
+            default_width = TRUE;
+            if (ISVT320(tt_type_mode))
+                width = cell_width;
+            else
+                width = 7;
+            break;
+        case 1:
+            return; /* Illegal */
+        case 2:
+            is_vt220_font = TRUE;
+            width = 5; height = 10; break;
+        case 3:
+            is_vt220_font = TRUE;
+            width = 6; height = 10; break;
+        case 4:
+            is_vt220_font = TRUE;
+            width = 7; height = 10; break;
+        default:
+            if (width > cell_width) return;
+            /* Arbitrary widths are only supported by the VT320 and up */
+            if (!ISVT320(tt_type_mode)) return;
+            break;
+    }
+
+    /* Pss - Font Set Size. VT220 calls this Pw.
+     *     0 - default (80 columns, 24 lines)
+     *     1 - 80 columns, 24 lines
+     *     2 - 132 columns, 24 lines
+     *    11 - 80 columns, 36 lines   (VT420 & VT510 only)
+     *    12 - 132 columns, 36 lines  (VT420 & VT510 only)
+     *    21 - 80 columns, 48 lines   (VT420 & VT510 only)
+     *    22 - 132 columns, 48 lines  (VT420 & VT510 only)
+     * */
+    switch (font_set_size) {
+        case 0:  break;
+        case 1:  break;
+        case 2:  columns = 132; break;
+        case 11: lines = 36; break;
+        case 12: columns = 132; lines = 36; break;
+        case 21: lines = 48; break;
+        case 22: columns = 132; lines = 48; break;
+        default: return; /* Invalid */
+    }
+    if (lines > 24 && tt_type_mode != TT_VT420 &&
+                     /*tt_type_mode != TT_VT510 &&*/
+                     tt_type_mode != TT_K95) {
+        // TODO: Confirm VT52x really does not except 11..22
+        return; /* Invalid */
+    }
+
+    /* Pu - Font Usage. VT220 and VT510 calls this Pt.
+     *     0 - default (text)
+     *     1 - text
+     *     2 - full-cell (Not supported on VT220)
+     * */
+    if (usage > 2) return;
+    if (!ISVT320(tt_type_mode) && is_full_cell) return;
+
+    if (ISVT320(tt_type_mode)) {
+        /* Pcmh - Character Cell Matrix height - VT320+
+         * This is ignored (set to 10) if PCmw is 2, 3 or 4.
+         * VT320: 1-12, 0=12
+         * VT340: 1-20, 0=20, >20 is illegal
+         * VT420: 1-16, 0=16, >16 is illegal
+         * VT5xx: 1-16, 0=16, >16 is illegal
+         * */
+        if (height > cell_height) return;
+        if (height == 0) {
+            default_height = TRUE;
+            height = cell_height;
+        }
+
+        /* Pcss - Character Set Size - VT320+
+         *     0 - 94-character set
+         *     1 - 96-character set
+         * */
+        if (character_set_size > 1) return;
+    } else {
+        /* VT220 */
+        height = 10;
+        character_set_size = 0;
+        is_vt220_font = TRUE;
+    }
+
+    /* Dscs - the name for the soft character set
+     * 0-2 intermediate characters, followed by a final character.
+     */
+    if (length < 1) return;
+    for (start = 0; start <= 3; start++) {
+        name[start] = definition[start];
+        if (start == 3) {
+            return; /* Didn't get a final character in 0...2 */
+        }
+        if (definition[start] >= ' ' && definition[start] <= '/') {
+            continue;  /* Intermediate character */
+        }
+        if (definition[start] >= '0' && definition[start] <= '~') {
+            break; /* Final character */
+        }
+        return; /* Something invalid */
+    }
+
+    /* if we got this far, then the parameters are all valid and we can proceed
+     * with loading the font. */
+
+    /* Now figure out what the real dimensions should be. */
+
+    EnterDRCSBufferCriticalSection();
+
+    /* Decide which font buffer we're going to use*/
+    if (font_number == 0) {
+        if (max_font_buffers > 1) {
+            /* For the VT510 and up, 0 means first empty buffer, or buffer 1 if
+             * they're all populated. For all other terminals, 0 means buffer 1.
+             */
+
+            /* Try and find an existing font buffer with the same name and
+                * other settings. */
+            for (i = 1; i <= max_font_buffers; i++) {
+                int bufid = i - 1;
+                if (drcsbuf[bufid] != NULL &&
+                    drcsbuf[bufid]->name[0] == name[0] &&
+                    drcsbuf[bufid]->name[1] == name[1] &&
+                    drcsbuf[bufid]->name[2] == name[2] /*&&
+                    drcsbuf[bufid]->cell_width == width &&
+                    drcsbuf[bufid]->cell_height == height &&
+                    drcsbuf[bufid]->full_cell == is_full_cell &&
+                    drcsbuf[bufid]->is_96_chars == (character_set_size == 1) &&
+                    drcsbuf[bufid]->start_character == glyph*/) {
+                    font_number = i;
+                    break;
+                }
+            }
+
+            /* If we didn't find an existing font buffer with the same name,
+             * find an empty one. */
+            if (font_number == 0) {
+                for (i = 1; i <= max_font_buffers; i++) {
+                    if (drcsbuf[i-1] == NULL) {
+                        font_number = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /* And if there were no empty ones, use the first */
+        if (font_number == 0) font_number = 1;
+    }
+    font_number -= 1;
+
+    if (drcsbuf[font_number] == NULL) {
+        drcs = (drcs_t*)malloc(sizeof(drcs_t));
+        memset((void*)drcs, 0, sizeof(drcs_t));
+        drcsbuf[font_number] = drcs;
+        erase_font_buffer(drcs);
+    } else {
+        drcs = drcsbuf[font_number];
+        if (drcs->full_cell != is_full_cell) {
+            /* STD 070: "Changes to this [the full cell ] parameter since the
+             * last DECDLD sequence to this buffer will result in the erasure of
+             * the entire set, and cause a new load to start" */
+            erase_control = 1;
+        }
+    }
+
+    if (erase_control == 0) {
+        /* Erase target font buffer only */
+        erase_font_buffer(drcs);
+    } else if (erase_control == 2) {
+        int i;
+        /* Erase all font buffers */
+        for (i = 0; i < max_font_buffers; i++) {
+            if (drcsbuf[i] != NULL) {
+                erase_font_buffer(drcsbuf[i]);
+            }
+        }
+    } /* Else we'll erase glyphs as they're defined */
+
+    drcs->name[0] = name[0];
+    drcs->name[1] = name[1];
+    drcs->name[2] = name[2];
+    drcs->cell_width = cell_width;
+    drcs->cell_height = cell_height;
+    drcs->full_cell = is_full_cell;
+    drcs->is_96_chars = character_set_size == 1;
+    drcs->start_character = glyph;
+    drcs->render_hints = DRCS_RENDER_HINT_NONE;
+
+    if (is_vt220_font) drcs->render_hints = DRCS_RENDER_HINT_VT220;
+    else if (tt_type_mode == TT_VT320) drcs->render_hints = DRCS_RENDER_HINT_VT320;
+
+    /* Center text glyphs within the cell. The VT220 does not do this - at least
+     * not in a normal way; its behaviour really has to be dealt with at render
+     * time. */
+    if (!is_full_cell && ISVT320(tt_type_mode)) {
+        int hspace = cell_width - width;
+        int vspace = cell_height - height;
+        h_offset = hspace/2;
+        v_offset = vspace/2;
+    }
+
+    for (i=start+1; i < length; i++) {
+        char sixel = definition[i];
+        char bits;
+        int bit;
+
+        if (sixel == ';') {
+            /* ';' means next glyph */
+            glyph++;
+            erased = FALSE;
+            row = 0;
+            column = 0;
+            continue;
+        }
+        if (sixel == '/') {
+            /* '/' means next row of sixels */
+            row +=6; /* Each sixel spans six rows */
+            column = 0;
+            continue;
+        }
+
+        /* Ignore sixel if it is outside the specified size
+         * The VT220 is a bit odd; its cells are 10 wide, only 8 columns are
+         * addressable and it allows all 8 columns to be filled even if the font
+         * specifies a smaller width.
+         */
+        if (ISVT320(tt_type_mode) && column > width) continue;
+        if (!ISVT320(tt_type_mode) && column > 8) continue;
+        if (column > cell_width) continue;
+
+        /* Ignore entire glyph if we're trying to load a 94-character set
+         * starting at position 0, or a position past the range for the
+         * character set size */
+        if (character_set_size == 0) {
+            if (glyph == 0 || glyph > 94 ) continue;
+        }
+        else if (glyph > 95) continue;
+
+        bits = sixel - '?';
+
+        if (!erased) {
+            for (j = 0; j < DRCS_MAX_CELL_HEIGHT; j++) {
+                drcs->glyphs[glyph].pixels[j] = 0;
+            }
+            erased = TRUE;
+        }
+
+        drcs->glyphs[glyph].undefined = 0;
+
+        for (bit = 0; bit < 6; bit++) {
+            if (row+bit > height) continue;
+
+            if (bits & (1 << bit)) {
+                drcs->glyphs[glyph].pixels[row+bit+v_offset] =
+                    drcs->glyphs[glyph].pixels[row+bit] | 0x8000 >> (column+h_offset);
+                if (row+bit > used_height) used_height = row+bit;
+            }
+        }
+        column++;
+    }
+
+    /* mark the font buffer as changed */
+    drcs->serial++;
+
+    LeaveDRCSBufferCriticalSection();
+
+    /* mark the vscreen as dirty */
+    VscrnIsDirty(VTERM);
+}
+
 /* VT level 4 Macro Support
  * ------------------------
  * Both the VT420 (EK-VT420-RM.002) and VT520 (EK-VT520-RM.A01) manuals claim

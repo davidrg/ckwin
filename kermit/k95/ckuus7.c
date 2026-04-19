@@ -14640,12 +14640,18 @@ savkeys(name,disp) char * name; int disp;
 #define SV_SCRL 0
 #define SV_HIST 1
 #define SV_SCRN 2
+#define SV_SFNT 3
 
 #ifdef OS2
 #ifndef NOLOCAL
 static struct keytab trmtrmopt[] = {
     { "screen",     SV_SCRN, 0 },
-    { "scrollback", SV_SCRL, 0 }
+    { "scrollback", SV_SCRL, 0 },
+#ifdef KUI
+#ifdef CK_HAVE_GDIPLUS
+    { "soft-fonts", SV_SFNT, CM_INV },
+#endif /* CK_HAVE_GDIPLUS */
+#endif /* KUI */
 };
 #endif /* NOLOCAL */
 #endif /* OS2 */
@@ -14713,11 +14719,48 @@ dosave(xx) int xx;
             struct FDB of, sw;
 #endif /* KUI */
 
-            if ((y = cmkey(trmtrmopt,2,
+            if ((y = cmkey(trmtrmopt,3,
                            "What to save","scrollback",xxstring)) < 0)
               return(y);
 #ifdef KUI
             if (y == SV_SCRL) break;
+
+#ifdef CK_HAVE_GDIPLUS
+            if (y == SV_SFNT) {
+                int bufnum;
+                /* We're saving a soft-font buffer to a bitmap. This is really
+                 * just a debugging feature, so the command is hidden. */
+
+                /* We need to collect a font buffer number, and a filename */
+                if (y = cmnum("Font buffer number", "1", 10, &bufnum, xxstring) < 0)
+                    return(y);
+
+                y = cmofi("Filename",
+                          ((bufnum == 1) ? "font-1.png" :
+                           (bufnum == 2) ? "font-2.png" : "font.png"),
+                          &s,
+                          xxstring);
+                if (y < 0)
+                    return(y);
+                if (y == 2) {
+                    printf("?Sorry, %s is a directory name\n",s);
+                    return(-9);
+                }
+
+                ckstrncpy(line,s,LINBUFSIZ);
+                if (zfnqfp(line,TMPBUFSIZ,tmpbuf)) {
+                    ckstrncpy(line,tmpbuf,LINBUFSIZ);
+                }
+
+                if ((y = cmcfm()) < 0) return(y);
+
+                if (line[0]) {
+                    success = KuiRenderSoftFontToFile(bufnum, line);
+                }
+
+                return success ? success : -9;
+            }
+#endif /* CK_HAVE_GDIPLUS */
 
             /* From here on we're saving the terminal screen. For the terminal
              * screen we have the option of saving in multiple image formats

@@ -14,6 +14,8 @@
 using namespace Gdiplus;
 #endif /* CK_HAVE_GDIPLUS */
 
+const char NO_SOFT_FONT = 0;
+
 typedef struct _K_WORK_STORE {
     int               offset;
     int               length;
@@ -21,6 +23,7 @@ typedef struct _K_WORK_STORE {
     int               y;
     cell_video_attr_t attr;
     unsigned short    effect;
+    char              fontBuffer;
 } K_WORK_STORE;
 
 extern UINT keyArray [];    // from kuikey.cxx
@@ -51,6 +54,8 @@ cell_video_attr_t geterasecolor(int);
 int tt_old_update;
 extern int tt_sync_output;  /* ckoco3.c */
 extern int tt_sync_output_timeout;
+
+extern drcs_t *drcsbuf[];
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
@@ -184,6 +189,14 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
 
+    for (int i = 0; i < DRCS_BUFFERS; i++) {
+        drcs_serials[i] = 0;
+        drcs_fonts[i] = NULL;
+        drcs_stretched_fonts[i] = NULL;
+        drcs_fontStretchedHeight = 0;
+        drcs_fontStretchedWidth = 0;
+    }
+
     memset( &cursorRect, '\0', sizeof(RECT) );
     cursorCount = 0;
 
@@ -219,6 +232,15 @@ KClient::~KClient()
     delete vert;
 
     delete clientPaint;
+
+    for (int i = 0; i < DRCS_BUFFERS; i++) {
+        if (drcs_fonts[i] != NULL) {
+            DeleteObject(drcs_fonts[i]);
+        }
+        if (drcs_stretched_fonts[i] != NULL) {
+            DeleteObject(drcs_stretched_fonts[i]);
+        }
+    }
 
     delete workStore;
     delete workTemp;
@@ -649,8 +671,216 @@ void KClient::getDrawInfo()
 {
     //debug(F100,"KClient::getDrawInfo()","",0);
     memset( workTemp, '\0', workTempSize );
+
+    // Update DRCS fonts if they've changed
+    refreshSoftFonts();
+
     if( ikterm->getDrawInfo() )
         writeMe();
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+// Refreshes the KUI bitmap representation of soft fonts from the DRCS
+// font buffer(s)
+void KClient::refreshSoftFonts() {
+    EnterDRCSBufferCriticalSection();
+    for (int i = 0; i < DRCS_BUFFERS; i++) {
+        if (drcsbuf[i] != NULL && (drcsbuf[i]->serial != drcs_serials[i] ||
+            drcs_fonts[i] == NULL)) {
+            // Soft font has changed or is new. Render to a bitmap.
+
+            HDC hDC = GetDC(NULL);
+            HDC hMDC = CreateCompatibleDC(hDC);
+
+            int display_width = drcsbuf[i]->cell_width;
+            int h = drcsbuf[i]->cell_height;
+            int w = display_width * 96;
+
+            if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
+                display_width += 1;
+            } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
+                /* Apparently the aspect ratio is nearly 3:1. Well, we can't do
+                 * nearly 3 so 2 will have to do */
+                h = h * 3;
+            }
+
+            HBITMAP hbmp = CreateBitmap(w,h,1,1,NULL);
+
+            ReleaseDC(NULL, hDC);
+
+            HBITMAP hOldBmp = (HBITMAP)SelectObject(hMDC, hbmp);
+
+            for (int glyph = 0; glyph < 96; glyph++) {
+                if (glyph == 0 && !drcsbuf[i]->is_96_chars) continue;
+                if (glyph == 95 && !drcsbuf[i]->is_96_chars) continue;
+                int offset = glyph * display_width;
+                int target_row = -3;
+                for (int row = 0; row < drcsbuf[i]->cell_height; row++) {
+                    int row_pixels = drcsbuf[i]->glyphs[glyph].pixels[row];
+                    target_row += 3;
+                    if (row_pixels == 0) {
+                        continue;
+                    }
+
+                    for (int col = 0; col < display_width; col++) {
+                        int bit = 0x8000 >> col;
+
+                        /* VT220 terminals implement dot stretching: at render
+                         * time, the value of any given pixel is the value of
+                         * that pixel ORd with the pixel to the immediate left.
+                         * It would be too expensive to draw pixels individually
+                         * at render time, so instead we'll apply the dot
+                         * stretching to the glyphs here instead.
+                         *
+                         * Additionally, columns 9 and 10 are not addressable.
+                         * These columns are just a copy of column 8. And dot
+                         * stretching is applied, so column 10 stretches into
+                         * column 11.
+                         *
+                         * At render time, the VT220 appears to render glyphs
+                         * one pixel to the right; so column 1 in the glyph is
+                         * really column 2 in the character cell. And the 10th
+                         * column stretches into the first column of the next
+                         * cell, but doesn't overwrite any pixels defined by the
+                         * glyph in the next cell.
+                         *
+                         * The rendering we do here doesn't quite match the
+                         * behaviour of the VT220 as described here:
+                         *   https://www.masswerk.at/nowgobang/2019/dec-crt-typography
+                         * but it's the best that can be reasonably done here
+                         * without a significant performance impact. Doing it
+                         * properly with reasonable performance might require
+                         * something like pixel shaders.
+                         */
+                        if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
+                            int prevbit;
+
+                            if (col < 10) {
+                                prevbit = bit;
+                            }
+
+                            if (col == 9 || col == 10) {
+                                /* Columns 9 and 10 are copies of Column 8 */
+                                bit = 0x8000 >> 8;
+                                prevbit = 0x8000 >> 7;
+                            } else if (col > 0) { /* Stretch pixels */
+                                prevbit = 0x8000 >> (col-1);
+                            }
+
+                            if (row_pixels & bit || row_pixels & prevbit) {
+                                SetPixel(hMDC, col + offset, row,
+                                    RGB(255, 255, 255));
+                            }
+                        } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
+                            /* The VT320 apparently (I don't have one to test
+                             * against) has a pixel aspect ratio of
+                             * "nearly 3:1". Well, we can't do *neary* three,
+                             * but we can do three which is closer to nearly
+                             * three than two is.
+                             * https://vt100.net/dec/vt320/soft_characters
+                             */
+                            if (row_pixels & bit) {
+                                SetPixel(hMDC, col + offset, target_row,
+                                    RGB(255, 255, 255));
+                                SetPixel(hMDC, col + offset, target_row+1,
+                                    RGB(255, 255, 255));
+                                SetPixel(hMDC, col + offset, target_row+2,
+                                    RGB(255, 255, 255));
+                            }
+                        } else if (row_pixels & bit) {
+                            /* Not VT220 and not VT320. Don't do any weird
+                             * tweaks - just render as is */
+                            SetPixel(hMDC, col + offset, row,
+                                RGB(255, 255, 255));
+                        }
+                    }
+                }
+            }
+
+            SelectObject(hMDC, hOldBmp);
+            DeleteDC(hMDC);
+            if (drcs_fonts[i] != NULL) {
+                DeleteObject(drcs_fonts[i]);
+                drcs_fonts[i] = NULL;
+            }
+            if (drcs_stretched_fonts[i] != NULL) {
+                DeleteObject(drcs_stretched_fonts[i]);
+                drcs_stretched_fonts[i] = NULL;
+            }
+            drcs_fonts[i] = hbmp;
+            drcs_serials[i] = drcsbuf[i]->serial;
+            drcs_render_hints[i] = drcsbuf[i]->render_hints;
+            stretchSoftFont(i);
+        } else if (drcsbuf[i] == NULL) {
+            // drcs font buffer has been *completely* erased.
+            drcs_serials[i] = 0;
+            drcs_render_hints[i] = DRCS_RENDER_HINT_NONE;
+            DeleteObject(drcs_fonts[i]);
+            drcs_fonts[i] = NULL;
+            DeleteObject(drcs_stretched_fonts[i]);
+            drcs_stretched_fonts[i] = NULL;
+        }
+    }
+    LeaveDRCSBufferCriticalSection();
+}
+
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+// Stretches the original soft-font bitmap representation to match the
+// currently selected font size.
+void KClient::stretchSoftFont(int fontId) {
+    int maxFont = DRCS_BUFFERS - 1;
+    if (fontId != 0) maxFont = fontId;
+
+    int fontWidth = font->getFontW();
+    int fontHeight = font->getFontSpacedH();
+
+    EnterDRCSBufferCriticalSection();
+    for (int i = fontId; i <= maxFont; i++) {
+        if (drcs_fonts[i] == NULL) continue;
+
+        HDC hDC = GetDC(NULL);
+
+        HDC hMDCsrc = CreateCompatibleDC(hDC);
+        HBITMAP hOldSrcBmp = (HBITMAP)SelectObject(hMDCsrc, drcs_fonts[i]);
+
+        HDC hMDCdest = CreateCompatibleDC(hDC);
+        HBITMAP hbmp = CreateBitmap(fontWidth * 96,fontHeight,1,1,NULL);
+        HBITMAP hOldDestBmp = (HBITMAP)SelectObject(hMDCdest, hbmp);
+
+        int display_height = drcsbuf[i]->cell_height;
+        int display_width = drcsbuf[i]->cell_width;
+        if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
+            display_width += 1;
+        } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
+            display_height *= 3;
+        }
+
+        // This gives better quality at larger sizes, but at smaller ones it
+        // makes it a bit fuzzy.
+        //SetStretchBltMode(hMDCdest, HALFTONE);
+
+        StretchBlt(hMDCdest, 0, 0, fontWidth * 96, fontHeight,
+                   hMDCsrc,  0, 0, display_width * 96,
+                   display_height, SRCCOPY);
+
+        ReleaseDC(NULL, hDC);
+        SelectObject(hMDCdest, hOldDestBmp);
+        SelectObject(hMDCsrc, hOldSrcBmp);
+        DeleteDC(hMDCdest);
+        DeleteDC(hMDCsrc);
+        if (drcs_stretched_fonts[i] != NULL) {
+            DeleteObject(drcs_stretched_fonts[i]);
+            drcs_stretched_fonts[i] = NULL;
+        }
+        drcs_stretched_fonts[i] = hbmp;
+    }
+    LeaveDRCSBufferCriticalSection();
+
+    drcs_fontStretchedWidth = fontWidth;
+    drcs_fontStretchedHeight = fontHeight;
 }
 
 void KClient::ToggleCursor( HDC hdc, LPRECT lpRect )
@@ -807,16 +1037,43 @@ void KClient::writeMe()
     FillRect( hdc(), &r, bgBrush); 
 
     // Then paint the data
+    // This code batches up strings with matching attributes so multiple
+    // characters can be painted in one go. Soft-fonts are counted as a kind of
+    // attribute here, so characters using a one soft-font will not be included
+    // with a batch of characters using another soft-font or no soft-font at all
     wc = 0;
     int xpos, i;
     int totlen = clientPaint->len;
     cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
     ushort effect = ushort(-1);
+    int lastDrcsBufferId = NO_SOFT_FONT;
+    EnterDRCSBufferCriticalSection();
     for( i = 0; i < totlen; i++ )
     {
+        int bufferId = DRCS_BUFFER_ID(textBuffer[i]);
+        if (bufferId != NO_SOFT_FONT) {
+            if (drcs_fonts[bufferId-1] == NULL || drcs_fonts[bufferId-1] == NULL
+                || drcs_stretched_fonts[bufferId-1] == NULL) {
+                // soft-font is undefined - replace with backwards question mark
+                bufferId = NO_SOFT_FONT;
+                textBuffer[i] = 0x2426; // backwards question mark
+            } else {
+                int font_start = DRCS_START(bufferId);
+                int glyph = textBuffer[i] - font_start;
+                if (drcsbuf[bufferId-1]->glyphs[glyph].undefined &&
+                    (drcsbuf[bufferId-1]->is_96_chars ||
+                        (glyph > 0 && glyph < 95))) {
+                    // Glyph is undefined - replace with backwards question mark
+                    bufferId = NO_SOFT_FONT;
+                    textBuffer[i] = 0x2426; // backwards question mark
+                }
+            }
+        }
+
         xpos = i % twid;
-        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) || effectBuffer[i] != effect )
+        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) ||
+            effectBuffer[i] != effect || lastDrcsBufferId != bufferId)
         {
             kws = &(workStore[wc]);
 
@@ -828,9 +1085,11 @@ void KClient::writeMe()
                 workStore[wc-1].length = i - workStore[wc-1].offset;
             attr = kws->attr = attrBuffer[i];
             effect = kws->effect = effectBuffer[i];
+            lastDrcsBufferId = kws->fontBuffer = bufferId;
             wc++;
         }
     }
+    LeaveDRCSBufferCriticalSection();
     if( wc )
         workStore[wc-1].length = i - workStore[wc-1].offset;
 
@@ -877,7 +1136,9 @@ void KClient::writeMe()
 			SetTextColor( hdc(), textColor);
         }
 
-        if( prevEffect != kws->effect )
+        // If a soft-font is being used, we can skip all of this as none of
+        // these attributes will apply.
+        if( prevEffect != kws->effect && kws->fontBuffer == NO_SOFT_FONT )
         {
             prevEffect = kws->effect;
             Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
@@ -961,12 +1222,61 @@ void KClient::writeMe()
             rect.bottom += margin();
 
         if( !blink || blinkOn ) {
-            ExtTextOutW( hdc(), rect.left, rect.top, 
-			ETO_CLIPPED | ETO_OPAQUE, 
-			&rect,
-			(wchar_t*) &(textBuffer[ kws->offset ]),
-			kws->length,
-			(int*)&interSpace );
+            if (kws->fontBuffer == NO_SOFT_FONT) {
+                ExtTextOutW( hdc(), rect.left, rect.top,
+                    ETO_CLIPPED | ETO_OPAQUE,
+                    &rect,
+                    (wchar_t*) &(textBuffer[ kws->offset ]),
+                    kws->length,
+                    (int*)&interSpace );
+            } else {
+                // Paint the characters one at a time by copying from the font
+                HDC hMDC = CreateCompatibleDC(hdc());
+                HBITMAP hOldBmp = (HBITMAP)SelectObject(
+                    hMDC, drcs_stretched_fonts[kws->fontBuffer-1]);
+                DeleteObject(hOldBmp);
+                int target_width = font->getFontW();
+                int target_height = font->getFontH();
+                int font_start = DRCS_START(kws->fontBuffer);;
+                int render_hints = drcs_render_hints[kws->fontBuffer-1];
+
+                /* Re-stretch the soft-fonts to fit the current normal font
+                 * dimensions if the font size has changed */
+                if (target_width != drcs_fontStretchedWidth ||
+                    target_height != drcs_fontStretchedHeight) {
+                    stretchSoftFont(0);
+                }
+
+                // Flip the FG/BG colors around to match how the bitmap will be
+                // painted.
+                COLORREF oldBkColor = SetBkColor( hdc(), textColor);
+                SetTextColor( hdc(), cell_video_attr_background_rgb(kws->attr));
+
+                for (int j = kws->offset; j < kws->offset+kws->length; j++) {
+                    int glyph = textBuffer[j] - font_start;
+
+                    /* The VT220s centering effectively draws glyphs offset by
+                     * 1 from the grid, so the 10th column gets rendered in the
+                     * first column of the next cell to the right.
+                     */
+
+                    BitBlt(hdc(),
+                           rect.left + (j-kws->offset) * target_width
+                                + (render_hints & DRCS_RENDER_HINT_VT220 ? 2 : 0),
+                           rect.top,
+                           target_width+1,
+                           target_height,
+                           hMDC,
+                           glyph * target_width, 0,
+                           SRCCOPY);
+                }
+                SelectObject(hMDC, hOldBmp);
+                DeleteDC(hMDC);
+
+                // Restore previous colours
+                SetBkColor( hdc(), oldBkColor);
+                SetTextColor( hdc(), textColor);
+            }
         }
         else {
             ExtTextOut( hdc(), rect.left, rect.top, 
@@ -1480,13 +1790,8 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-/* Renders to an image file using GDI+
- *    vnum        The vscrn to render
- *    filename    File to save to
- *    format      Image format, eg image/png
- * If an error occurs, FALSE is returned.
- */
-BOOL KClient::renderToImageFile(int vnum, char* filename, const wchar_t* format) {
+/* Saves an HBITMAP to an image file using GDI+ */
+BOOL KClient::saveBitmap(HBITMAP hbmp, const char* filename, const wchar_t* format) {
 
     // GDI+ wants the filename as a wide string.
     size_t newsize = strlen(filename) + 1;
@@ -1501,10 +1806,6 @@ BOOL KClient::renderToImageFile(int vnum, char* filename, const wchar_t* format)
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-
-    // Render vscrn to a bitmap
-    DWORD *pixels;
-    HBITMAP hbmp = renderToBitmap(vnum, &pixels);
 
     // Convert to a GDI+ bitmap
     Bitmap * bmp = Bitmap::FromHBITMAP(hbmp, NULL);
@@ -1526,8 +1827,29 @@ BOOL KClient::renderToImageFile(int vnum, char* filename, const wchar_t* format)
 
     delete wcfilename;
     delete bmp;
-    DeleteObject(hbmp);
     GdiplusShutdown(gdiplusToken);
+
+    return success;
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+/* Renders to an image file using GDI+
+ *    vnum        The vscrn to render
+ *    filename    File to save to
+ *    format      Image format, eg image/png
+ * If an error occurs, FALSE is returned.
+ */
+BOOL KClient::renderToImageFile(int vnum, char* filename, const wchar_t* format) {
+    BOOL success = TRUE;
+
+    // Render vscrn to a bitmap
+    DWORD *pixels;
+    HBITMAP hbmp = renderToBitmap(vnum, &pixels);
+
+    success = saveBitmap(hbmp, filename, format);
+
+    DeleteObject(hbmp);
 
     return success;
 }
@@ -1539,6 +1861,25 @@ BOOL KClient::renderToPngFile(int vnum, char* filename) {
 
 BOOL KClient::renderToGifFile(int vnum, char* filename) {
     return renderToImageFile(vnum, filename, L"image/gif");
+}
+
+BOOL KClient::saveFontBuffer(int buffer_number, const char* filename,
+    const wchar_t *format) {
+
+    BOOL stretched = FALSE;
+
+    if (buffer_number < 1 ) return FALSE;
+    if (buffer_number > DRCS_BUFFERS) {
+        buffer_number -= DRCS_BUFFERS;
+        stretched = TRUE;
+    }
+    if (buffer_number > DRCS_BUFFERS) return FALSE;
+    if (drcs_fonts[buffer_number-1] == NULL) return FALSE;
+
+    if (stretched) {
+        return saveBitmap(drcs_stretched_fonts[buffer_number-1], filename, format);
+    }
+    return saveBitmap(drcs_fonts[buffer_number-1], filename, format);
 }
 
 #endif /* CK_HAVE_GDIPLUS */

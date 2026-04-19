@@ -3872,6 +3872,22 @@ DECTSR		462
             <!-- dtterm recognises it, but doesn't do anything with it -->
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 wt"/>
             <ctlseq>DCS <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/>  { .... ST</ctlseq>
+
+            <!--
+
+            Patterns:
+            ?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+            ................................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            ................XXXXXXXXXXXXXXXX................XXXXXXXXXXXXXXXX
+            ........XXXXXXXX........XXXXXXXX........XXXXXXXX........XXXXXXXX
+            ....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX
+            ..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX
+            .X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X
+
+
+
+            -->
+
         </section>
 
         <section role="ctlseq" id="wylsfnt" mnemonic="WYLSFNT" title="Load softfont"
@@ -6910,7 +6926,7 @@ DCS $ q 3 , } ST</pre>
                 <dt>6</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220, xt -->
                 <dd>Selective erase</dd>
 
-                <dt not-implemented="true">7</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220 -->
+                <dt>7</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220 -->
                 <dd>Soft character sets (DRCS)</dd>
 
                 <dt>8</dt>  <!-- vt510, vt420, vt382, vt340, vt330, vt320, vt220, xt -->
