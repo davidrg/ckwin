@@ -233,6 +233,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Terminal
    - System
  - Improved throughput for pipe connections on Windows 
+ - Upgraded to zlib 1.3.2
 
 ### New terminal control sequences
 > [!NOTE]
