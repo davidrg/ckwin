@@ -1013,6 +1013,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b838">838. CLEAR APC allows execution of dangerous commands via APC</a>
 <li><tt>[+] (K)</tt> <a href="#b839">839. REDIRECT command sometimes fails to detect when the subprocess exits</a>
 <li><tt>[+] (K)</tt> <a href="#b840">840. Host Writable Status Line in K95G may cause crash or window resize</a>
+<li><tt>[ ] (K)</tt> <a href="#b841">841. K95.EXE may crash on exit</a>
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
     -->
@@ -8170,6 +8171,23 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/485">Issue #485 on Github</a>
+
+<h3><a name="b841">841. K95.EXE may crash on exit</a></h3>
+<p>When exiting K95.EXE, it may crash rather than exit cleanly. If a debugger is
+    installed on this system, this may result inthe debugger starting when
+    K95.EXE exits. This behaviour has been observed in releases going back to
+    version 1.1.17 (June 1998)
+</p>
+
+<p>If you are running K95.EXE as part of a script rather than interactively,
+    having K95 use stdin and stdout for input and output with the <tt>-# 100</tt>
+    command line parameter should prevent K95 from crashing on exit.
+</p>
+
+<p>If you are running K95.EXE interactively, use K95G.EXE instead as it does not
+    suffer from this problem.
+</p>
+  
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
 <p>
