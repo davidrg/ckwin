@@ -3,8 +3,8 @@ setlocal enabledelayedexpansion
 
 if [%1] == [] goto :help
 
-REM available switches: A B D E F H I J L P Q T U V Y
-for %%I in (switch valid CKB_LIBSSH CKB_GSSAPI_PATCH CKB_XP_PATCH CKB_OPENSSL CKB_ZLIB CKB_KERB CKB_NAMED CKB_MOVE CKB_CLEAN CKB_REL) do set "%%I="
+REM available switches: A B D E H I J L P Q T U V Y
+for %%I in (switch valid CKB_LIBSSH CKB_GSSAPI_PATCH CKB_XP_PATCH CKB_OPENSSL CKB_ZLIB CKB_KERB CKB_NAMED CKB_MOVE CKB_CLEAN CKB_REL CKB_CMAKE_VER_OVERRIDE) do set "%%I="
 for %%I in (%*) do (
     rem Value after a switch
     if defined switch (
@@ -33,7 +33,7 @@ for %%I in (%*) do (
             set "switch=%%~I"
 
             rem Check for a valid switch
-            for %%x in (O Z K N S M C R G X W) do (
+            for %%x in (O Z K N S M C R G X W F) do (
                 if /i "!switch:~1!"=="%%x" set "valid=true"
             )
 
@@ -69,6 +69,14 @@ for %%I in (%*) do (
             )
             if /i "!switch:~1!"=="G" (
                set "CKB_GSSAPI_PATCH=yes"
+               set "switch="
+            )
+
+            REM This switch is just to enable building libssh 0.10.6 via Github
+            REM actions which has a newer version of cmake that thinks its
+            REM incompatbile with the libssh cmake file.
+            if /i "!switch:~1!"=="F" (
+               set "CKB_CMAKE_VER_OVERRIDE=yes"
                set "switch="
             )
         ) || (
@@ -150,10 +158,16 @@ if "%CKB_STATIC%" == "yes" echo Static library
 if "%CKB_GSSAPI_PATCH%" == "yes" echo Apply GSSAPI patch
 if "%CKB_XP_PATCH%" == "yes" echo Apply Windows XP patch
 if "%CKB_XP_PATCH%" == "no" echo Reverse Windows XP patch
+if "%CKB_CMAKE_VER_OVERRIDE%" == "yes" echo Force cmake policy version minimum to 3.5
 echo.
 
 if "%CKB_REL%" == "yes" set CKB_REL=-DCMAKE_BUILD_TYPE=Release
 if "%CKB_STATIC%" == "yes" set CKB_STATIC=-DBUILD_SHARED_LIBS=OFF
+
+REM The version of CMake in github actions is no longer compatible with CMake
+REM versions 3.4 and older, which causes problems with libssh 0.10.6. This
+REM setting "fixes" the problem.
+if "%CKB_CMAKE_VER_OVERRIDE%" == "yes" set CKB_CMAKE_VER_OV=-DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
 pushd %root%\libssh\%CKB_LIBSSH%
 
@@ -182,7 +196,7 @@ set XP_TLS=
 REM run the build!
 mkdir build
 cd build
-cmake .. %CKB_FRESH% -G "NMake Makefiles" %CKB_STATIC% %CKB_REL% -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% %CKB_KERBEROS_OPT% %CKB_NAME_OPT% %XP_TLS% -DWITH_DSA=ON
+cmake .. %CKB_FRESH% -G "NMake Makefiles" %CKB_STATIC% %CKB_REL% -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% %CKB_KERBEROS_OPT% %CKB_NAME_OPT% %XP_TLS% -DWITH_DSA=ON %CKB_CMAKE_VER_OV%
 if %errorlevel% neq 0 exit /b %errorlevel%
 if "%CKB_CLEAN%" == "yes" nmake clean
 nmake
