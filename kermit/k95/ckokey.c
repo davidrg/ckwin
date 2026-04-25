@@ -1540,10 +1540,14 @@ _PROTOTYP( int rlog_naws, (void) ) ;
      debug(F100,buf,"",0) ;
 #endif /* COMMENT */
      if ( VscrnGetWidth(mode) != r.dwSize.X || VscrnGetHeight(mode) != r.dwSize.Y ){
-         sz = (VscrnGetEnd(mode) - VscrnGetTop(mode)
-                + VscrnGetBufferSize(mode) + 1)%VscrnGetBufferSize(mode) ;
-         VscrnSetWidth( mode, r.dwSize.X ) ;
-         VscrnSetHeight( mode, r.dwSize.Y ) ;
+         int bufsize = VscrnGetBufferSize(mode);
+         int newWidth, newHeight;
+         if (bufsize == 0) return;
+         sz = (VscrnGetEnd(mode) - VscrnGetTop(mode) + bufsize + 1)%bufsize;
+         newWidth = min(MAXTERMCOL, r.dwSize.X);
+         newHeight = min(MAXTERMROW, r.dwSize.Y);
+         VscrnSetWidth( mode, newWidth ) ;
+         VscrnSetHeight( mode, newHeight ) ;
          VscrnScroll( mode, UPWARD, 1, sz, sz, TRUE, SP ) ;
          cleartermscreen(mode);
 #ifdef TCPSOCKET
