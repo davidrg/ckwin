@@ -1494,6 +1494,7 @@ _PROTOTYP( USHORT VscrnWrtUCS2StrAtt, ( BYTE vmode, PUSHORT UCS2Str, USHORT Leng
                                         USHORT Row, USHORT Column, cell_video_attr_t* Attr ) ) ;
 #ifndef KUI
 _PROTOTYP( void   TermScrnUpd, ( void * ) ) ;
+_PROTOTYP( int    TermScrnUpdCleanup, ( void ) );
 #endif /* KUI */
 _PROTOTYP( videoline * VscrnGetPageLineFromTop, ( BYTE, SHORT, int ) ) ;
 _PROTOTYP( videoline * VscrnGetLineFromTop, ( BYTE, SHORT, BOOL ) ) ;
