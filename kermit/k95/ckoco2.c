@@ -87,6 +87,9 @@ int tt_url_hilite = 1;
 int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD | VT_CHAR_ATTR_UNDERLINE;
 #else /* KUI */
 int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
+#ifdef ONETERMUPD
+BOOL TermScrnUpdActive = TRUE;
+#endif /* ONETERMUPD */
 #endif /* KUI */
 extern int updmode ;
 extern int priority ;
@@ -4484,7 +4487,7 @@ TermScrnUpd( void * threadinfo)
 #ifndef ONETERMUPD
     while (IsConnectMode())
 #else
-    while ( 1 )
+    while ( TermScrnUpdActive )
 #endif /* ONETERMUPD */
     {
         /* Need to add some code in here to check variables such as  */
@@ -5108,13 +5111,6 @@ TermScrnUpd( void * threadinfo)
         ReleaseScreenMutex() ;
     }
 
-#ifndef ONETERMUPD
-    /*
-     * When ONETERMUPD is defined, the above loop is while(1) and contains
-     * no breaks which means it runs forever - that means all the code here
-     * is unreachable so don't try to compile it (or we get unreachable code
-     * warnings)
-     */
     StopVscrnTimer() ;
 
 #ifdef NT
@@ -5131,8 +5127,26 @@ TermScrnUpd( void * threadinfo)
     free(thecells) ;
     PostTermScrnUpdThreadDownSem();
     ckThreadEnd(threadinfo) ;
-#endif /* ONETERMUPD */
 }
+
+#ifdef ONETERMUPD
+int
+TermScrnUpdCleanup( void ) {
+    int n = 0;
+    if ( !tidTermScrnUpd )
+        return(0);
+
+    debug(F100,"TermScrnUpdCleanup called","",0);
+    ResetTermScrnUpdThreadDownSem();
+    TermScrnUpdActive = 0 ;
+    VscrnIsDirty(vmode); /* In case the thread is waiting for something to do */
+    while ( !WaitAndResetTermScrnUpdThreadDownSem( 1000 )) {
+        debug(F111,"Waiting for TermScrnUpdThreadDownSem","n",n) ;
+    }
+    tidTermScrnUpd = (TID) 0 ;   /* This will be closed by the thread */
+    return 0 ;
+}
+#endif /* ONETERMUPD */
 #endif /* KUI */
 
 #ifdef PCFONTS
