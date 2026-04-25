@@ -243,7 +243,7 @@ jobs:
           # Get and unpack zlib
           mkdir zlib
           cd zlib
-          wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          wget https://github.com/madler/zlib/releases/download/v${{env.ZLIB_VERSION}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
           7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
           7z x zlib-${{env.ZLIB_VERSION}}.tar
           del zlib-${{env.ZLIB_VERSION}}.tar 
