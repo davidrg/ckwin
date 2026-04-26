@@ -60,8 +60,9 @@
 8_12 A6D8
 8_13 8030
 8_14 BEA8
-# 9 - Bugs - not implemented
-# 10 - Reset - not implemented
+# TODO: 9 - Bugs - not implemented
+# TODO: 10 - Reset - not implemented
+
 # Non VT100 tests - VT220:
 11_1_1_1_1 E2AD
 11_1_1_1_2 DC2A
@@ -76,13 +77,13 @@
 11_1_2_4_3 6B75
 11_1_3 A979
 11_2_2_1 CEF8
-11_2_2_2 ?D0C6 	# Output matches xterm but not the VT520
+11_2_2_2 ?CCAC 	   # Output matches xterm, but reading DEC STD 070 I suspect this behaviour is wrong - it should be more like operating the scrollbar if the viewport were smaller than the page: "This control affects what is visible on the physical display only. No movement of data within the Logical Display occurs. The Active Position does not change."
 11_2_3_1_1 45FD
 11_2_3_1_2 45FD
 11_2_3_1_3 45FD
 11_2_3_1_4 324B
 11_2_3_1_5 55DF
-11_2_3_2_1 !E0E7
+11_2_3_2_1 4737
 11_2_3_2_2 4736
 11_2_3_2_3 4734
 11_2_3_2_4 4731
@@ -148,7 +149,6 @@
 # VT420 Cursor movement tests - lots of combinations. Each test comes in
 # a colour and a No-Colour version. I don't have access to a VT525 to check if
 # the colour results are correct or not.
-#        DECOM    DECLRMM  T/BM  L/RM  Color
 11_3_2_7_disabled_disabled_reset_reset_no_color C885
 11_3_2_8_disabled_disabled_reset_reset_no_color C763
 11_3_2_9_disabled_disabled_reset_reset_no_color B602

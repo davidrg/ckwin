@@ -83,10 +83,13 @@ local mono_tests line_drawing_chars
 # Record debug log? These are *big*, and producing them slows down the tests.
 .debug_logging = 0
 
+# Session logs are worth recording - they're pretty small.
+.session_logging = 1
+
 # Some tests are available in both color and mono versions. Which should be 
 # run? Selecting only colour tests with line drawing characters can cut down
 # the number of test permutations significantly reducing overall run time.
-.color_tests = 1
+.color_tests = 0
 .mono_tests = 1
 .line_drawing_chars = 1
 .no_line_drawing_chars = 0
@@ -150,6 +153,21 @@ def test_procedure {
 	
 	exit_vttest			# Exit VTTEST
 	
+	# Wait for a prompt, then logout
+	input 1 {:~$}
+	lineout logout
+	close
+}
+
+# What tests should run?
+def test_procedureXX {
+	init_terminal		# This configures the terminal emulator for testing
+	start_vttest		# Start VTTEST
+
+    test_11_3_3_v420_editing_sequences
+
+	exit_vttest			# Exit VTTEST
+
 	# Wait for a prompt, then logout
 	input 1 {:~$}
 	lineout logout
@@ -334,7 +352,7 @@ def pop_menu {
 	# Pop the stack
 	.&a[\%s] := ""
 	.%s ::= \%s - 1
-	
+
 	# And choose the exit/return option which is always option 0
 	lineout 0
 	
@@ -419,6 +437,7 @@ def wait_for_push_return_prompt {
 	# Not on screen - wait up to two seconds for it to arrive.
 	input 5 {Push <RETURN>}
 	if fail {
+    	add_test_result FAIL FAIL
 		fail_and_stop 6 "Timeout waiting Push RETURN prompt "
 	}
 }
@@ -481,7 +500,6 @@ def get_test_checksum_int {
 	.%v := ""
 	.%n := ""
 	.line := ""
-	array undeclare &b
 	
 	# Fall back to the checksum file
 	if > \flength(\m(checksum_file)) 0 {
@@ -569,12 +587,14 @@ def add_test_result {
     .comment := \fsubstring(\%n, 2)
 
     # Grab a snapshot of data received since last test
-    snapshot_session_log
-    if exist "\%e" {
-        if exist "\m(output_directory)/\%1.log" {
-            delete "\m(output_directory)/\%1.log"
+    if = \m(session_logging) 1 {
+        snapshot_session_log
+        if exist "\%e" {
+            if exist "\m(output_directory)/\%1.log" {
+                delete "\m(output_directory)/\%1.log"
+            }
+            rename "\%e" "\m(output_directory)/\%1.log"
         }
-        rename "\%e" "\m(output_directory)/\%1.log"
     }
 
     if = \m(debug_logging) 1 {
@@ -659,6 +679,29 @@ def add_test_result {
         # the data file
         putout {			<br>If this test is now known to be passing or failing, copy one of these to \m(checksum_file) to update the result:<br>}
         putout {			<table>}
+        putout {				<tr>}
+        putout {					<td><b>Pass</b></td>}
+        putout {					<td><tt>\m(checksum_id) \m(checksum)</tt></td>}
+        putout {					<td><a href="javascript:navigator.clipboard.write([new ClipboardItem({'text/plain':'\m(checksum_id) \m(checksum)'})])">copy</a></td>}
+        putout {				</tr>}
+        putout {				<tr>}
+        putout {					<td><b>Fail</b></td>}
+        putout {					<td><tt>\m(checksum_id) !\m(checksum)</tt></td>}
+        putout {					<td><a href="javascript:navigator.clipboard.write([new ClipboardItem({'text/plain':'\m(checksum_id) !\m(checksum)'})])">copy</a></td>}
+        putout {				</tr>}
+        putout {			</table>}
+        if ( equal "\fleft(\m(pass_checksum),1)" "!" ) {
+            putout {			(currently recorded checksum for this test (<tt>\fright(\m(pass_checksum),\flength(\m(pass_checksum)) - 1)</tt>) is marked as a failure)}
+        }
+    }
+    if ( equal \m(result) 4 ) {
+        putout {			<br>If this test result is wrong, copy one of these to \m(checksum_file) to update the result:<br>}
+        putout {			<table>}
+        putout {				<tr>}
+        putout {					<td><b>Current</b></td>}
+        putout {					<td><tt>\m(checksum_id) \m(pass_checksum)</tt></td>}
+        putout {					<td><a href="javascript:navigator.clipboard.write([new ClipboardItem({'text/plain':'\m(checksum_id) \m(pass_checksum)'})])">copy</a></td>}
+        putout {				</tr>}
         putout {				<tr>}
         putout {					<td><b>Pass</b></td>}
         putout {					<td><tt>\m(checksum_id) \m(checksum)</tt></td>}
@@ -873,7 +916,9 @@ def start_vttest {
     fwrite /line \%l {Test-ID\{9}Result\{9}Note\{9}Picture-File\{9}Comment}
 
 	# Start logging
-	snapshot_session_log
+	if = \m(session_logging) 1 {
+	    snapshot_session_log
+	}
 	if = \m(debug_logging) 1 {
        snapshot_debug_log
     }
@@ -936,8 +981,12 @@ def close_output {
 	fclose \%o
 	fclose \%d
     fclose \%l
-    close session
-    close debug
+    if = \m(session_logging) 1 {
+        close session
+    }
+    if = \m(debug_logging) 1 {
+        close debug
+    }
 }
 
 # Exits VTTEST
@@ -949,7 +998,7 @@ def exit_vttest {
 	close_output
 	
 	# Pop all the  to exit
-	for \%i \%s 1 -1 {
+	for \%i \%s 0 -1 {
 		pop_menu 1
 	}
 
@@ -2236,10 +2285,10 @@ def test_11_3_2_v420_cm_tests {
 	putout {		<td colspan="2"> Menu 11.3.2: \fjoin(&a[2:\%s],-) - Settings: DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5</td>}
 	putout {	</tr>}
 
-	choose_single_test_option 7 "11.3.2.7-\%1-\%2-\%3-\%4-\%5" "Test Back Index (DECBI) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "through"
-	choose_single_test_option 8 "11.3.2.8-\%1-\%2-\%3-\%4-\%5" "Test Forward Index (DECFI) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "through"
-	choose_single_test_option 9 "11.3.2.9-\%1-\%2-\%3-\%4-\%5" "Test Cursor Movement within Margins - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "margins"
-	choose_single_test_option 10 "11.3.2.10-\%1-\%2-\%3-\%4-\%5" "Test Other Movement within Margins - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "margins"
+	choose_single_test_option 7 "11.3.2.7-\%1-\%2-\%3-\%4-\%5" "Test Back Index (DECBI) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
+	choose_single_test_option 8 "11.3.2.8-\%1-\%2-\%3-\%4-\%5" "Test Forward Index (DECFI) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
+	choose_single_test_option 9 "11.3.2.9-\%1-\%2-\%3-\%4-\%5" "Test Cursor Movement within Margins - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
+	choose_single_test_option 10 "11.3.2.10-\%1-\%2-\%3-\%4-\%5" "Test Other Movement within Margins - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "Push <RETURN>"
 }
 
 def test_11_3_2_v420_cursor_movement {
@@ -3058,9 +3107,9 @@ def test_11_3_6_v420_rectangular_operations {
 	# DECOM back to disabled
 	choose_toggle_option 2
 	
-	pop_menu # 11.3.6: VT420 Rectangular Area Tests
-	pop_menu # 11.3 VT420 Tests 
-	pop_menu # 11 Non-VT100 Tests
+    pop_menu # 11.3.6: VT420 Rectangular Area Tests
+    pop_menu # 11.3 VT420 Tests
+    pop_menu # 11 Non-VT100 Tests
 }
 
 
@@ -3119,9 +3168,9 @@ def test_11_3_7_vt420_reporting_functions {
     #      1. ANSI Mode Report (DECRPM)
     #      2. DEC Mode Report (DECRPM)
 	choose_submenu_option 2 "11.3.7.2.2" "Request Mode (DECRQM)/Report Mode (DECRPM)"
-	choose_single_test_option 1 "11.3.7.2.1" "ANSI Mode Report (DECRPM)" 15
-	choose_multi_test_option 2 "11.3.7.2.2.1" "DEC Mode Report (DECRPM) - 1" 15
-	do_test "11.3.7.2.2.2" "DEC Mode Report (DECRPM) - 2" 10
+	choose_single_test_option 1 "11.3.7.2.2.1" "ANSI Mode Report (DECRPM)" 15
+	choose_multi_test_option 2 "11.3.7.2.2.2.2.1" "DEC Mode Report (DECRPM) - 1" 15
+	do_test "11.3.7.2.2.2.2.2" "DEC Mode Report (DECRPM) - 2" 10
 	wait_for_menu_prompt
 	pop_menu # Request Mode (DECRQM)/Report Mode (DECRPM)
 	
@@ -4083,4 +4132,8 @@ if defined test_procedureX {
 
 .%r ::= \v(ntime) - \%r
 
+echo
+echo {----------------------------}
 echo Done in \%r seconds!
+echo {----------------------------}
+echo
