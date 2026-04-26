@@ -24918,13 +24918,23 @@ vtcsi(void)
                              * be more like clicking the up button on the scroll
                              * bar if K95 supported a smaller physical window
                              * than the page (as the console version does for
-                             * the horizontal dimension). */
-                            VscrnScroll(VTERM, UPWARD,
-                                         vscrn_c_page_margin_top(VTERM)-1, vscrn_c_page_margin_bot(VTERM)-1,
-                                         pn[1],
-                                         vscrn_c_page_margin_top(VTERM) == 1,
-                                         SP,
-                                         FALSE);
+                             * the horizontal dimension). Though when DECLRMM
+                             * is on and the cursor is in the margins, the
+                             * behaviour below seems to be correct for the
+                             * VT520.
+                             */
+                            VscrnScrollPage(
+                                VTERM,  /* Vscrn */
+                                UPWARD, /* Direction */
+                                vscrn_c_page_margin_top(VTERM)-1, /* Top */
+                                vscrn_c_page_margin_bot(VTERM)-1, /* Bottom */
+                                vscrn_c_page_margin_left(VTERM),  /* Left */
+                                vscrn_c_page_margin_right(VTERM), /* Right */
+                                pn[1], /* Lines */
+                                vscrn_c_page_margin_top(VTERM) == 1, /* Save */
+                                SP, /* Fill char */
+                                vscrn_current_page_number(VTERM, FALSE) /* page */
+                                );
                         }
                     }
                     /* No paged memory, so do nothing */
@@ -25070,14 +25080,18 @@ vtcsi(void)
                                      SP,
                                      FALSE);
                     } else { /* Roll Mode */
-                        VscrnScroll(VTERM,
-                                     DOWNWARD,
-                                     vscrn_c_page_margin_top(VTERM)-1,
-                                     vscrn_c_page_margin_bot(VTERM)-1,
-                                     pn[1],
-                                     FALSE,
-                                     SP,
-                                     FALSE);
+                        VscrnScrollPage(
+                            VTERM,      /* Vscrn */
+                            DOWNWARD,   /* Direction */
+                            vscrn_c_page_margin_top(VTERM)-1,   /* Top */
+                            vscrn_c_page_margin_bot(VTERM)-1,   /* Bottom */
+                            vscrn_c_page_margin_left(VTERM),    /* Left */
+                            vscrn_c_page_margin_right(VTERM),   /* Right */
+                            pn[1],      /* Lines */
+                            FALSE,      /* Save */
+                            SP,         /* Fill Char */
+                            vscrn_current_page_number(VTERM, FALSE) /* page */
+                            );
                     }
                 }
                 /* We don't support paged memory so it does nothing */
