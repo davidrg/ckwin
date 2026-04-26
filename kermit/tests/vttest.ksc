@@ -28,6 +28,9 @@
 # selected, and produces around 7,800 image files.
 #
 # TODO
+#  - If REXX is available, try using that to process the checksums data file.
+#    It might be faster, and might also solve that bug where somtimes lookups
+#    fail for no obvious reason.
 #  - SAVE TERMINAL SCREEN /FORMAT:TEXT should probably save as unicode
 #  - Compute a hash of the text output and store that alongside the checksum, as
 #    the terminal checksum only tells us *what* characters are on the screen but
@@ -893,6 +896,7 @@ def start_vttest {
 	putout {	<dl>}
 	putout {		<dt>Release</dt><dd>\v(herald)</dd>}
 	putout {		<dt>VTTEST Version</dt><dd>\m(vttest_version)</dd>}
+	putout {        <dt>Test Date</dt><dd>\futcdate() UTC</dd>}
 	putout {	</dl>}
 	putout {	<p>This page and all the screenshots on it were automatically}
 	putout {        produced by a Kermit script which navigates through}

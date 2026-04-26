@@ -235,6 +235,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Terminal
    - System
  - Improved throughput for pipe connections on Windows 
+ - Upgraded to zlib 1.3.2
 
 ### New terminal control sequences
 > [!NOTE]
@@ -321,7 +322,6 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      Table Request - provides the current color palette in RGB or HLS format.
    - [DECRSTS - Color Table](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrsts-2):
      Update/restore the current color palette
-   - [DECECM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm) - Erase Color Mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
  - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
@@ -338,9 +338,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - DECSM/DECRM/DECRQM modes
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
-   - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
+   - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): DECPCCM - Page Cursor Coupling
    - [95](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decncsm): No Clearing Screen On Column Change (VT520)
-   - [117](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm): Erase Color Mode
+   - [117](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm): DECECM - Erase Color Mode
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
