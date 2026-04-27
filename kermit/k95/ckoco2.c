@@ -3592,8 +3592,7 @@ void
 VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
              int leftmargin, int rightmargin, int nlines, int savetobuffer,
              CHAR fillchar, int page) {
-    /* topmargin and bottommargin are zero based, leftmargin and rightmargin are
-     * not.*/
+    /* margins are zero based */
     viocell blankcell;
     videoline * line ;
     videoline   linetodelete ;
@@ -3640,11 +3639,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F101,"VscrnScroll requests VscrnMutex","",vmode);
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
-    vs_width = VscrnGetWidth(vmode);
+    vs_width = VscrnGetWidth(vmode) - 1;
 
-    if (leftmargin < 0) leftmargin = 1;
-    if (rightmargin < 1 || rightmargin > vs_width) rightmargin = vs_width;
-    lrmm = (leftmargin != 1 || rightmargin != vs_width) &&
+    if (leftmargin < 0) leftmargin = 0;
+    if (rightmargin < 0 || rightmargin > vs_width) rightmargin = vs_width;
+    lrmm = (leftmargin != 0 || rightmargin != vs_width) &&
         leftmargin < rightmargin;
 
     debug(F101,"VscrnScroll has VscrnMutex","",vmode);
@@ -3728,11 +3727,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         videoline this_line = *VscrnGetPageLineFromTop(vmode, i, page);
                         videoline next_line = *VscrnGetPageLineFromTop(vmode, i+1, page);
 
-                        memcpy(this_line.cells+leftmargin - 1,
-                               next_line.cells+leftmargin - 1,
+                        memcpy(this_line.cells+leftmargin,
+                               next_line.cells+leftmargin,
                                sizeof(viocell) * (rightmargin-leftmargin+1));
-                        memcpy(this_line.vt_char_attrs+leftmargin - 1,
-                               next_line.vt_char_attrs+leftmargin - 1,
+                        memcpy(this_line.vt_char_attrs+leftmargin,
+                               next_line.vt_char_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                     }
                 }
@@ -3754,11 +3753,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         memcpy(line->vt_char_attrs, blank_attrs,
                                 sizeof(vt_char_attr_t) * MAXTERMCOL);
                     } else {
-                        memcpy(line->cells+leftmargin - 1,
-                               blank_cells+leftmargin - 1,
+                        memcpy(line->cells+leftmargin,
+                               blank_cells+leftmargin,
                                sizeof(viocell) * (rightmargin-leftmargin+1));
-                        memcpy(line->vt_char_attrs+leftmargin - 1,
-                               blank_attrs+leftmargin - 1,
+                        memcpy(line->vt_char_attrs+leftmargin,
+                               blank_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                     }
                 }
@@ -3796,11 +3795,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     videoline this_line = *VscrnGetPageLineFromTop(vmode, i, page);
                     videoline prev_line = *VscrnGetPageLineFromTop(vmode, i-1, page);
 
-                    memcpy(this_line.cells+leftmargin - 1,
-                           prev_line.cells+leftmargin - 1,
+                    memcpy(this_line.cells+leftmargin,
+                           prev_line.cells+leftmargin,
                            sizeof(viocell) * (rightmargin-leftmargin+1));
-                    memcpy(this_line.vt_char_attrs+leftmargin - 1,
-                           prev_line.vt_char_attrs+leftmargin - 1,
+                    memcpy(this_line.vt_char_attrs+leftmargin,
+                           prev_line.vt_char_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                 }
             }
@@ -3823,11 +3822,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                             sizeof(vt_char_attr_t) * MAXTERMCOL);
                 } else
                 {
-                    memcpy(line->cells+leftmargin - 1,
-                           blank_cells+leftmargin - 1,
+                    memcpy(line->cells+leftmargin,
+                           blank_cells+leftmargin,
                            sizeof(viocell) * (rightmargin-leftmargin+1));
-                    memcpy(line->vt_char_attrs+leftmargin - 1,
-                           blank_attrs+leftmargin - 1,
+                    memcpy(line->vt_char_attrs+leftmargin,
+                           blank_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
                 }
             }

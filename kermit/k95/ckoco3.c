@@ -17249,8 +17249,8 @@ wrtch(unsigned short ch) {
                             UPWARD,
                             vscrn_c_page_margin_top(VTERM) - 1,
                             vscrn_c_page_margin_bot(VTERM) - 1,
-                            vscrn_c_page_margin_left(VTERM),
-                            vscrn_c_page_margin_right(VTERM),
+                            vscrn_c_page_margin_left(VTERM) - 1,
+                            vscrn_c_page_margin_right(VTERM) - 1,
                             1,
                             vscrn_c_page_margin_top(VTERM) == 1,
                             SP,
@@ -24591,8 +24591,8 @@ vtcsi(void)
                                          DOWNWARD,
                                          wherey[VTERM]-1,
                                          vscrn_c_page_margin_bot(VTERM)-1,
-                                         vscrn_c_page_margin_left(VTERM),
-                                         vscrn_c_page_margin_right(VTERM),
+                                         vscrn_c_page_margin_left(VTERM)-1,
+                                         vscrn_c_page_margin_right(VTERM)-1,
                                          1,
                                          FALSE,
                                          SP,
@@ -24715,8 +24715,8 @@ vtcsi(void)
                                          UPWARD,
                                          wherey[VTERM] - 1,
                                          vscrn_c_page_margin_bot(VTERM) - 1,
-                                         vscrn_c_page_margin_left(VTERM),
-                                         vscrn_c_page_margin_right(VTERM),
+                                         vscrn_c_page_margin_left(VTERM) - 1,
+                                         vscrn_c_page_margin_right(VTERM) - 1,
                                          1,
                                          FALSE,
                                          SP,
@@ -24929,8 +24929,8 @@ vtcsi(void)
                                 UPWARD, /* Direction */
                                 vscrn_c_page_margin_top(VTERM)-1, /* Top */
                                 vscrn_c_page_margin_bot(VTERM)-1, /* Bottom */
-                                vscrn_c_page_margin_left(VTERM),  /* Left */
-                                vscrn_c_page_margin_right(VTERM), /* Right */
+                                vscrn_c_page_margin_left(VTERM)-1,  /* Left */
+                                vscrn_c_page_margin_right(VTERM)-1, /* Right */
                                 pn[1], /* Lines */
                                 vscrn_c_page_margin_top(VTERM) == 1, /* Save */
                                 SP, /* Fill char */
@@ -25086,8 +25086,8 @@ vtcsi(void)
                             DOWNWARD,   /* Direction */
                             vscrn_c_page_margin_top(VTERM)-1,   /* Top */
                             vscrn_c_page_margin_bot(VTERM)-1,   /* Bottom */
-                            vscrn_c_page_margin_left(VTERM),    /* Left */
-                            vscrn_c_page_margin_right(VTERM),   /* Right */
+                            vscrn_c_page_margin_left(VTERM)-1,  /* Left */
+                            vscrn_c_page_margin_right(VTERM)-1, /* Right */
                             pn[1],      /* Lines */
                             FALSE,      /* Save */
                             SP,         /* Fill Char */
@@ -26612,8 +26612,8 @@ vtescape( void )
                                  UPWARD,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
-                                 vscrn_c_page_margin_left(VTERM),
-                                 vscrn_c_page_margin_right(VTERM),
+                                 vscrn_c_page_margin_left(VTERM) - 1,
+                                 vscrn_c_page_margin_right(VTERM) - 1,
                                  1,
                                  (vscrn_c_page_margin_top(VTERM)==1),
                                  SP,
@@ -26731,8 +26731,8 @@ vtescape( void )
                                  DOWNWARD,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
-                                 vscrn_c_page_margin_left(VTERM),
-                                 vscrn_c_page_margin_right(VTERM),
+                                 vscrn_c_page_margin_left(VTERM) - 1,
+                                 vscrn_c_page_margin_right(VTERM) - 1,
                                  1,
                                  FALSE,
                                  SP,
