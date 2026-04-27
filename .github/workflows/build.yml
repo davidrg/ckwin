@@ -774,7 +774,11 @@ jobs:
             
           cd p95
           call mknt.bat
-          cd ..\k95
+          cd ..
+          
+          cd cm\src
+          nmake -f cm.mak
+          cd ..\..\k95
     
           REM We only do dynamic SSH for x86 and x86-64 as at this time ARM only
           REM has the single non-GSSAPI SSH backend to choose from.
@@ -844,6 +848,7 @@ jobs:
       - name: Prepare Artifact
         working-directory: ${{github.workspace}}\kermit\k95
         run: |
+          move ..\cm\src\Release\cm.exe dist\
           move dist ${{github.workspace}}\ckwin
         shell: cmd
     
@@ -1048,7 +1053,9 @@ jobs:
           echo Run Build...
           cd p95
           call mknt.bat
-          cd ..\k95
+          cd ..\cm\src
+          nmake -f cm.mak
+          cd ..\..\k95
           call mk.bat
           call mkdist.bat
         shell: cmd
@@ -1078,6 +1085,7 @@ jobs:
       - name: Prepare Artifact
         working-directory: ${{github.workspace}}\kermit\k95
         run: |
+          move ..\cm\src\Release\cm.exe dist\
           move dist ${{github.workspace}}\ckwin
         shell: cmd
       - name: Upload Artifact
