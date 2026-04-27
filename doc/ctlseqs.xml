@@ -120,7 +120,11 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
-        <!ELEMENT section (ctlseq|ref|termsupp|p|ul|ol|dl|section|pre|table)*>
+        <!ELEMENT implchk EMPTY>
+        <!ATTLIST implchk std070 (true|false) "false">
+        <!ATTLIST implchk xt CDATA "">
+
+        <!ELEMENT section (ctlseq|ref|termsupp|implchk|p|ul|ol|dl|section|pre|table)*>
         <!ATTLIST section id ID #IMPLIED>
         <!ATTLIST section title CDATA #IMPLIED>
         <!ATTLIST section ctlseq CDATA #IMPLIED>
@@ -240,6 +244,11 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
       does support it. In cases where references aren't available, the
       termsupp element can be explicitly used to state which real terminals
       support it.
+
+      The implchk element states which, if any, reference implementations K95s
+      implementation of a control sequence has been checked against:
+        std070: the pseudo-code in DEC STD 070. True/false.
+        xt: Xterm. Value is xterm version checked against.
 
       Ctlseq, ctlchar and parameter sections can still have textual content
       just like a regular section with the text role. This textual content
@@ -778,7 +787,8 @@ DECTSR		462
         <badge-def sort-order="61" name="dtc01" colour="" comment="DEC DTC01"/> <!-- Not implemented -->
         <badge-def sort-order="61" name="la75" colour="" comment="DEC LA75 ANSI printer"/> <!-- Not implemented -->
         <badge-def sort-order="62" name="vt382" colour="" comment="DEC VT382 Kanji Display Terminal"/> <!-- Not implemented -->
-        <badge-def sort-order="63" name="vt22z" colour="" comment="DEC VT220-Z"/> <!-- Not implemented -->
+        <badge-def sort-order="63" name="vtstar" colour="" comment="Multia VTstar"/> <!-- Not implemented -->
+        <badge-def sort-order="64" name="vt22z" colour="" comment="DEC VT220-Z"/> <!-- Not implemented -->
     </badges>
     <!--
      Badge groups should be kept in sync with the matching macros in ckuusr.h
@@ -1872,7 +1882,12 @@ DECTSR		462
             <ref src="vt52x:345"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <!-- 0x85 -->
-            <p>Next Line</p>
+            <p>Move the cursor to the left margin on the next line, or to screen
+                left if the cursor is outside the margins. If the cursor is
+                within the margins and on the bottom margin, the scrollable
+                region scrolls up one line and the cursor remains on the bottom
+                margin. Clears the <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
         </section>
         <section role="ctlseq" id="ssa" ctlseq="ESC F" mnemonic="SSA" title="Start Selected Area"
                  not-implemented="true" todo="true">
@@ -2103,7 +2118,7 @@ DECTSR		462
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
             <termsupp first="vt100" series="vt" additional="vt330 vt340 putty tt dtterm wt"/>
-            <p>Moves the cursor left 1 column</p>
+            <p>Moves the cursor left 1 column. Clears the <a href="#lcf">Last Column Flag</a>.</p>
             <p badges="qnx">
                 If the cursor is already at the start of the line, the cursor
                 is moved to the end of the previous line
@@ -2111,6 +2126,9 @@ DECTSR		462
             <p badges="s97801" groups="ishp">
                 Moves the cursor left one column if it is currently to the right of the left
                 margin
+            </p>
+            <p badges="hft" groups="isansi">
+                Does <em>not</em> clear the <a href="#lcf">Last Column Flag</a>.
             </p>
         </section>
         <section id="can" role="ctlchar" mnemonic="CAN" ctlseq="CAN" title="Cancel">
@@ -2143,13 +2161,13 @@ DECTSR		462
             <ref src="vt52x:110"/>
             <termsupp first="vt100" series="vt" additional="vt330 vt340 putty tt dtterm wt"/>
             <p>Carriage Return. Sends the cursor to the start of the line
-                and cancels wrapping</p>
+                and clears the <a href="#lcf">Last Column Flag</a></p>
 
             <p badges="s97801" groups="ishp">
                 Sends the cursor to the left margin
             </p>
             <p badges="hft" groups="isansi">
-                Does not cancel wrapping.
+                Does <em>not</em> clear the <a href="#lcf">Last Column Flag</a>.
             </p>
         </section>
         <section id="dc4" role="ctlchar" mnemonic="DC4" ctlseq="DC4" title="Device Control 4"
@@ -2232,7 +2250,8 @@ DECTSR		462
             <!--- TODO: Except in no-emulation mode - see wrtch -->
 
             <p badges="sun" groups="isansi">
-                Instead, this clears screen and homes cursor
+                Instead, this clears screen and homes cursor clearing the
+                <a href="#lcf">Last Column Flag</a>.
             </p>
             <p badges="avatar">
                 Instead, this clear screen, home cursor, and reset color attribute
@@ -2362,7 +2381,7 @@ DECTSR		462
             <ref src="vt52x:110"/>
             <ref src="vt52x:336"/>
             <termsupp first="vt100" series="vt" additional="vt330 vt340 putty tt dtterm wt"/>
-            <p>Horizontal Tab—sends the cursor to the next tabstop</p>
+            <p>Horizontal Tab—sends the cursor to the next tabstop. </p>
         </section>
         <section id="vt" role="ctlchar" mnemonic="VT" ctlseq="VT" title="Vertical Tab">
             <ref src="e48:88"/>
@@ -2377,7 +2396,7 @@ DECTSR		462
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
             <termsupp first="vt100" series="vt" additional="vt330 vt340 putty tt dtterm wt"/>
-            <p>Vertical Tab. This is treated the same as LF</p>
+            <p>Vertical Tab. This is treated the same as LF. </p>
 
             <!-- TODO: If ISWYSE, ISTVI or ISHZL and a VT gets into wrtch() then if at
                         top margin and autoscroll is on and not in a protected field,
@@ -2508,7 +2527,8 @@ DECTSR		462
             <ref src="vt510:DECDHL.html"/>
             <ref src="vt52x:192"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty dtterm wt"/>
-            <p>DEC double-height line, top half</p>
+            <p>DEC double-height line, top half.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="decdhl-bottom" ctlseq="ESC # 4" mnemonic="DECDHL" title="double-height line, bottom half">
             <ref src="070:354"/>
@@ -2522,7 +2542,8 @@ DECTSR		462
             <ref src="vt510:DECDHL.html"/>
             <ref src="vt52x:192"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty wt"/>
-            <p>DEC double-height line, bottom half</p>
+            <p>DEC double-height line, bottom half.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="decswl" ctlseq="ESC # 5" mnemonic="DECSWL" title="single width line">
             <ref src="070:351"/>
@@ -2535,7 +2556,8 @@ DECTSR		462
             <ref src="vt420:166"/>
             <ref src="vt510:DECSWL.html"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty dtterm wt"/>
-            <p>DEC Single Width line</p>
+            <p>DEC Single Width line.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="decdwl" ctlseq="ESC # 6" mnemonic="DECDWL" title="double width line">
             <ref src="070:352"/>
@@ -2549,7 +2571,8 @@ DECTSR		462
             <ref src="vt510:DECDWL.html"/>
             <ref src="vt52x:202"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 putty dtterm wt"/>
-            <p>DEC Double Width line</p>
+            <p>DEC Double Width line.
+                Not available when <a href="#decvssm">DECVSSM/DECLRMM</a> is set.</p>
         </section>
         <section role="ctlseq" id="vt100-hardcopy" ctlseq="ESC # 7"
                  mnemonic="DECHCP" title="Hard Copy (DEC Private)" not-implemented="true">
@@ -2568,7 +2591,19 @@ DECTSR		462
             <ref src="vt510:DECALN.html"/>
             <ref src="vt52x:171"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty dtterm wt"/>
-            <p>Fills the screen with "E"</p>
+            <p>Fills the screen with "E".
+                Clears the <a href="#lcf">Last Column Flag</a>, margins and
+                SGR attributes. Turns of <a href="#decvssm">DECLRMM</a> and
+                <a href="#decom">DECOM</a>.
+            </p>
+            <p>
+                The VT420 (v1.4) does not correctly turn of DECLRMM. K95 does
+                not currently implement this behaviour as it is deemed to be a
+                bug. Rather it behaves as the VT520 does. Additionally, while
+                DEC STD 070 says SGR attribute should be cleared no tested
+                hardware terminal appears to do this. DECterm does though, so
+                K95 does as STD 070 specifies and DECterm does.
+            </p>
         </section>
         <section role="ctlseq" id="decfpp" ctlseq="ESC # 9" todo="true"
                  mnemonic="DECFPP" title="Positioning" not-implemented="true">
@@ -3123,8 +3158,18 @@ DECTSR		462
             <ref src="vt510:DECBI.html"/>
             <ref src="vt52x:180"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
-            <p>Moves the cursor left. If the cursor is already at the
-                left margin, then all data on the screen is moved one column to the right.</p>
+            <implchk std070="true"/>
+            <p>Moves the cursor left and clears the
+                <a href="#lcf">Last Column Flag</a>. If the cursor is already at
+                the left margin, then all data within the margins is moved one
+                column to the right. If the cursor is outside the margins, and
+                it hits the left edge of the screen then no action is taken.
+            </p>
+            <p>
+                When data within the margins is scrolled, lines with the
+                double-height or double-wide attributes set will scroll twice as
+                fast as lines without those attributes set.
+            </p>
         </section>
         <section role="ctlseq" id="scp" mnemonic="SCP" ctlseq="ESC 7"
                  title="Save Cursor (ANSI)" groups="isansi" badges="aaa">
@@ -3189,7 +3234,10 @@ DECTSR		462
             <ref src="vt52x:208"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
             <p>Moves the cursor right one. If the cursor is already
-                at the right margin, it scrolls the screen one column to the left.</p>
+                at the right margin, it scrolls the screen one column to the left.
+                Clears the <a href="#lcf">Last Column Flag</a> if the current
+                position is to the left of the right margin.
+            </p>
         </section>
         <section role="ctlseq" id="zgua" ctlseq="ESC :" mnemonic="zGUA" title="Guard Unprotected Areas" not-implemented="true" badges="aaa">
             <p>Guard Unprotected Areas</p>
@@ -3278,7 +3326,7 @@ DECTSR		462
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <termsupp first="vt50" series="vt" additional="vt330 vt340 putty wt"/>
-            <p>Cursor Right</p>
+            <p>Cursor Right. <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" id="vt52-cl" ctlseq="ESC D" title="VT52 Cursor Left" groups="isvt52">
             <ref src="xt:h4-VT52-Mode:ESC-A.50F"/>
@@ -3290,10 +3338,10 @@ DECTSR		462
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <termsupp first="vt50h" series="vt" additional="vt330 vt340 putty wt"/>
-            <p>Cursor Left</p>
+            <p>Cursor Left. Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" id="h19-cls" ctlseq="ESC E" title="Clear screen (H19)" badges="h19">
-            <p>Clear display and home cursor</p>
+            <p>Clear display and home cursor. Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" id="vt52-egr" ctlseq="ESC F" title="VT52 Enable Graphics"
                  groups="isvt52">
@@ -3354,7 +3402,7 @@ DECTSR		462
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <termsupp first="vt50" series="vt"  additional="vt330 vt340 putty wt"/>
-            <p>Cursor Home</p>
+            <p>Cursor Home. Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" id="vt52-rlf" ctlseq="ESC I" title="VT52 Reverse Linefeed" groups="isvt52">
             <ref src="xt:h4-VT52-Mode:ESC-A.50F"/>
@@ -3477,7 +3525,8 @@ DECTSR		462
             <ctlseq>
                 ESC Y <param-single/> <param-single/>
             </ctlseq>
-            <p>Sends the cursor to row and column <param-single/></p>
+            <p>Sends the cursor to row and column <param-single/>.
+                Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
 
         <section role="ctlseq" id="h19-hold" ctlseq="ESC ["
@@ -3576,13 +3625,15 @@ DECTSR		462
                  title="Lock Memory Area (SCO/HPTERM)" badges="scoansi k95 xterm">
             <termsupp series="sco" first="sco" additional="xterm"/>
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-l.C9A"/>
-            <p>Lock Memory Area (sets margins)</p>
+            <p>Lock Memory Area (sets margins) and homes the cursor.
+                Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" id="usr" mnemonic="USR" ctlseq="ESC m"
                  title="Unlock Memory Area (SCO/HPTERM)" badges="scoansi k95 xterm">
             <termsupp series="sco" first="sco" additional="xterm"/>
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-m.C9B"/>
-            <p>Unlock Memory Area (sets margins)</p>
+            <p>Unlock Memory Area (sets margins) and homes the cursor.
+                Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" id="h19-cpr" ctlseq="ESC n" title="Cursor Position Report (H19)" badges="h19">
             <p>Cursor Position Report</p>
@@ -4314,15 +4365,97 @@ DECTSR		462
             <termsupp first="vt520" series="vt" additional="tt"/>
         </section>
 
+        <section role="ctlseq" id="deccir" mnemonic="DECCIR"
+                 title="Cursor Information Report (Terminal to Host)"
+                 groups="isvt320">
+            <ctlseq>DCS 1 $ u D...D ST</ctlseq>
+            <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w:Ps-=-2.1E5C"/>
+            <ref src="070:455"/>
+            <ref src="wy370:141"/>
+            <ref src="vt340:224"/>
+            <ref src="vt420:270"/>
+            <ref src="vt510:DECCIR.html"/>
+            <ref src="vt52x:184"/>
+            <termsupp first="vt340" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>
+                Produced in response to a
+                <a href="#decrqpsr">Presentation State Request (DECRQPSR)</a>,
+                the Cursor Information Report contains detailed information
+                about the curosr including:
+            </p>
+            <ul>
+                <li>Coordinates (Y, X, Page)</li>
+                <li>Reverse video, blink, underline, bold and protected
+                    attributes</li>
+                <li>last column flag (auto-wrap pending), SS3 pending,
+                    SS2 pending, DECOM setting</li>
+                <li>Character sets currently invoked into GL and GR</li>
+                <li>Sizes of G0, G1, G2 and G3 (94 or 96 characters)</li>
+                <li>Character sets designated into G0, G1, G2, and G3</li>
+            </ul>
+            <p>The encoding a little quite complex so best to check DEC STD 070
+                or the VT420 manual (The VT520 and VT52x manuals don't cover it)
+                for the full details. But in summary, D...D is <tt>Pr ; Pc ; Pp ; Srend ; Satt ; Sflag ; Spgl ; Spgr ; Scss ; Sdesig</tt> where:
+            </p>
+            <ul>
+                <li>Pr and Pc are the row and column the cursor is currently on</li>
+                <li>Pp is the page the cursor is currently on</li>
+                <li>Srend is a single byte in the ASCII range where bit 1
+                    indicates bold, bit 2 is underline, bit 3 is blink,
+                    bit 4 is reverse video, and bit 5 is invisible.
+                </li>
+                <li>Satt is a single byte in the ASCII range where bit 1
+                    indicates if the protected attribute is set</li>
+                <li>Sflag is a single byte in the ASCII range where bit 1
+                    indicates <a href="#decom">DECOM</a> is set,
+                    bit 2 indicates <a href="ssg2l">SS2</a> is pending,
+                    bit 3 indicates <a href="ssg3l">SS3</a> is pending,
+                    and bit 4 indicates the last column flag is set.
+                </li>
+                <li>Spgl is a number from 0 to 3 indicating which of G0, G1, G2 or G3 is invoked into GL</li>
+                <li>Spgr is a number from 0 to 3 indicating which of G0, G1, G2 or G3 is invoked into GR</li>
+                <li>Scss is a single byte in the ASCII range where bits 1-4
+                    indicate if G0-G3 is a 96-character character set (bit is set)
+                    or a 94-character character set (bit is cleared)
+                </li>
+                <li>Sdesig are the intermediate and final characters for the
+                    character sets designed as G0 through G3
+                </li>
+            </ul>
+            <p>
+                For Srend, Satt, Sflag and Scss bit 8 is always cleared and bit
+                7 is always set. And bit 6 indicates another byte of information
+                follows (K95 never sends additional bytes, so never sets this
+                bit). Its not clear if any DEC terminal sets bit 6 either.
+            </p>
+            <p>For example, a Cursor Information Report might look like:
+                <tt><cc>DCS</cc> 1 $ u 1 ; 1 ; 1 ; @ ; @ ; @ ; 0 ; 2 ; N ; BAAA <cc>ST</cc></tt>
+            </p>
+
+        </section>
+
         <section role="ctlseq" id="dectabsr" mnemonic="DECTABSR"
-                 title="Tab Stop Report"
-                 not-implemented="true" todo="true">
+                 title="Tab Stop Report (Terminal to Host)"
+                 groups="isvt320">
             <ctlseq>DCS 2 $ u D...D ST</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w:Ps-=-2.1E5C"/>
             <ref src="070:459"/>
+            <ref src="wy370:144"/>
+            <ref src="vt340:230"/>
+            <ref src="vt420:276"/>
             <ref src="vt510:DECTABSR.html"/>
             <ref src="vt52x:311"/>
-            <termsupp first="vt510" series="vt" additional=""/>
+            <termsupp first="vt340" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>Produced in response to a
+                <a href="#decrqpsr">Presentation State Request (DECRQPSR)</a>,
+                the Tab Stop Report contains the positions of all horizontal tab
+                stops. <tt>D...D</tt> consists of column numbers separated by the
+                forward slash character (/).
+            </p>
+            <p>
+                For example:
+                <tt><cc>DCS</cc> 2 $ u 9 / 17 / 25 / 33 / 41 / 49 / 57 / 65 / 73 <cc>ST</cc></tt>
+            </p>
         </section>
 
         <section role="ctlseq" id="k95link" mnemonic="K95LINK"
@@ -4376,6 +4509,7 @@ DECTSR		462
             <ref src="vws:112"/>
             <ref src="wy370:145"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+            <implchk std070="true"/>
             <ctlseq>
                 DCS $ q <param-text/> ST
             </ctlseq>
@@ -4447,6 +4581,7 @@ DECTSR		462
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
                 <termsupp first="vt510" series="vt" additional="tt"/>
+                <implchk std070="true"/>
                 <p>
                     Returns currently <a href="#sgr">selected graphic rendition</a>.
                     Only the following are currently reported:
@@ -4535,16 +4670,20 @@ DECTSR		462
                     is 20 the response would be: <tt><cc>DCS</cc> 1 $ r 5 ; 2 0 r <cc>ST</cc></tt>
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decslrm"
-                     mnemonic="DECSLRM" title="Set Left and Right Margins">
+            <section role="parameter" id="decrqss-decslrm" groups="isvt420"
+                     mnemonic="DECSLRM" title="Set Left and Right Margins"
+                     badges="k95 xterm">
                 <ctlseq><param-text/> = s</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <termsupp first="vt510" series="vt" additional="tt"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 1 $ r s ST</pre>
+                <termsupp first="vt420" series="vt" additional="tt"/>
+                <implchk std070="true"/>
+                <p>Reports the current <a href="#decslrm">DECSLRM</a> setting -
+                    the left and right margins of the current page. For example:
+                </p>
+                <pre><cc>DCS</cc>1$r1;80s<cc>>ST</cc></pre>
             </section>
             <section role="parameter" id="decrqss-decslpp" mnemonic="DECSLPP"
                      title="Set Lines Per Page">
@@ -4651,7 +4790,7 @@ DECTSR		462
                     the response would be <tt><cc>DCS</cc> 1 $ r 2 * x <cc>ST</cc></tt>
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsnls"
+            <section role="parameter" id="decrqss-decsnls"
                      mnemonic="DECSNLS" title="Set Number of Lines per Screen">
                 <ctlseq><param-text/> = * |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
@@ -4850,7 +4989,7 @@ DCS $ q 3 , } ST</pre>
             <p>
                 Cursor left <param-single/> columns. A comment notes that
                 SCO ANSI is violating the rules by using SP as a final
-                character.
+                character. Clears the <a href="#lcf">Last Column Flag</a>.
             </p>
         </section>
 
@@ -4896,14 +5035,15 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:119"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> A</ctlseq>
-            <p>Cursor Up <param-single/> lines (default = 1). Cancels Wrapping
-                (clears the last column flag)
+            <p>Cursor Up <param-single/> lines (default = 1).
+                Clears the <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.
             </p>
 
             <p badges="s97801">Ignored if outside scroll region</p>
 
             <p badges="scoansi at386 ansi">
-                Does not cancel wrapping.
+                Does not clear the <a href="#lcf">Last Column Flag</a> if a parameter is supplied.
             </p>
         </section>
         <section role="ctlseq" id="sbc" mnemonic="SBC" title="Set Border Color (ANSI)" groups="isansi">
@@ -4949,10 +5089,11 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> B</ctlseq>
             <p>Cursor Down <param-single/> lines (default = 1).
-                Cancels wrapping (clears the last column flag).</p>
+                Clears the <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
             <p badges="s97801">Ignored if outside scroll region</p>
             <p groups="isansi">
-                Wrapping is not canceled.
+                The <a href="#lcf">Last Column Flag</a> is not cleared.
             </p>
         </section>
         <section role="ctlseq" mnemonic="GSM" title="Graphic Size Modification"
@@ -4999,7 +5140,7 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> C</ctlseq>
             <p>Cursor Right <param-single/> times (default = 1) staying on the
-            same line.</p>
+            same line. Clears the <a href="#lcf">Last Column Flag</a></p>
         </section>
         <section role="ctlseq" mnemonic="GSS" title="Graphic Size Selection"
                  not-implemented="true" todo="true">
@@ -5037,7 +5178,8 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:120"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> D</ctlseq>
-            <p>Cursor left <param-single/> characters</p>
+            <p>Cursor left <param-single/> characters.
+                Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="FNT" title="Font Selection"
                  not-implemented="true" todo="true">
@@ -5074,7 +5216,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:121"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> E</ctlseq>
-            <p>Cursor next line <param-single/> times (default = 1)</p>
+            <p>Moves the cursor down <param-single/> lines (default = 1). Unlike
+                <a href="#nel">NEL</a>, when the cursor hits the bottom margin
+                the page does <em>not</em> scroll. Clears the
+                <a href="#lcf">Last Column Flag</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="TSS" title="Thin Space Specification"
                  not-implemented="true" todo="true">
@@ -5146,7 +5292,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:119"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco xterm putty dtterm wt"/>
             <ctlseq>CSI <param-single/> G</ctlseq>
-            <p>Move cursor to column <param-single/></p>
+            <p>Synonym for <a href="#hpa">HPA</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="SPI" title="Spacing Increment"
                  not-implemented="true" todo="true">
@@ -5164,7 +5310,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="cup" mnemonic="CUP" title="Cursor Position">
             <ref src="e48:50"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps-H.1D86"/>
-            <ref src="070:306"/>
+            <ref src="070:304"/>
             <ref src="wy370:120"/>
             <ref src="vt100:CUP"/>
             <ref src="vt132:82"/>
@@ -5174,9 +5320,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:CUP.html"/>
             <ref src="vt52x:162"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
+            <implchk std070="true"/>
             <ctlseq>CSI <param-single/> ; <param-single/> H</ctlseq>
             <p>Send cursor to row;column. Default is 1;1. Implementation is
-            shared with <a href="#hvp">HVP</a></p>
+            shared with <a href="#hvp">HVP</a>.
+                Affected by <a href="#decom">DECOM</a>.</p>
             <p badges="s97801">
                 If DECSASD is set to the status line, it is reset to terminal.
             </p>
@@ -5206,7 +5354,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:127"/>
             <termsupp first="vt510" series="vt" additional="tt wt"/>
             <ctlseq>CSI <param-single/> I</ctlseq>
-            <p>Cursor Horizontal Tab <param-single/> tab stops</p>
+            <p>Moves the cursor forward <param-single/> (default = 1) tab stops.
+                This is equivalent to sending the specified number of
+                <a href="#tab">HT (TAB)</a> characters.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="SSU" title="Select Size Unit"
                  not-implemented="true" todo="true">
@@ -5301,7 +5452,8 @@ DCS $ q 3 , } ST</pre>
                 <p badges="s97801">If clearing within the terminal
                     area (not the status line), only the scroll region is cleared. The cursor
                     is not moved.</p>
-                <p groups="isansi">Clears the entire screen and homes the cursor.</p>
+                <p groups="isansi">Clears the entire screen, homes the cursor
+                    and clears the <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <section role="parameter" id="ed-3xt" title="Erase Saved Lines"
                      not-implemented="true" todo="true">
@@ -5503,6 +5655,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:283"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm wt"/>
             <ctlseq>CSI ? <param-single/> J</ctlseq>
+            <p>Erases only characters that do not have the protected attribute
+                set. Any existing visual attributes set by <a href="#sgr">SGR</a>,
+                protection attributes, and line attributes are unaffected.
+            </p>
             <section role="parameter" id="decsed-0" title="Selective erase to end of screen">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="wy370:124"/>
@@ -5852,6 +6008,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:285"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm wt"/>
             <ctlseq>CSI ? <param-single/> K</ctlseq>
+            <p>Erases only characters that do not have the protected attribute
+                set. Any existing visual attributes set by <a href="#sgr">SGR</a>,
+                protection attributes, and line attributes are unaffected.
+            </p>
             <section role="parameter" id="decsel-0" title="Selective erase to end of line">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-K:Ps-=-0.1E49"/>
@@ -5905,7 +6065,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:126"/>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> L</ctlseq>
-            <p>Insert <param-single/> lines.</p>
+            <p>Insert <param-single/> empty lines at the cursors location and
+                send the cursor to the left margin. Lines below the cursor
+                scroll down. If the cursor is outside the page margins, IL is
+                ignored.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="SVS" title="Select Line Spacing"
                  not-implemented="true" todo="true">
@@ -6028,7 +6192,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:126"/>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> M</ctlseq>
-            <p>Delete <param-single/> lines.</p>
+            <p>Delete <param-single/> line at the cursors location, and send the
+                cursor to the left margin. Lines below the cursor scroll up. If
+                the cursor is outside the page margins, DL is ignored.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="IGS" title="Identify Graphic Subrepertoire"
                  not-implemented="true" todo="true">
@@ -6346,6 +6513,12 @@ DCS $ q 3 , } ST</pre>
             <p>
                 Scrolls the characters up <param-single/> lines.
             </p>
+            <p>
+                It should be noted that the current implementation is not
+                correct and is subject to change in the future. The correct
+                behaviour would be more similar to operating the scroll bar - it
+                is not supposed to alter any data on screen (like clearing lines).
+            </p>
         </section>
         <section role="ctlseq" mnemonic="SPD" title="Select Presentation Directions"
                  not-implemented="true" todo="true">
@@ -6412,6 +6585,12 @@ DCS $ q 3 , } ST</pre>
                 Scroll down <param-single/> lines. The top
                 <param-single/> lines are cleared to blanks.
             </p>
+            <p>
+                It should be noted that the current implementation is not
+                correct and is subject to change in the future. The correct
+                behaviour would be more similar to operating the scroll bar - it
+                is not supposed to alter any data on screen (like clearing lines).
+            </p>
         </section>
         <section role="ctlseq" id="xthimouse" mnemonic="XTHIMOUSE"
                  title="Begin highlight mouse tracking"
@@ -6434,7 +6613,9 @@ DCS $ q 3 , } ST</pre>
         </section>
         <section role="ctlseq" id="aixterm-slc" title="Go to status line column (AIXTERM)" badges="aixterm">
             <ctlseq>CSI ? <param-single/> T</ctlseq>
-            <p>Go to column <param-single/> of the status line</p>
+            <p>Go to column <param-single/> of the status line. The status line
+                is switched to host-writable if it isn't already.
+            </p>
         </section>
 
         <!-- ######################### U ######################### -->
@@ -6593,6 +6774,7 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> Z</ctlseq>
             <p>
                 Moves active cursor position back <param-single/> tab stops.
+                Clears the <a href="#lcf">Last Column Flag</a>.
             </p>
         </section>
         <section role="ctlseq" mnemonic="PEC" title="Presentation Expand or Contract"
@@ -6765,6 +6947,8 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <p>
                 Moves active position to column <param-single/>.
+                Obeys <a href="#decom">DECOM</a>.
+                Clears the <a href="#lcf">Last Column Flag</a>.
             </p>
         </section>
         <section role="ctlseq" mnemonic="TATE" title="Tabulation Aligned Trailing Edge"
@@ -6785,7 +6969,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> a</ctlseq>
             <p>
                 Horizontal Position Relative - moves active position
-                <param-single/> characters to the right.
+                <param-single/> characters to the right clearing the
+                <a href="#lcf">Last Column Flag</a>. Only obeys the right margin
+                if <a href="#decom">DECOM</a> is set. When the cursor hits the
+                right margin (DECOM set) or right edge of the screen (DECOM
+                reset) the cursor stops and does not wrap.
             </p>
         </section>
         <section role="ctlseq" mnemonic="TALE" title="Tabulation Aligned Leading Edge"
@@ -6874,7 +7062,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>K95</td>
-                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 3 2 ; 4 4 ; 5 2 c</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 1 ; 2 2 ; 2 8 ; 3 2 ; 4 2 ; 4 4 ; 5 2 c</td>
                 </tr>
             </table>
 
@@ -6980,7 +7168,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">20</dt>  <!-- ? -->
                 <dd>APL</dd>
 
-                <dt not-implemented="true">21</dt>  <!-- vt510, vt420, xt -->
+                <dt>21</dt>  <!-- vt510, vt420, xt -->
                 <dd>Horizontal scrolling</dd>
 
                 <dt>22</dt>   <!-- vt525, xt -->
@@ -7052,8 +7240,8 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">41</dt>    <!-- ? -->
                 <dd>unknown</dd>
 
-                <dt not-implemented="true">42</dt>  <!-- vt510 -->
-                <dd>ISO Latin-2 character set</dd>      <!-- TODO: Do we really not have this? -->
+                <dt>42</dt>  <!-- vt510 -->
+                <dd>ISO Latin-2 character set</dd>
 
                 <dt not-implemented="true">43</dt>    <!-- DECterm -->
                 <dd>Ruled Lines</dd>
@@ -7174,17 +7362,21 @@ DCS $ q 3 , } ST</pre>
             -->
             <!-- TODO: This will need changing when we get support for more
                  VT420 or VT520 escapes
-                 The first parameter is the identification code:
+                 The first parameter is the Product ID:
                          1 - VT220
+                         2 - VT240
                         18 - VT330
                         19 - VT340
                         24 - VT320
                         28 - DECterm
+                        32 - VT382J
                         41 - VT420
                         42 - VT1000 terminal emulator
+                        44 - VT382T
                         61 - VT510
                         64 - VT520
                         65 - VT525
+                        66 - VTStar
             -->
             <p>
                 Secondary Device Attributes Report Request. If <param-single/>
@@ -7252,7 +7444,9 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:362"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> d</ctlseq>
-            <p>Vertical Position Absolute: Moves active position to row <param-single/></p>
+            <p>Vertical Position Absolute: Moves active position to row <param-single/>.
+                Affected by <a href="#decom">DECOM</a>.
+                Clears the <a href="#lcf">Last Column Flag</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="TSR" title="Tabulation Stop Remove"
                  not-implemented="true" todo="true">
@@ -7271,7 +7465,7 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> e</ctlseq>
             <p>Vertical Position Relative—moves active position <param-single/>
-                rows down</p>
+                rows down. Affected by <a href="#decom">DECOM</a>.</p>
         </section>
         <section role="ctlseq" mnemonic="SCO" title="Select Character Orientation"
                  not-implemented="true" todo="true">
@@ -7293,9 +7487,13 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:HVP.html"/>
             <ref src="vt52x:337"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
+            <implchk std070="true"/>
             <ctlseq>CSI <param-single/> ; <param-single/> f</ctlseq>
-            <p>Send cursor to row;column. Default is 1;1. Cancels Wrapping
-                (clears the last column flag)</p>
+            <p>Send cursor to row;column. Default is 1;1. Clears the
+                <a href="#lcf">Last Column Flag</a>. This control sequence is
+                implemented for compatibility with printing terminals.
+                Applications should use <a href="#cup">CUP</a> instead.
+            </p>
             <p badges="s97801">
                 If DECSASD is set to the status line, it is reset to terminal.
             </p>
@@ -7426,7 +7624,8 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" badges="scoansi" id="sm-3-sco" title="132 Column Mode">
                 <ctlseq><param-single/> = 3</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
-                <p> Switches to 132 Column Mode</p>
+                <p> Switches to 132 Column Mode.
+                    Clears the <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <section role="parameter" mnemonic="CRM" id="sm-3" title="Controls Mode On">
                 <ctlseq><param-single/> = 3</ctlseq>
@@ -7473,7 +7672,8 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" badges="scoansi" id="sm-6-sco" title="Relative Origin">
                 <ctlseq><param-single/> = 6</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
-                <p>Returns the cursor to 1,margintop</p>
+                <p>Homes the cursor within set margins, and clears the
+                    <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <section role="parameter" mnemonic="ERM" id="sm-6" title="Erasure Mode Set">
                 <ctlseq><param-single/> = 6</ctlseq>
@@ -7709,7 +7909,8 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" badges="s97801" id="sm-53" title="132-character mode">
                 <ctlseq><param-single/> = 53</ctlseq>
-                <p>Switches to 132-character mode</p>
+                <p>Switches to 132-character mode.
+                    Clears the <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <!-- TODO: The VT510 manual shows this as being DEC Private ( ? 81 h )
                     while the VT420 and VT520 manuals disagree. Need to test. -->
@@ -7790,7 +7991,10 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:188"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
-                <p>Switches the screen to 132 columns and moves homes the cursor</p>
+                <p>Switches the screen to 132 columns, clears margins, disables
+                    <a href="#decvssm">DECVSSM/DECLRMM</a>, and homes the
+                    cursor clearing the <a href="#lcf">Last Column Flag</a>.
+                </p>
             </section>
             <section role="parameter" id="decsclm" mnemonic="DECSCLM" title="Smooth scroll">
                 <ctlseq><param-single/> = 4 </ctlseq>
@@ -8321,7 +8525,7 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="decvssm" mnemonic="DECVSSM"
                      title="Vertical Split Screen Mode (DECLRMM)"
-                     not-implemented="true" todo="true" >
+                     groups="isvt420" badges="k95 xterm">
                 <ctlseq><param-single/> = 69</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-6-9.1ECC"/>
                 <ref src="070:284"/>
@@ -8329,12 +8533,18 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECLRMM.html"/>
                 <ref src="vt52x:226"/>
                 <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+                <implchk std070="true" xt="407"/>
                 <p>Called DECVSSM (Vertial Split Screen Mode) in the VT420
                     manual, and DECLRMM (Left Right Margin Mode) in the VT5xx.
                     Whatever you call it, this enables or disables the
-                    <a href="#decslrmm">DECSLRMM</a> control sequence. When
-                    DECSLRMM is enabled, <a href="#decdhl">DECDHL</a> and
-                    <a href="#decdwl">DECDWL</a> are disabled.
+                    <a href="#decslrm">DECSLRM</a> control sequence. When
+                    DECSLRMM is enabled, <a href="#decdhl-top">DECDHL</a> and
+                    <a href="#decdwl">DECDWL</a> are disabled and all lines on
+                    all pages are reset to single width, single height.
+                </p>
+                <p badges="k95 xterm">
+                    When this mode is enabled, the <a href="#scosc">SCOSC</a>
+                    control sequence is unavaialble.
                 </p>
             </section>
             <section role="parameter" id="decfpm" mnemonic="DECFPM"
@@ -8407,12 +8617,17 @@ DCS $ q 3 , } ST</pre>
             <!-- TODO: Mode 90 - DECTHAISCM - Thai Space Compensating Mode -->
             <section role="parameter" id="decncsm" mnemonic="DECNCSM"
                      title="No Clearing Screen on Column Change Mode"
-                     not-implemented="true" todo="true">
+                     groups="isvt520 isxterm">
                 <ctlseq><param-single/> = 95</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-9-5.1ECB"/>
                 <ref src="vt510:DECNCSM.html"/>
                 <ref src="vt52x:228"/>
                 <termsupp first="vt510" series="vt" additional=""/>
+                <p>
+                    Disables clearing of the terminal screen when the size is
+                    changed. This is equivalent to
+                    <tt>SET TERM CLEAR-ON-RESIZE OFF</tt>
+                </p>
             </section>
             <section role="parameter" id="decrlcm" mnemonic="DECRLCM"
                      title="Right-to-Left Copy Mode"
@@ -9393,7 +9608,11 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="ilu" title="Insert line up">
             <ctlseq>CSI = ? l</ctlseq>
             <ctlseq>CSI ? = l</ctlseq>
-            <p>Insert line up</p>
+            <p>Insert line up.</p>
+            <p>It is currently unknown which terminal this control sequence
+                comes from, but its not anything from DEC. As such it does not
+                obey <a href="#decvssm">DECVSSM/DECLRMM</a>.
+            </p>
         </section>
         <section role="ctlseq" id="rm" mnemonic="RM" title="Reset Mode">
             <ctlseq>CSI <param-multi/> l</ctlseq>
@@ -9437,7 +9656,8 @@ DCS $ q 3 , } ST</pre>
                      title="80 columns">
                 <ctlseq><param-single/> = 3</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
-                <p>Switch to 80 column mode</p>
+                <p>Switch to 80 column mode, clear screen, home cursor, and
+                    clear the <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <section role="parameter" mnemonic="CRM" id="rm-3"
                      title="Controls Mode off">
@@ -9486,7 +9706,8 @@ DCS $ q 3 , } ST</pre>
                      title="Absolute Origin">
                 <ctlseq><param-single/> = 6</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
-                <p>Sends the cursor to 1,1</p>
+                <p>Clears the screen, homes the cursor and clears the
+                    <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <section role="parameter" mnemonic="ERM" id="rm-6"
                      title="Erasure Mode Reset">
@@ -9786,7 +10007,10 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:188"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty dtterm wt"/>
-                <p>Switches to 80 column mode</p>
+                <p>Switches the screen to 80 columns, clears margins, disables
+                    <a href="#decvssm">DECVSSM/DECLRMM</a>, and homes the
+                    cursor clearing the <a href="#lcf">Last Column Flag</a>.
+                </p>
             </section>
             <section role="parameter" id="r-decsclm" mnemonic="DECSCLM" title="Jump scrolling">
                 <ctlseq><param-single/> = 4</ctlseq>
@@ -9835,7 +10059,8 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:231"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
-                <p>Normal cursor mode</p>
+                <p>Normal cursor mode. Homes the cursor and clears the
+                    <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <section role="parameter" mnemonic="DECAWM" id="r-decawm" title="Auto wrap">
                 <ctlseq><param-single/> = 7</ctlseq>
@@ -10326,18 +10551,19 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="ctlseq" id="r-decvssm" mnemonic="DECVSSM"
                      title="Vertical Split Screen Mode (DECLRMM)"
-                     not-implemented="true" todo="true" >
+                     groups="isvt420" badges="k95 xterm">
                 <ctlseq>CSI <param-single/> 69</ctlseq>
                 <ref src="070:284"/>
                 <ref src="vt420:157"/>
                 <ref src="vt510:DECLRMM.html"/>
                 <ref src="vt52x:226"/>
                 <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+                <implchk std070="true"/>
                 <p>Called DECVSSM (Vertial Split Screen Mode) in the VT420
                     manual, and DECLRMM (Left Right Margin Mode) in the VT5xx.
                     Whatever you call it, this enables or disables the
                     <a href="#decslrmm">DECSLRMM</a> control sequence. When
-                    DECSLRMM is enabled, <a href="#decdhl">DECDHL</a> and
+                    DECSLRMM is enabled, <a href="#decdhl-top">DECDHL</a> and
                     <a href="#decdwl">DECDWL</a> are disabled.
                 </p>
             </section>
@@ -10403,12 +10629,17 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="r-decncsm" mnemonic="DECNCSM"
                      title="No Clearing Screen on Column Change Mode"
-                     not-implemented="true" todo="true">
+                     groups="isvt520 isxterm">
                 <ctlseq><param-single/> = 95</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-9-5.1ECF"/>
                 <ref src="vt510:DECNCSM.html"/>
                 <ref src="vt52x:228"/>
                 <termsupp first="vt510" series="vt" additional=""/>
+                <p>
+                    Enables clearing of the screen when the terminal size is
+                    changed. This does not affect <a href="#decscpp">DECSCPP</a>.
+                    This is equivalent to <tt>SET TERM CLEAR-ON-RESIZE ON</tt>
+                </p>
             </section>
             <section role="parameter" id="r-decrlcm" mnemonic="DECRLCM"
                      title="Right-to-Left Copy Mode"
@@ -11056,10 +11287,17 @@ DCS $ q 3 , } ST</pre>
 
         </section>
 
-        <section role="ctlseq" id="chc" mnemonic="CHC" title="Clear and Home Cursor (SCOANSI)"
-                not-implemented="true" todo="true">
+        <section role="ctlseq" id="chc" mnemonic="CHC" badges="sco"
+                 title="Clear and Home Cursor (SCOANSI)">
             <ctlseq>CSI = l</ctlseq>
             <termsupp series="sco" first="sco"/>
+            <p>
+                Clears the screen, homes the cursor and
+                clears the <a href="#lcf">Last Column Flag</a>.
+                SCO OpenServer homes the cursor to the top left of the scrolling
+                region, but K95 currently homes the cursor to the top left of
+                the screen.
+            </p>
             <!-- Documented here: http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html -->
         </section>
 
@@ -11070,6 +11308,10 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI ? = }</ctlseq>
             <ctlseq>CSI = ? m</ctlseq>
             <ctlseq>CSI ? = m</ctlseq>
+            <p>It is currently unknown which terminal this control sequence
+                comes from, but its not anything from DEC. As such it does not
+                obey <a href="#decvssm">DECVSSM/DECLRMM</a>.
+            </p>
         </section>
         <section badges="scoansi" role="ctlseq" id="ssm" mnemonic="SSM"
                  title="Set margin to specified value">
@@ -13686,7 +13928,7 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="decrqm-69" mnemonic="DECLRMM"
                          title="Vertical Split Screen"
-                         not-implemented="true" todo="true">
+                         groups="isvt420" badges="k95 xterm">
                     <ctlseq><param-single/> = 69</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-6-9.1ECC"/>
                     <ref src="070:284"/>
@@ -13738,12 +13980,15 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="decrqm-95" mnemonic="DECNCSM"
                          title="No clearing screen on column change"
-                         not-implemented="true" todo="true">
+                         groups="isvt520 isxterm">
                     <ctlseq><param-single/> = 95</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-9-5.1ECB"/>
                     <ref src="vt510:DECRQM.html#T5-8"/>
                     <ref src="vt52x:264"/>
                     <termsupp first="vt510" series="vt" additional=""/>
+                    <p>
+                        Reports whether the screen will be cleared on reisze.
+                    </p>
                 </section>
                 <section role="parameter" id="decrqm-96" mnemonic="DECRLCM"
                          title="Cursor right to left"
@@ -14685,9 +14930,15 @@ DCS $ q 3 , } ST</pre>
                 currently on. You can query the current state of DECSTBM with
                 <a href="#decrqss">DECRQSS</a>.
             </p>
+            <p>
+                This operation homes the cursor within set margins, and
+                clears the <a href="#lcf">Last Column Flag</a>.
+            </p>
             <p badges="s97801">
                 The bottom margin may include the status line even when it is
-                separated from the main display area.
+                separated from the main display area. The cursor does not move
+                from its current location, and the
+                <a href="#lcf">Last Column Flag</a> is unaffected.
             </p>
         </section>
         <section role="ctlseq" id="decskcv" mnemonic="DECSKCV"
@@ -14758,6 +15009,7 @@ DCS $ q 3 , } ST</pre>
                 <param-single symbol="Pl"/> ;
                 <param-single symbol="Pb"/> ; <param-single symbol="Pr"/></tt> is
                 the rectangle (top line, left column, bottom line, right column).
+                DECCARA is affected by <a href="#decom">DECOM</a>.
                 If <a href="#decsace">DECSACE</a> is off (1 or 0) then the
                 DECCARA affects the
                 stream of characters between the first and second character positions
@@ -14955,7 +15207,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" ctlseq="CSI s" badges="aaa" mnemonic="zPSH"
                  not-implemented="true" title="Push Line"/>
         <section role="ctlseq" ctlseq="CSI s" id="scosc" mnemonic="SCOSC"
-                 title="Save Cursor Position" badges="linux xterm" groups="isansi">
+                 title="Save Cursor Position" badges="linux xterm k95" groups="isansi">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-s.1BC3"/>
             <ref src="vt52x:371"/>
             <ref src="wy370:35"/>
@@ -14963,10 +15215,18 @@ DCS $ q 3 , } ST</pre>
                 <!-- Supposedly for SNI-97801 too, but for that the `CSI Ps s`
                      code path will be taken first resulting in this being
                      skipped -->
-            <!-- TODO: xterm: available only when DECLRMM is disabled (SCOSC, also ANSI.SYS) -->
+            <!-- TODO: xterm: available only when DECLRMM is disabled
+
+            This sequence supposedly comes from ANSI.SYS (DOS 2.0) rather than
+            SCO.
+            -->
             <p>
                 Saves the cursor X,Y position only. Does not save attributes or
                 the current page.
+            </p>
+            <p badges="k95 xterm">
+                This control sequence is not available when
+                <a href="#decvssm">DECLRMM/DECVSSM is enabled</a>.
             </p>
         </section>
         <section role="ctlseq" id="sunreset" ctlseq="CSI s"
@@ -14976,13 +15236,34 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="decslrm" mnemonic="DECSLRM"
                  title="Set Left and Right margins"
-                 not-implemented="true" todo="true">
+                 groups="isvt420" badges="k95 xterm">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pl;Pr-s.1DA9"/>
             <ref src="vt420:155"/>
             <ref src="vt510:DECSLRM.html"/>
-            <ref src="vt52x:294"/>
+            <ref src="vt52x:291"/>
+            <ref src="070:282"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
+            <implchk std070="true" xt="407"/>
             <ctlseq>CSI <param-single symbol="Pl"/> ; <param-single symbol="Pr"/> s </ctlseq>
+            <p>
+                Sets the left and right margins for the current page and homes
+                the cursor obeying <a href="#decom">DECOM</a> if and only
+                if <a href="#decvssm">DECVSSM/DECLRMM</a> is set, the
+                specified value for the left margin is less than the value
+                specified for the right margin, and the right margin is less
+                than or equal to the width of the page.
+            </p>
+            <p>
+                The current Left/Right margin setting can be queried with
+                <a href="#decrqss">DECRQSS</a>.
+            </p>
+            <p groups="isvt420" badges="k95">
+                <!-- TODO: XTERM does not do this - STD070 doesn't specify it,
+                          but it is how the VT420 and VT520 behave -->
+                This control sequence is ignored when the cursor is on the
+                host-writable status line (see: <a href="#decssdt">DECSSDT</a>,
+                <a href="#decsasd">DECSASD</a>).
+            </p>
         </section>
         <section role="ctlseq" mnemonic="DECSPRTT" id="decsprtt"
                  title="Select Printer Type"
@@ -15398,7 +15679,8 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pr"/></tt> is
                 the rectangle. If <a href="#decsace">DECSACE</a> is off (1 or 0) then the DECRARA affects the
                 stream of characters between the first and second character positions
-                specified. The <param-single symbol="Pm"/> is the SGR attributes
+                specified. Coordinates are affected by <a href="#decom">DECOM</a>.
+                The <param-single symbol="Pm"/> is the SGR attributes
                 to change, one of:
             </p>
             <table>
@@ -15798,7 +16080,9 @@ DCS $ q 3 , } ST</pre>
                 <tt><param-single symbol="Ptd"/> ;
                     <param-single symbol="Pld"/></tt> is the destination
                 rectangle (top, left) and <param-single symbol="Ppd"/> is the
-                destination page.
+                destination page. Coordinates are affected by
+                <a href="#decom">DECOM</a> (source and destination pages may
+                have different margins set).
             </p>
             <p>
                 If the source or destination page is less than 1, then the first
@@ -15860,7 +16144,7 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="decrqpsr" mnemonic="DECRQPSR"
                  title="Request Presentation State Report"
-                 not-implemented="true" todo="true">
+                 groups="isvt320">
             <ctlseq>CSI <param-single/> $ w</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w.1D08"/>
             <ref src="vt340:224"/>
@@ -15869,6 +16153,34 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:265"/>
             <ref src="wy370:140"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>Request a presentation state report. <param-single/> is the
+                report being requested.
+            </p>
+            <section role="parameter" id="decrqpsr-ignored" title="Ignored">
+                <ctlseq><param-single/> = 0</ctlseq>
+            </section>
+            <section role="parameter" id="decrqpsr-deccir" title="Cursor Information Report (DECCIR)">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w.1D08"/>
+                <ref src="vt340:224"/>
+                <ref src="vt420:270"/>
+                <ref src="vt510:DECRQPSR.html"/>
+                <ref src="vt52x:265"/>
+                <ref src="wy370:140"/>
+                <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+                <p>Requests a <a href="#deccir">Cursor Information Report (DECCIR)</a></p>
+            </section>
+            <section role="parameter" id="decrqpsr-tadectabsr" title="Tab Stop Report (DECTABSR)">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-w.1D08"/>
+                <ref src="vt340:224"/>
+                <ref src="vt420:270"/>
+                <ref src="vt510:DECRQPSR.html"/>
+                <ref src="vt52x:265"/>
+                <ref src="wy370:140"/>
+                <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+                <p>Requests a <a href="#dectabsr">Tab Stop Report (DECTABSR)</a></p>
+            </section>
         </section>
         <section role="ctlseq" id="decefr" mnemonic="DECEFR"
                  title="Enable Filter Rectangle"
@@ -16326,9 +16638,14 @@ DCS $ q 3 , } ST</pre>
                 this will only be available to VT420 and higher emulations.
             </p>
             <p>
+                Fills the specified rectangular area with the specified
+                character using the current SGR attributes.
+            </p>
+            <p>
                 <tt><param-single symbol="Pt"/> ;
                     <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                     <param-single symbol="Pr"/></tt> is the rectangle to fill.
+                Coordinates are affected by <a href="#decom">DECOM</a>.
             </p>
             <p>
                 <param-single symbol="Pc"/> is an integer referring to a
@@ -16595,6 +16912,14 @@ DCS $ q 3 , } ST</pre>
             </p>
             <p>Pt is the top line, Pb is the bottom line, Pl is the left column,
                 and Pr is the right column.
+                These coordinates are affected by <a href="#decom">DECOM</a>.
+                The left column can not be greater than the right, and the top
+                can not be greater than the bottom.
+            </p>
+            <p>
+                Any erased cells within the rectangle are skipped aside from
+                having their background color updated to the current erase
+                color.
             </p>
         </section>
         <section role="ctlseq" id="decelr" mnemonic="DECELR"
@@ -16715,11 +17040,18 @@ DCS $ q 3 , } ST</pre>
                 available to VT320-compatible terminal types. In the future,
                 this will only be available to VT420 and higher emulations.
             </p>
-            <p> <tt><param-single symbol="Pt"/> ;
+            <p> Erases all unerased characters in the specified rectangle with
+                the Space character unless those characters have the protected
+                attribute set. The rectangle is defined by
+                <tt><param-single symbol="Pt"/> ;
                     <param-single symbol="Pl"/> ;
                     <param-single symbol="Pb"/> ;
-                    <param-single symbol="Pr"/></tt> is the rectangle to selectively
-                erase
+                    <param-single symbol="Pr"/></tt>.
+                Coordinates are affected by <a href="#decom">DECOM</a>.
+            </p>
+            <p>
+                Any existing visual attributes set by <a href="#sgr">SGR</a>,
+                protection attributes, and line attributes are unaffected.
             </p>
         </section>
         <section role="ctlseq" id="decstglt" mnemonic="DECSTGLT"
@@ -16829,10 +17161,24 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:279"/>
             <ref src="vws:108"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 v510 putty"/>
+            <implchk std070="true"/>
             <p>
                 The parameter <param-single/> specifies the new width of the
-                terminal. If no width is specified, or the width specified is
-                less than 80, then the terminal will be set to 80 columns.
+                terminal. VT emulations treat any width less than 80 as 80, and
+                any width above 80 as 132.
+            </p>
+            <p>DECSCPP is unaffected by <a href="#decncsm">DECNCSM</a> and it
+                never clears the entire screen. When the width is reduced, the
+                area beyond the new last column is erased however.
+            </p>
+            <!-- decterm and vtstar behaviour confirmed -->
+            <p badges="k95 decterm vtstar">
+                Any reasonable width may be chosen. If <param-single/> is 42,
+                you will get a with of 42. If <param-single/> is 193 you will
+                get a width of 193.
+            </p>
+            <p badges="xterm"> <!-- as of xterm(390) -->
+                Any value other than 80 or 132 is ignored.
             </p>
             <section style="group" role="group">
                 <section title="80 columns" id="decscpp-0" role="parameter">
@@ -17163,7 +17509,11 @@ DCS $ q 3 , } ST</pre>
                 available to VT320-compatible terminal types. In the future,
                 this will only be available to VT420 and higher emulations.
             </p>
-            <p>Insert <param-single/> columns (default 1).</p>
+            <p>Insert <param-single/> blank columns (default 1) at the cursors
+                current location, with all columns between the cursor and the
+                right margin shifting right. If the cursor is outside the page
+                margins, DECIC is ignored.
+            </p>
         </section>
         <section role="ctlseq" id="decsasd"
                  mnemonic="DECSASD" title="Select Active Status Display">
@@ -17365,7 +17715,11 @@ DCS $ q 3 , } ST</pre>
                 available to VT320-compatible terminal types. In the future,
                 this will only be available to VT420 and higher emulations.
             </p>
-            <p>Delete <param-single/> columns (default 1).</p>
+            <p>Delete <param-single/> columns (default 1), shifting columns from
+                the right margin towards the cursor. One or more empty columns
+                are inserted at the right margin. If the cursor is outside the
+                page margins, DECDC is ignored.
+            </p>
         </section>
         <section role="ctlseq" id="decssdt"
                  mnemonic="DECSSDT" title="Select Status Line Type">
@@ -17387,6 +17741,9 @@ DCS $ q 3 , } ST</pre>
                 differs in behavior from the VT520 which reserves space on the
                 screen for the status line and just shows/hides it as required
                 without changing the number of terminal lines.
+            </p>
+            <p>When switching from the Indicator status line to host writable,
+                the <a href="#lcf">Last Column Flag</a> is cleared.
             </p>
             <p badges="k95">
                 Instead of changing the height of the terminal when showing or
@@ -18625,5 +18982,42 @@ DCS $ q 3 , } ST</pre>
                 <a href="#xt-ena-altbuf">Mode 1046</a>.
             </p>
         </section>
+    </section>
+    <section id="lcf" title="The Last Column Flag" role="text">
+        <p>
+            The <em>Last Column Flag</em> is a detail specific the way autowrap
+            was implemented in the line of video terminals manufactured by
+            Digital Equipment Corporation starting with the VT100.
+        </p>
+        <p>
+            Normally when the terminal receives a graphic character or space
+            character, the cursor is immediately advanced to the next column
+            after the character has been added to the display. If the cursor
+            is in the last column of the page and advancing would cause a wrap,
+            instead of advancing the cursor the terminal sets the
+            <em>Last Column Flag</em> causing the wrap to be deferred until the
+            next character is received.
+        </p>
+        <p>
+            If a graphic character or space is received while the
+            <em>Last Column Flag</em> is set, then the cursor is advanced to the
+            first column position on the next line <em>before</em> the received
+            character is added to the display and the <em>Last Column Flag</em>
+            is reset.
+        </p>
+
+        <p>
+            Most control sequences and control characters that potentially move
+            the cursor reset the Last Column Flag. This includes CR and LF.
+        </p>
+        <!-- TODO: Include a table here showing what the various emulations do
+                -->
+        <p>
+            This feature both enables cursors to be placed in the bottom right
+            corner of the display without resulting in the terminal scrolling,
+            and allows a full 80 column line of text terminated with CR+LF to be
+            output to the terminal without an additional line breaks as both the
+            CR and LF control characters clear the <em>Last Column Flag</em>.
+        </p>
     </section>
 </document>

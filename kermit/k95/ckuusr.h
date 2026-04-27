@@ -1079,6 +1079,8 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_REGENT60 103     /* ADDS Regent 60  */
 #define     TT_REGENT100 104    /* ADDS Regent 100 */
 #define     TT_REGENT200 105    /* ADDS Regent 200 */
+#define     TT_VTSTAR 110   /* DEC VTstar */
+#define     TT_DECTERM 111  /* DECterm */
 
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
@@ -1117,6 +1119,8 @@ struct stringint {			/* String and (wide) integer */
 #define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
 #else /* COMMENT */
 /* Since we do not yet support 420/520/525 extend 320 */
+#define ISVTSTAR(x) (ISVTSTAR(x))
+#define ISDECTERM(x) (ISVT320(x))
 #define ISVT525(x) (ISVT320(x))
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
@@ -1344,6 +1348,7 @@ struct stringint {			/* String and (wide) integer */
 #define     P_PCCM    0
 #define     P_COUNT   1
 #define     P_ACTIVE  2
+#define   XYTCLRRS  70  /* SET TERM CLEAR-ON-RESIZE */
 #endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */
