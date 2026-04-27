@@ -1780,6 +1780,14 @@ VscrnIsDirty( int vmode )
     extern int k95stdout;
     if ( k95stdout )
         return 0;
+#ifdef KUIDIRTY
+   /* Just having a number that constantly changes is a bit cheaper than
+    * semaphores. KUI is on a different thread, so it just needs to check if the
+    * number has changed since last it checked to know if its dirty. KUI never
+    * waited on the semaphore, so there wasn't much value in the extra overhead
+    * it has. */
+   vscrn[vmode].dirty++;
+#else /* KUIDIRTY */
 #ifdef OLDDIRTY
    RequestVscrnDirtyMutex( vmode, SEM_INDEFINITE_WAIT );
    if ( !isdirty[vmode] )
@@ -1790,11 +1798,13 @@ VscrnIsDirty( int vmode )
    ReleaseVscrnDirtyMutex(vmode);
 #else
     rc = PostVscrnDirtySem(vmode) ;
-#endif 
+#endif
+#endif /* KUIDIRTY */
    return rc ;
 }
 
 
+#ifndef KUIDIRTY
 APIRET
 IsVscrnDirty( int vmode )
 {
@@ -1824,9 +1834,11 @@ VscrnClean( int vmode )
 #else
     rc = IsVscrnDirty(vmode);
     ResetVscrnDirtySem(vmode);
-#endif 
+#endif
     return rc ;
 }
+#endif /* KUIDIRTY */
+
 /*----------------------------------------------------------+----------------*/
 /* VscrnScrollLf                                            | Page: Cursor   */
 /*----------------------------------------------------------+----------------*/
@@ -2991,7 +3003,7 @@ VscrnGetEnd( BYTE vmode, BOOL orStatusLine, BOOL view_page )
 /* VscrnSetPageTop                                          | Page: Specified*/
 /*----------------------------------------------------------+----------------*/
 LONG
-VscrnSetPageTop( BYTE vmode, LONG y, BOOL orStatusLine, int page )
+VscrnSetPageTop( BYTE vmode, LONG y, BOOL orStatusLine, int page, BOOL haveMutex )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
@@ -2999,9 +3011,9 @@ VscrnSetPageTop( BYTE vmode, LONG y, BOOL orStatusLine, int page )
     while ( y < 0 )
         y += vscrn[vmode].pages[page].linecount ;
 
-    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
+	if (!haveMutex) RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
     vscrn[vmode].pages[page].top = y%vscrn[vmode].pages[page].linecount ;
-    ReleaseVscrnMutex( vmode );
+    if (!haveMutex) ReleaseVscrnMutex( vmode );
     return vscrn[vmode].pages[page].top ;
 }
 
@@ -3012,7 +3024,7 @@ LONG
 VscrnSetTop( BYTE vmode, LONG y, BOOL orStatusLine, BOOL view )
 {
     return VscrnSetPageTop(vmode, y, orStatusLine,
-		vscrn_current_page_number(vmode, view));
+		vscrn_current_page_number(vmode, view), FALSE);
 }
 
 
@@ -3060,6 +3072,7 @@ VscrnSetScrollHorz( BYTE vmode, LONG h )
 /*----------------------------------------------------------+----------------*/
 /* VscrnSetPageBegin                                        | Page: Specified*/
 /*----------------------------------------------------------+----------------*/
+/* You must acquire the Vscrn mutex before calling! */
 LONG
 VscrnSetPageBegin( BYTE vmode, LONG y, int page )
 {
@@ -3070,25 +3083,14 @@ VscrnSetPageBegin( BYTE vmode, LONG y, int page )
     while ( y < 0 )
         y += vscrn[vmode].pages[page].linecount ;
 
-    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
     vscrn[vmode].pages[page].beg = y%vscrn[vmode].pages[page].linecount ;
-    ReleaseVscrnMutex( vmode );
     return vscrn[vmode].pages[page].beg ;
-}
-
-/*----------------------------------------------------------+----------------*/
-/* VscrnSetBegin                                            | Page: Specified*/
-/*----------------------------------------------------------+----------------*/
-LONG
-VscrnSetBegin( BYTE vmode, LONG y, BOOL view )
-{
-   return VscrnSetPageBegin(
-		vmode, y, vscrn_current_page_number(vmode, view));
 }
 
 /*----------------------------------------------------------+----------------*/
 /* VscrnSetPageEnd                                          | Page: Specified*/
 /*----------------------------------------------------------+----------------*/
+/* You must acquire the Vscrn mutex before calling! */
 LONG
 VscrnSetPageEnd( BYTE vmode, LONG y, int page )
 {
@@ -3098,20 +3100,8 @@ VscrnSetPageEnd( BYTE vmode, LONG y, int page )
     while ( y < 0 )
         y += vscrn[vmode].pages[page].linecount ;
 
-    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
     vscrn[vmode].pages[page].end = y%vscrn[vmode].pages[page].linecount ;
-    ReleaseVscrnMutex( vmode );
     return vscrn[vmode].pages[page].end ;
-}
-
-/*----------------------------------------------------------+----------------*/
-/* VscrnSetEnd                                              | Page: Specified*/
-/*----------------------------------------------------------+----------------*/
-LONG
-VscrnSetEnd( BYTE vmode, LONG y, BOOL view )
-{
-    return VscrnSetPageEnd(
-		vmode, y, vscrn_current_page_number(vmode, view));
 }
 
 /*----------------------------------------------------------+----------------*/
@@ -3652,7 +3642,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     }
                 }
 
-                VscrnSetPageTop( vmode,ntop, TRUE, page ) ;
+                VscrnSetPageTop( vmode,ntop, TRUE, page, TRUE ) ;
                 if ( bottommargin != VscrnGetHeight(vmode)
                                         -(tt_status[vmode]?2:1) )
                     VscrnScrollPage(vmode,DOWNWARD, bottommargin, VscrnGetHeight(vmode)

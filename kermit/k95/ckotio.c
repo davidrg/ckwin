@@ -1892,7 +1892,9 @@ sysinit() {
 #ifndef NOLOCAL
     CreateScreenMutex( FALSE ) ;
     CreateVscrnMutex( FALSE ) ;
+#ifdef OLDDIRTY
     CreateVscrnDirtyMutex( FALSE );
+#endif /* OLDDIRTY */
     CreateConnectModeMutex( FALSE ) ;
 #endif /* NOLOCAL */
     CreateThreadMgmtMutex( FALSE );
@@ -1915,7 +1917,9 @@ sysinit() {
     CreateTermScrnUpdThreadDownSem( FALSE ) ;
     CreateConKbdHandlerThreadDownSem( FALSE ) ;
     CreateKeyMapInitSem( FALSE ) ;
+#ifndef KUIDIRTY
     CreateVscrnDirtySem( TRUE );
+#endif /* KUIDIRTY */
 #endif /* NOLOCAL */
     CreateZoutDumpMutex( FALSE );
 
@@ -2496,7 +2500,9 @@ syscleanup() {
 #ifndef NOLOCAL
     CloseScreenMutex() ;
     CloseVscrnMutex() ;
+#ifdef OLDDIRTY
     CloseVscrnDirtyMutex() ;
+#endif /* OLDDIRTY */
     CloseConnectModeMutex() ;
     CloseCommandModeSem() ;
     CloseTerminalModeSem() ;
@@ -4392,6 +4398,10 @@ le_inbuf( void ) {
     }
     ReleaseLocalEchoMutex() ;
     return rc ;
+}
+
+int le_hasdata() {
+	return LocalEchoData;
 }
 
 int
