@@ -73,6 +73,12 @@ WIN32_VERSION=0x0400
 # WINVER up to that to get some extra shell notification icon features.
 !message Targeting Windows 2000 or newer
 WIN32_VERSION=0x0500
+
+# Safe to use for builds targeting Win2k or newer
+!if "$(CKF_CRITICAL_SECTIONS)" != "no"
+CKF_CRITICAL_SECTIONS=yes
+!endif
+
 !endif
 
 !if ($(MSC_VER) > 150)
@@ -783,4 +789,16 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) ShellNotify
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY -D_WIN32_IE=0x0501
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) ShellNotify
+!endif
+
+# Try to use CRITICAL_SECTIONs rather than Mutexes for thread synchronisation
+# in a few places. These are entirely user-space so have much lower overhead
+# than mutexes if there is little contention for the mutex. They don't support
+# being waited on with a timeout though - your options are wait forever, or
+# on Windows NT 4.0 and newer only, don't wait at all (TryEnterCriticalSection).
+# It should be possible to use TryEnterCriticalSection to simulate shorter
+# timeouts, but not on Windows NT 3.x and Windows 9x. So for now these are only
+# used on Modern Windows.
+!if "$(CKF_CRITICAL_SECTIONS)" == "yes"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_CRITICAL_SECTIONS
 !endif

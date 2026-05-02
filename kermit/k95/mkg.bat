@@ -11,6 +11,7 @@ SET KERMITDIR=..
 SET OUTDIR=.\win95%SUFFIX%
 SET NODEBUG=1
 SET PLATFORM=NT
+set KUI_BUILD=k95g
 cd kui
 %MAKE% /e /f makefile || exit /B %errorlevel%
 cd ..
