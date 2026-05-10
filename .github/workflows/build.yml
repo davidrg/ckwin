@@ -20,6 +20,7 @@ on:
 env:
   # Expected filename: https://zlib.net/zlib-1.3.1.tar.gz
   # old site: https://ftp.zx.net.nz/pub/dev/lib/zlib/
+  # new site: https://github.com/madler/zlib/releases/download/v${{env.ZLIB_VERSION}}/zlib-${{env.ZLIB_VERSION}}.tar.gz
   # As of 2023-01-21 downloads from zlib.net were coming back corrupted for an unknown reason,
   # so we switched fetching zlib from ftp.zx.net.nz instead. As of 2024-08-16 it seems to be
   # fine, so we've switched back to zlib.net.
@@ -430,7 +431,8 @@ jobs:
           # Get and unpack zlib
           mkdir zlib
           cd zlib
-          wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          # wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          wget https://github.com/madler/zlib/releases/download/v${{env.ZLIB_VERSION}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
           7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
           7z x zlib-${{env.ZLIB_VERSION}}.tar
           del zlib-${{env.ZLIB_VERSION}}.tar 
