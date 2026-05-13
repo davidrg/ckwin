@@ -5651,7 +5651,7 @@ isdoublewidth( unsigned short y )     /* based from 1 */
  *     scroll       If the scrollable area should scroll at the bottom margin.
  */
 void
-cursornextline(BOOL scroll) {
+cursornextline(BOOL scroll, int count) {
     if ( decsasd == SASD_TERMINAL ) {
         /* Due to a log from dcombeer I am no longer sure that */
         /* cursornextline() or cursorprevline() is affected by */
@@ -5659,10 +5659,10 @@ cursornextline(BOOL scroll) {
 
         if (vscrn_c_page_margin_bot(VTERM) > wherey[VTERM]) {
             int margin_left = 1;
-            int y = wherey[VTERM] + 1;
+            int y = wherey[VTERM] + count;
             if (relcursor && wherey[VTERM] < vscrn_c_page_margin_top(VTERM))
             {
-                y = vscrn_c_page_margin_top(VTERM) + 1;
+                y = vscrn_c_page_margin_top(VTERM) + count;
             }
 
             if ( printon && is_aprint() ) {
@@ -5670,7 +5670,8 @@ cursornextline(BOOL scroll) {
             }
 
             if (y >= vscrn_c_page_margin_top(VTERM) &&
-                y <= vscrn_c_page_margin_bot(VTERM)) {
+                y <= vscrn_c_page_margin_bot(VTERM) &&
+                wherex[VTERM] >= vscrn_c_page_margin_left(VTERM)) {
                 margin_left = vscrn_c_page_margin_left(VTERM);
             }
 
@@ -5892,7 +5893,7 @@ cursorrightex(int wrap, int obey_margins) {
                   ISHFT(tt_type_mode) ||
 #endif /* COMMENT */
                   ISDG200(tt_type_mode)) {
-            cursornextline(TRUE);
+            cursornextline(TRUE, 1);
             if ( wrapit ) {
                 cursorright(0);
                 wrapit = FALSE ;
@@ -18865,7 +18866,7 @@ vtcsi(void)
             }
             else {
                 /* CNL - Cursor Next Line */
-                cursornextline(FALSE);
+                cursornextline(FALSE, 1);
             }
             break;
         case 'F':
@@ -20610,11 +20611,11 @@ vtcsi(void)
                     /* CNL - Cursor next line */
                     /* moves active position pn[1] rows down */
                     if (pn[1] < 1) pn[1] = 1;
-                    do {
-                        cursornextline(FALSE);
-                        pn[1] = pn[1] - 1;
-                    } while (pn[1] > 0 &&
-                        wherey[VTERM] < vscrn_c_page_margin_bot(VTERM));
+
+                    if (pn[1] + wherey[VTERM] >= vscrn_c_page_margin_bot(VTERM))
+                        pn[1] = vscrn_c_page_margin_bot(VTERM) - wherey[VTERM];
+
+                    cursornextline(FALSE, pn[1]);
                 }
                 break;
             case 'e':
@@ -26629,7 +26630,7 @@ vtescape( void )
                 lgotoxy(VTERM,1,1);       /* and home the cursor */
             }
             else {                      /* NEL - Next Line */
-                cursornextline(TRUE);
+                cursornextline(TRUE, 1);
             }
             break;
         case 'F':

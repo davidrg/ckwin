@@ -5220,7 +5220,13 @@ DCS $ q 3 , } ST</pre>
                 <a href="#nel">NEL</a>, when the cursor hits the bottom margin
                 the page does <em>not</em> scroll. Clears the
                 <a href="#lcf">Last Column Flag</a>.
-                Affected by <a href="#decom">DECOM</a>.</p>
+                Affected by <a href="#decom">DECOM</a>.
+            </p>
+            <p>If the cursor is within the margins, or to the right of the left
+                margin, the cursor will be placed at the left margin
+                <param-single/> lines down. Otherwise the cursor will be placed
+                at screen left <param-single/> lines down.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="TSS" title="Thin Space Specification"
                  not-implemented="true" todo="true">
