@@ -9184,6 +9184,7 @@ cursor_right_margin(int vmode)
     return rmargin;
 }
 
+/* Returns true if the cursor is currently within the margins.  */
 bool
 cursor_in_margins(int vmode) {
     if (wherey[vmode] >= vscrn_c_page_margin_top(vmode) &&
@@ -9204,10 +9205,10 @@ cursor_in_margins(int vmode) {
 int
 cursor_pos_left_margin(int vmode, int y, int x)
 {
-    if (relcursor ||
-        y >= vscrn_c_page_margin_top(vmode) &&
-        y <= vscrn_c_page_margin_bot(vmode) &&
-        x >= vscrn_c_page_margin_left(vmode)) {
+    /* If relcursor is on, then the cursor is constrained to the margins. So the
+     * position of the cursor is irrelevant. Otherwise, the position of the left
+     * margin only matters if the cursor is within the margins. */
+    if (relcursor || cursor_in_margins(vmode)) {
         return vscrn_c_page_margin_left(vmode);
     }
 
