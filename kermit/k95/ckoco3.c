@@ -5643,12 +5643,17 @@ isdoublewidth( unsigned short y )     /* based from 1 */
 /*---------------------------------------------------------------------------*/
 /* CursorNextLine -                                         | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
-/* Moves the cursor to the first position on the next line. This will
- * be screen left if the cursor is outside the margins, or the left
- * margin if the cursor is inside the margins.
+/* Moves the cursor to the first position some number of lines down. This will
+ * be screen left if the cursor is currently outside the margins, or the left
+ * margin if the cursor is currently inside the margins.
+ *
+ * As the cursors relationship to the margins is evaluated before moving it,
+ * calling five times with a count of 1 may produce a different result from
+ * calling it once with a count of 5.
  *
  * Parameters:
  *     scroll       If the scrollable area should scroll at the bottom margin.
+ *     count        Number of lines down to move
  */
 void
 cursornextline(BOOL scroll, int count) {
