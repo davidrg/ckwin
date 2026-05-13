@@ -5703,7 +5703,7 @@ cursornextline(BOOL scroll, int count) {
 /*---------------------------------------------------------------------------*/
 /* CursorHPA                                                | Page: Cursor   */
 /*---------------------------------------------------------------------------*/
-/* Horizontal Position Absolute (HPA). Also, Cursor Horizontal Absolite (CHA).
+/* Horizontal Position Absolute (HPA). Also, Cursor Horizontal Absolute (CHA).
  * Move cursor to specified horizontal position
  *
  * Parameters:
