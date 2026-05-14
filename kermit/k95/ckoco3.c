@@ -5739,7 +5739,7 @@ cursorhpa(int x)
 /* CursorPrevLine -                                                   */
 /* ------------------------------------------------------------------ */
 void
-cursorprevline() {
+cursorprevline(int count) {
     if ( printon && is_aprint() ) {
         prtline( wherey[VTERM], LF ) ;
     }
@@ -5749,7 +5749,7 @@ cursorprevline() {
         /* Origin mode                                         */
 
         int y = wherey[VTERM];
-        int margin_left = cursor_left_margin(VTERM);
+        int margin_left = 1;
         int margin_top = 1;
 
         if (wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) &&
@@ -5758,10 +5758,18 @@ cursorprevline() {
             margin_top = vscrn_c_page_margin_top(VTERM);
         }
 
-        if (margin_top != wherey[VTERM])
-            y -= 1;
+        if (y >= vscrn_c_page_margin_top(VTERM) &&
+            y <= vscrn_c_page_margin_bot(VTERM) &&
+            wherex[VTERM] >= vscrn_c_page_margin_left(VTERM)) {
+            margin_left = vscrn_c_page_margin_left(VTERM);
+        }
+
+        if (margin_top <= wherey[VTERM] - count)
+            y -= count;
         else if ( wy_autopage )
             y = vscrn_c_page_margin_bot(VTERM);
+        else
+            y = margin_top;
 
         lgotoxy(VTERM, margin_left, y);
     }
@@ -18883,7 +18891,7 @@ vtcsi(void)
             }
             else {
                 /* Cursor Previous Line */
-                cursorprevline();
+                cursorprevline(1);
             }
             break;
         case 'J': /* Erase from cursor to end of scrn */
@@ -20677,10 +20685,13 @@ vtcsi(void)
                     /* CPL - Cursor Previous Line */
                     /* moves active position pn[1] rows up */
                     /* in the first column */
+                    if (pn[1] == 0) pn[1] = 1;
+                    cursorprevline(pn[1]);
+                    /*
                     do {
-                        cursorprevline();
+                        cursorprevline(pn[1]);
                         pn[1] = pn[1] - 1;
-                    } while (pn[1] > 0);
+                    } while (pn[1] > 0);*/
                 }
                 break;
             case 'G':
