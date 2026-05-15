@@ -27074,21 +27074,23 @@ vtescape( void )
                     short x,y ;
 
                     /* STD 070 says we reset SGR attributes, though no hardware
-                     * terminals tested do this. DECterm does though.*/
-                    attrib.blinking = FALSE;
-                    attrib.italic = FALSE;              /* No italic */
-                    attrib.bold = FALSE;
-                    attrib.invisible = FALSE;
-                    attrib.underlined = FALSE;
-                    attrib.reversed = FALSE;
-                    attrib.dim = FALSE ;
-                    attrib.graphic = FALSE ;
-                    attrib.wyseattr = FALSE ;
-                    attrib.crossedout = FALSE ;
-                    attrib.erased = FALSE;
-                    attrib.hyperlink = FALSE;
-                    attrib.linkid = 0;
-                    resetcolors(0);
+                     * terminals tested do this. DECterm does though. */
+                    if (ISK95(tt_type_mode) || ISDECTERM(tt_type_mode)) {
+                        attrib.blinking = FALSE;
+                        attrib.italic = FALSE;              /* No italic */
+                        attrib.bold = FALSE;
+                        attrib.invisible = FALSE;
+                        attrib.underlined = FALSE;
+                        attrib.reversed = FALSE;
+                        attrib.dim = FALSE ;
+                        attrib.graphic = FALSE ;
+                        attrib.wyseattr = FALSE ;
+                        attrib.crossedout = FALSE ;
+                        attrib.erased = FALSE;
+                        attrib.hyperlink = FALSE;
+                        attrib.linkid = 0;
+                        resetcolors(0);
+                    }
 
                     cell.c = 'E';
                     cell.video_attr = defaultattribute; /* was 0x07 */
