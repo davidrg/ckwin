@@ -140,7 +140,7 @@ int type_intrp = 0;
 extern int tcp_avail;
 extern bool viewonly;
 extern int k95stdout;
-extern int tt_scroll, tt_scroll_usr;
+extern int tt_scroll;
 #ifndef NOTERM
 extern int tt_status[VNUM];
 #endif /* NOTERM */
@@ -13418,7 +13418,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifdef OS2
     if (cx == XXNSCR) {
 	if ((z = cmcfm()) < 0) return(z);
-        tt_scroll = tt_scroll_usr = 0;
+        tt_scroll = 0;
         return(success = 1);
     }
 #endif /* OS2 */

@@ -15525,6 +15525,15 @@ char *                                  /* Evaluate builtin variable */
                 case CK_PALETTE_XTRGB88:
                     sprintf(vvbuf,"xterm-88rgb");
                     break;
+                case CK_PALETTE_VT525:
+                    sprintf(vvbuf, "vt525");
+                    break;
+                case CK_PALETTE_VT525_M:
+                    sprintf(vvbuf, "vt525-mono");
+                    break;
+                case CK_PALETTE_VT525_A:
+                    sprintf(vvbuf, "vt525-atc");
+                    break;
                 default:
                     sprintf(vvbuf,"unknown");
                     break;

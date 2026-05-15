@@ -93,10 +93,12 @@ void KuiShowNotification(int icon, char* title, char * message);
 #endif /* CK_SHELL_NOTIFY */
 
 BOOL KuiRenderToEmfFile(int vmode, char* filename);
+#ifdef CK_SAVE_TO_IMAGE
 BOOL KuiRenderToBmpFile(int vmode, char* filename);
 #ifdef CK_HAVE_GDIPLUS
 BOOL KuiRenderToPngFile(int vmode, char* filename);
 BOOL KuiRenderToGifFile(int vmode, char* filename);
 #endif /* CK_HAVE_GDIPLUS */
+#endif /* CK_SAVE_TO_IMAGE */
 
 void KuiRefreshTerminal();

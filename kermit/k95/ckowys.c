@@ -2049,6 +2049,7 @@ wyseascii( int ch )
 
                     x  = wherex[VTERM]-1 ;
                     vta.unerasable = TRUE ;
+                    vta.erased = FALSE;
                     for ( y=wherey[VTERM]-1 ; y<ys ; y++ )
                         VscrnWrtCell( VTERM, cell, vta, y, x ) ;
                     cursorright(0);
@@ -2069,6 +2070,7 @@ wyseascii( int ch )
                     x  = wherex[VTERM]-1 ;
                     for ( y=wherey[VTERM]-1 ; y<ys ; y++ ) {
                         vta = VscrnGetVtCharAttr( VTERM, x, y ) ;
+                        vta.erased = FALSE;
                         vta.unerasable = TRUE ;
                         VscrnWrtCell(VTERM, cell,
                                       writeprotect ? WPattrib : vta,

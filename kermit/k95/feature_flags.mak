@@ -34,6 +34,7 @@
 #   CKF_RICHEDIT   yes        Rich Edit control support
 #   CKF_TOOLBAR    yes        Include the toolbar
 #   CKF_REXX       no         REXX support
+#   CKF_SAVE_IMG   yes        Save as an image file (excl. EMF)
 #
 # The following flags are set automatically:
 #   CKF_SSH     Turned off when targeting OS/2 or when building with Open Watcom
@@ -167,6 +168,10 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35
 # These features are not available on Windows NT 3.50
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
+
+# Saving as a bitmap file relies on CreateDIBSection which isn't available on
+# Windows NT 3.10
+CKF_SAVE_IMG=no
 !endif
 
 # These features require Windows NT 3.51 and are unknown to Visual C++ 1.0/2.0
@@ -762,6 +767,13 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) GDI+
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_GDIPLUS
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) GDI+
+!endif
+
+!if "$(CKF_SAVE_IMG)" != "no"
+ENABLED_FEATURES = $(ENABLED_FEATURES) SaveImage
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SAVE_TO_IMAGE
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) SaveImage
 !endif
 
 # Shell notifications apparently need IE 5.01 installed to work. They're only
