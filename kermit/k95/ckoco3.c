@@ -18822,8 +18822,8 @@ vtcsi(void)
     unsigned short  pecount = 0;  /* Number of pe */
     int             vmode = VTERM;
     /* Currently everything here assumes terminal emulation only ever happens on
-     * VTERM and, selevtively, VSTATUS. Ideally that restriction would be lifted
-     * someday in which chas a vmode parameter will have to be introduced. Until
+     * VTERM and, selectively, VSTATUS. Ideally that restriction would be lifted
+     * someday in which case a vmode parameter will have to be introduced. Until
      * then, the hardcoded VTERMs can be progressively replaced with the above
      * vmode variable. */
 
