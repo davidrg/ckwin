@@ -198,7 +198,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    the `SHOW VERSIONS` output going forward
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
- - Upgrade OpenSSL to 3.5.5
+ - Upgrade OpenSSL to 3.5.6
  - Improved terminal throughput for SSH connections by around seven times, which
    helps when you accidentally cat a large log file.
  - Doubled maximum terminal lines to 256 in K95G on modern systems
@@ -477,7 +477,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed DECFRA not filling with current SGR or protection attributes, and not
    obeying DECOM
  - Fixed DECERA, DECSERA, DECCARA and DECRARA not obeying DECOM
-
+ - Fixed potential crash when exiting the console version of K95
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
