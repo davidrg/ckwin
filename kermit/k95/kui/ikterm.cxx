@@ -1,4 +1,7 @@
 #include "ikterm.h"
+
+#include "../ckocon.h"
+
 extern "C" {
 #include "ikui.h"
 extern enum markmodes markmodeflag[] ;
@@ -172,7 +175,9 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                     if ( RequestVscrnMutex( vnum, -1 ) )
                         return FALSE;
 #endif /* NEW_EXCLUSIVE */
-                    vt_char_attrs = line->vt_char_attrs[x+xho];
+                    /* Throw away the erased flag - the renderer doesn't care
+                     * about it, and it messes with its attribute batching */
+                    vt_char_attrs = line->vt_char_attrs[x+xho] & ~VT_CHAR_ATTR_ERASED;
 #ifdef NEW_EXCLUSIVE
                     /* Give mutex back */
                     ReleaseVscrnMutex(vnum) ;

@@ -8144,6 +8144,10 @@ static char *hxyterm[] = {
 #endif /* NOCSETS */
 
 #ifdef OS2
+"SET TERMINAL CLEAR-ON-RESIZE { ON, OFF }",
+"  When enabled, the terminal screen is cleared when ever it is resized. When",
+"  off, the contents of the terminal screen is preserved on resize.",
+" ",
 "SET TERMINAL CLIPBOARD-ACCESS { ALLOW-BOTH, ALLOW-READ, ALLOW-WRITE } ",
 #ifdef KUI
 #ifdef CK_SHELL_NOTIFY
