@@ -406,8 +406,7 @@ if [ "$F_RULED_LINES" = "1" ]; then
 	printf ' * DECterm Ruled Lines\n'
 
 	# This should put a box around the "Ruled Lines" text.
-	printf '\x1b[15;12;10;%d;1,r' $LINE
-	SPACE="$(($SPACE-1))"
+	printf '\x1b[15;12;11;%d;1,r' $LINE
 fi
 
 if [ "$F_SOFT_FONT" = "1" ]; then
