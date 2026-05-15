@@ -15500,7 +15500,7 @@ dodcs( void )
                         break;
                         }
                     case 's':           /* DECSLRM - Set Left and Right Margins */
-						if (IS_DECLRMM_AVAILABLE(tt_type_mode) {
+						if (IS_DECLRMM_AVAILABLE(tt_type_mode)) {
 							char buf[200];
                             _snprintf(buf, sizeof(buf), "%d;%ds",
 								vscrn_c_page_margin_left(VTERM),
