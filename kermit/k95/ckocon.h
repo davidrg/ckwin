@@ -1268,10 +1268,12 @@ typedef struct cell_struct {          /* to be used with VioWrtNCell() */
     cell_video_attr_t video_attr;      /* attribute */
 } viocell ;
 
+typedef unsigned short vt_char_attr_t;
+
 typedef struct videoline_struct {
     unsigned short      width ;           /* number of valid chars */
     viocell *           cells ;           /* valid to length width */
-    unsigned short *    vt_char_attrs ;   /* bitwise & of VT_CHAR_ATTR Values */
+    vt_char_attr_t *    vt_char_attrs ;   /* bitwise & of VT_CHAR_ATTR Values */
     unsigned short *    hyperlinks;       /* hyperlink index values */
     unsigned short      vt_line_attr ;
     short               markbeg ;
@@ -1548,7 +1550,7 @@ _PROTOTYP( int VscrnGetBookmark, ( BYTE, int ) ) ;
 _PROTOTYP( bool IsWARPed, ( void ) ) ;
 _PROTOTYP( APIRET VscrnIsDirty, ( int ) ) ;
 _PROTOTYP( void VscrnScroll, (BYTE, int, int, int, int,int, CHAR, BOOL) ) ;
-_PROTOTYP( void VscrnScrollPage, (BYTE, int, int, int, int, int, CHAR, int) ) ;
+_PROTOTYP( void VscrnScrollPage, (BYTE, int, int, int, int, int, int, int, CHAR, int) ) ;
 _PROTOTYP( BOOL IsOS2FullScreen, (void) ) ;
 _PROTOTYP( void SmoothScroll, (void) ) ;
 _PROTOTYP( void JumpScroll, (void ) ) ;

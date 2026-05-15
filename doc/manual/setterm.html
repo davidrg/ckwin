@@ -177,8 +177,15 @@ you must not have <tt>PARITY</tt> set to anything other than <tt>NONE</tt>.
 <i>remote-set</i></tt>
 
 <p>
+<dt><tt>SET TERMINAL CLEAR-ON-RESIZE <i>{</i> ON, OFF <i>}</i></tt>
+<dd>
+    When enabled, the terminal screen is cleared when ever it is resized. When
+    off, the contents of the terminal screen is preserved on resize.
+</dd>
+
+<p>
 <dt><tt>SET TERMINAL CLIPBOARD-ACCESS <i>{</i> ALLOW-BOTH, ALLOW-READ,
-    ALLOW-WRITE <i>}</i> <i>{</i> ON, OFF <i>} NOTIFY</i></tt>
+    ALLOW-WRITE <i>}</i> <i>{</i> ON, OFF <i>}</i> NOTIFY</tt>
 <dd>
     Enable or disable clipboard access by the remote host using OSC-52. You can
     turn read and write on or off individually, or you can set both at once with

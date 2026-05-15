@@ -974,6 +974,7 @@ static struct keytab trmtab[] = {
     { "character-set", XYTCS,     0 },
 #endif /* NOCSETS */
 #ifdef OS2
+    { "clear-on-resize",   XYTCLRRS,  0 },
     { "clipboard-access",  XYTCLP,    0 },
     { "code-page",     XYTCPG,    0 },
     { "color",         XYTCOL,    0 },
@@ -5317,6 +5318,15 @@ settrm() {
         y = cmnum("Maximum seconds to allow CTS off during CONNECT",
                   "5",10,&x,xxstring);
         return(setnum(&tt_ctstmo,x,y,10000));
+
+      case XYTCLRRS:                    /* TERMINAL CLEAR-ON-RESIZE */
+        y = seton(&x);                  /* Go parse ON or OFF */
+        if (y > 0) {                    /* Command succeeded? */
+            extern bool decncsm, decncsm_usr;
+            decncsm = decncsm_usr = !x;
+        }
+        return(y);
+
 
       case XYTCLP: {    /* SET TERMINAL CLIPBOARD-ACCESS */
             int zz;
