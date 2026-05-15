@@ -19587,6 +19587,8 @@ vtcsi(void)
                         }
 
                         if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
                             pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
                             pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
                             pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
@@ -19734,6 +19736,8 @@ vtcsi(void)
                         }
 
                         if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
                             pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
                             pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
                             pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
@@ -20008,6 +20012,8 @@ vtcsi(void)
                             pn[1] = SP ;
 
                         if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
                             pn[2] += vscrn_c_page_margin_top(VTERM)-1; /* top */
                             pn[3] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
                             pn[4] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
@@ -20069,6 +20075,8 @@ vtcsi(void)
                             pn[1] = 1 ;
 
                         if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
                             pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
                             pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
                             pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
@@ -20109,6 +20117,8 @@ vtcsi(void)
                             pn[1] = 1 ;
 
                         if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
                             pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
                             pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
                             pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
