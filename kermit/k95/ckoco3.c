@@ -147,6 +147,9 @@ int cursor_right_margin(int);
 int cursor_left_margin(int);
 bool cursor_in_margins(int);
 
+/* These terminal types get DECLRMM */
+#define IS_DECLRMM_AVAILABLE(x) (ISVT420((x)) || ISXTERM((x)) || ISK95((x)))
+
 /*
  *
  * =============================externals=====================================
@@ -7862,7 +7865,7 @@ restore_color_table(int dcsnext)
 
 void
 set_declrmm(bool enabled) {
-	if ((ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) || ISK95(tt_type_mode) )) {
+	if (IS_DECLRMM_AVAILABLE(tt_type_mode)) {
 		declrmm = enabled;
 
 		if (declrmm) {
@@ -15497,8 +15500,7 @@ dodcs( void )
                         break;
                         }
                     case 's':           /* DECSLRM - Set Left and Right Margins */
-						if ((ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ||
-						        ISK95(tt_type_mode) )) {
+						if (IS_DECLRMM_AVAILABLE(tt_type_mode) {
 							char buf[200];
                             _snprintf(buf, sizeof(buf), "%d;%ds",
 								vscrn_c_page_margin_left(VTERM),
@@ -19022,8 +19024,7 @@ vtcsi(void)
                 doreset(1);
             } else if (declrmm &&
                         (decsasd == SASD_TERMINAL || ISXTERM(tt_type_mode)) &&
-                        (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ||
-                            ISK95(tt_type_mode))) {
+                        IS_DECLRMM_AVAILABLE(tt_type_mode)) {
                 /* DECSLRM - Set Left/Right Margins (reset) -------------------
                  * Sets Left/Right margins only if Left/Right Margin Mode is
                  * enabled. The VT520 and VT420 ignore DECSLRM if the cursor is
@@ -19348,8 +19349,7 @@ vtcsi(void)
                             pn[2] = 3 ; /* permanently set */
                             break;
                         case 69: /* DECLRMM aka DECVSSM */
-                            if (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode)
-                                    || ISK95(tt_type_mode)) {
+                            if (IS_DECLRMM_AVAILABLE(tt_type_mode)) {
                                 pn[2] = declrmm ? 1 : 2;
                             }
                             break;
@@ -25003,8 +25003,7 @@ vtcsi(void)
                 }
 				else if (declrmm &&
 				        (decsasd == SASD_TERMINAL || ISXTERM(tt_type_mode)) &&
-				        (ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ||
-				            ISK95(tt_type_mode)) ) {
+				        IS_DECLRMM_AVAILABLE(tt_type_mode) ) {
 				    /* DECSLRM - Set Left/Right Margins -----------------------
                      * Sets Left/Right margins only if Left/Right Margin Mode is
                      * enabled. The VT520 and VT420 ignore DECSLRM if the cursor
