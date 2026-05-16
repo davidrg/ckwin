@@ -6432,6 +6432,23 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
                      	-1, -1,
                      	VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
                      	TRUE,fillchar, page);
+
+#ifdef KUI
+        if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+            videoline *line = NULL, *newline = NULL ;
+            int y = 0, y2 = 0, linecount = VscrnGetBufferSize(vmode,TRUE,FALSE);
+
+            /* Now we must restore any ruled lines */
+            for ( y = linecount - VscrnGetHeight(vmode) + (tt_status[vmode]?1:0)
+                    ; y < linecount ; y++,y2++ )
+            {
+                line = VscrnGetLineFromTop( vmode, y, FALSE ) ;
+                newline = VscrnGetLineFromTop( vmode, y2, FALSE ) ;
+                memcpy(newline->cell_attrs, line->cell_attrs,
+                    sizeof(vt_cell_attr_t) * MAXTERMCOL);
+            }
+        }
+#endif /* KUI */
     }
 }
 
@@ -6998,7 +7015,17 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
                 }
             }
         }
+#ifdef KUI
+        if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+            /* Preserve ruled lines too. The DECterm documentation for ruled
+             * lines doesn't say anything about DECSED, but it does seem to at
+             * least *try* to preserve them. It seems to be buggy though - some
+             * ruled lines survive, but not all. */
+            memcpy(newline->cell_attrs, line->cell_attrs,
+                    sizeof(vt_cell_attr_t) * MAXTERMCOL);
         }
+#endif /* KUI */
+    }
 }
 
 
