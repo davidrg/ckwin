@@ -3646,6 +3646,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     static cell_video_attr_t last_cellcolor = cell_video_attr_init_vio_attribute(0);
     static viocell blank_cells[MAXTERMCOL];
     static vt_char_attr_t blank_attrs[MAXTERMCOL];
+#ifdef KUI
+    static vt_cell_attr_t blank_cell_attrs[MAXTERMCOL];
+#endif /* KUI */
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -3664,6 +3667,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             blank_cells[x] = blankcell ;
             blank_attrs[x] = VT_CHAR_ATTR_ERASED;
+#ifdef KUI
+            blank_cell_attrs[x] = CA_ATTR_NONE;
+#endif /* KUI */
         }
         last_fillchar = fillchar;
         last_cellcolor = cellcolor ;
@@ -3740,6 +3746,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                             sizeof(viocell) * MAXTERMCOL);
                     memcpy(line->vt_char_attrs, blank_attrs,
                             sizeof(vt_char_attr_t) * MAXTERMCOL);
+#ifdef KUI
+                    memcpy(line->cell_attrs, blank_cell_attrs,
+                        sizeof(vt_cell_attr_t) * MAXTERMCOL);
+#endif /* KUI */
                 }
 
                 VscrnSetPageTop( vmode,ntop, TRUE, page ) ;
@@ -3775,6 +3785,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         memcpy(this_line.vt_char_attrs+leftmargin,
                                next_line.vt_char_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+#ifdef KUI
+                        memcpy(this_line.cell_attrs+leftmargin,
+                               next_line.cell_attrs+leftmargin,
+                               sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
+#endif /* KUI */
                     }
                 }
 
@@ -3794,6 +3809,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                             sizeof(viocell) * MAXTERMCOL);
                         memcpy(line->vt_char_attrs, blank_attrs,
                                 sizeof(vt_char_attr_t) * MAXTERMCOL);
+#ifdef KUI
+                        memcpy(line->cell_attrs, blank_cell_attrs,
+                            sizeof(vt_cell_attr_t) * MAXTERMCOL);
+#endif /* KUI */
                     } else {
                         memcpy(line->cells+leftmargin,
                                blank_cells+leftmargin,
@@ -3801,6 +3820,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         memcpy(line->vt_char_attrs+leftmargin,
                                blank_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+#ifdef KUI
+                        memcpy(line->cell_attrs+leftmargin,
+                               blank_cell_attrs+leftmargin,
+                               sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
+#endif /* KUI */
                     }
                 }
             }
@@ -3847,7 +3871,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                            prev_line.vt_char_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
 #ifdef KUI
-                    /* TODO: handle ruled lines */
+                    memcpy(this_line.cell_attrs+leftmargin,
+                           prev_line.cell_attrs+leftmargin,
+                           sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
 #endif /* KUI */
                 }
             }
@@ -3868,11 +3894,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                             sizeof(viocell) * MAXTERMCOL);
                     memcpy(line->vt_char_attrs, blank_attrs,
                             sizeof(vt_char_attr_t) * MAXTERMCOL);
-                    for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
 #ifdef KUI
-					    line->cell_attrs[x] = CA_ATTR_NONE;
+                    memcpy(line->cell_attrs, blank_cell_attrs,
+                        sizeof(vt_cell_attr_t) * MAXTERMCOL);
 #endif /* KUI */
-                    }
                 } else
                 {
                     memcpy(line->cells+leftmargin,
@@ -3882,7 +3907,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                            blank_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
 #ifdef KUI
-                    /* TODO: Handle ruled lines */
+                    memcpy(line->cell_attrs+leftmargin,
+                           blank_cell_attrs+leftmargin,
+                           sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
 #endif /* KUI */
                 }
             }

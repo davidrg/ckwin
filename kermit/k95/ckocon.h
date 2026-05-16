@@ -1282,13 +1282,14 @@ typedef struct cell_struct {          /* to be used with VioWrtNCell() */
 } viocell ;
 
 typedef unsigned short vt_char_attr_t;
+typedef unsigned char vt_cell_attr_t;
 
 typedef struct videoline_struct {
     unsigned short      width ;           /* number of valid chars */
     viocell *           cells ;           /* valid to length width */
     vt_char_attr_t *    vt_char_attrs ;   /* bitwise & of VT_CHAR_ATTR Values */
 #ifdef KUI
-    unsigned char  *    cell_attrs;       /* bitwise & of CA_ATTR Values */
+    vt_cell_attr_t *    cell_attrs;       /* bitwise & of CA_ATTR Values */
 #endif /* KUI */    
     unsigned short *    hyperlinks;       /* hyperlink index values */
     unsigned short      vt_line_attr ;
