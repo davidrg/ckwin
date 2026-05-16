@@ -270,6 +270,9 @@ F_DECLRMM=1        # L/R Margins
 F_PAGING=1         # Lack of Paging really breaks this script, so it can be
                    # turned off separately as its rarely implemented.
 
+# Not many of these are really used.
+F_VT520_FEATURES=1
+
 # Eventually: "PCTERM and win32 direct keyboard modes"
 KB_MODES="PCTERM direct keyboard mode"
 #        "|------Max Length-----------------------------|"
@@ -290,14 +293,23 @@ if [[ $IS_K95 == "true" ]]; then
   fi
 elif [[ $TERM == "vt320" ]]; then
     F_VT420_FEATURES=0
+    F_VT520_FEATURES=0
+    F_PAGING=0
 elif [[ $TERM == "vt220" ]]; then
     F_VT420_FEATURES=0
+    F_VT520_FEATURES=0
+    F_PAGING=0
     F_STATUS_LINE=0
     F_SOFT_FONT=0  # TODO: Current font is incompatible
+elif [[ $PRODUCT_ID == "28" ]]; then
+    # DECterm - a VT340 with some extra features but no soft-fonts.
+    F_VT420_FEATURES=0
+    F_VT520_FEATURES=0
+    F_SOFT_FONT=0
+    F_DECLRMM=0
 fi
 
 if [ "$F_VT420_FEATURES" != "1" ]; then
-  F_PAGING=0
   F_DECLRMM=0
 fi
 
@@ -402,11 +414,16 @@ fi
 
 # Line 6 or 7
 if [ "$F_RULED_LINES" = "1" ]; then
-  LINE=$(curline)
-	printf ' * DECterm Ruled Lines\n'
+	printf ' * DECterm Ruled Lines'
 
 	# This should put a box around the "Ruled Lines" text.
-	printf '\x1b[15;12;11;%d;1,r' $LINE
+	printf '\x1b[11D'   # CUB - go back 11
+	printf '\x1b[15;;11;;1,r'   # Ruled line starting at the cursor
+	if [ "$F_VT520_FEATURES" = "1" ]; then
+	  printf '\x1b[E'     # CNL
+	else
+	  printf '\x1bE'      # NEL
+	fi
 fi
 
 if [ "$F_SOFT_FONT" = "1" ]; then

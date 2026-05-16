@@ -25798,7 +25798,7 @@ vtcsi(void)
                         pattern = pn[1];
 
 						/* Starting column */
-                        if (k < 2) left = 1;
+                        if (k < 2) left = 0;
 						else left = pn[2];
 
                         /* width in columns */
@@ -25806,12 +25806,26 @@ vtcsi(void)
                         else width = pn[3];
 
                         /* Starting line */
-                        if (k < 4) top = 1;
+                        if (k < 4) top = 0;
 						else top = pn[4];
 
                         /* height in lines */
                         if (k < 5) height = 1;
                         else height = pn[5];
+
+                        if (achar == 'r') {
+                            /* DECDRLBR defaults to starting at the cursor */
+                            if (left == 0) left = wherex[VTERM];
+                            if (top == 0) top = wherey[VTERM];
+
+                            /* with a width and height of 1 */
+                            if (width == 0) width = 1;
+                            if (height == 0) height = 1;
+                        } else if (left == 0 || width == 0 || top == 0 || height == 0){
+                            /* DECERLBRP has no defaults - if an area is not
+                             * specified it does nothing. */
+                            break;
+                        }
 
 						ruledlines_escape(pattern, left, top, width, height,
 							achar == 'r'); /* 'r' is set, 's' is clear */
