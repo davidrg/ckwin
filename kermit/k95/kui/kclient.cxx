@@ -251,15 +251,29 @@ size_t KClient::allocateClientPaintBuffers(K_CLIENT_PAINT* clientPaint,
     int column, row;
     ::getMaxSizes( &column, &row );
     //  workTempSize = (maxcells * sizeof(ushort) * 5) + (row * sizeof(ushort));  // This seems to allocate almost twice as much memory as actually needed!
-    size_t workTempSize = (maxcells * ((sizeof(ushort) * 2) + sizeof(cell_video_attr_t) + sizeof(char))) + (MAXSCRNROW * sizeof(ushort));
+    size_t workTempSize = MAXSCRNROW * sizeof(ushort); // Line attributes
+           workTempSize += maxcells * sizeof(ushort);  // Text
+           workTempSize += maxcells * sizeof(vt_char_attr_t);  // Effects
+           workTempSize += maxcells * sizeof(cell_video_attr_t);  // Colour
+           workTempSize += maxcells * sizeof(vt_cell_attr_t);  // Ruled lines
+
     uchar* workTemp = new uchar[ workTempSize ];
     memset( workTemp, '\0', workTempSize);
 
     clientPaint->textBuffer =   (ushort*)            &(workTemp[0]); /* One per cell */
-    clientPaint->attrBuffer =   (cell_video_attr_t*) &(workTemp[ maxcells * sizeof(ushort)]); /* One per cell */
-    clientPaint->effectBuffer = (ushort*)            &(workTemp[maxcells * (sizeof(cell_video_attr_t) + sizeof(ushort))]); /* One per cell */
-    clientPaint->lineAttr =     (ushort*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 2 * sizeof(ushort))]); /* One per line */
-	clientPaint->cellAttrBuffer = (char*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 3 * sizeof(ushort))]); /* One per line */
+    size_t offset = maxcells * sizeof(ushort);
+
+    clientPaint->attrBuffer =   (cell_video_attr_t*) &(workTemp[ offset ]); /* One per cell */
+    offset += maxcells * sizeof(cell_video_attr_t);
+
+    clientPaint->effectBuffer = (vt_char_attr_t*)    &(workTemp[ offset ]); /* One per cell */
+    offset += maxcells * sizeof(vt_char_attr_t);
+
+    clientPaint->cellAttrBuffer = (vt_cell_attr_t*)  &(workTemp[ offset ]); /* One per cell */
+    offset += maxcells * sizeof(vt_cell_attr_t);
+
+    clientPaint->lineAttr =     (ushort*)            &(workTemp[ offset ]); /* One per line */
+    offset += MAXSCRNROW * sizeof(ushort);
 
     *workTempOut = workTemp;
     return workTempSize;
@@ -1243,9 +1257,9 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     allocateClientPaintBuffers(&clientPaint, maxcells, &workBuf);
     ushort* textBuffer            = clientPaint.textBuffer;
     cell_video_attr_t* attrBuffer = clientPaint.attrBuffer;
-    ushort* effectBuffer          = clientPaint.effectBuffer;
+    vt_char_attr_t* effectBuffer  = clientPaint.effectBuffer;
     ushort* lineAttr              = clientPaint.lineAttr;
-	char* cellAttrBuffer		  = clientPaint.cellAttrBuffer;
+	vt_cell_attr_t* cellAttrBuffer	= clientPaint.cellAttrBuffer;
 
     K_WORK_STORE *workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );

@@ -96,14 +96,14 @@ private:    // this section is for performance
 
     ushort* textBuffer;
     cell_video_attr_t* attrBuffer;
-    ushort* effectBuffer;
+    vt_char_attr_t* effectBuffer;
     ushort* lineAttr;
-    char* cellAttrBuffer;
+    vt_cell_attr_t* cellAttrBuffer;
     _K_WORK_STORE* kws;
 
     cell_video_attr_t prevAttr;
-    ushort prevEffect;
-    char prevCellAttr;
+    vt_char_attr_t prevEffect;
+    vt_cell_attr_t prevCellAttr;
     COLORREF textColor;
 
     int wc;
