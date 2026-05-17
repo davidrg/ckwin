@@ -144,6 +144,8 @@ private:    // this section is for performance
     HBRUSH disabledBrush;
     HBRUSH bgBrush;
     HPEN ruledLinePen;
+    cell_video_attr_t normalAttr;
+    bool screenNormal;
     DWORD savebgcolor;
     int interSpace[MAXNUMCOL];
 

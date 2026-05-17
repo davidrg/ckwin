@@ -52,13 +52,14 @@ cell_video_attr_t geterasecolor(int);
 int tt_old_update;
 extern int tt_sync_output;  /* ckoco3.c */
 extern int tt_sync_output_timeout;
+extern bool     decscnm;
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
 extern DWORD VscrnIsDirty( int );
 
 extern int colorpalette; /* ckoco3.c */
-extern cell_video_attr_t  colorcursor;  /* ckoco3.c */
+extern cell_video_attr_t  colorcursor, colornormal;  /* ckoco3.c */
 
 #ifdef CK_COLORS_DEBUG
 extern ULONG RGBTable256[256];
@@ -160,6 +161,7 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , _msgret( 1 )
     , ws_blinking( 0 )
     , cursor_displayed( 0 )
+    , screenNormal(FALSE)
 {
 #ifdef CK_COLORS_24BIT
 #if _MSC_VER < 1800
@@ -826,6 +828,17 @@ void KClient::writeMe()
         savebgcolor = rgb;
     }
     FillRect( hdc(), &r, bgBrush); 
+
+    if (!cell_video_attr_equal(colornormal, normalAttr) ||
+            decscnm != screenNormal) {
+        normalAttr = colornormal;
+        screenNormal = decscnm;
+        DeleteObject (ruledLinePen);
+        DWORD rgb = decscnm
+            ? cell_video_attr_background_rgb(colornormal)
+            : cell_video_attr_foreground_rgb(colornormal);
+        ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
+    }
 
     // Then paint the data
     wc = 0;
@@ -1501,7 +1514,10 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     // ruled lines.
     if (anyRuledLines) {
         Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
-        HPEN ruledLinePen = (HPEN) GetStockObject( WHITE_PEN );
+        DWORD rgb = decscnm
+            ? cell_video_attr_background_rgb(colornormal)
+            : cell_video_attr_foreground_rgb(colornormal);
+        HPEN ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
 
         for( i = 0; i < wc; i++ ) {
             kws = &(workStore[i]);
