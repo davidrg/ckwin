@@ -655,12 +655,12 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;21;22;28;32;42;44c",     /* Kermit 95 self-personality */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;21;22;28;32;42;43;44c",     /* Kermit 95 self-personality */
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
 				horizontal-scrolling;ansi-color;rectangular-editing;text-macros;
-				latin-2;PCTerm
+				latin-2;ruled-lines;PCTerm
             */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
@@ -6432,6 +6432,33 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
                      	-1, -1,
                      	VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
                      	TRUE,fillchar, page);
+
+#ifdef KUI
+        if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+            videoline *line = NULL, *newline = NULL ;
+            int y = 0, y2 = 0, linecount = VscrnGetBufferSize(vmode,TRUE,FALSE);
+#ifndef PACKED_CELL_ATTRS
+            int x = 0;
+#endif /* PACKED_CELL_ATTRS */
+
+            /* Now we must restore any ruled lines */
+            for ( y = linecount - VscrnGetHeight(vmode) + (tt_status[vmode]?1:0)
+                    ; y < linecount ; y++,y2++ )
+            {
+                line = VscrnGetLineFromTop( vmode, y, FALSE ) ;
+                newline = VscrnGetLineFromTop( vmode, y2, FALSE ) ;
+#ifdef PACKED_CELL_ATTRS
+                memcpy(newline->cell_attrs, line->cell_attrs,
+                    sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+#else /* PACKED_CELL_ATTRS */
+                for ( x = 0 ; x < CELL_ATTR_LEN ; x++ ) {
+                    /* Only preserve ruled line attributes */
+                    newline->cell_attrs[x] = line->cell_attrs[x] & CA_ATTR_RULED_LINES;
+                }
+#endif /* PACKED_CELL_ATTRS */
+            }
+        }
+#endif /* KUI */
     }
 }
 
@@ -6990,6 +7017,14 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
                 }
                 newline->vt_char_attrs[x] = line->vt_char_attrs[x] ;
                 newline->vt_line_attr = line->vt_line_attr;
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+                if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+                    /* Only preserve ruled line attributes */
+                    newline->cell_attrs[x] = line->cell_attrs[x] & CA_ATTR_RULED_LINES;
+                }
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
             }
             else {
                 if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
@@ -6998,7 +7033,19 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
                 }
             }
         }
+#ifdef KUI
+#ifdef PACKED_CELL_ATTRS
+        if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+            /* Preserve ruled lines too. The DECterm documentation for ruled
+             * lines doesn't say anything about DECSED, but it does seem to at
+             * least *try* to preserve them. It seems to be buggy though - some
+             * ruled lines survive, but not all. */
+            memcpy(newline->cell_attrs, line->cell_attrs,
+                    sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
         }
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
+    }
 }
 
 
@@ -7332,6 +7379,117 @@ boxrect_escape( BYTE vmode, int row, int col )
         VscrnWrtCell( vmode, cell, vta, erow, x ) ;
     }
 }
+
+#ifdef KUI
+#define DECDRLBR_BOTTOM  0x01
+#define DECDRLBR_RIGHT   0x02
+#define DECDRLBR_TOP     0x04
+#define DECDRLBR_LEFT    0x08
+void
+ruledlines_escape(int pattern, int left, int top, int width, int height, BOOL set) {
+	int right, bot, x, y;
+
+	/* TODO:
+	 *	  - Cursor Coupling: should this be happening on the cursor page only?
+	 *      Currently assuming yes.
+	 */
+
+    if (pattern & 0x0F == 0) return; /* Nothing to do */
+
+	/* Columns and lines are numbered from 0 */
+    left -= 1;
+    right = left + width-1;
+    bot = top + height-1;
+
+    /* Top or Bottom boundary */
+    if (pattern & DECDRLBR_BOTTOM || pattern & DECDRLBR_TOP) {
+        videoline *topLine = NULL;
+        videoline *botLine = NULL;
+
+        /* Top line */
+        if (pattern & DECDRLBR_TOP) {
+            debug(F111, "Ruled Lines top at", "y", top - 1);
+            topLine = VscrnGetLineFromTop(vmode, top - 1, FALSE);
+        }
+
+        if (pattern & DECDRLBR_BOTTOM) {
+            debug(F111, "Ruled Lines bot at", "y", bot - 1);
+            botLine = VscrnGetLineFromTop(vmode, bot - 1, FALSE);
+        }
+
+        /* Cells are numbered from 0 */
+        for (x = left; x <= right; x++) {
+            if (topLine) {
+                debug(F111, "Ruled Lines top at", "x", x);
+                CELL_ATTR_SET(topLine,x,
+					set ? CELL_ATTR_GET(topLine,x) | CA_ATTR_TOP_BORDER
+                    	: CELL_ATTR_GET(topLine,x) & ~CA_ATTR_TOP_BORDER);
+            }
+
+            if (botLine) {
+                debug(F111, "Ruled Lines bot at", "x", x);
+                 CELL_ATTR_SET(botLine,x,
+                    set ? CELL_ATTR_GET(botLine,x) | CA_ATTR_BOTTOM_BORDER
+						: CELL_ATTR_GET(botLine,x) & ~CA_ATTR_BOTTOM_BORDER);
+            }
+        }
+    }
+
+    /* Left or Right boundary */
+    if (pattern & DECDRLBR_RIGHT || pattern & DECDRLBR_LEFT) {
+        debug(F111, "Ruled Lines left at", "x", left);
+        debug(F111, "Ruled Lines left at", "x", right);
+        for (y = top-1; y < bot; y++) {
+            videoline *line = VscrnGetLineFromTop(vmode, y, FALSE);
+
+            if (pattern & DECDRLBR_LEFT) {
+                debug(F111, "Ruled Lines left at", "y", y);
+                CELL_ATTR_SET(line,left,
+					set ? CELL_ATTR_GET(line,left) | CA_ATTR_LEFT_BORDER
+                    	: CELL_ATTR_GET(line,left) & ~CA_ATTR_LEFT_BORDER);
+            }
+
+            if (pattern & DECDRLBR_RIGHT) {
+                debug(F111, "Ruled Lines right at", "y", y);
+                CELL_ATTR_SET(line,right,
+					set ? CELL_ATTR_GET(line,right) | CA_ATTR_RIGHT_BORDER
+                    	: CELL_ATTR_GET(line,right) & ~CA_ATTR_RIGHT_BORDER);
+            }
+        }
+    }
+
+    if (cursor_on_visible_page(VTERM)) {
+    	VscrnIsDirty(vmode);
+	}
+}
+
+/* Erase all ruled lines in an area */
+void
+decerlbra_escape(int left, int top, int width, int height) {
+	int right, bot, x, y, mask;
+
+	/* Columns and lines are numbered from 0 */
+    left -= 1;
+    right = left + width-1;
+    bot = top + height-1;
+
+	mask = ~(CA_ATTR_TOP_BORDER | CA_ATTR_BOTTOM_BORDER |
+				CA_ATTR_LEFT_BORDER | CA_ATTR_RIGHT_BORDER);
+
+	for (y = top-1; y < bot; y++) {
+		videoline *line = VscrnGetLineFromTop(vmode, y, FALSE);
+
+        for (x = left; x <= right; x++) {
+            CELL_ATTR_SET(line,x, CELL_ATTR_GET(line,x) & mask);
+        }
+	}
+
+	if (cursor_on_visible_page(VTERM)) {
+    	VscrnIsDirty(vmode);
+	}
+}
+
+#endif /* KUI */
 
 void
 decdwl_escape(bool dwlflag) {
@@ -25675,6 +25833,96 @@ vtcsi(void)
                         pn[1] = 8 ;
                     loadtod( pn[1], pn[2] ) ;
                     break;
+#ifdef KUI
+				case 'r':
+				case 's':
+					/* r - DECDRLBR - Draw Ruled Lines in a pattern
+					 * s - DECERLBRP - Erase Ruled Lines in a pattern */
+                    if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+						int pattern, left, top, width, height;
+
+						if (k < 1) break; /* First parameter (pattern) required */
+                        pattern = pn[1];
+
+						/* Starting column */
+                        if (k < 2) left = 0;
+						else left = pn[2];
+
+                        /* width in columns */
+                        if (k < 3) width = 1;
+                        else width = pn[3];
+
+                        /* Starting line */
+                        if (k < 4) top = 0;
+						else top = pn[4];
+
+                        /* height in lines */
+                        if (k < 5) height = 1;
+                        else height = pn[5];
+
+                        if (achar == 'r') {
+                            /* DECDRLBR defaults to starting at the cursor */
+                            if (left == 0) left = wherex[VTERM];
+                            if (top == 0) top = wherey[VTERM];
+
+                            /* with a width and height of 1 */
+                            if (width == 0) width = 1;
+                            if (height == 0) height = 1;
+                        } else if (left == 0 || width == 0 || top == 0 || height == 0){
+                            /* DECERLBRP has no defaults - if an area is not
+                             * specified it does nothing. */
+                            break;
+                        }
+
+						ruledlines_escape(pattern, left, top, width, height,
+							achar == 'r'); /* 'r' is set, 's' is clear */
+					}
+					break;
+				case 't':
+					/* DECERLBRA  - Erase All Ruled Lines in an Area */
+					if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+						int scope;
+
+						if (k < 1) scope = 1;
+						else scope = pn[1];
+
+						if (scope == 0 || scope == 1) {
+							/* Erase all ruled lines on screen */
+
+							/* For scope 0/1 DECterm would still require an area
+						   	   to be specified, otherwise it would ignore the
+						       whole thing. We won't enforce that though.
+							if (k < 5) break; */
+
+							decerlbra_escape(1, 1,
+								tt_cols[VTERM], tt_rows[VTERM]);
+
+						} else if (scope == 2) {
+							/* Erase all ruled lines in an area */
+
+							int left, top, width, height;
+
+							/* Starting column */
+                        	if (k < 2) left = 1;
+							else left = pn[2];
+
+                        	/* width in columns */
+                        	if (k < 3) width = 1;
+                    	    else width = pn[3];
+
+            	            /* Starting line */
+                	        if (k < 4) top = 1;
+							else top = pn[4];
+
+    	                    /* height in lines */
+	                        if (k < 5) height = 1;
+	                        else height = pn[5];
+
+							decerlbra_escape(left, top, width, height);
+						}
+					}
+					break;
+#endif /* KUI */
                 case 'x':     /* DECSPMA - Session Page Memory Allocation */
                     if (ISVT520(tt_type_mode)) {
                         /* We don't support multiple sessions, so this just

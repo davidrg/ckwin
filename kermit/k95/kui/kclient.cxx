@@ -21,6 +21,7 @@ typedef struct _K_WORK_STORE {
     int               y;
     cell_video_attr_t attr;
     unsigned short    effect;
+    char              cellAttr;
 } K_WORK_STORE;
 
 extern UINT keyArray [];    // from kuikey.cxx
@@ -51,13 +52,14 @@ cell_video_attr_t geterasecolor(int);
 int tt_old_update;
 extern int tt_sync_output;  /* ckoco3.c */
 extern int tt_sync_output_timeout;
+extern bool     decscnm;
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
 extern DWORD VscrnIsDirty( int );
 
 extern int colorpalette; /* ckoco3.c */
-extern cell_video_attr_t  colorcursor;  /* ckoco3.c */
+extern cell_video_attr_t  colorcursor, colornormal;  /* ckoco3.c */
 
 #ifdef CK_COLORS_DEBUG
 extern ULONG RGBTable256[256];
@@ -153,11 +155,13 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , prevAttr( cell_video_attr_init_vio_attribute(255) )
 #endif /* CK_COLORS_24BIT */
     , prevEffect( uchar(-1) )
+    , prevCellAttr( 0 )
     , _xoffset( 0 )
     , _yoffset( 0 )
     , _msgret( 1 )
     , ws_blinking( 0 )
     , cursor_displayed( 0 )
+    , screenNormal(FALSE)
 {
 #ifdef CK_COLORS_24BIT
 #if _MSC_VER < 1800
@@ -180,6 +184,7 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     attrBuffer = clientPaint->attrBuffer;
     effectBuffer = clientPaint->effectBuffer;
     lineAttr = clientPaint->lineAttr;
+	cellAttrBuffer = clientPaint->cellAttrBuffer;
 
     workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
@@ -197,6 +202,8 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
 
     /* Save initial window size so we can tell when it changes */
     getEndSize(previousWidth, previousHeight);
+
+    ruledLinePen = (HPEN) GetStockObject( WHITE_PEN );
 }
 
 /*------------------------------------------------------------------------
@@ -212,6 +219,7 @@ KClient::~KClient()
     DeleteObject( hrgnPaint );
     DeleteObject( disabledBrush );
     DeleteObject( bgBrush );
+    DeleteObject (ruledLinePen);
 
     if( timerID )
         KillTimer( hWnd, timerID );
@@ -245,14 +253,29 @@ size_t KClient::allocateClientPaintBuffers(K_CLIENT_PAINT* clientPaint,
     int column, row;
     ::getMaxSizes( &column, &row );
     //  workTempSize = (maxcells * sizeof(ushort) * 5) + (row * sizeof(ushort));  // This seems to allocate almost twice as much memory as actually needed!
-    size_t workTempSize = (maxcells * ((sizeof(ushort) * 2) + sizeof(cell_video_attr_t))) + (MAXSCRNROW * sizeof(ushort));
+    size_t workTempSize = MAXSCRNROW * sizeof(ushort); // Line attributes
+           workTempSize += maxcells * sizeof(ushort);  // Text
+           workTempSize += maxcells * sizeof(vt_char_attr_t);  // Effects
+           workTempSize += maxcells * sizeof(cell_video_attr_t);  // Colour
+           workTempSize += maxcells * sizeof(vt_cell_attr_t);  // Ruled lines
+
     uchar* workTemp = new uchar[ workTempSize ];
     memset( workTemp, '\0', workTempSize);
 
     clientPaint->textBuffer =   (ushort*)            &(workTemp[0]); /* One per cell */
-    clientPaint->attrBuffer =   (cell_video_attr_t*) &(workTemp[ maxcells * sizeof(ushort)]); /* One per cell */
-    clientPaint->effectBuffer = (ushort*)            &(workTemp[maxcells * (sizeof(cell_video_attr_t) + sizeof(ushort))]); /* One per cell */
-    clientPaint->lineAttr =     (ushort*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 2 * sizeof(ushort))]); /* One per line */
+    size_t offset = maxcells * sizeof(ushort);
+
+    clientPaint->attrBuffer =   (cell_video_attr_t*) &(workTemp[ offset ]); /* One per cell */
+    offset += maxcells * sizeof(cell_video_attr_t);
+
+    clientPaint->effectBuffer = (vt_char_attr_t*)    &(workTemp[ offset ]); /* One per cell */
+    offset += maxcells * sizeof(vt_char_attr_t);
+
+    clientPaint->cellAttrBuffer = (vt_cell_attr_t*)  &(workTemp[ offset ]); /* One per cell */
+    offset += maxcells * sizeof(vt_cell_attr_t);
+
+    clientPaint->lineAttr =     (ushort*)            &(workTemp[ offset ]); /* One per line */
+    offset += MAXSCRNROW * sizeof(ushort);
 
     *workTempOut = workTemp;
     return workTempSize;
@@ -806,6 +829,17 @@ void KClient::writeMe()
     }
     FillRect( hdc(), &r, bgBrush); 
 
+    if (!cell_video_attr_equal(colornormal, normalAttr) ||
+            decscnm != screenNormal) {
+        normalAttr = colornormal;
+        screenNormal = decscnm;
+        DeleteObject (ruledLinePen);
+        DWORD rgb = decscnm
+            ? cell_video_attr_background_rgb(colornormal)
+            : cell_video_attr_foreground_rgb(colornormal);
+        ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
+    }
+
     // Then paint the data
     wc = 0;
     int xpos, i;
@@ -813,10 +847,16 @@ void KClient::writeMe()
     cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
     ushort effect = ushort(-1);
+    char cellAttr = 0;
+    // The following collects up contiguous strings of text that are all on the
+    // same line and have the same attributes, allowing the text to be painted
+    // in one go rather than a character at a time.
     for( i = 0; i < totlen; i++ )
     {
         xpos = i % twid;
-        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) || effectBuffer[i] != effect )
+        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr)
+                || effectBuffer[i] != effect
+                || cellAttrBuffer[i] != cellAttr )
         {
             kws = &(workStore[wc]);
 
@@ -828,6 +868,7 @@ void KClient::writeMe()
                 workStore[wc-1].length = i - workStore[wc-1].offset;
             attr = kws->attr = attrBuffer[i];
             effect = kws->effect = effectBuffer[i];
+            cellAttr = kws->cellAttr = cellAttrBuffer[i];
             wc++;
         }
     }
@@ -863,9 +904,18 @@ void KClient::writeMe()
     }
 
     RECT rect;
+    BOOL anyRuledLines = FALSE;
+    ws_blinking = 0;
     for( i = 0; i < wc; i++ )
     {
         kws = &(workStore[i]);
+
+        // Determine if this screen contains any blinking data besides the
+        // cursor
+        if( kws->effect & VT_CHAR_ATTR_BLINK ) {
+            ws_blinking = 1;
+        }
+
         if( !cell_video_attr_equal(prevAttr, kws->attr) )
         {
             prevAttr = kws->attr;
@@ -949,16 +999,20 @@ void KClient::writeMe()
                 getFont()->setItalic( hdc() );
         }
 
-        rect.left = kws->x;
-        rect.top = kws->y;
-        rect.right = rect.left + kws->length * font->getFontW();
-        rect.bottom = rect.top + font->getFontSpacedH();
+        if (prevCellAttr != kws->cellAttr ) {
+            prevCellAttr = kws->cellAttr;
 
-        if( rect.right == twid * font->getFontW() )
-            rect.right += margin();
+            anyRuledLines = anyRuledLines ||
+                            prevCellAttr & CA_ATTR_LEFT_BORDER ||
+                            prevCellAttr & CA_ATTR_TOP_BORDER ||
+                            prevCellAttr & CA_ATTR_RIGHT_BORDER ||
+                            prevCellAttr & CA_ATTR_BOTTOM_BORDER;
+        }
 
-        if( rect.bottom == thi * font->getFontSpacedH() )
-            rect.bottom += margin();
+        // Update the rect that covers the area we've gathered common attributes
+        // for. All text that belongs in this rect will be painted in one go
+        // with the selected attributes.
+        SetWorkStoreRect(&rect, kws, font, twid, thi, margin());
 
         if( !blink || blinkOn ) {
             ExtTextOutW( hdc(), rect.left, rect.top, 
@@ -975,6 +1029,9 @@ void KClient::writeMe()
         }
     }
 
+    // Stretch the contents of any double-height or double-wide lines to
+    // double-height or double-wide size. The EMF output doesn't support doing
+    // this.
     for( i = 0; i < thi; i++ )
     {
         lattr = lineAttr[i];
@@ -1014,7 +1071,31 @@ void KClient::writeMe()
         }
     }
 
+    // Deal with any ruled lines - this has to be done separately after
+    // any double-height/double-wide lines as these are not supposed to affect
+    // ruled lines.
+    if (anyRuledLines) {
+        Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
 
+        for( i = 0; i < wc; i++ ) {
+            kws = &(workStore[i]);
+
+            rlLeft = kws->cellAttr & CA_ATTR_LEFT_BORDER;
+            rlTop = kws->cellAttr & CA_ATTR_TOP_BORDER;
+            rlRight = kws->cellAttr & CA_ATTR_RIGHT_BORDER;
+            rlBottom = kws->cellAttr & CA_ATTR_BOTTOM_BORDER;
+
+            if (rlLeft || rlTop || rlRight || rlBottom) {
+                RECT rect;
+                SetWorkStoreRect(&rect, kws, font, twid, thi, margin());
+
+                drawRuledLines(hdc(), ruledLinePen, kws->length, font, rect,
+                               rlTop, rlBottom, rlLeft, rlRight);
+            }
+        }
+    }
+
+    // Draw the cursor
     if( clientPaint->cursorVisible && cursor_displayed && _inFocus) {
         int adjustedH = font->getFontH();
         if( tt_cursor == 2 )        // full
@@ -1068,17 +1149,74 @@ void KClient::writeMe()
         }
     }
 
+    // adjust the horizontal scrollbar (not currently used)
     vert->setPos( vscrollpos );
     hscrollpos = VscrnGetScrollHorz(vmode);
     horz->setPos( hscrollpos );
+}
 
-    // Determine if this screen contains any blinking data
-    ws_blinking = 0;
-    for( i = 0; i < wc; i++ ) {
-        if( workStore[i].effect & VT_CHAR_ATTR_BLINK ) {
-            ws_blinking = 1;
-            break;
+void KClient::SetWorkStoreRect(RECT* rect, _K_WORK_STORE* kws, KFont *font,
+        int terminalCellsWide, int terminalCellsHigh, int margin) {
+
+    rect->left = kws->x;
+    rect->top = kws->y;
+    rect->right = rect->left + kws->length * font->getFontW();
+    rect->bottom = rect->top + font->getFontSpacedH();
+
+    if( rect->right == terminalCellsWide * font->getFontW() )
+        rect->right += margin;
+
+    if( rect->bottom == terminalCellsHigh * font->getFontSpacedH() )
+        rect->bottom += margin;
+}
+
+// Draws the specified DECterm Ruled Lines for the specified rectangle.
+void KClient::drawRuledLines(HDC hdc, HPEN pen, int cells, KFont* font,
+            RECT rect, BOOL rlTop, BOOL rlBottom, BOOL rlLeft, BOOL rlRight) {
+    if (rlTop || rlBottom || rlLeft || rlRight) {
+        HPEN oldPen = (HPEN)SelectObject( hdc, pen );
+
+        // Top ruled line along the extent of this string. Offsets are to
+        // account for the offsets on the vertical lines
+        if (rlTop) {
+            // Line from [rect.left, rect.top] to [rect.right, rect.top]
+            MoveToEx(hdc, rect.left , rect.top, NULL);
+            LineTo(hdc, rect.right, rect.top);
         }
+
+        // Bottom ruled line along the extent of this string
+        if (rlBottom) {
+            // Line from [rect.left, rect.bottom] to [rect.right, rect.bottom]
+            MoveToEx(hdc, rect.left , rect.bottom-1, NULL);
+            LineTo(hdc, rect.right, rect.bottom-1);
+        }
+
+        // Vertical ruled lines on the left/right borders of cells.
+        if (rlLeft || rlRight) {
+            for (int i = 0; i < cells; i++) {
+                //int left = rect.left + 1 + i * font->getFontW();
+                //int right = left + font->getFontW() -1;
+
+                int left = rect.left + i * font->getFontW();
+                int right = left + font->getFontW() - 1;
+
+                if (rlLeft) {
+                    // Line on the left cell border. DECterm draws this one inside
+                    // the cell causing left and right borders to double up in to
+                    // a thicker line
+                    MoveToEx(hdc, left, rect.top, NULL);
+                    LineTo(hdc, left, rect.bottom);
+                }
+
+                if (rlRight) {
+                    // Line on the right cell border
+                    MoveToEx(hdc, right, rect.top, NULL);
+                    LineTo(hdc, right, rect.bottom);
+                }
+            }
+        }
+
+        SelectObject(hdc, oldPen);
     }
 }
 
@@ -1132,8 +1270,9 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     allocateClientPaintBuffers(&clientPaint, maxcells, &workBuf);
     ushort* textBuffer            = clientPaint.textBuffer;
     cell_video_attr_t* attrBuffer = clientPaint.attrBuffer;
-    ushort* effectBuffer          = clientPaint.effectBuffer;
+    vt_char_attr_t* effectBuffer  = clientPaint.effectBuffer;
     ushort* lineAttr              = clientPaint.lineAttr;
+	vt_cell_attr_t* cellAttrBuffer	= clientPaint.cellAttrBuffer;
 
     K_WORK_STORE *workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
@@ -1156,10 +1295,13 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
     ushort effect = ushort(-1);
+	char cellAttr = 0;
     for( i = 0; i < totlen; i++ )
     {
         xpos = i % twid;
-        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) || effectBuffer[i] != effect )
+        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr)
+					|| effectBuffer[i] != effect
+					|| cellAttrBuffer[i] != cellAttr )
         {
             kws = &(workStore[wc]);
 
@@ -1171,6 +1313,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                 workStore[wc-1].length = i - workStore[wc-1].offset;
             attr = kws->attr = attrBuffer[i];
             effect = kws->effect = effectBuffer[i];
+			cellAttr = kws->cellAttr = cellAttrBuffer[i];
             wc++;
         }
     }
@@ -1184,9 +1327,12 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
 
     // Output text in runs with matching attributes
     RECT rect;
+    BOOL anyRuledLines = FALSE;
     cell_video_attr_t prevAttr = cell_video_attr_init_vio_attribute(255);
     ushort prevEffect = uchar(-1);
+    char prevCellAttr = 0;
     BOOL blink;
+	Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
     for( i = 0; i < wc; i++ )
     {
         kws = &(workStore[i]);
@@ -1287,16 +1433,20 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
                 font->setItalic( hdc );
         }
 
-        rect.left = kws->x;
-        rect.top = kws->y;
-        rect.right = rect.left + kws->length * font->getFontW();
-        rect.bottom = rect.top + font->getFontSpacedH();
+        if (prevCellAttr != kws->cellAttr ) {
+            prevCellAttr = kws->cellAttr;
 
-        if( rect.right == twid * font->getFontW() )
-            rect.right += margin;
+            anyRuledLines = anyRuledLines ||
+                            prevCellAttr & CA_ATTR_LEFT_BORDER ||
+                            prevCellAttr & CA_ATTR_TOP_BORDER ||
+                            prevCellAttr & CA_ATTR_RIGHT_BORDER ||
+                            prevCellAttr & CA_ATTR_BOTTOM_BORDER;
+        }
 
-        if( rect.bottom == thi * font->getFontSpacedH() )
-            rect.bottom += margin;
+        // Update the rect that covers the area we've gathered common attributes
+        // for. All text that belongs in this rect will be painted in one go
+        // with the selected attributes.
+        SetWorkStoreRect(&rect, kws, font, twid, thi, margin);
 
         // This is where writeMe() decides whether or not to render blinking text.
         ExtTextOutW( hdc, rect.left, rect.top,
@@ -1357,6 +1507,35 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
         }
         DeleteDC( hdcScratch );
         DeleteObject( scratchBitmap );
+    }
+
+    // Deal with any ruled lines - this has to be done separately after
+    // any double-height/double-wide lines as these are not supposed to affect
+    // ruled lines.
+    if (anyRuledLines) {
+        Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
+        DWORD rgb = decscnm
+            ? cell_video_attr_background_rgb(colornormal)
+            : cell_video_attr_foreground_rgb(colornormal);
+        HPEN ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
+
+        for( i = 0; i < wc; i++ ) {
+            kws = &(workStore[i]);
+
+            rlLeft = kws->cellAttr & CA_ATTR_LEFT_BORDER;
+            rlTop = kws->cellAttr & CA_ATTR_TOP_BORDER;
+            rlRight = kws->cellAttr & CA_ATTR_RIGHT_BORDER;
+            rlBottom = kws->cellAttr & CA_ATTR_BOTTOM_BORDER;
+
+            if (rlLeft || rlTop || rlRight || rlBottom) {
+                RECT rect;
+                SetWorkStoreRect(&rect, kws, font, twid, thi, margin);
+
+                drawRuledLines(hdc, ruledLinePen, kws->length, font, rect,
+                                rlTop, rlBottom, rlLeft, rlRight);
+            }
+        }
+        DeleteObject(ruledLinePen);
     }
 
     success = GdiFlush();
