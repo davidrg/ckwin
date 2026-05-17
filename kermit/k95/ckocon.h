@@ -1258,16 +1258,52 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 #define WY_LINE_ATTR_PROTECTED        ((USHORT) 0x08)
 
 #ifdef KUI
-/* These currently only used by K95G */
+
+/* At this time only four cell attribute bits are used, so pack two cells into
+ * each byte to save memory. If five or more attribute bits are ever needed,
+ * delete PACKED_CELL_ATTRS and any code that is #ifdef PACKED_CELL_ATTRS.
+ * If a long time has passed since the year 2026 and no additional uses for cell
+ * attributes have arisen, its probably save to delete all the non-packed code
+ * paths and rename these to ruled line attributes or something. */
+#define PACKED_CELL_ATTRS
+
+/* These currently only used by K95G for implementing DECterm Ruled Lines */
 #define CA_ATTR_NONE                  ((CHAR) 0x00)
 #define CA_ATTR_LEFT_BORDER           ((CHAR) 0x01)
 #define CA_ATTR_TOP_BORDER            ((CHAR) 0x02)
 #define CA_ATTR_RIGHT_BORDER          ((CHAR) 0x04)
 #define CA_ATTR_BOTTOM_BORDER         ((CHAR) 0x08)
+#define CA_ATTR_RULED_LINES (CA_ATTR_LEFT_BORDER | CA_ATTR_TOP_BORDER | CA_ATTR_RIGHT_BORDER | CA_ATTR_BOTTOM_BORDER)
+
+#ifndef PACKED_CELL_ATTRS
+/* Not used, and not available when PACKED_CELL_ATTRS is defined */
 #define CA_ATTR_RESERVED_4            ((CHAR) 0x10)
 #define CA_ATTR_RESERVED_3            ((CHAR) 0x20)
 #define CA_ATTR_RESERVED_2            ((CHAR) 0x40)
 #define CA_ATTR_RESERVED_1            ((CHAR) 0x80)
+
+/* One per cell */
+#define CELL_ATTR_LEN MAXTERMCOL
+#define CELL_ATTR_GET(line, id) ((line)->cell_attrs[(id)])
+#define CELL_ATTR_SET(line, id, val) ((line)->cell_attrs[(id)] = (val))
+
+#else /* PACKED_CELL_ATTRS */
+/* The upper four bits aren't used, so no point wasting memory on them. Pack
+ * ruled lines for two cells into each byte. Other packing arrangements would
+ * require changes elsewhere (at a minimum in copy_cell_attrs, probably other
+ * places too) */
+#define CELL_ATTR_LEN (MAXTERMCOL/2 + 1)
+
+#define CELL_ATTR_GET(line, id) ((id)%2==0 ? ((line)->cell_attrs[(id)/2] & 0xF0) >> 4 \
+                                           : ((line)->cell_attrs[(id)/2] & 0x0F) )
+#define CELL_ATTR_SET(line, id, val) (\
+    (line)->cell_attrs[(id)/2] = (id)%2==0 \
+        ?  ((line)->cell_attrs[(id)/2] & 0x0F) | (val) << 4 \
+        : ((line)->cell_attrs[(id)/2] & 0xF0) | (val) & 0x0F)
+
+#endif /* PACKED_CELL_ATTRS */
+
+
 #endif /* KUI */
 
 /* On OS/2, this struct must be a pair of unsigned chars - the first a

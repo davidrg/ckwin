@@ -796,7 +796,7 @@ cleartermpage( BYTE vmode, int page ) {
             line->cells[x].video_attr = erasecolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
 #ifdef KUI
-			line->cell_attrs[x] = CA_ATTR_NONE;
+			CELL_ATTR_SET(line,x,CA_ATTR_NONE);
 #endif /* KUI */
             }
         }

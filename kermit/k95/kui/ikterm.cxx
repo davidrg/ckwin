@@ -180,7 +180,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                     /* Throw away the erased flag - the renderer doesn't care
                      * about it, and it messes with its attribute batching */
                     vt_char_attrs = line->vt_char_attrs[x+xho] & ~VT_CHAR_ATTR_ERASED;
-                    cell_attrs = line->cell_attrs[x+xho];
+                    cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                     /* Give mutex back */
                     ReleaseVscrnMutex(vnum) ;
@@ -283,7 +283,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                             textBuffer[c+x] = line->cells[x+xho].c ;
                             attrBuffer[c+x] = colorselect ;
                             effectBuffer[c+x] = line->vt_char_attrs[x+xho];
-                            cellAttrBuffer[c+x] = line->cell_attrs[x+xho];
+                            cellAttrBuffer[c+x] = CELL_ATTR_GET(line,x+xho);
                         }
                         else
                         {
@@ -293,7 +293,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
                             vt_char_attrs = line->vt_char_attrs[x+xho];
-                            cell_attrs = line->cell_attrs[x+xho];
+                            cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                             /* Give mutex back */
                             ReleaseVscrnMutex(vnum) ;
@@ -326,7 +326,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                             return FALSE;
 #endif /* NEW_EXCLUSIVE */
                         vt_char_attrs = line->vt_char_attrs[x+xho];
-                        cell_attrs = line->cell_attrs[x+xho];
+                        cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                         /* Give mutex back */
                         ReleaseVscrnMutex(vnum) ;
@@ -385,7 +385,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                                                         line->cells[x].video_attr,
                                                         line->vt_char_attrs[x]);
                 effectBuffer[c+x] = line->vt_char_attrs[x];
-                cellAttrBuffer[c+x] = line->cell_attrs[x];
+                cellAttrBuffer[c+x] = CELL_ATTR_GET(line,x);
             }
             c += xs ;
         }

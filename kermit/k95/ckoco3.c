@@ -6437,6 +6437,9 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
         if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
             videoline *line = NULL, *newline = NULL ;
             int y = 0, y2 = 0, linecount = VscrnGetBufferSize(vmode,TRUE,FALSE);
+#ifndef PACKED_CELL_ATTRS
+            int x = 0;
+#endif /* PACKED_CELL_ATTRS */
 
             /* Now we must restore any ruled lines */
             for ( y = linecount - VscrnGetHeight(vmode) + (tt_status[vmode]?1:0)
@@ -6444,8 +6447,15 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
             {
                 line = VscrnGetLineFromTop( vmode, y, FALSE ) ;
                 newline = VscrnGetLineFromTop( vmode, y2, FALSE ) ;
+#ifdef PACKED_CELL_ATTRS
                 memcpy(newline->cell_attrs, line->cell_attrs,
-                    sizeof(vt_cell_attr_t) * MAXTERMCOL);
+                    sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+#else /* PACKED_CELL_ATTRS */
+                for ( x = 0 ; x < CELL_ATTR_LEN ; x++ ) {
+                    /* Only preserve ruled line attributes */
+                    newline->cell_attrs[x] = line->cell_attrs[x] & CA_ATTR_RULED_LINES;
+                }
+#endif /* PACKED_CELL_ATTRS */
             }
         }
 #endif /* KUI */
@@ -7007,6 +7017,14 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
                 }
                 newline->vt_char_attrs[x] = line->vt_char_attrs[x] ;
                 newline->vt_line_attr = line->vt_line_attr;
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+                if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+                    /* Only preserve ruled line attributes */
+                    newline->cell_attrs[x] = line->cell_attrs[x] & CA_ATTR_RULED_LINES;
+                }
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
             }
             else {
                 if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
@@ -7016,14 +7034,16 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
             }
         }
 #ifdef KUI
+#ifdef PACKED_CELL_ATTRS
         if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
             /* Preserve ruled lines too. The DECterm documentation for ruled
              * lines doesn't say anything about DECSED, but it does seem to at
              * least *try* to preserve them. It seems to be buggy though - some
              * ruled lines survive, but not all. */
             memcpy(newline->cell_attrs, line->cell_attrs,
-                    sizeof(vt_cell_attr_t) * MAXTERMCOL);
+                    sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
         }
+#endif /* PACKED_CELL_ATTRS */
 #endif /* KUI */
     }
 }
@@ -7401,16 +7421,16 @@ ruledlines_escape(int pattern, int left, int top, int width, int height, BOOL se
         for (x = left; x <= right; x++) {
             if (topLine) {
                 debug(F111, "Ruled Lines top at", "x", x);
-                topLine->cell_attrs[x] =
-					set ? topLine->cell_attrs[x] | CA_ATTR_TOP_BORDER
-                    	: topLine->cell_attrs[x] & ~CA_ATTR_TOP_BORDER;
+                CELL_ATTR_SET(topLine,x,
+					set ? CELL_ATTR_GET(topLine,x) | CA_ATTR_TOP_BORDER
+                    	: CELL_ATTR_GET(topLine,x) & ~CA_ATTR_TOP_BORDER);
             }
 
             if (botLine) {
                 debug(F111, "Ruled Lines bot at", "x", x);
-                 botLine->cell_attrs[x] =
-                    set ? botLine->cell_attrs[x] | CA_ATTR_BOTTOM_BORDER
-						: botLine->cell_attrs[x] & ~CA_ATTR_BOTTOM_BORDER;
+                 CELL_ATTR_SET(botLine,x,
+                    set ? CELL_ATTR_GET(botLine,x) | CA_ATTR_BOTTOM_BORDER
+						: CELL_ATTR_GET(botLine,x) & ~CA_ATTR_BOTTOM_BORDER);
             }
         }
     }
@@ -7424,16 +7444,16 @@ ruledlines_escape(int pattern, int left, int top, int width, int height, BOOL se
 
             if (pattern & DECDRLBR_LEFT) {
                 debug(F111, "Ruled Lines left at", "y", y);
-                line->cell_attrs[left] =
-					set ? line->cell_attrs[left] | CA_ATTR_LEFT_BORDER
-                    	: line->cell_attrs[left] & ~CA_ATTR_LEFT_BORDER;
+                CELL_ATTR_SET(line,left,
+					set ? CELL_ATTR_GET(line,left) | CA_ATTR_LEFT_BORDER
+                    	: CELL_ATTR_GET(line,left) & ~CA_ATTR_LEFT_BORDER);
             }
 
             if (pattern & DECDRLBR_RIGHT) {
                 debug(F111, "Ruled Lines right at", "y", y);
-                line->cell_attrs[right] =
-					set ? line->cell_attrs[right] | CA_ATTR_RIGHT_BORDER
-                    	: line->cell_attrs[right] & ~CA_ATTR_RIGHT_BORDER;
+                CELL_ATTR_SET(line,right,
+					set ? CELL_ATTR_GET(line,right) | CA_ATTR_RIGHT_BORDER
+                    	: CELL_ATTR_GET(line,right) & ~CA_ATTR_RIGHT_BORDER);
             }
         }
     }
@@ -7460,7 +7480,7 @@ decerlbra_escape(int left, int top, int width, int height) {
 		videoline *line = VscrnGetLineFromTop(vmode, y, FALSE);
 
         for (x = left; x <= right; x++) {
-            line->cell_attrs[x] = line->cell_attrs[x] & mask;
+            CELL_ATTR_SET(line,x, CELL_ATTR_GET(line,x) & mask);
         }
 	}
 
