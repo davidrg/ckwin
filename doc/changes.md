@@ -480,6 +480,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed potential crash when exiting the console version of K95
  - Fixed possible read past end of string in `TAKE` command
  - Fixed possible read past end of string in `DIR` command
+ - Fixed possible read past end of string in array name parser (function arraynam)
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
