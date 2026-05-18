@@ -10696,13 +10696,16 @@ docmd(cx) int cx;
 #ifdef OS2
 	if (!keymapenv)
 	  keymapenv = getenv("CK_KEYMAPS");
-	if (!keymapenv)
-	  keymapenv = "";
 
-	ckstrncat(takepath,
-		  (scriptenv && scriptenv[strlen(scriptenv)-1]==';')?"":";",
-		  TAKEPATHLEN
-		  );
+    {
+	    int scriptenv_len = strlen(scriptenv);
+	    if (scriptenv_len > 0) {
+	        ckstrncat(takepath,
+                  (scriptenv[scriptenv_len-1]==';')?"":";",
+                  TAKEPATHLEN
+                  );
+	    }
+    }
 	ckstrncat(takepath,keymapenv?keymapenv:"",TAKEPATHLEN);
 	ckstrncat(takepath,
 		  (keymapenv && keymapenv[strlen(keymapenv)-1]==';')?"":";",
