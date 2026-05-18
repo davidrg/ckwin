@@ -2490,6 +2490,8 @@ syscleanup() {
     debug(F100,"keybufcleanup done","",0);
 #endif /* NOLOCAL */
 
+    if ( !k95stdout ) TermScrnUpdCleanup() ;
+
     le_clean();
 
     CloseAlarmMutex() ;
@@ -2524,7 +2526,7 @@ syscleanup() {
 #ifdef NT
     CloseSerialMutex() ;
 #ifndef KUI
-    if ( !stdout )
+    if ( !k95stdout )
         CloseHandle(VioHandle);
     VioHandle = 0 ;
 #endif /* ! KUI */
