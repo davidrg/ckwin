@@ -35,6 +35,9 @@
 #   CKF_TOOLBAR    yes        Include the toolbar
 #   CKF_REXX       no         REXX support
 #   CKF_SAVE_IMG   yes        Save as an image file (excl. EMF)
+#   CKB_ASAN       no         Build with AddressSanitizer. Windows 10+,
+#                             x86/x86-64, Visual C++ 2019+ only. For debugging
+#                             only - not for release builds.
 #
 # The following flags are set automatically:
 #   CKF_SSH     Turned off when targeting OS/2 or when building with Open Watcom
@@ -783,4 +786,24 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) ShellNotify
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY -D_WIN32_IE=0x0501
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) ShellNotify
+!endif
+
+# Check if ASAN can really be used. It requires:
+#   - Visual C++ 2019 v16.9 or newer
+#   - Windows 10 or newer
+#   - An x86 or x86-64 CPU
+#   - Is not suitable for Release builds.
+!if "$(CKB_ASAN)" == "yes"
+!if ($(MSC_VER) < 192)
+!message Disabling CKB_ASAN - Visual C++ 2019 v16.9 or newer required.
+CKB_ASAN=no
+!endif
+!if "$(TARGET_CPU)" != "x86" && "$(TARGET_CPU)" != "x86-64"
+!message Disabling CKB_ASAN - Not available for CPU architecture $(TARGET_CPU)
+CKB_ASAN=no
+!endif
+!if "$(CKF_BETATEST)" == "no"
+!message Disabling CKB_ASAN - Not available in Release builds.
+CKB_ASAN=no
+!endif
 !endif
