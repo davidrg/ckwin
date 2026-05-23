@@ -3636,9 +3636,7 @@ copy_cell_attrs(videoline *dest, videoline *source, int start, int end) {
            sizeof(vt_cell_attr_t) * end-start+1);
 }
 
-/* Sets a range of cell attributes in one packed array of attributes with a
- * constant value. The source array should be MAXTERMCOL wide, and all values
- * should be the same
+/* Clears a range of cell attributes in a packed array of attributes.
  */
 void
 clear_cell_attrs(videoline *dest, int start, int end) {
