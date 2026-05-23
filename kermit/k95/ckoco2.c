@@ -5588,13 +5588,12 @@ vscrn_size_bytes(BYTE vnum) {
     size_t result;
     size_t cellsize = sizeof(viocell)     /* viocell */
             + sizeof(short)     /* attributes */
-#ifdef KUI
-            + sizeof(char)      /* Cell attributes */
-#endif /* KUI */
             + sizeof(short);    /* hyperlink IDs */
     size_t vlinesize = sizeof(videoline) + MAXTERMCOL * cellsize;
 
+#ifdef KUI
     vlinesize += CELL_ATTR_LEN * sizeof(vt_cell_attr_t);
+#endif /* KUI */
 
     result = sizeof(vscrn_t);
     result += vscrn[vnum].page_count * sizeof(vscrn_page_t);
@@ -5751,6 +5750,7 @@ shovscrn(void)
     printf("\tvideopopup is: %d bytes\n", sizeof(videopopup));
     printf("Total memory requirements:\n");
     {
+#ifdef KUI
 #ifdef PACKED_CELL_ATTRS
 #define SZTYP "%.1f"
 	    float cellsize = sizeof(vt_cell_attr_t)/2.0;
@@ -5758,6 +5758,10 @@ shovscrn(void)
 #define SZTYP "%d"
 	    size_t cellsize = sizeof(vt_cell_attr_t);
 #endif /* PACKED_CELL_ATTRS */
+#else/* KUI */
+#define SZTYP "%d"
+	    size_t cellsize = 0;
+#endif /* KUI */
 	    cellsize += sizeof(viocell)     /* viocell */
             + sizeof(vt_char_attr_t)     /* attributes */
             + sizeof(short);    /* hyperlink IDs */
