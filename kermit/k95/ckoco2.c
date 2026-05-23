@@ -3200,7 +3200,7 @@ static viocell *        cellmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 static unsigned short * attrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 #ifdef KUI
-static char * cellattrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
+static vt_cell_attr_t * cellattrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 #endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
@@ -3385,7 +3385,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
                 (total_lines + 1) * MAXTERMCOL * sizeof(short)) ;
 #ifdef KUI
         debug( F101,"VscrnSetBufferSize cellattrmem size","",
-                (total_lines + 1) * MAXTERMROW * sizeof(char)) ;
+                (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t)) ;
 #endif /* KUI */
 
         cellmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(viocell) ) ;
@@ -3398,7 +3398,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
 #ifdef KUI
-        cellattrmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(char) ) ;
+        cellattrmem[vmode] = malloc( (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t) ) ;
         if ( !cellattrmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for cellattrmem[]!");
 #endif /* KUI */
@@ -3419,7 +3419,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
             	vscrn[vmode].pages[pagenum].lines[j].cells = cellmem[vmode] + mem_offset ;
             	vscrn[vmode].pages[pagenum].lines[j].vt_char_attrs = attrmem[vmode] + mem_offset ;
 #ifdef KUI
-                vscrn[vmode].pages[pagenum].lines[j].cell_attrs = cellattrmem[vmode] + mem_offset ;
+                vscrn[vmode].pages[pagenum].lines[j].cell_attrs = cellattrmem[vmode] + i * CELL_ATTR_LEN ;
 #endif /* KUI */
             	vscrn[vmode].pages[pagenum].lines[j].vt_line_attr = VT_LINE_ATTR_NORMAL ;
             	vscrn[vmode].pages[pagenum].lines[j].hyperlinks = hyperlinkmem[vmode] + mem_offset ;
@@ -3438,7 +3438,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         viocell *        oldcellmem = cellmem[vmode] ;
         unsigned short * oldattrmem = attrmem[vmode] ;
 #ifdef KUI
-        char *           oldcellattrmem = cellattrmem[vmode] ;
+        vt_cell_attr_t * oldcellattrmem = cellattrmem[vmode] ;
 #endif /* KUI */
         unsigned short * oldhyperlinkmem = hyperlinkmem[vmode] ;
         int              old_lines;
@@ -3514,11 +3514,11 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
                 * MAXTERMCOL * sizeof(short) ) ;
 
 #ifdef KUI
-        cellattrmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(char) ) ;
+        cellattrmem[vmode] = malloc( (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t) ) ;
         if ( !cellattrmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for cellattrmem[]!");
         memcpy( cellattrmem[vmode], oldcellattrmem, (old_lines + 1)
-                * MAXTERMCOL * sizeof(short) ) ;
+                * CELL_ATTR_LEN * sizeof(vt_cell_attr_t) ) ;
 #endif /* KUI */
 
         hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
@@ -5761,17 +5761,26 @@ shovscrn(void)
     printf("\tvideopopup is: %d bytes\n", sizeof(videopopup));
     printf("Total memory requirements:\n");
     {
-        size_t cellsize = sizeof(viocell)     /* viocell */
-            + sizeof(short)     /* attributes */
+#ifdef PACKED_CELL_ATTRS
+#define SZTYP "%.1f"
+	    float cellsize = sizeof(vt_cell_attr_t)/2.0;
+#else /* PACKED_CELL_ATTRS */
+#define SZTYP "%d"
+	    size_t cellsize = sizeof(vt_cell_attr_t);
+#endif /* PACKED_CELL_ATTRS */
+	    cellsize += sizeof(viocell)     /* viocell */
+            + sizeof(vt_char_attr_t)     /* attributes */
             + sizeof(short);    /* hyperlink IDs */
-        printf("\tOne cell is: %d bytes (viocell + attributes + hyperlink IDs)\n",
+
+        printf("\tOne cell is: " SZTYP " bytes (viocell + attributes + hyperlink IDs)\n",
               cellsize);
-        printf("\tOne videoline contains %d cells requiring: %d bytes\n",
+        printf("\tOne videoline contains %d cells requiring: " SZTYP " bytes\n",
                MAXTERMCOL,
                sizeof(videoline) + MAXTERMCOL * cellsize);
-        printf("\tOne page is at least %d lines requiring: %d bytes\n",
+        printf("\tOne page is at least %d lines requiring: " SZTYP " bytes\n",
                MAXTERMROW,
                sizeof(vscrn_page_t) + MAXTERMROW * (sizeof(videoline) + MAXTERMCOL * cellsize));
+#undef SZTYP
     }
 }
 
