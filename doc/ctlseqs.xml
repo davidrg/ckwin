@@ -15101,9 +15101,13 @@ DCS $ q 3 , } ST</pre>
                 they are not erased by control sequences that erase in the
                 display such as <a href="#ed">ED</a>, instead they must be
                 erased using either <a href="#decerlbrp">DECERLBRP</a> or
-                <a href="#decerlbra">DECERLBRA</a>. Control sequences that
-                delete charcter cells such as <a href="#dl">DL</a> will also
-                delete any ruled lines in the affected area.
+                <a href="#decerlbra">DECERLBRA</a>. They are treated as an
+                attribute on character cells themselves, so control sequences
+                that move or remove character cells will affect ruled lines.
+                Control sequences that  delete charcter cells such as
+                <a href="#dl">DL</a> will also delete any ruled lines in the
+                affected area, while those that move character cells like
+                <a href="#il">IL</a> or scrolling will move ruled lines.
             </p>
 
             <p>
