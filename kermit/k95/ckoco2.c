@@ -5594,6 +5594,8 @@ vscrn_size_bytes(BYTE vnum) {
             + sizeof(short);    /* hyperlink IDs */
     size_t vlinesize = sizeof(videoline) + MAXTERMCOL * cellsize;
 
+    vlinesize += CELL_ATTR_LEN * sizeof(vt_cell_attr_t);
+
     result = sizeof(vscrn_t);
     result += vscrn[vnum].page_count * sizeof(vscrn_page_t);
 
