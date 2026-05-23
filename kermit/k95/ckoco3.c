@@ -25864,19 +25864,22 @@ vtcsi(void)
                         if (k < 5) height = 1;
                         else height = pn[5];
 
-                        if (achar == 'r') {
-                            /* DECDRLBR defaults to starting at the cursor */
-                            if (left == 0) left = wherex[VTERM];
-                            if (top == 0) top = wherey[VTERM];
+                        /* DECterm in Tru64 UNIX v5.1B defaults to starting at
+                         * the cursor even though the documentation says it
+                         * should default to 1,1. Ruled Lines in DECterm have
+                         * lots of bugs, so this *could* be another, or perhaps
+                         * the documentation is wrong. If the earliest versions
+                         * of DECterm supporting Ruled Lines match the behaviour
+                         * seen in v5.1B then what the documentation says is
+                         * irrelevant. If the behaviour changed at some point
+                         * (or is different on OpenVMS), then we might need to
+                         * revisit these defaults. */
+                        if (left == 0) left = wherex[VTERM];
+                        if (top == 0) top = wherey[VTERM];
 
-                            /* with a width and height of 1 */
-                            if (width == 0) width = 1;
-                            if (height == 0) height = 1;
-                        } else if (left == 0 || width == 0 || top == 0 || height == 0){
-                            /* DECERLBRP has no defaults - if an area is not
-                             * specified it does nothing. */
-                            break;
-                        }
+                        /* with a width and height of 1 */
+                        if (width == 0) width = 1;
+                        if (height == 0) height = 1;
 
 						ruledlines_escape(pattern, left, top, width, height,
 							achar == 'r'); /* 'r' is set, 's' is clear */
