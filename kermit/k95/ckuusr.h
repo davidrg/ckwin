@@ -1065,13 +1065,15 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_VTNT    42       /*    Microsoft NT Virtual Terminal */
 #define     TT_REGENT25 43      /*    ADDS Regent 25 (ADDS25) */
 #define     TT_MAX   TT_REGENT25
-#define     TT_VT330   94   /*    DEC VT-330 (mono graphics) */
-#define     TT_VT340   95   /*    DEC VT-340 (color graphics) */
+#define     TT_VTSTAR  92   /*    DEC VTstar */
+#define     TT_VT330   93   /*    DEC VT-330 (mono graphics) */
+#define     TT_VT340   94   /*    DEC VT-340 (color graphics) */
+#define     TT_DECTERM 95   /*    DECterm */
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520 */
 #define     TT_VT525   98   /*    DEC VT-525 */
-#define     TT_XTERM   98   /*    XTerm */
-#define     TT_TEK40   99	/*    Tektronix 401x */
+#define     TT_XTERM  100   /*    XTerm */
+#define     TT_TEK40  101	/*    Tektronix 401x */
 /* Other ADDS Regent terminals - not currently emulated */
 #define     TT_REGENT20 100     /* ADDS Regent 20  */
 #define     TT_REGENT40 101     /* ADDS Regent 40  */
@@ -1079,8 +1081,6 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_REGENT60 103     /* ADDS Regent 60  */
 #define     TT_REGENT100 104    /* ADDS Regent 100 */
 #define     TT_REGENT200 105    /* ADDS Regent 200 */
-#define     TT_VTSTAR 110   /* DEC VTstar */
-#define     TT_DECTERM 111  /* DECterm */
 
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
@@ -1119,8 +1119,8 @@ struct stringint {			/* String and (wide) integer */
 #define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
 #else /* COMMENT */
 /* Since we do not yet support 420/520/525 extend 320 */
-#define ISVTSTAR(x) (ISVTSTAR(x))
-#define ISDECTERM(x) (ISVT320(x))
+#define ISVTSTAR(x) (x == TT_VTSTAR)
+#define ISDECTERM(x) (x == TT_DECTERM)
 #define ISVT525(x) (ISVT320(x))
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))

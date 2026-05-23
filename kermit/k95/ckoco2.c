@@ -3199,6 +3199,9 @@ VscrnGetCurPos( BYTE vmode ) {
 static viocell *        cellmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 static unsigned short * attrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
+#ifdef KUI
+static vt_cell_attr_t * cellattrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
+#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* VscrnSetBufferSize                                       | Page: All      */
@@ -3228,7 +3231,6 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
     int i, pagenum, total_lines = 0 ;
     videoline * line ;
     ULONG rc = FALSE ;  /* Determines whether clearscreen needs to be called */
-    bool reset_pages = FALSE;
 
     /* Don't see why VscrnSetBufferSize should act on the status line rather
        than terminal if the host happens to put the cursor there.
@@ -3302,6 +3304,10 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         cellmem[vmode]=NULL ;
         free(attrmem[vmode]) ;
         attrmem[vmode]=NULL ;
+#ifdef KUI
+        free(cellattrmem[vmode]);
+        cellattrmem[vmode]=NULL ;
+#endif /* KUI */
     }
 
     if (vscrn[vmode].pages == NULL) {
@@ -3377,6 +3383,10 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
                 (total_lines + 1) * MAXTERMCOL * sizeof(short)) ;
         debug( F101,"VscrnSetBufferSize hyperlinkmem size","",
                 (total_lines + 1) * MAXTERMCOL * sizeof(short)) ;
+#ifdef KUI
+        debug( F101,"VscrnSetBufferSize cellattrmem size","",
+                (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t)) ;
+#endif /* KUI */
 
         cellmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(viocell) ) ;
         if ( !cellmem[vmode] )
@@ -3387,6 +3397,11 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
+#ifdef KUI
+        cellattrmem[vmode] = malloc( (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t) ) ;
+        if ( !cellattrmem[vmode] )
+            fatal("VscrnSetBufferSize: unable to allocate memory for cellattrmem[]!");
+#endif /* KUI */
 
 		/* Loop over all lines in all pages assigning memory to them. As the
          * various per-cell members are allocated in big blocks of memory, we
@@ -3395,7 +3410,6 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         debug(F100, "VscrnSetBufferSize allocating cell memory to lines", "", 0);
 		i = 0;
 		for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
-			int end_line = i + vscrn[vmode].pages[pagenum].linecount;
             int j, mem_offset;
         	for (j = 0 ; j < vscrn[vmode].pages[pagenum].linecount ; j++ ) {
                 i++;
@@ -3404,6 +3418,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
             	vscrn[vmode].pages[pagenum].lines[j].width = 0 ;
             	vscrn[vmode].pages[pagenum].lines[j].cells = cellmem[vmode] + mem_offset ;
             	vscrn[vmode].pages[pagenum].lines[j].vt_char_attrs = attrmem[vmode] + mem_offset ;
+#ifdef KUI
+                vscrn[vmode].pages[pagenum].lines[j].cell_attrs = cellattrmem[vmode] + i * CELL_ATTR_LEN ;
+#endif /* KUI */
             	vscrn[vmode].pages[pagenum].lines[j].vt_line_attr = VT_LINE_ATTR_NORMAL ;
             	vscrn[vmode].pages[pagenum].lines[j].hyperlinks = hyperlinkmem[vmode] + mem_offset ;
             	vscrn[vmode].pages[pagenum].lines[j].markbeg = -1 ;
@@ -3420,6 +3437,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         vscrn_t          TmpScrn ;
         viocell *        oldcellmem = cellmem[vmode] ;
         unsigned short * oldattrmem = attrmem[vmode] ;
+#ifdef KUI
+        vt_cell_attr_t * oldcellattrmem = cellattrmem[vmode] ;
+#endif /* KUI */
         unsigned short * oldhyperlinkmem = hyperlinkmem[vmode] ;
         int              old_lines;
 
@@ -3493,6 +3513,14 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         memcpy( attrmem[vmode], oldattrmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(short) ) ;
 
+#ifdef KUI
+        cellattrmem[vmode] = malloc( (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t) ) ;
+        if ( !cellattrmem[vmode] )
+            fatal("VscrnSetBufferSize: unable to allocate memory for cellattrmem[]!");
+        memcpy( cellattrmem[vmode], oldcellattrmem, (old_lines + 1)
+                * CELL_ATTR_LEN * sizeof(vt_cell_attr_t) ) ;
+#endif /* KUI */
+
         hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
@@ -3521,6 +3549,12 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
                 	+ (attrmem[vmode] - oldattrmem);
             	line->vt_char_attrs = 0 ;
 
+#ifdef KUI
+                TmpScrn.pages[pagenum].lines[i].cell_attrs = line->cell_attrs
+                	+ (cellattrmem[vmode] - oldcellattrmem);
+            	line->vt_char_attrs = 0 ;
+#endif /* KUI */
+
             	TmpScrn.pages[pagenum].lines[i].hyperlinks = line->hyperlinks
                 	+ (hyperlinkmem[vmode] - oldhyperlinkmem);
             	line->hyperlinks = 0 ;
@@ -3537,6 +3571,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
             	TmpScrn.pages[pagenum].lines[i].width = 0 ;
             	TmpScrn.pages[pagenum].lines[i].cells = cellmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
             	TmpScrn.pages[pagenum].lines[i].vt_char_attrs = attrmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
+#ifdef KUI
+                TmpScrn.pages[pagenum].lines[i].cell_attrs = cellattrmem[vmode] + (i+total_lines+1) * CELL_ATTR_LEN ;
+#endif /* KUI */
             	TmpScrn.pages[pagenum].lines[i].hyperlinks = hyperlinkmem[vmode] + (i+total_lines+1) * MAXTERMCOL ;
             	TmpScrn.pages[pagenum].lines[i].vt_line_attr = VT_LINE_ATTR_NORMAL ;
             	TmpScrn.pages[pagenum].lines[i].markbeg = -1 ;
@@ -3550,6 +3587,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 
         free(oldcellmem) ;
         free(oldattrmem) ;
+#ifdef KUI
+        free(oldcellattrmem) ;
+#endif /* KUI */
         free(oldhyperlinkmem) ;
         vscrn[vmode] = TmpScrn ;
     }
@@ -3568,6 +3608,59 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
     old_page_count[vmode] = vscrn[vmode].page_count;
     return rc ;
 }
+
+#ifdef KUI
+#ifdef PACKED_CELL_ATTRS
+/* Copies a range of cell attributes from one packed array of attributes to
+ * another */
+void
+copy_cell_attrs(videoline *dest, videoline *source, int start, int end) {
+    if (start%2 == 1) {
+        /* Copy only the lower 4 bits at start */
+        CELL_ATTR_SET(dest, start, CELL_ATTR_GET(source, start));
+        start++;
+    }
+    if (end%2 == 0) {
+        /* Copy the upper 4 bits at end manually */
+        CELL_ATTR_SET(dest, end, CELL_ATTR_GET(source, end));
+        end--;
+    }
+
+    /* Copy everything else. Divide by two because we're
+     * storing two cells worth of attributes in each
+     * byte */
+    start = start / 2;
+    end = end / 2;
+    memcpy(dest->cell_attrs + start,
+           source->cell_attrs + start,
+           sizeof(vt_cell_attr_t) * end-start+1);
+}
+
+/* Clears a range of cell attributes in a packed array of attributes.
+ */
+void
+clear_cell_attrs(videoline *dest, int start, int end) {
+
+    if (start%2 == 1) {
+        /* Copy only the lower 4 bits at start */
+        CELL_ATTR_SET(dest, start, CA_ATTR_NONE);
+        start++;
+    }
+    if (end%2 == 0) {
+        /* Copy the upper 4 bits at end manually */
+        CELL_ATTR_SET(dest, end, CA_ATTR_NONE);
+        end--;
+    }
+
+    start = start / 2;
+    end = end / 2;
+    memset(dest->cell_attrs + start,
+           CA_ATTR_NONE | CA_ATTR_NONE << 4,
+           sizeof(vt_cell_attr_t) * end);
+
+}
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* VscrnScrollPage                                          | Page: Specified*/
@@ -3604,6 +3697,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     static cell_video_attr_t last_cellcolor = cell_video_attr_init_vio_attribute(0);
     static viocell blank_cells[MAXTERMCOL];
     static vt_char_attr_t blank_attrs[MAXTERMCOL];
+#ifdef KUI
+    static vt_cell_attr_t blank_cell_attrs[MAXTERMCOL];
+#endif /* KUI */
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -3622,6 +3718,13 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             blank_cells[x] = blankcell ;
             blank_attrs[x] = VT_CHAR_ATTR_ERASED;
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+            blank_cell_attrs[x] = CA_ATTR_NONE;
+#else /* PACKED_CELL_ATTRS */
+            blank_cell_attrs[x] = CA_ATTR_NONE | CA_ATTR_NONE << 4;
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
         }
         last_fillchar = fillchar;
         last_cellcolor = cellcolor ;
@@ -3698,6 +3801,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                             sizeof(viocell) * MAXTERMCOL);
                     memcpy(line->vt_char_attrs, blank_attrs,
                             sizeof(vt_char_attr_t) * MAXTERMCOL);
+#ifdef KUI
+                    memcpy(line->cell_attrs, blank_cell_attrs,
+                        sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+#endif /* KUI */
                 }
 
                 VscrnSetPageTop( vmode,ntop, TRUE, page ) ;
@@ -3733,6 +3840,16 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         memcpy(this_line.vt_char_attrs+leftmargin,
                                next_line.vt_char_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+                        memcpy(this_line.cell_attrs+leftmargin,
+                               next_line.cell_attrs+leftmargin,
+                               sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
+#else /* PACKED_CELL_ATTRS */
+                        copy_cell_attrs(&this_line, &next_line, leftmargin,
+                            rightmargin);
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
                     }
                 }
 
@@ -3752,6 +3869,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                             sizeof(viocell) * MAXTERMCOL);
                         memcpy(line->vt_char_attrs, blank_attrs,
                                 sizeof(vt_char_attr_t) * MAXTERMCOL);
+#ifdef KUI
+                        memcpy(line->cell_attrs, blank_cell_attrs,
+                            sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+#endif /* KUI */
                     } else {
                         memcpy(line->cells+leftmargin,
                                blank_cells+leftmargin,
@@ -3759,6 +3880,15 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         memcpy(line->vt_char_attrs+leftmargin,
                                blank_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+                        memcpy(line->cell_attrs+leftmargin,
+                               blank_cell_attrs+leftmargin,
+                               sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
+#else /* PACKED_CELL_ATTRS */
+                        clear_cell_attrs(line, leftmargin, rightmargin-leftmargin+1);
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
                     }
                 }
             }
@@ -3791,6 +3921,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
                     line->cells = linetodelete.cells ;
                     line->vt_char_attrs = linetodelete.vt_char_attrs ;
+#ifdef KUI
+                    line->cell_attrs = linetodelete.cell_attrs ;
+#endif /* KUI */
                 } else {
                     videoline this_line = *VscrnGetPageLineFromTop(vmode, i, page);
                     videoline prev_line = *VscrnGetPageLineFromTop(vmode, i-1, page);
@@ -3801,6 +3934,16 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     memcpy(this_line.vt_char_attrs+leftmargin,
                            prev_line.vt_char_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+                    memcpy(this_line.cell_attrs+leftmargin,
+                           prev_line.cell_attrs+leftmargin,
+                           sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
+#else /* PACKED_CELL_ATTRS */
+                    copy_cell_attrs(&this_line, &prev_line, leftmargin,
+                        rightmargin);
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
                 }
             }
 
@@ -3820,6 +3963,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                             sizeof(viocell) * MAXTERMCOL);
                     memcpy(line->vt_char_attrs, blank_attrs,
                             sizeof(vt_char_attr_t) * MAXTERMCOL);
+#ifdef KUI
+                    memcpy(line->cell_attrs, blank_cell_attrs,
+                        sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+#endif /* KUI */
                 } else
                 {
                     memcpy(line->cells+leftmargin,
@@ -3828,6 +3975,15 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     memcpy(line->vt_char_attrs+leftmargin,
                            blank_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+                    memcpy(line->cell_attrs+leftmargin,
+                           blank_cell_attrs+leftmargin,
+                           sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
+#else /* PACKED_CELL_ATTRS */
+                    clear_cell_attrs(line, leftmargin, rightmargin-leftmargin+1);
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
                 }
             }
             break;
@@ -5435,6 +5591,10 @@ vscrn_size_bytes(BYTE vnum) {
             + sizeof(short);    /* hyperlink IDs */
     size_t vlinesize = sizeof(videoline) + MAXTERMCOL * cellsize;
 
+#ifdef KUI
+    vlinesize += CELL_ATTR_LEN * sizeof(vt_cell_attr_t);
+#endif /* KUI */
+
     result = sizeof(vscrn_t);
     result += vscrn[vnum].page_count * sizeof(vscrn_page_t);
 
@@ -5590,17 +5750,31 @@ shovscrn(void)
     printf("\tvideopopup is: %d bytes\n", sizeof(videopopup));
     printf("Total memory requirements:\n");
     {
-        size_t cellsize = sizeof(viocell)     /* viocell */
-            + sizeof(short)     /* attributes */
+#ifdef KUI
+#ifdef PACKED_CELL_ATTRS
+#define SZTYP "%.1f"
+	    float cellsize = sizeof(vt_cell_attr_t)/2.0;
+#else /* PACKED_CELL_ATTRS */
+#define SZTYP "%d"
+	    size_t cellsize = sizeof(vt_cell_attr_t);
+#endif /* PACKED_CELL_ATTRS */
+#else/* KUI */
+#define SZTYP "%d"
+	    size_t cellsize = 0;
+#endif /* KUI */
+	    cellsize += sizeof(viocell)     /* viocell */
+            + sizeof(vt_char_attr_t)     /* attributes */
             + sizeof(short);    /* hyperlink IDs */
-        printf("\tOne cell is: %d bytes (viocell + attributes + hyperlink IDs)\n",
+
+        printf("\tOne cell is: " SZTYP " bytes (viocell + attributes + hyperlink IDs)\n",
               cellsize);
-        printf("\tOne videoline contains %d cells requiring: %d bytes\n",
+        printf("\tOne videoline contains %d cells requiring: " SZTYP " bytes\n",
                MAXTERMCOL,
                sizeof(videoline) + MAXTERMCOL * cellsize);
-        printf("\tOne page is at least %d lines requiring: %d bytes\n",
+        printf("\tOne page is at least %d lines requiring: " SZTYP " bytes\n",
                MAXTERMROW,
                sizeof(vscrn_page_t) + MAXTERMROW * (sizeof(videoline) + MAXTERMCOL * cellsize));
+#undef SZTYP
     }
 }
 
