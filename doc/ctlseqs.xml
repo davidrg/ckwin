@@ -7199,7 +7199,7 @@ DCS $ q 3 , } ST</pre>
                 <dd>Arabic Bilingual Mode 3</dd>
 
                 <dt>28</dt>                         <!-- xt -->
-                <dd>Rectangular editing</dd>        <!-- TODO: we have this? -->
+                <dd>Rectangular editing</dd>
 
                 <dt not-implemented="true">29</dt>  <!-- xt -->
                 <dd>ANSI text locator</dd>          <!-- TODO: we have this? -->
@@ -7249,7 +7249,7 @@ DCS $ q 3 , } ST</pre>
                 <dt>42</dt>  <!-- vt510 -->
                 <dd>ISO Latin-2 character set</dd>
 
-                <dt not-implemented="true">43</dt>    <!-- DECterm -->
+                <dt>43</dt>    <!-- DECterm -->
                 <dd>Ruled Lines</dd>
 
                 <dt>44</dt>  <!-- vt510 -->

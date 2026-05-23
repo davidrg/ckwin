@@ -655,7 +655,11 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
+#ifdef KUI
     "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;21;22;28;32;42;43;44c",     /* Kermit 95 self-personality */
+#else /* KUI */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;21;22;28;32;42;44c",     /* Kermit 95 self-personality */
+#endif /* KUI */
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
