@@ -7393,11 +7393,6 @@ void
 ruledlines_escape(int pattern, int left, int top, int width, int height, BOOL set) {
 	int right, bot, x, y;
 
-	/* TODO:
-	 *	  - Cursor Coupling: should this be happening on the cursor page only?
-	 *      Currently assuming yes.
-	 */
-
     if (pattern & 0x0F == 0) return; /* Nothing to do */
 
 	/* Columns and lines are numbered from 0 */
