@@ -244,8 +244,10 @@ rz_file_info()
 	/**********************************************/
 	/* Let's save the received attention sequence */
 	/**********************************************/
-	attn_len = rx_buf_len - 1; /* Don't include the null */
-	memcpy(attn, rx_buf, rx_buf_len);
+	if (rx_buf_len > 0 && rx_buf_len <= sizeof(attn)) {
+	  attn_len = rx_buf_len - 1; /* Don't include the null */
+	  memcpy(attn, rx_buf, rx_buf_len);
+	}
 	
 	*(U32 *)tx_hdr = p_cfg->serial_num;
 	z_send_hex_header(ZACK);
