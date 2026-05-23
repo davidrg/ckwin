@@ -17261,17 +17261,22 @@ wrtch(unsigned short ch) {
                         else /* Page Mode */
                             wherex[VTERM] = 1;
                     } else if ( autoscroll && !protect ) {
-                        VscrnScrollPage(
-                            vmode,
-                            UPWARD,
-                            vscrn_c_page_margin_top(VTERM) - 1,
-                            vscrn_c_page_margin_bot(VTERM) - 1,
-                            vscrn_c_page_margin_left(VTERM) - 1,
-                            vscrn_c_page_margin_right(VTERM) - 1,
-                            1,
-                            vscrn_c_page_margin_top(VTERM) == 1,
-                            SP,
-                            vscrn_current_page_number(vmode, FALSE) ) ;
+                        int x = wherex[VTERM];
+                        int lmargin = vscrn_c_page_margin_left(VTERM);
+                        int rmargin = vscrn_c_page_margin_right(VTERM);
+                        if (lmargin <= x && x <= rmargin) {
+                            VscrnScrollPage(
+                                vmode,
+                                UPWARD,
+                                vscrn_c_page_margin_top(VTERM) - 1,
+                                vscrn_c_page_margin_bot(VTERM) - 1,
+                                vscrn_c_page_margin_left(VTERM) - 1,
+                                vscrn_c_page_margin_right(VTERM) - 1,
+                                1,
+                                vscrn_c_page_margin_top(VTERM) == 1,
+                                SP,
+                                vscrn_current_page_number(vmode, FALSE) ) ;
+                        }
                     } else if ( wherex[vmode] > VscrnGetWidth(vmode) )
                         wherex[vmode] = VscrnGetWidth(vmode);
                 } else {
