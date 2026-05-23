@@ -3615,15 +3615,6 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
  * another */
 void
 copy_cell_attrs(videoline *dest, videoline *source, int start, int end) {
-#ifdef COMMENT
-    int i;
-    /* rightmargin-leftmargin+1 */
-    for (i = start; i <= end; i++) {
-        CELL_ATTR_SET(dest, i, CELL_ATTR_GET(source, i));
-    }
-
-#else
-
     if (start%2 == 1) {
         /* Copy only the lower 4 bits at start */
         CELL_ATTR_SET(dest, start, CELL_ATTR_GET(source, start));
@@ -3643,7 +3634,6 @@ copy_cell_attrs(videoline *dest, videoline *source, int start, int end) {
     memcpy(dest->cell_attrs + start,
            source->cell_attrs + start,
            sizeof(vt_cell_attr_t) * end-start+1);
-#endif
 }
 
 /* Sets a range of cell attributes in one packed array of attributes with a
