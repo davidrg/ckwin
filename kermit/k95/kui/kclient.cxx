@@ -20,7 +20,7 @@ typedef struct _K_WORK_STORE {
     int               x;
     int               y;
     cell_video_attr_t attr;
-    unsigned short    effect;
+    vt_char_attr_t    effect;
     vt_cell_attr_t    cellAttr;
 } K_WORK_STORE;
 
@@ -846,8 +846,8 @@ void KClient::writeMe()
     int totlen = clientPaint->len;
     cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
-    ushort effect = ushort(-1);
-    char cellAttr = 0;
+    vt_char_attr_t effect = ushort(-1);
+    vt_cell_attr_t cellAttr = 0;
     // The following collects up contiguous strings of text that are all on the
     // same line and have the same attributes, allowing the text to be painted
     // in one go rather than a character at a time.
@@ -1294,8 +1294,8 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
 
     cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
-    ushort effect = ushort(-1);
-	char cellAttr = 0;
+    vt_char_attr_t effect = ushort(-1);
+	vt_cell_attr_t cellAttr = 0;
     for( i = 0; i < totlen; i++ )
     {
         xpos = i % twid;
@@ -1329,8 +1329,8 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     RECT rect;
     BOOL anyRuledLines = FALSE;
     cell_video_attr_t prevAttr = cell_video_attr_init_vio_attribute(255);
-    ushort prevEffect = uchar(-1);
-    char prevCellAttr = 0;
+    vt_char_attr_t prevEffect = uchar(-1);
+    vt_cell_attr_t prevCellAttr = 0;
     BOOL blink;
 	Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
     for( i = 0; i < wc; i++ )
