@@ -21,7 +21,7 @@ typedef struct _K_WORK_STORE {
     int               y;
     cell_video_attr_t attr;
     unsigned short    effect;
-    char              cellAttr;
+    vt_cell_attr_t    cellAttr;
 } K_WORK_STORE;
 
 extern UINT keyArray [];    // from kuikey.cxx
