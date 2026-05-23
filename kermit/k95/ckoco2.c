@@ -3754,11 +3754,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F101,"VscrnScroll requests VscrnMutex","",vmode);
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
-    vs_width = VscrnGetWidth(vmode) - 1;
+    vs_width = VscrnGetWidth(vmode);
 
     if (leftmargin < 0) leftmargin = 0;
-    if (rightmargin < 0 || rightmargin > vs_width) rightmargin = vs_width;
-    lrmm = (leftmargin != 0 || rightmargin != vs_width) &&
+    if (rightmargin < 0 || rightmargin > vs_width-1) rightmargin = vs_width-1;
+    lrmm = (leftmargin != 0 || rightmargin != vs_width-1) &&
         leftmargin < rightmargin;
 
     debug(F101,"VscrnScroll has VscrnMutex","",vmode);

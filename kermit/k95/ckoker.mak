@@ -300,6 +300,10 @@ LDDEBUG = $(LDDEBUG) /OPT:ICF
 
 # End PDB Generation Stuff
 
+!if "$(CKB_ASAN)" == "yes"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /fsanitize=address
+!endif # If CKB_ASAN
+
 !else   # Else CMP == VCXX
 
 !if "$(CKB_MAKE_PDB)" != "no"

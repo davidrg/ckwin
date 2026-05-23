@@ -9641,7 +9641,7 @@ arraynam(ss,c,n) char *ss; int *c; int *n;
         return(-9);
     }
     p--;                                /* Trim whitespace from end */
-    while (*p == SP || *p == HT)
+    while (p >= ssbuf && (*p == SP || *p == HT))
       p--;
     p++;
     *p = NUL;                           /* Terminate subscript with null */
