@@ -1322,7 +1322,7 @@ DECTSR		462
              against the control sequence.
         -->
         <html type="todo" filename="todo.html" title="TO-DO"
-              todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
+              todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL XTPUSHCOLORS XTPOPCOLORS XTREPORTCOLORS"
               terminals="vt220 vt420 vt525 k95 xterm tt putty wt"
               show-refs="true"
@@ -15087,13 +15087,131 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <section role="ctlseq" id="decdrlbr" mnemonic="DECDRLBR"
-                 title="Draw Ruled Line" not-implemented="true" todo="true">
+                 title="Draw Ruled Line" badges="k95 decterm">
             <ctlseq>CSI <param-single symbol="Pl"/> ;
                 <param-single symbol="Px"/> ; <param-single symbol="Plx"/> ;
                 <param-single symbol="Py"/> ; <param-single symbol="Ply"/> , r
             </ctlseq>
             <ref src="dtl:BLOCK84"/>
             <termsupp series="vt" first="decterm"/>
+            <p>
+                Ruled lines are drawn 1px wide using normal terminal colours
+                (<tt>SET TERMINAL COLOR TERM</tt>) on the inside edge of
+                character cells. They are not treated like SGR attributes, and
+                they are not erased by control sequences that erase in the
+                display such as <a href="#ed">ED</a>, instead they must be
+                erased using either <a href="#decerlbrp">DECERLBRP</a> or
+                <a href="#decerlbra">DECERLBRA</a>. Control sequences that
+                delete charcter cells such as <a href="#dl">DL</a> will also
+                delete any ruled lines in the affected area.
+            </p>
+
+            <p>
+                DECDRLBR acts in a similar way to other Rectangular Area
+                Operations, though the way the rectangle is specified differs a
+                little. <param-single symbol="Px"/> and <param-single symbol="Py"/>
+                give the absolute coordinates for the cell that will be the top
+                left corner of the rectangle (column and row), while
+                <param-single symbol="Plx"/> and
+                <param-single symbol="Ply"/> are the width (in columns) and
+                height (in rows) of the rectangle, rather than absolute
+                coordinates as in other rectangualr area operations. The default
+                width and height is 1.
+            </p>
+            <p>
+                If values for <param-single symbol="Px"/> or
+                <param-single symbol="Py"/> not given, or set to zero, the
+                current position of the cursor is used. This
+                matches the behaviour observed in DECterm under Tru64 UNIX
+                v5.1B, but conflicts with the <em>documented</em> behaviour so
+                should not be relied upon as it may change in future releases of
+                Kermit 95.
+            </p>
+            <p>
+                Double Height/Double Width lines are treated as single
+                height/single width when drawing ruled lines. Ruled lines are
+                currently drawn on top of double high/wide lines which is the
+                behaviour of DECterm if anything forces it to repaint the
+                window.
+            </p>
+            <p>
+                The <param-single symbol="Pl"/> parameter specifies which
+                borders of the rectangle should have lines drawn. The value is
+                a bit mask:
+            </p>
+            <table>
+                <tr>
+                    <th>Bit</th>
+                    <th>Value</th>
+                    <th>Meaning</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>1</td>
+                    <td>Bottom boundary</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>2</td>
+                    <td>Right boundary</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>4</td>
+                    <td>Top boundary</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>8</td>
+                    <td>Left boundary</td>
+                </tr>
+            </table>
+            <p>
+                So to draw the line on only the top of the rectangle, you would
+                supply the value 4 for <param-single symbol="Pl"/>. To lines on
+                all boundaries to make a box, you would use
+                <param-single symbol="Pl"/>=15 (1+2+4+8).
+            </p>
+
+            <p>
+                Ruled Lines are only supported on Windows under K95G. The console
+                verson for Windows (K95.EXE) and OS/2 version (K2.EXE) do not
+                currently support this feature.
+            </p>
+
+            <section role="text" title="Bugs in DECTerm">
+                <p>
+                    While there is no publicly available specification
+                    describing how this feature <em>should</em> work in any
+                    detail, DECterm appears to have a number of bugs or possible
+                    bugs in its implementation of this feature:
+                </p>
+                <ul>
+                    <li>When the cursor is moved to a terminal line containing
+                        Ruled Lines, if any text is output DECterm shifts all
+                        Ruled Line segments on that line to the left by one
+                        character cell. Kermit 95 does not reproduce this
+                        behaviour.
+                    </li>
+                    <li>When ruled lines are drawn over double-height or
+                        double-width lines they are not visible until something
+                        forces DECterm to repaint the window such as switching
+                        pages, opening a menu, or minimizing and maximizing the
+                        window. The documentation does not describe the correct
+                        behaviour here, so Kermit 95 chooses to behave as
+                        DECterm does when it repaints its window.
+                    </li>
+                    <li>
+                        The DECterm documentation does not say if
+                        <a href="#decsed">DECSED</a>. DECterm seems to make an
+                        attempt to preserve them, though usually some end up
+                        being cleared. Kermit 95 treates DECSED the same way as
+                        ED - ruled lines are unaffected.
+                    </li>
+                </ul>
+            </section>
+
+
 
             <!--
             This draws a box on screen. Lines appear to be on the borders of the
@@ -15304,13 +15422,35 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <section role="ctlseq" id="decerlbrp" mnemonic="DECERLBRP"
-                 title="Erase Ruled Lines" not-implemented="true" todo="true">
+                 title="Erase Ruled Lines" badges="k95 decterm">
             <ctlseq>CSI <param-single symbol="Pl"/> ;
                 <param-single symbol="Px"/> ; <param-single symbol="Plx"/> ;
                 <param-single symbol="Py"/> ; <param-single symbol="Ply"/> , s
             </ctlseq>
             <ref src="dtl:BLOCK85"/>
             <termsupp series="vt" first="decterm"/>
+            <p>
+                Erases ruled lines on edge of the specified rectangular area,
+                acting as the reverse of <a href="#decdrlbr">DECDRLBR</a>. Any
+                ruled lines inside the rectangular area are untouched. To erase
+                all Ruled Lines within an area rather than just on the edges,
+                see <a href="#decerlbra">DECERLBRA</a>.
+            </p>
+            <p>
+                The format of the parameters is the same as for
+                <a href="#decdrlbr">DECDRLBR</a>, only instead of placing ruled
+                lines DECERLBRP removes them.
+                <param-single symbol="Pl"/> specifies which edges to erase ruled
+                lines from, while <param-single symbol="Px"/>,
+                <param-single symbol="Plx"/>, <param-single symbol="Py"/>, and
+                <param-single symbol="Ply"/> describe the rectangle.
+            </p>
+
+            <p>
+                Ruled Lines are only supported on Windows under K95G. The console
+                verson for Windows (K95.EXE) and OS/2 version (K2.EXE) do not
+                currently support this feature.
+            </p>
         </section>
 
         <section role="ctlseq" id="ttimesv" mnemonic="TTIMESV"
@@ -15722,13 +15862,48 @@ DCS $ q 3 , } ST</pre>
             <ref src="vws:110"/>
         </section>
         <section role="ctlseq" id="decerlbra" mnemonic="DECERLBRA"
-                 title="Erase All Ruled Lines in Area" not-implemented="true" todo="true">
+                 title="Erase All Ruled Lines in Area" badges="k95 decterm">
             <ctlseq>CSI <param-single symbol="Pl"/> ;
                 <param-single symbol="Px"/> ; <param-single symbol="Plx"/> ;
                 <param-single symbol="Py"/> ; <param-single symbol="Ply"/> , t
             </ctlseq>
             <ref src="dtl:BLOCK86"/>
             <termsupp series="vt" first="decterm"/>
+
+            <p>
+                Erases <em>all</em> ruled lines within the specified rectangular
+                area, not just those on the border of the rectangle.
+            </p>
+
+            <p>
+                When <param-single symbol="Pl"/> is 0, 1, or not specified all
+                ruled lines on the entire screen are erased and the remaining
+                parameters are ignored. When the value of
+                <param-single symbol="Pl"/> is 2, only Ruled Lines within the
+                rectangular area are erased.
+            </p>
+
+            <p>
+                The parameters <param-single symbol="Px"/> and
+                <param-single symbol="Py"/>
+                give the absolute coordinates for the cell that will be the top
+                left corner of the rectangle (column and row), while
+                <param-single symbol="Plx"/> and
+                <param-single symbol="Ply"/> are the width (in columns) and
+                height (in rows) of the rectangle, rather than absolute
+                coordinates as in other rectangualr area operations.
+            </p>
+            <p>
+                Unlike DECterm, Kermit 95 does not require all five parameters
+                to always be specified if they are not required as this is
+                expected to be a bug in DECterm.
+            </p>
+
+            <p>
+                Ruled Lines are only supported on Windows under K95G. The console
+                verson for Windows (K95.EXE) and OS/2 version (K2.EXE) do not
+                currently support this feature.
+            </p>
         </section>
 
         <section role="ctlseq" id="ttimest" mnemonic="TTIMEST"

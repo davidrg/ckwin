@@ -155,6 +155,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    work across pages, while [DECRQDE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqde)
    and [DECXCPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-decxcpr)
    now include page information
+ - DECterm Ruled Lines
  - K95G can now save the terminal screen as an image rather than plain text.
    For example, `SAVE TERMINAL SCREEN /FORMAT:PNG screenshot.png`. The following
    output formats are available:
@@ -373,6 +374,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECSLRM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decslrm) - Set left/right margins
  - [XTVERSION](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtversion) (k95 terminal type only)
  - [DECRQPSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqpsr) (VT320 and up)
+ - DECterm Ruled Lines (K95 terminal type only)
+   - [DECDRLBR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdrlbr)
+   - [DECERLBRP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbrp)
+   - [DECERLBRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbra)
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
