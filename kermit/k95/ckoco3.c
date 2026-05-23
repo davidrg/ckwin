@@ -20944,10 +20944,11 @@ vtcsi(void)
                             tt_autorepeat = TRUE;
 #endif /* NT */
                             break;
-                        case 9: /* DECINLM - Interlace */
+                        case 9: /* DECINLM - Interlace. VT1xx only. */
                             /* XTERM - Send Mouse X & Y on button press */
 #ifdef OS2MOUSE
-                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
                                 /* The linux console terminal, as well as many
                                  * other terminal emulators, implement XTERM
                                  * mouse tracking */
@@ -21604,10 +21605,11 @@ vtcsi(void)
                                tt_autorepeat = FALSE;
 #endif /* NT */
                                break;
-                           case 9: /* DECINLM - Interlace */
+                           case 9: /* DECINLM - Interlace. VT1xx only. */
                                /* XTERM - Don't Send Mouse X&Y on button press */
 #ifdef OS2MOUSE
-                               if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                               if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                 ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
                                    /* The linux console terminal, as well as many
                                     * other terminal emulators, implement XTERM
                                     * mouse tracking */
