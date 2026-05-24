@@ -124,10 +124,18 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 
 !MESSAGE Non-debugging build
 
-CFLAGS    = /c /W3 $(RTFLAG) /Ox /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR) \
+!if "$(CKB_OPT_SIZE)" == "yes"
+# Optimize for size
+OPT = /O1
+!else
+# Enable most speed optimizations
+OPT = /Ox
+!endif
+
+CFLAGS    = /c /W3 $(RTFLAG) $(OPT) /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR) \
 			$(COMMON_CFLAGS)
 CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 \
-                -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
+                -DNT -DOS2 -DDYNAMIC -DNETCONN -DTCPSOCKET \
                 -DHADDRLIST -DSCRIPTTERM -DOS2TEST -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)

@@ -65,6 +65,69 @@ ENABLED_FEATURE_DEFS = -DDOSYSLOG -DDOARROWKEYS
 # type /interpret doesn't work on windows currently.
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
 
+!if "$(CKB_BUILD_MINI)" == "yes"
+# Turn off as many features as we can to try and minimize executable size. This
+# nearly halves the size of the executable when built with Visual C++ 4.0 at
+# the expense of a bunch of features, and if you run it through something like
+# UPX it will shrink it down to only around 570K. You wouldn't really want to
+# *use* K95 like this, but it might be useful for bootstrapping a more
+# full-featured K95 onto a machine
+
+CKF_JUMPLISTS=no
+CKF_GDIPLUS=no
+CKF_SHELLNOTIFY=no
+CKF_SSH=no
+CKF_CONPTY=no
+CKF_LOGIN=no
+CKF_NTLM=no
+CKF_MOUSEWHEEL=no
+CKF_SAVE_IMG=no
+CKF_TAPI=no
+CKF_RICHEDIT=no
+CKF_TOOLBAR=no
+CKF_XYZ=no
+CKF_DECNET=no
+CKF_K4W=no
+CKF_K4W_KRB4=no
+CKF_K4W_SSL=no
+CKF_K4W_WSHELPER=no
+CKF_COLORS=16
+CKF_SSL=no
+CKF_TELNET_ENCRYPTION=no
+CKF_SRP=no
+CKF_INTERNAL_CRYPT=no
+CKF_CRYPTDLL=no
+CKF_ZLIB=no
+CKF_DEBUG=no
+CKF_SUPERLAT=no
+CKF_REXX=no
+CKF_MOUSE=no
+CKF_FTP=no
+CKF_HTTP=no
+CKF_RLOGIN=no
+CKF_HELP=no
+CKF_ALL_CSETS=no
+CKF_MODEM=no
+CKF_BROWSER=no
+
+# Saves ~20K, disables NETCMD, REDIRECT, BROWSER, LEARN and others
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOLEARN -DNOPUSH
+
+# Disabling NPIPE only saves ~2K
+
+# And turning these off saves around...
+# +mouse         49K
+# +all csets     87K
+# +help         353K
+# +toolbar        7K
+# +xyz           23K
+# +modem        106K
+# (when built with Visual C++ 4.0)
+
+# Optimize for small size rather than speed
+CKB_OPT_SIZE=yes
+!endif
+
 # ==============================================================================
 # ############################# Platform: WIN32 ################################
 # ==============================================================================
