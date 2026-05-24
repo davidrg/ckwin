@@ -823,6 +823,10 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOKANJI -DNOLATIN2 \
     -DNOCYRILLIC -DNOHEBREW -DNOGREEK
 !endif
 
+!if "$(CKF_MODEM)" == "no"
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODIAL
+!endif
+
 # Check if ASAN can really be used. It requires:
 #   - Visual C++ 2019 v16.9 or newer
 #   - Windows 10 or newer
