@@ -656,16 +656,25 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
 #ifdef KUI
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;21;22;28;32;42;43;44c",     /* Kermit 95 self-personality */
-#else /* KUI */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;21;22;28;32;42;44c",     /* Kermit 95 self-personality */
-#endif /* KUI */
+#define EXT_RULED_LINES "43;"
+#else
+#define EXT_RULED_LINES ""
+#endif
+#ifdef LATIN2
+#define EXT_LATIN2 "42;"
+#else
+#define EXT_LATIN2 ""
+#endif
+    "K95",    {"K95",NULL},     /* Kermit 95 self-personality */
+        "[?63;1;2;6;8;9;15;21;22;28;32;" EXT_LATIN2 EXT_RULED_LINES "44c",
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
 				horizontal-scrolling;ansi-color;rectangular-editing;text-macros;
 				latin-2;ruled-lines;PCTerm
             */
+#undef EXT_RULED_LINES
+#undef EXT_LATIN2
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
