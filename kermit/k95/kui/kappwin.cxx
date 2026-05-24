@@ -861,12 +861,14 @@ Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
                 }
             case ID_HELP_HELPONKERMIT:
                 {
+#ifndef NOHELP
                     //debug(F111,"KAppWin::message WM_COMMAND","ID_HELP_HELPONKERMIT",LOWORD(wParam));
                     char tmp[256];
                     char* c = ::getVar( LOG_HOME_DIR );
                     strcpy( tmp, c );
                     strcat( tmp, "kermit95.hlp" );
                     WinHelp( hWnd, tmp, HELP_INDEX, 0 );
+#endif /* NOHELP */
                     break;
                 }
 
