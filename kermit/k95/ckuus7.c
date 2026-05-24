@@ -62,9 +62,7 @@
 #include "ckowin.h"
 #include "ckocon.h"
 #include "ckodir.h"
-#ifdef OS2MOUSE
 #include "ckokey.h"
-#endif /* OS2MOUSE */
 #ifdef KUI
 #include "ikui.h"
 #endif /* KUI */

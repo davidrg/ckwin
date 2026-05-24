@@ -1165,9 +1165,9 @@ putkverb( int kmode, int k ) {
              km == K_HOLDSCRN ||
              km == K_EXIT ||
              km == K_HANGUP ||
-	     km == K_DUMP && markmodeflag[kmode] != notmarking ||
+	     km == K_DUMP && markmodeflag[kmode] != notmarking
 #ifdef OS2MOUSE
-             km >= K_MOUSE_MIN && km <= K_MOUSE_MAX
+             || km >= K_MOUSE_MIN && km <= K_MOUSE_MAX
 #endif /* OS2MOUSE */
              )
         {

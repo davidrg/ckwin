@@ -9874,7 +9874,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     vtnt_read  = VTNT_MIN_READ;
 
     /* Disable y active mouse reporting modes */
+#ifdef OS2MOUSE
     mouse_reporting_mode &= ~(MOUSEREPORTING_ACTIVE | MOUSEREPORTING_UNSUPPORTED);
+#endif /* OS2MOUSE */
 
     dokverb(VTERM,K_ENDSCN);
     dokverb(VTERM,K_MARK_CANCEL);
@@ -12555,9 +12557,11 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             }
             return;
 
+#ifdef OS2MOUSE
         case K_CURSOR_URL:
             mouseurl(mode,vscrn[mode].cursor.y,vscrn[mode].cursor.x);
             break;
+#endif /* OS2MOUSE */
 
         case K_FOCUS_IN:
 #ifdef KUI

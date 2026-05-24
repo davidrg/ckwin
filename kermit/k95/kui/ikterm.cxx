@@ -31,8 +31,10 @@ extern int nt351;
 
 extern void
 win32KeyEvent( int mode, KEY_EVENT_RECORD key );
+#ifdef OS2MOUSE
 extern void 
 win32MouseEvent( int mode, MOUSE_EVENT_RECORD r );
+#endif /* OS2MOUSE */
 
 }
 
@@ -916,5 +918,7 @@ void IKTerm::mouseEvent( HWND hwnd, UINT msg, WPARAM wParam, int x, int y )
     inpEvt.Event.MouseEvent.dwControlKeyState = getControlKeyState();
     //debug(F111,"IKTerm::MouseEvent","dwControlKeyState",inpEvt.Event.MouseEvent.dwControlKeyState);
 
+#ifdef OS2MOUSE
     win32MouseEvent( vnum, inpEvt.Event.MouseEvent );
+#endif /* OS2MOUSE */
 }

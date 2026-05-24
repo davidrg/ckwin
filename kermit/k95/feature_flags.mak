@@ -788,6 +788,10 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY -D_WIN32_IE=0x0
 DISABLED_FEATURES = $(DISABLED_FEATURES) ShellNotify
 !endif
 
+!if "$(CKF_MOUSE)" != "no"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOS2MOUSE
+!endif
+
 # Check if ASAN can really be used. It requires:
 #   - Visual C++ 2019 v16.9 or newer
 #   - Windows 10 or newer
