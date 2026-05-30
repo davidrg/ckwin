@@ -486,6 +486,13 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed possible read past end of string in `TAKE` command
  - Fixed possible read past end of string in `DIR` command
  - Fixed possible read past end of string in array name parser (function arraynam)
+ - Fixed the japanese-roman (JIS Roman) character set which has been broken since
+   K95 1.1.21. This character set was specifically excluded from being 
+   considered a national replacement character set since at least 1996 though
+   that didn't seem to cause problems until 2002. Unfortunately without source 
+   history for K95 I've no way of knowing what change broke it, so I've removed 
+   the code that was preventing it from being considered a national replacement 
+   character set which seems to have fixed it. (K95 bug 842)
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
