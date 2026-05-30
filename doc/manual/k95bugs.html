@@ -1030,7 +1030,9 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 
 Ctrl-C typed in the Command screen to interrupt a command is not always
 delivered to Kermit 95 by Windows, due to a bug in Windows 95 and Windows NT:
-Microsoft PSS ID Numbers Q130717 and Q134284, 09-25-1995.
+Microsoft PSS ID Numbers
+<a href="https://web.archive.org/web/20010626061718/http://support.microsoft.com/support/kb/articles/Q130/7/17.asp">Q130717</a>
+and <a href="https://ftp.zx.net.nz/pub/archive/ftp.microsoft.com/MISC/KB/en-us/134/284.HTM">Q134284</a>, 09-25-1995.
 <p>
 Once Ctrl-C fails to be delivered, it might never be delivered again.
 Workaround: evidently the only workaround is to restart Windows.  In the
@@ -1537,7 +1539,8 @@ a Kermit 95 server, the server will lock up.  Diagnosis: The server end of
 REMOTE HOST commands is implemented by running the corresponding operating
 system command with its standard output piped back to the server; redirection
 of standard output in Windows 95 can cause the parent process to get stuck in
-a read that never returns (refer to Microsoft Knowledge Base Article Q150956).
+a read that never returns (refer to Microsoft Knowledge Base Article
+<a href="https://web.archive.org/web/20010210190901/http://support.microsoft.com/support/kb/articles/Q150/9/56.ASP">Q150956</a>).
 <p>
 Partially fixed in version 1.1.3, by using temporary files rather than pipes.
 <p>
@@ -1947,7 +1950,7 @@ the correct dead-key combinations are still produced).
 All of these problems will disappear when the GUI version is released and
 Kermit is no longer accessing any of the bug-ridden Windows console services.
 <p>
-(*) Microsoft PSS ID Q140456, 12-07-1995:  "Deadkeys cannot be accepted as
+(*) Microsoft PSS ID <a href="https://web.archive.org/web/20010210194238/http://support.microsoft.com/support/kb/articles/Q140/4/56.asp">Q140456</a>, 12-07-1995:  "Deadkeys cannot be accepted as
 input to a Windows 95 Console application even when the appropriate keyboard
 layout is selected.  <tt>ReadConsoleInput()</tt> cannot read deadkeys in
 Windows 95".
@@ -3161,7 +3164,8 @@ In May 1997 hackers discovered that any Windows 95 or NT system could be
 crashed by sending TCP Out Of Band (OOB) data to it on the NETBEUI port.
 Microsoft's reaction was to publish a "hotfix" for Windows NT that disabled
 processing of OOB data by Winsock; refer to Microsoft Knowledge Base Document
-Q143478 [winnt], "Stop 0A in TCPIP.SYS When Receiving Out Of Band (OOB) Data".
+<a href="https://web.archive.org/web/20001018101815/http://support.microsoft.com/support/kb/articles/Q143/4/78.asp">Q143478</a>
+[winnt], "Stop 0A in TCPIP.SYS When Receiving Out Of Band (OOB) Data".
 But RLOGIN protocol works by using OOB data, and therefore if you have
 installed these fixes, you will not be able to use RLOGIN.  This situation was
 addressed in a second "hotfix" issued May 24.  Each fix is simply a
@@ -4709,7 +4713,9 @@ when using AT386 and similar emulations (which automatically choose 8-bit
 characters and no translation), they are not able to enter Chinese (or Korean,
 or Japanese, etc) characters on the keyboard.  This is because Microsoft chose
 to disable CJK Input Method Editors (IME) in Windows 95 Console windows.  See
-Microsoft Knowledge Base Article Q156793: "All Far East versions of Windows
+Microsoft Knowledge Base Article
+<a href="https://web.archive.org/web/20001003045202/http://support.microsoft.com/support/kb/articles/q156/7/93.asp">Q156793</a>:
+"All Far East versions of Windows
 NT 4.0 support IME in a command prompt.  Only the Japanese version of Windows
 NT 3.51 supports IME in a command prompt.  None of the Far East versions of
 Windows 95 support IME in a command prompt."  When an IME is not supported,
@@ -5290,7 +5296,8 @@ entry.  The result is that Kerberos authentication fails when attempting to
 connect to a hostname that is really an alias for several machines that
 provide a similar function.  Microsoft has chosen to issue a private fix
 which may be applied to Windows 95 with the Winsock 2.0 update.  The problem
-is documented in the Knowledge Base as article Q192425.
+is documented in the Knowledge Base as article
+<a href="https://web.archive.org/web/20001002094650/http://support.microsoft.com/support/kb/articles/Q192/4/25.ASP">Q192425</a>.
 <p>
 The following directions specify how to receive this fix:
 <p><ol type="a">
@@ -5317,7 +5324,8 @@ Windows 95".
 <li>Once you get to a support engineer, advise him or her of the following:
 <p><blockquote>    
 You need the hotfix referenced by knowledge base article:
-Q192425  Gethostbyaddr() Call with Winsock2 Returns Address Pool Alias.
+<a href="https://web.archive.org/web/20001002094650/http://support.microsoft.com/support/kb/articles/Q192/4/25.ASP">
+    Q192425</a>  Gethostbyaddr() Call with Winsock2 Returns Address Pool Alias.
 </blockquote><p>
 Hotfix fulfillment is done via an internal escalation team,
 which typically does a callback to validate the need for the hotfix.
