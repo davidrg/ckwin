@@ -6189,8 +6189,10 @@ shotrm() {
       }
       if (strlen(tt_info[tt_type].x_id) <= 23)
         printf("  %13s: <ESC>%s","ID", idbuf);
-      else
-        printf("\n %19s: <ESC>%s","ID", idbuf);
+      else {
+          printf("\n %19s: <ESC>%s","ID", idbuf);
+          if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+      }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
