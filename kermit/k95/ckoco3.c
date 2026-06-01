@@ -10189,8 +10189,13 @@ rtolxlat( int c )
             {
                 if ( win95hsl && c >= 0x23BA && c <= 0x23BD )
                     c = tx_hslsub(c);
-                else if ( c >= 0xE000 && c <= 0xF8FF )
+                else if ( c >= 0xE000 && c <= 0xF8FF &&
+                    !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
+                      drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c)) ) {
+                    /* DRCS soft character sets map into the unicode PUA range,
+                     * so don't apply tx_usub to them. */
                     c = tx_usub(c);
+                }
                 if (win95lucida && c > 0x017f)
                     c = tx_lucidasub(c);
             }
@@ -10367,8 +10372,13 @@ pushed:
                 if ( ck_isunicode() ) {
                     if ( win95hsl && c >= 0x23BA && c <= 0x23BD )
                         c = tx_hslsub(c);
-                    else if ( c >= 0xE000 && c <= 0xF8FF )
+                    else if ( c >= 0xE000 && c <= 0xF8FF &&
+                            !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
+                              drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c)) ) {
+                        /* DRCS soft character sets map into the unicode PUA range,
+                         * so don't apply tx_usub to them. */
                         c = tx_usub(c);
+                    }
                     if (win95lucida && c > 0x017f)
                         c = tx_lucidasub(c);
                 } else {        
