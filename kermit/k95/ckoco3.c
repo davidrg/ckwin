@@ -15504,6 +15504,18 @@ dodcs( void )
                 } /* switch on character afer '$' */
 				break;
             } /* $ */
+            case '{':      /* DECDLD - Soft character set */
+                if (k < 8) pn[8] = 0;
+                if (k < 7) pn[7] = 0;
+                if (k < 6) pn[6] = 0;
+                if (k < 5) pn[5] = 0;
+                if (k < 4) pn[4] = 0;
+                if (k < 3) pn[3] = 0;
+                if (k < 2) pn[2] = 0;
+                if (k < 1) pn[1] = 0;
+                decdld(pn[1], pn[2], pn[3], pn[4], pn[5], pn[6], pn[7], pn[8],
+                   apcbuf+dcsnext, apclength - dcsnext);
+                break;
             case '|': {    /* DECUDK */
                 int key = 0 ;
                 /* pn[1] - Clear keys: 0 All, 1 One */
