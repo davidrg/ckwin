@@ -763,8 +763,8 @@ decdld(int font_number, int starting_character, int erase_control,
     int cell_height, cell_width, used_height = 0;
     int h_offset = 0, v_offset = 0;
     int lines = 24, columns = 80;
-    BOOL is_132cols, is_full_cell, is_vt220_font = FALSE, erased=FALSE;
-    BOOL default_height = FALSE, default_width = FALSE;
+    BOOL is_132cols = FALSE, is_full_cell = FALSE, is_vt220_font = FALSE;
+    BOOL default_height = FALSE, default_width = FALSE, erased = FALSE;
     int glyph = 0, row = 0, column = 0;
     char name[3] = {0, 0, 0};
 
@@ -825,16 +825,32 @@ decdld(int font_number, int starting_character, int erase_control,
             }
             cell_height = 20;  /* The docs say so, but it feels wrong */
             break;
-        case TT_K95:
-            /* We don't *really* care about 80/132-column modes */
-            cell_width = 16;
-            cell_height = 20;
+        case TT_WY370:
+            /* The WY-370 apparently supports a 161 column mode which affects
+             * font cell dimensions. It looks like it doesn't have a separate
+             * font set size parameter value though. I don't have a WY-370 to
+             * test against, so I guess you just send the font as a 132-column
+             * one, and if the terminal isn't in 161-column mode it won't
+             * display properly. If thats the case there isn't much we can
+             * really do to handle 161-column fonts here. The terminal also
+             * apparently supports a 52-line display which affects the cell
+             * height, but this also doesn't seem to be signaled via font set
+             * size like it is on later DEC terminals. */
+            if (is_full_cell) { /* full cell */
+                /* TODO: 161 column display uses a width of 8 */
+                cell_width = is_132cols ? 10 : 16;
+            } else { /* text cell */
+                /* 161 column display also uses a width of 7 */
+                cell_width = is_132cols ? 7 : 12;
+            }
+            /* TODO: 52 line display uses a height of 8 */
+            cell_height = 16;
             break;
         case TT_VT420:
-            /*case TT_VT510:*/
+        /*case TT_VT510:*/
         case TT_VT520:
         case TT_VT525:
-        case TT_WY370:
+        case TT_K95:
         default:
             if (is_full_cell) { /* full cell */
                 cell_width = 10;
