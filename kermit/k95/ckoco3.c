@@ -10524,319 +10524,337 @@ unsigned char
 charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
 {
     unsigned char cs = TX_UNDEF ;
-    unsigned char bchar ;
+    unsigned char bchar = 0;
+    unsigned char cchar = 0;
+    int i;
 
-    switch ( size ) {
-    case cs94:
-        switch ( achar ) {
-#ifdef SN97801_5XX
-        case '@':       /* International (new) */
-            break;
-        case 'B':       /* International A (US-ASCII) */
-            break;
-        case 'K':       /* German character set (GR-ASCII) */
-            break;
-        case 'w':       /* Brackets character set (new) */
-            break;
-        case 'c':       /* FACET character set (new) */
-            break;
-        case 'v':       /* IBM character set (new) */
-            break;
-        case 'u':       /* EURO symbols (new) */
-            break;
-        case 't':       /* Mathematics symbols (new) */
-            break;
-        case 'y':       /* Blanks (new) */
-            break;
-        case 'x':       /* Load Area G2 (7-bit) or DRCS area (8-bit) if G0/G1 */
-                        /* DRCS area always if G2/G3 */
-            break;
-#endif /* SN97801_5XX */
-        case '@':  /* 97801 - Not quite US ASCII but close */
-        case 'A':
-            cs = TX_BRITISH ;
-            break;
-        case 'B':       /* Use the default value for G[0] */
-            if (ISLINUX(tt_type_mode)) {
-                if ( pG == &G[0] )
-                    cs = TX_ASCII;
-                else
-                    cs = TX_8859_1 ;
-            } else if ( !(ISVT100(tt_type_mode) && decnrcm) ) {
-                /*
-                From VT330/340 install guide page 81.:
-                "When you select an NRC set in multinational mode,
-                the NRC set replaces the ASCII set."
-                */
-#ifdef COMMENT
-                cs = G[0].def_designation;
-#else /* COMMENT */
-                cs = dec_nrc;
-#endif /* COMMENT */
-            }
-            else {
-                cs = TX_ASCII ;
-            }
-            break;
-        case '1':       /* DEC Alternate ROM */
-            cs = TX_ASCII ;
-            break;
-        case 'C':
-        case '5':
-            cs = TX_FINNISH ;
-            break;
-        case 'E':
-        case '6':
-        case '`':
-            cs = TX_NORWEGIAN ;
-            break;
-        case 'G':
-        case 'H':
-        case '7':
-            cs = TX_SWEDISH ;
-            break;
-        case 'K':
-            if ( ISLINUX(tt_type_mode) ) {       /* user defined */
-                if (pG == &G[0]) {
-                    cs = TX_ASCII ;
-                } else {
-                    cs = TX_CP850;               /* we will choose one */
-                }
-            } else
-                cs = TX_GERMAN ;
-            break;
-        case 'Q':
-        case '9':
-            cs = TX_CN_FRENCH ;
-            break;
-        case 'R':
-        case 'f':
-            cs = TX_FRENCH ;
-            break;
-        case 'Y':
-            cs = TX_ITALIAN ;
-            break;
-        case 'Z':
-            cs = TX_SPANISH ;
-            break;
-        case '0':
-            cs = TX_DECSPEC ;
-            break;
-        case '>':
-        case '2':       /* DEC Alternate ROM - Special Graphics */
-            cs = TX_DECTECH ;
-            break;
-        case '4':
-            cs = TX_DUTCH ;
-            break;
-        case '<':
-            if ( ISVT320(tt_type_mode) ) {
-                /* DEC User Preferred Supplemental VT320 and higher */
-                cs = dec_upss ;
-            }
-            else {
-                cs = TX_DECMCS ;
-            }
-            break;
-        case '=':
-            cs = TX_SWISS ;
-            break;
-        case '%':
-            bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
-            if (bchar == '5') {
-                cs = TX_DECMCS ;
-            }
-            else if (bchar == '6') {
-                cs = TX_PORTUGUESE ;
-            }
-#ifdef COMMENT
-            else if (bchar == '0') {
-                cs = DEC TURKISH ;
-            }
-            else if (bchar == '=') {
-                cs = HEBREW NRCS ;
-            }
-            else if ( bchar == '2' )
-                cs = TURKISH NRCS;
-            else if ( bchar == '3' )
-                cs = SCS NRCS;
-#endif /* COMMENT */
-            break;
-        case 'L':
-            cs = TX_PORTUGUESE ;
-            break;
-        case 'i':
-            cs = TX_HUNGARIAN ;
-            break;
-        case 'J':
-            cs = TX_J201R ;
-            break;
-        case 'I':
-            cs = TX_J201K ;
-            break;
-        case '*':
-            cs = TX_IBMC0GRPH;  /* QANSI/Linux */
-            break;
-        case 'U':               /* QANSI/Linux */
-        case '?':               /* This is a MSK hack for Word Perfect */
-            if (pG == &G[0]) {
-                cs = TX_ASCII ;
-            } else {
-                cs = TX_CP437 ;
-            }
-            break;
-        case 'c':       /* FACET character set (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIFACET;
-            }
-            break;
-        case 'e':       /* APL-ISO */
-            cs = TX_APL1;
-            break;
-        case 'u':       /* EURO symbols (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIEURO;
-            }
-            break;
-        case 'v':       /* IBM character set (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIIBM;
-            }
-            break;
-        case 'w':       /* Brackets character set (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIBRACK;
-            }
-            break;
-        case ' ':  /* space */
-            bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
-            switch (bchar) {
-            case '@':   /* soft character set */
-                /* not supported - do nothing */
-                debug(F100,"charset - host tried to activate soft-character-set","",0);
-                break;
-            }
-            break;
-#ifdef COMMENT
-        case '"':
-            if ( bchar == '?' )
-                cs = DEC GREEK;
-            else if ( bchar == '4' )
-                cs = DEC HEBREW;
-            else if ( bchar == '>' )
-                cs = GREEK NRCS;
-            break;
-        case '&':
-            if ( bchar == '4' )
-                cs = DEC CYRILLIC;
-            else if ( bchar == '5' )
-                cs = RUSSIAN NRC;
-            break;
-#endif /* COMMENT */
-
+    if (achar >= ' ' && achar <= '/') {
+        bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
+        if (bchar >= ' ' && bchar <= '/') {
+            cchar = (escnext<=esclast)?escbuffer[escnext++]:0;
+            /* cchar should be between '0' and '~' though I'm not sure there
+             * is much we can usefully do if that isn't the case */
         }
-        break;
+    }
 
-    case cs96:
-        switch ( achar ) {
+    /* First, check DRCS buffers. They're searched in reverse order. */
+    for (i = DRCS_BUFFERS-1; i >= 0; i--) {
+        if (drcsbuf[i] != NULL && drcsbuf[i]->is_96_chars == (size == cs96)) {
+            if (drcsbuf[i]->name[0] == achar &&
+                drcsbuf[i]->name[1] == bchar &&
+                drcsbuf[i]->name[2] == cchar) {
+                switch (i) {
+                    case 0: cs = TX_DRCS_1; break;
+                    case 1: cs = TX_DRCS_2; break;
+                    default: break;
+                }
+                if (cs != TX_UNDEF) break;
+            }
+        }
+    }
+
+    if (cs == TX_UNDEF) {
+        switch ( size ) {
+            case cs94:
+                switch ( achar ) {
 #ifdef SN97801_5XX
-        case 'A':       /* 8859-1 */
-        case 'B':       /* 8859-2 */
-        case 'C':       /* 8859-3 */
-        case 'D':       /* 8859-4 */
-        case 'F':       /* 8859-5 (different) */
-        case '@':       /* 8859-7 (different) */
-        case 'T':       /* 8859-9 (different) */
-        case 'x':       /* DRCS area */
+                case '@':       /* International (new) */
+                        break;
+                case 'B':       /* International A (US-ASCII) */
+                        break;
+                case 'K':       /* German character set (GR-ASCII) */
+                        break;
+                case 'w':       /* Brackets character set (new) */
+                        break;
+                case 'c':       /* FACET character set (new) */
+                        break;
+                case 'v':       /* IBM character set (new) */
+                        break;
+                case 'u':       /* EURO symbols (new) */
+                        break;
+                case 't':       /* Mathematics symbols (new) */
+                        break;
+                case 'y':       /* Blanks (new) */
+                        break;
+                case 'x':       /* Load Area G2 (7-bit) or DRCS area (8-bit) if G0/G1 */
+                        /* DRCS area always if G2/G3 */
+                        break;
 #endif /* SN97801_5XX */
-        case '<':       /* DEC User-preferred Supplemental */
-            cs = dec_upss ;
-            break;
+                case '@':  /* 97801 - Not quite US ASCII but close */
+                case 'A':
+                        cs = TX_BRITISH ;
+                        break;
+                case 'B':       /* Use the default value for G[0] */
+                        if (ISLINUX(tt_type_mode)) {
+                            if ( pG == &G[0] )
+                                cs = TX_ASCII;
+                            else
+                                cs = TX_8859_1 ;
+                        } else if ( !(ISVT100(tt_type_mode) && decnrcm) ) {
+                            /*
+                            From VT330/340 install guide page 81.:
+                            "When you select an NRC set in multinational mode,
+                            the NRC set replaces the ASCII set."
+                            */
+#ifdef COMMENT
+                            cs = G[0].def_designation;
+#else /* COMMENT */
+                            cs = dec_nrc;
+#endif /* COMMENT */
+                        }
+                        else {
+                            cs = TX_ASCII ;
+                        }
+                        break;
+                case '1':       /* DEC Alternate ROM */
+                        cs = TX_ASCII ;
+                        break;
+                case 'C':
+                case '5':
+                        cs = TX_FINNISH ;
+                        break;
+                case 'E':
+                case '6':
+                case '`':
+                        cs = TX_NORWEGIAN ;
+                        break;
+                case 'G':
+                case 'H':
+                case '7':
+                        cs = TX_SWEDISH ;
+                        break;
+                case 'K':
+                        if ( ISLINUX(tt_type_mode) ) {       /* user defined */
+                            if (pG == &G[0]) {
+                                cs = TX_ASCII ;
+                            } else {
+                                cs = TX_CP850;               /* we will choose one */
+                            }
+                        } else
+                            cs = TX_GERMAN ;
+                        break;
+                case 'Q':
+                case '9':
+                        cs = TX_CN_FRENCH ;
+                        break;
+                case 'R':
+                case 'f':
+                        cs = TX_FRENCH ;
+                        break;
+                case 'Y':
+                        cs = TX_ITALIAN ;
+                        break;
+                case 'Z':
+                        cs = TX_SPANISH ;
+                        break;
+                case '0':
+                        cs = TX_DECSPEC ;
+                        break;
+                case '>':
+                case '2':       /* DEC Alternate ROM - Special Graphics */
+                        cs = TX_DECTECH ;
+                        break;
+                case '4':
+                        cs = TX_DUTCH ;
+                        break;
+                case '<':
+                        if ( ISVT320(tt_type_mode) ) {
+                            /* DEC User Preferred Supplemental VT320 and higher */
+                            cs = dec_upss ;
+                        }
+                        else {
+                            cs = TX_DECMCS ;
+                        }
+                        break;
+                case '=':
+                        cs = TX_SWISS ;
+                        break;
+                case '%':
+                        if (bchar == '5') {
+                            cs = TX_DECMCS ;
+                        }
+                        else if (bchar == '6') {
+                            cs = TX_PORTUGUESE ;
+                        }
+#ifdef COMMENT
+                        else if (bchar == '0') {
+                            cs = DEC TURKISH ;
+                        }
+                        else if (bchar == '=') {
+                            cs = HEBREW NRCS ;
+                        }
+                        else if ( bchar == '2' )
+                            cs = TURKISH NRCS;
+                        else if ( bchar == '3' )
+                            cs = SCS NRCS;
+#endif /* COMMENT */
+                        break;
+                case 'L':
+                        cs = TX_PORTUGUESE ;
+                        break;
+                case 'i':
+                        cs = TX_HUNGARIAN ;
+                        break;
+                case 'J':
+                        cs = TX_J201R ;
+                        break;
+                case 'I':
+                        cs = TX_J201K ;
+                        break;
+                case '*':
+                        cs = TX_IBMC0GRPH;  /* QANSI/Linux */
+                        break;
+                case 'U':               /* QANSI/Linux */
+                case '?':               /* This is a MSK hack for Word Perfect */
+                        if (pG == &G[0]) {
+                            cs = TX_ASCII ;
+                        } else {
+                            cs = TX_CP437 ;
+                        }
+                        break;
+                case 'c':       /* FACET character set (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIFACET;
+                        }
+                        break;
+                case 'e':       /* APL-ISO */
+                        cs = TX_APL1;
+                        break;
+                case 'u':       /* EURO symbols (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIEURO;
+                        }
+                        break;
+                case 'v':       /* IBM character set (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIIBM;
+                        }
+                        break;
+                case 'w':       /* Brackets character set (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIBRACK;
+                        }
+                        break;
+#ifdef COMMENT
+                case '"':
+                        if ( bchar == '?' )
+                            cs = DEC GREEK;
+                        else if ( bchar == '4' )
+                            cs = DEC HEBREW;
+                        else if ( bchar == '>' )
+                            cs = GREEK NRCS;
+                        break;
+                case '&':
+                        if ( bchar == '4' )
+                            cs = DEC CYRILLIC;
+                        else if ( bchar == '5' )
+                            cs = RUSSIAN NRC;
+                        break;
+#endif /* COMMENT */
 
-        case 'A':
-            cs = TX_8859_1 ;
-            break;
-        case 'B':
-            cs = TX_8859_2 ;
-            break;
-        case 'C':
-            cs = TX_8859_3 ;
-            break;
-        case 'D':
-            cs = TX_8859_4 ;
-            break;
-        case 'F':
-            cs = IS97801(tt_type_mode) ? TX_8859_5 : TX_8859_7 ;
-            break;
-        case '@':
-            cs = TX_8859_7 ;
-            break;
-        case 'G':
-            cs = TX_8859_6 ;
-            break;
-        case 'H':
-            cs = TX_8859_8 ;
-            break;
-        case 'L':
-            cs = TX_8859_5 ;
-            break;
-        case 'T': /* SNI-97801 */
-            if ( !IS97801(tt_type_mode) )
+                }
                 break;
 
-        case 'M': /* DEC VT3xx */
-            cs = TX_8859_9 ;
-            break;
+            case cs96:
+                switch ( achar ) {
+#ifdef SN97801_5XX
+                case 'A':       /* 8859-1 */
+                case 'B':       /* 8859-2 */
+                case 'C':       /* 8859-3 */
+                case 'D':       /* 8859-4 */
+                case 'F':       /* 8859-5 (different) */
+                case '@':       /* 8859-7 (different) */
+                case 'T':       /* 8859-9 (different) */
+                case 'x':       /* DRCS area */
+#endif /* SN97801_5XX */
+                case '<':       /* DEC User-preferred Supplemental */
+                        cs = dec_upss ;
+                        break;
 
-        case 'V':
-            cs = TX_8859_6 ;
-            break;
+                case 'A':
+                        cs = TX_8859_1 ;
+                        break;
+                case 'B':
+                        cs = TX_8859_2 ;
+                        break;
+                case 'C':
+                        cs = TX_8859_3 ;
+                        break;
+                case 'D':
+                        cs = TX_8859_4 ;
+                        break;
+                case 'F':
+                        cs = IS97801(tt_type_mode) ? TX_8859_5 : TX_8859_7 ;
+                        break;
+                case '@':
+                        cs = TX_8859_7 ;
+                        break;
+                case 'G':
+                        cs = TX_8859_6 ;
+                        break;
+                case 'H':
+                        cs = TX_8859_8 ;
+                        break;
+                case 'L':
+                        cs = TX_8859_5 ;
+                        break;
+                case 'T': /* SNI-97801 */
+                        if ( !IS97801(tt_type_mode) )
+                            break;
 
-        case '%':
-            bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
-            if (bchar == '5') {
-                cs = TX_DECMCS ;
-            }
-			break;
-        case '*':
-            cs = TX_IBMC0GRPH;  /* QANSI/Linux */
-            break;
-        case 'U':               /* QANSI/Linux */
-            /* fall through */
-        case '?':               /* This is a MSK hack for Word Perfect */
-            if (pG == &G[0]) {
-                cs = TX_ASCII ;
-            } else {
-                cs = TX_CP437 ;
-            }
-            break;
-        case 'b':
-            cs = TX_8859_15;    /* Latin 9 */
-            break;
+                case 'M': /* DEC VT3xx */
+                        cs = TX_8859_9 ;
+                        break;
 
-            /* Warning the following have been allocated officially */
-            /* the values below are not official.                   */
-        case 'd':               /* Hack alert: DGI */
-            cs = TX_DGI ;
-            break;
-        case 'e':               /* Hack alert: DG PC Graphics */
-            cs = TX_DGPCGRPH;
-            break;
-        case 'f':               /* Hack alert: DG Line Drawing */
-            cs = TX_DGLDGRPH;
-            break;
-        case 'g':               /* Hack alert: DG Word Processing Graphics */
-            cs = TX_DGWPGRPH;
-            break;
-        case 'h':               /* Hack alert: HP Roman-8 */
-            cs = TX_HPR8;
-            break;
-        case 'i':               /* Hack alert: HP Math-8 */
-            cs = TX_HPMATH;
-            break;
-        case 'j':               /* Hack alert: HP Line-8 */
-            cs = TX_HPLINE;
-            break;
+                case 'V':
+                        cs = TX_8859_6 ;
+                        break;
+
+                case '%':
+                        if (bchar == '5') {
+                            cs = TX_DECMCS ;
+                        }
+                        break;
+                case '*':
+                        cs = TX_IBMC0GRPH;  /* QANSI/Linux */
+                        break;
+                case 'U':               /* QANSI/Linux */
+                        /* fall through */
+                case '?':               /* This is a MSK hack for Word Perfect */
+                        if (pG == &G[0]) {
+                            cs = TX_ASCII ;
+                        } else {
+                            cs = TX_CP437 ;
+                        }
+                        break;
+                case 'b':
+                        cs = TX_8859_15;    /* Latin 9 */
+                        break;
+
+                        /* Warning the following have been allocated officially */
+                        /* the values below are not official.                   */
+                case 'd':               /* Hack alert: DGI */
+                        cs = TX_DGI ;
+                        break;
+                case 'e':               /* Hack alert: DG PC Graphics */
+                        cs = TX_DGPCGRPH;
+                        break;
+                case 'f':               /* Hack alert: DG Line Drawing */
+                        cs = TX_DGLDGRPH;
+                        break;
+                case 'g':               /* Hack alert: DG Word Processing Graphics */
+                        cs = TX_DGWPGRPH;
+                        break;
+                case 'h':               /* Hack alert: HP Roman-8 */
+                        cs = TX_HPR8;
+                        break;
+                case 'i':               /* Hack alert: HP Math-8 */
+                        cs = TX_HPMATH;
+                        break;
+                case 'j':               /* Hack alert: HP Line-8 */
+                        cs = TX_HPLINE;
+                        break;
+                }
         }
     }
 
