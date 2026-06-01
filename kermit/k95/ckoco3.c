@@ -9396,6 +9396,20 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     erasemode = user_erasemode;
 
+    /* Erase DRCS font buffers */
+    if (x) {
+        int i;
+        EnterDRCSBufferCriticalSection();
+        for (i = 0; i < DRCS_BUFFERS; i++) {
+            if (drcsbuf[i] != NULL) {
+                drcs_t *buf = drcsbuf[i];
+                drcsbuf[i] = NULL;
+                free(buf);
+            }
+        }
+        LeaveDRCSBufferCriticalSection();
+    }
+
     /* Restore DEC VT Graphic Set translation functions */
     for ( i = 0 ; i < 4 ; i++ )
     {
