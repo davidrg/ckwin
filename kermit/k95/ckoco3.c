@@ -568,6 +568,7 @@ int saved_cursor_page = -1;
 int decspma_max_page = -1;  /* How many pages does the host want (DECSPMA) */
 int user_pages = -1; /* How many pages does the user want (SET TERM PAGE COUNT) */
 
+/* DRCS extension only available in KUI builds */
 #ifdef KUI
 #define DRCS_EXT "7;"
 #else
@@ -580,21 +581,42 @@ int user_pages = -1; /* How many pages does the user want (SET TERM PAGE COUNT) 
      2 - Printer port
   *  3 - ReGIS graphics
   *  4 - Sixel graphics
+  *  5 - Katakana
      6 - DECSED - Selective erase
-     7 - DRCS - Soft character sets
+     7 - DRCS - Soft character sets   (KUI builds only)
      8 - UDK - User-defined keys
      9 - National Replacement Character Sets can be designated by host
+  * 10 - Kanji
+    11 - Status Display
   * 12 - Serbo-Croation (SCS)
   * 13 - Local editing
+    14 - 8-bit Interface Architecture
     15 - Technical character set
   * 16 - Locator device port
+  * 17 - Terminal State Interrogation
   * 18 - Windowing Capability
   * 19 - Dual sessions
+  * 20 - APL
   * 21 - Horizontal Scrolling
     22 - Color
     23 - Greek
   * 24 - Turkish
+  * 25 - Arabic Bilingual Mode 1
+  * 26 - Arabic Milingual Mode 2
+  * 27 - Arabic Milingual Mode 3
+    28 - Rectangular Editing
+  * 29 - ANSI Text Locator
+  * 30 - Hanzi
+    32 - Text Macros
+  * 33 - Hangul and Hanja
+  * 34 - Icelandic
+  * 35 - Arabic Bilingual with Text Controls
+  * 36 - Arabic Bilingual with no Text Controls
+  * 37 - Thai
+  * 38 - Character Outlining
+  * 39 - Page Memory Extension
     42 - ISO Latin-2
+    43 - Ruled Lines   (KUI builds only)
     44 - PC Term
     45 - Soft-key mapping
     46 - ASCII Terminal emulation
