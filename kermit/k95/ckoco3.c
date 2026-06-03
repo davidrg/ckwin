@@ -1153,9 +1153,10 @@ decdld(int font_number, int starting_character, int erase_control,
          * The VT220 is a bit odd; its cells are 10 wide, only 8 columns are
          * addressable and it allows all 8 columns to be filled even if the font
          * specifies a smaller width.
-         */
-        if (ISVT320(tt_type_mode) && column > width) continue;
-        if (!ISVT320(tt_type_mode) && column > 8) continue;
+         *
+         * Note, column here is zero-based, while width is not.*/
+        if (ISVT320(tt_type_mode) && column >= width) continue;
+        if (!ISVT320(tt_type_mode) && column >= 8) continue;
         if (column > cell_width) continue;
 
         /* Ignore entire glyph if we're trying to load a 94-character set
