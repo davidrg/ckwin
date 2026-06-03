@@ -4607,7 +4607,7 @@ DECTSR		462
                 <ref src="wy370:76"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt510 tt"/>
                 <p>
-                    Responds with the current state of <a href="decsca">DECSCA</a>.
+                    Responds with the current state of <a href="#decsca">DECSCA</a>.
                     For example, if DECSCA is set to Designate Character
                     Erasable (2), then the response will be: <tt><cc>DCS</cc> 1 $ r 1 " q <cc>ST</cc></tt>
                 </p>
@@ -14790,6 +14790,20 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:DECSCA.html"/>
             <ref src="vt52x:275"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 dtterm wt"/>
+
+            <p>
+                Sets and clears character attributes in a similar way to how
+                <a href="#sgr">SGR</a> works, though the set of settable
+                attributes is different. Selected character attributes are
+                applied to all subsequently received characters.
+            </p>
+
+            <p>
+                DEC only defined the unerasable (protected) attribute for this
+                control sequence. Characters with the unerasable attribute
+                set are not affected by <a href="#decsera">DECSERA</a>,
+                <a href="#decsed">DECSED</a>, <a href="#decsel">DECSEL</a>.
+            </p>
 
             <p>You can query the current state of DECSCA with
                 <a href="#decrqss">DECRQSS</a></p>
