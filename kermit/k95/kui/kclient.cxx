@@ -731,7 +731,7 @@ void KClient::refreshSoftFonts() {
                          * that pixel ORd with the pixel to the immediate left.
                          * It would be too expensive to draw pixels individually
                          * at render time, so instead we'll apply the dot
-                         * stretching to the glyphs here instead.
+                         * stretching to the glyphs here.
                          *
                          * Additionally, columns 9 and 10 are not addressable.
                          * These columns are just a copy of column 8. And dot
