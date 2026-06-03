@@ -568,6 +568,12 @@ int saved_cursor_page = -1;
 int decspma_max_page = -1;  /* How many pages does the host want (DECSPMA) */
 int user_pages = -1; /* How many pages does the user want (SET TERM PAGE COUNT) */
 
+#ifdef KUI
+#define DRCS_EXT "7;"
+#else
+#define DRCS_EXT ""
+#endif /* KUI */
+
 /*
   VT220 and higher Pn's for terminal ID string are (* = Not supported):
      1 - 132 columns
@@ -631,18 +637,18 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "BETERM",  {NULL},                          "",                    /* BEOS ANSI */
     "VT100", {"DEC-VT100","VT100-AM",NULL},     "[?1;2c",              /* DEC VT100 */
     "VT102", {"DEC-VT102",NULL},                "[?6c",                /* DEC VT102 */
-    "VT220", {"DEC-VT220","DEC-VT200","VT200",NULL}, "[?62;1;2;6;8;9;15;44c",  /* DEC VT220 */
-    "VT220PC", {"DEC-VT220-PC","DEC-VT200-PC","VT200PC",NULL}, "[?62;1;2;6;8;9;15;44c",  /* DEC VT220 w/ PC keyboard */
-    "VT320", {"DEC-VT320","DEC-VT300","VT300",NULL}, "[?63;1;2;6;8;9;15;44c",  /* DEC VT320 */
-    "VT320PC", {"DEC-VT320-PC","DEC-VT300-PC","VT300PC",NULL}, "[?63;1;2;6;8;9;15;44c",  /* DEC VT320 w/ PC keyboard */
-    "WY370", {"WYSE-370","WYSE370","WY350",NULL},"[?63;1;2;6;8;9;15;44c",  /* WYSE 370 (same as VT320) */
+    "VT220", {"DEC-VT220","DEC-VT200","VT200",NULL}, "[?62;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT220 */
+    "VT220PC", {"DEC-VT220-PC","DEC-VT200-PC","VT200PC",NULL}, "[?62;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT220 w/ PC keyboard */
+    "VT320", {"DEC-VT320","DEC-VT300","VT300",NULL}, "[?63;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT320 */
+    "VT320PC", {"DEC-VT320-PC","DEC-VT300-PC","VT300PC",NULL}, "[?63;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT320 w/ PC keyboard */
+    "WY370", {"WYSE-370","WYSE370","WY350",NULL},"[?63;1;2;6;"DRCS_EXT"8;9;15;44c",  /* WYSE 370 (same as VT320) */
     "97801", {"SNI-97801",NULL},                "[?62;1;2;6;8;9;15;44c",  /* Sinix 97801 */
     "AAA", { "ANNARBOR", "AMBASSADOR",NULL}, "11;00;00", /* Ann Arbor Ambassador */
 #ifdef COMMENT
-    "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;23;42;44;45;46c",       /* DEC VT420 */
-    "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
+    "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;"DRCS_EXT"8;9;15;23;42;44;45;46c",       /* DEC VT420 */
+    "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;"DRCS_EXT"8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;7;8;9;15;22;28;32;44c",     /* Kermit 95 self-personality */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;"DRCS_EXT"8;9;15;22;28;32;44c",     /* Kermit 95 self-personality */
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;DRCS;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
