@@ -1257,12 +1257,15 @@ void KClient::writeMe()
 
                     /* The VT220s centering effectively draws glyphs offset by
                      * 1 from the grid, so the 10th column gets rendered in the
-                     * first column of the next cell to the right.
-                     */
+                     * first column of the next cell to the right. The VT220
+                     * does this for all fonts, but we'll only do this for fonts
+                     * that don't use columns 8+, so that drawing soft-fonts can
+                     * still line up with regular non-soft-fonts that aren't
+                     * offset like this. */
 
                     BitBlt(hdc(),
                            rect.left + (j-kws->offset) * target_width
-                                + (render_hints & DRCS_RENDER_HINT_VT220 ? 2 : 0),
+                                + (render_hints & DRCS_RENDER_HINT_VT220_TEXT ? 1 : 0),
                            rect.top,
                            target_width+1,
                            target_height,

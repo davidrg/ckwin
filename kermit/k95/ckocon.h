@@ -1333,7 +1333,7 @@ typedef struct _drcs_glyph_t {
 #define DRCS_RENDER_HINT_NONE           0x00
 #define DRCS_RENDER_HINT_VT220          0x01
 #define DRCS_RENDER_HINT_VT320          0x02
-#define DRCS_RENDER_HINT_RES_F          0x04
+#define DRCS_RENDER_HINT_VT220_TEXT     0x04
 #define DRCS_RENDER_HINT_RES_E          0x08
 #define DRCS_RENDER_HINT_RES_D          0x10
 #define DRCS_RENDER_HINT_RES_C          0x20

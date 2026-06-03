@@ -1116,7 +1116,8 @@ decdld(int font_number, int starting_character, int erase_control,
     drcs->start_character = glyph;
     drcs->render_hints = DRCS_RENDER_HINT_NONE;
 
-    if (is_vt220_font) drcs->render_hints = DRCS_RENDER_HINT_VT220;
+    if (is_vt220_font) drcs->render_hints =
+        DRCS_RENDER_HINT_VT220 | DRCS_RENDER_HINT_VT220_TEXT;
     else if (tt_type_mode == TT_VT320) drcs->render_hints = DRCS_RENDER_HINT_VT320;
 
     /* Center text glyphs within the cell. The VT220 does not do this - at least
@@ -1136,6 +1137,19 @@ decdld(int font_number, int starting_character, int erase_control,
 
         if (sixel == ';') {
             /* ';' means next glyph */
+
+            if ((drcs->render_hints & DRCS_RENDER_HINT_VT220_TEXT) &&
+                    (tt_type_mode == TT_VT220 || tt_type_mode == TT_VT220PC)) {
+                if (column >= 8) {
+                    /* The 8th column is stretched to three pixels to join up
+                     * with the next cell, so text fonts will never put anything
+                     * in that column. If one or more glyphs leave that column
+                     * out, we'll treat it as a text font and handle centering
+                     * at render time. */
+                    drcs->render_hints = drcs->render_hints & ~DRCS_RENDER_HINT_VT220_TEXT;
+                }
+            }
+
             glyph++;
             erased = FALSE;
             row = 0;
