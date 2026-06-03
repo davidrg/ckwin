@@ -1319,6 +1319,7 @@ typedef struct vscrn_struct {
 } vscrn_t;
 
 
+#ifdef KUI
 /* VT level 2 DRCS Support
  * ------------------------
  *
@@ -1383,6 +1384,7 @@ typedef struct _drcs_t {
     (buffer) == 2 ? DRCS_2_START : \
     0 \
 )
+#endif /* KUI */
 
 /* Multiple Page support
  * ---------------------

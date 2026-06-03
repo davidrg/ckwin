@@ -731,6 +731,7 @@ CHAR sni_kbd_firmware[7]="920031";      /* 97801 Keyboard Firmware Version */
 CHAR sni_term_firmware[7]="830851";     /* 97801 Terminal Firmware Version */
 
 
+#ifdef KUI
 /* VT level 2 DRCS Support
  * ------------------------
  * TODO: - Support multiple renditions for those terminals that support it
@@ -1212,6 +1213,7 @@ decdld(int font_number, int starting_character, int erase_control,
     /* mark the vscreen as dirty */
     VscrnIsDirty(VTERM);
 }
+#endif /* KUI */
 
 /* VT level 4 Macro Support
  * ------------------------
@@ -9427,6 +9429,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     erasemode = user_erasemode;
 
+#ifdef KUI
     /* Erase DRCS font buffers */
     if (x) {
         int i;
@@ -9440,6 +9443,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
         }
         LeaveDRCSBufferCriticalSection();
     }
+#endif /* KUI */
 
     /* Restore DEC VT Graphic Set translation functions */
     for ( i = 0 ; i < 4 ; i++ )
@@ -10220,9 +10224,12 @@ rtolxlat( int c )
             {
                 if ( win95hsl && c >= 0x23BA && c <= 0x23BD )
                     c = tx_hslsub(c);
-                else if ( c >= 0xE000 && c <= 0xF8FF &&
-                    !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
-                      drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c)) ) {
+                else if ( c >= 0xE000 && c <= 0xF8FF
+#ifdef KUI
+                          && !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
+                               drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c))
+#endif /* KUI */
+                        ) {
                     /* DRCS soft character sets map into the unicode PUA range,
                      * so don't apply tx_usub to them. */
                     c = tx_usub(c);
@@ -10403,9 +10410,12 @@ pushed:
                 if ( ck_isunicode() ) {
                     if ( win95hsl && c >= 0x23BA && c <= 0x23BD )
                         c = tx_hslsub(c);
-                    else if ( c >= 0xE000 && c <= 0xF8FF &&
-                            !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
-                              drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c)) ) {
+                    else if ( c >= 0xE000 && c <= 0xF8FF
+#ifdef KUI
+                              && !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
+                                   drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c))
+#endif /* KUI */
+                            ){
                         /* DRCS soft character sets map into the unicode PUA range,
                          * so don't apply tx_usub to them. */
                         c = tx_usub(c);
@@ -10568,6 +10578,7 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
         }
     }
 
+#ifdef KUI
     /* First, check DRCS buffers. They're searched in reverse order. */
     for (i = DRCS_BUFFERS-1; i >= 0; i--) {
         if (drcsbuf[i] != NULL && drcsbuf[i]->is_96_chars == (size == cs96)) {
@@ -10583,6 +10594,7 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
             }
         }
     }
+#endif /* KUI */
 
     if (cs == TX_UNDEF) {
         switch ( size ) {
@@ -15536,6 +15548,7 @@ dodcs( void )
 				break;
             } /* $ */
             case '{':      /* DECDLD - Soft character set */
+#ifdef KUI
                 if (k < 8) pn[8] = 0;
                 if (k < 7) pn[7] = 0;
                 if (k < 6) pn[6] = 0;
@@ -15546,6 +15559,7 @@ dodcs( void )
                 if (k < 1) pn[1] = 0;
                 decdld(pn[1], pn[2], pn[3], pn[4], pn[5], pn[6], pn[7], pn[8],
                    apcbuf+dcsnext, apclength - dcsnext);
+#endif /* KUI */
                 break;
             case '|': {    /* DECUDK */
                 int key = 0 ;
