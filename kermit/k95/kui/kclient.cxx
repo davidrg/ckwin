@@ -698,6 +698,8 @@ void KClient::refreshSoftFonts() {
             int w = display_width * 96;
 
             if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
+                /* To account for VT220 glyphs being stretched horizontally
+                 * into the next cell, which we don't really do. */
                 display_width += 1;
             } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
                 /* Apparently the aspect ratio is nearly 3:1. Well, we can't do
@@ -736,14 +738,17 @@ void KClient::refreshSoftFonts() {
                          * Additionally, columns 9 and 10 are not addressable.
                          * These columns are just a copy of column 8. And dot
                          * stretching is applied, so column 10 stretches into
-                         * column 11.
+                         * column 11 (the first column of the cell to the
+                         * right).
                          *
                          * At render time, the VT220 appears to render glyphs
                          * one pixel to the right; so column 1 in the glyph is
                          * really column 2 in the character cell. And the 10th
                          * column stretches into the first column of the next
-                         * cell, but doesn't overwrite any pixels defined by the
-                         * glyph in the next cell.
+                         * cell. We don't currently implement the "stretches
+                         * into the next cell" rendering behaviour, so instead
+                         * we treat glyphs as being 11 columns wide with columns
+                         * 8-11 having the same value.
                          *
                          * The rendering we do here doesn't quite match the
                          * behaviour of the VT220 as described here:
@@ -752,6 +757,15 @@ void KClient::refreshSoftFonts() {
                          * without a significant performance impact. Doing it
                          * properly with reasonable performance might require
                          * something like pixel shaders.
+                         *
+                         * So, to summarise the rendering differences from a
+                         * real VT220:
+                         *   - No scan lines (they're quite visible on the VT220)
+                         *   - Column 10 doesn't stretch into column 1 on the
+                         *     adjacent cell
+                         *   - Dot stretching is applied before rather than after
+                         *     double-wide stretching, so double-wide characters
+                         *     come out less detailed than on a real VT220.
                          */
                         if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
                             int prevbit;
@@ -853,6 +867,8 @@ void KClient::stretchSoftFont(int fontId) {
         int display_height = drcsbuf[i]->cell_height;
         int display_width = drcsbuf[i]->cell_width;
         if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
+            /* To account for VT220 glyphs being stretched horizontally one
+             * pixel into the next cell, which we don't really do. */
             display_width += 1;
         } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
             display_height *= 3;
