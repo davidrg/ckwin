@@ -3877,13 +3877,12 @@ DECTSR		462
 
             Patterns:
             ?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
-            ................................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-            ................XXXXXXXXXXXXXXXX................XXXXXXXXXXXXXXXX
-            ........XXXXXXXX........XXXXXXXX........XXXXXXXX........XXXXXXXX
-            ....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX
-            ..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX
             .X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X
-
+            ..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX
+            ....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX
+            ........XXXXXXXX........XXXXXXXX........XXXXXXXX........XXXXXXXX
+            ................XXXXXXXXXXXXXXXX................XXXXXXXXXXXXXXXX
+            ................................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
             -->
