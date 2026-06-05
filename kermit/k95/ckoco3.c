@@ -803,6 +803,81 @@ void vt_macro_reset();		/* Halts macro execution and resets the stack, etc */
 void vt_macro_clear();		/* Calls vt_macro_reset(), then clears all definitions */
 /* ------------------------*/
 
+/* VT level 5 Sound Support
+ * ------------------------
+ * While this *probably* could be supported on OS/2, for now its Windows only.
+ *
+ */
+#ifdef NT
+HMIDIOUT midiDeviceHandle = NULL;
+
+void
+OpenSoundDevice() {
+    midiOutOpen(
+        &midiDeviceHandle,      /* [out] handle */
+        MIDI_MAPPER,            /* Device to open */
+        (DWORD_PTR)NULL,        /* progress callback - not needed */
+        (DWORD_PTR)NULL,        /* User data - not needed */
+        CALLBACK_NULL);         /* No callback */
+    if (midiDeviceHandle != NULL) {
+        /* Success! We have a midi device, now set it up. This doc gives the
+         * MIDI commands we'll need:
+         * https://learn.microsoft.com/en-us/windows/win32/multimedia/summary-of-maps-and-midi-messages
+         * 0xC0 is Program Change, 0x80 is note off, 0x90 is note on.
+         *
+         * And 80 and 81 are square and sawtooth instruments respectively
+         * https://learn.microsoft.com/en-us/windows/win32/multimedia/standard-midi-patch-assignments
+         * I'm not really sure which is a closer match for the VT520.
+         */
+        midiOutShortMsg(midiDeviceHandle, MAKELONG(MAKEWORD(0xC0, 80), 0));
+    }
+}
+
+void
+CloseSoundDevice() {
+    if (midiDeviceHandle != NULL) {
+        midiOutClose(midiDeviceHandle);
+    }
+}
+#endif /* NT */
+
+/* Plays a single note via MIDI with the specified velocity (volume) for the
+ * specified duration in milliseconds. This function blocks.
+ *
+ * Its not a perfect match to how the VT520 sounds, but close enough. The VT520
+ * is perhaps a little higher pitched, though that might just be the result of
+ * the low quality audio hardware in the VT520. Just a little piezo beeper
+ * buried between the PCB and the rear plastic of the otherwise fairly open
+ * enclosure. Or maybe using a sawtooth instrument (81) is closer? hard to say.
+ */
+void
+MakeSound(UCHAR note, UCHAR velocity, int duration_ms) {
+    /* Try to open the MIDI device if it isn't already open. If this fails,
+     * we'll just treat every note as silent, but still do the sleep which is
+     * probably better than nothing as applications using it might be relying
+     * on its blocking nature. */
+#ifdef NT
+    if (midiDeviceHandle == NULL) OpenSoundDevice();
+
+    if (note == 0) velocity = 0;
+
+    if (velocity && midiDeviceHandle != NULL) {
+        /* note on */
+        midiOutShortMsg(midiDeviceHandle,
+            MAKELONG(MAKEWORD(0x90, note), MAKEWORD(velocity, 0)));
+    }
+    msleep(duration_ms);
+    if (velocity && midiDeviceHandle != NULL) {
+        /* note off */
+        midiOutShortMsg(midiDeviceHandle,
+            MAKELONG(MAKEWORD(0x80, note), MAKEWORD(velocity, 0)));
+    }
+#else
+    msleep(duration_ms);
+#endif /* NT */
+}
+
+
 /* Escape-sequence processing buffer */
 
 unsigned short escbuffer[ESCBUFLEN+1];
@@ -25972,6 +26047,42 @@ vtcsi(void)
 
                     break;
                 } /* '}' */
+                case '~':      /* DECPS - Play Sound */
+                    /* Pvolume ; Pduration ; Pnote */
+                    if (ISVT520(tt_type_mode) || ISK95(tt_type_mode)) {
+                        UCHAR velocity;
+                        int duration, note;
+                        if (k < 1) pn[1] = 0;
+                        if (pn[1] > 7) return;
+                        if (k < 2) pn[2] = 0;
+                        if (pn[2] > 255) return;
+                        if (k < 3) {
+                            k = 3;
+                            pn[k] = 0;
+                        }
+
+                        /* volume (0-7) to MIDI velocity (0-127) */
+                        velocity = pn[1] * 127 / 7;
+
+                        /* duration (0-255) in 1/32nds of a second to
+                         * milliseconds. This won't be perfect, but we don't
+                         * milliseconds. This won't be perfect, but we don't
+                         * currently have a microsecond sleep function. So it's
+                         * the best we can reasonably do for now.*/
+                        duration = pn[2] * 1000 / 32;
+
+                        for (note = 3; note <= k; note++) {
+                            /* A bunch of sites give 72 as the number for C5 in
+                             * MIDI, and they progress up from there in the same
+                             * order the VT520 manual gives, so... */
+                            pn[note] += 71;
+                            MakeSound(
+                                pn[note] > 96 ? 0 : pn[note],  /* Note out of range? silent */
+                                pn[note] == 71 ? 0 : velocity, /* note 0 is silent */
+                                duration);
+                        }
+                    };
+                    break;
 				case '|': {    /*  DECAC - Assign Color */
 					if (ISVT525(tt_type_mode)) {
 						cell_video_attr_t att = cell_video_attr_init_vio_attribute(0x00);

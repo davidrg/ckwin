@@ -2528,6 +2528,7 @@ syscleanup() {
         CloseHandle(VioHandle);
     VioHandle = 0 ;
 #endif /* ! KUI */
+    CloseSoundDevice();
 #endif /* NT */
     CloseThreadMgmtMutex() ;
     CloseZoutDumpMutex();

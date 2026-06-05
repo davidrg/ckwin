@@ -1326,7 +1326,7 @@ typedef struct videoline_struct {
     vt_char_attr_t *    vt_char_attrs ;   /* bitwise & of VT_CHAR_ATTR Values */
 #ifdef KUI
     vt_cell_attr_t *    cell_attrs;       /* bitwise & of CA_ATTR Values */
-#endif /* KUI */    
+#endif /* KUI */
     unsigned short *    hyperlinks;       /* hyperlink index values */
     unsigned short      vt_line_attr ;
     short               markbeg ;
@@ -1962,4 +1962,11 @@ int gui_text_popup_create(char * title, int h, int w);
 int gui_text_popup_append(unsigned short uch);
 int gui_text_popup_close(void);
 int gui_text_popup_wait(int seconds);
+
+#ifdef NT
+void OpenSoundDevice();
+void CloseSoundDevice();
+void MakeSound(UCHAR, UCHAR, int);
+#endif /* NT */
+
 #endif /* CKOCON_H */
