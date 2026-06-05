@@ -1138,8 +1138,8 @@ decdld(int font_number, int starting_character, int erase_control,
     drcs->name[0] = name[0];
     drcs->name[1] = name[1];
     drcs->name[2] = name[2];
-    drcs->cell_width = cell_width;
-    drcs->cell_height = cell_height;
+    drcs->cell_width = width;
+    drcs->cell_height = height;
     drcs->full_cell = is_full_cell;
     drcs->is_96_chars = character_set_size == 1;
     drcs->start_character = glyph;
