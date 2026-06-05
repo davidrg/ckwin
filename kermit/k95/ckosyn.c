@@ -3835,7 +3835,6 @@ void
 CreateDRCSBufferCriticalSection()
 {
     InitializeCriticalSection(&csDRCSBuffer);
-    return 0;
 }
 
 void
