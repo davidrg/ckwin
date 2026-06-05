@@ -7241,8 +7241,7 @@ cs_is_nrc(x) int x;
 #endif /* CK_ANSIC */
 {
 #ifdef UNICODE
-    if (x == TX_J201R || x == TX_DECSPEC || x == TX_DECTECH
-        || txrinfo[x] == NULL)
+    if (x == TX_DECSPEC || x == TX_DECTECH || txrinfo[x] == NULL)
       return(0);
     else
       return(txrinfo[x]->flags & X2U_STD && txrinfo[x]->size == 94);

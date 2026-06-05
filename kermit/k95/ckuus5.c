@@ -6189,8 +6189,10 @@ shotrm() {
       }
       if (strlen(tt_info[tt_type].x_id) <= 23)
         printf("  %13s: <ESC>%s","ID", idbuf);
-      else
-        printf("\n %19s: <ESC>%s","ID", idbuf);
+      else {
+          printf("\n %19s: <ESC>%s","ID", idbuf);
+          if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+      }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -9641,7 +9643,7 @@ arraynam(ss,c,n) char *ss; int *c; int *n;
         return(-9);
     }
     p--;                                /* Trim whitespace from end */
-    while (*p == SP || *p == HT)
+    while (p >= ssbuf && (*p == SP || *p == HT))
       p--;
     p++;
     *p = NUL;                           /* Terminate subscript with null */

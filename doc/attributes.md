@@ -105,20 +105,20 @@ K95 does treat color attributes specially. And of course those non-color uses
 are only possible in 24-bit builds which are also currently Windows and GUI 
 only.
 
-## DECterm Ruled Lines
-DECterm Ruled Lines ([#499](https://github.com/davidrg/ckwin/issues/499)), if
-they're ever implemented, will require an additional four bits per character
-cell but with the quirk that they're _not_ character attributes.
+## Cell Attributes
+These are special attributes that are not handled as SGR attributes, and are not
+affected by the kinds of things that affect SGR attributes. They're not placed 
+by the cursor, and they're not erased by things that erase the screen. Once set
+they stay set until explicitly unset. They do scroll with the contents of the
+screen and so are affected by things move (or destroy) cells like IL and DL.
 
-They're not turned on and off like other SGR attributes, rather they're drawn
-on screen with an escape sequence. The only thing that erases them is the
-matching erase lines escape sequence or having all cells that contain ruled
-lines scroll naturally off the screen. Erasing character cells or even the 
-entire screen doesn't impact ruled lines and DECRQSS doesn't report their 
-presence.
+| Bit # | Value | Purpose       | Notes                            |
+|-------|-------|---------------|----------------------------------|
+|     1 |  0x01 | Left Border   | DECterm Ruled Line Left Border   |
+|     2 |  0x02 | Top Border    | DECterm Ruled Line Top Border    |
+|     3 |  0x04 | Right Border  | DECterm Ruled Line Right Border  |
+|     4 |  0x08 | Bottom Border | DECterm Ruled Line Bottom Border |
 
-Because of their special separate nature these would probably best be stored in 
-a new kind of attribute byte separate from character attributes and line 
-attributes. Trying to shoehorn them into normal character attributes (which
-won't really have space for them anyway) is probably asking for weird bugs like
-those DECterm has when it comes to ruled lines.
+At this time Cell Attribute storage is only sized for four bits per character 
+cell, but if a need for more ever arises it can trivially be increased to a full
+eight bits per cell.

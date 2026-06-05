@@ -98,12 +98,14 @@ private:    // this section is for performance
 
     ushort* textBuffer;
     cell_video_attr_t* attrBuffer;
-    ushort* effectBuffer;
+    vt_char_attr_t* effectBuffer;
     ushort* lineAttr;
+    vt_cell_attr_t* cellAttrBuffer;
     _K_WORK_STORE* kws;
 
     cell_video_attr_t prevAttr;
-    ushort prevEffect;
+    vt_char_attr_t prevEffect;
+    vt_cell_attr_t prevCellAttr;
     COLORREF textColor;
 
     int wc;
@@ -112,6 +114,11 @@ private:    // this section is for performance
 
     void ToggleCursor(HDC, LPRECT);
 
+    static void SetWorkStoreRect(RECT* rect, _K_WORK_STORE* kws, KFont *font,
+        int terminalCellsWide, int terminalCellsHigh, int margin);
+    static void drawRuledLines(
+        HDC hdc, HPEN pen, int cells, KFont* font, RECT rect,
+        BOOL rlTop, BOOL rlBottom, BOOL rlLeft, BOOL rlRight);
     static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0);
     HBITMAP renderToBitmap(int vnum, DWORD **outPixels);
 #ifdef CK_HAVE_GDIPLUS
@@ -142,6 +149,9 @@ private:    // this section is for performance
     HRGN hrgnPaint;
     HBRUSH disabledBrush;
     HBRUSH bgBrush;
+    HPEN ruledLinePen;
+    cell_video_attr_t normalAttr;
+    bool screenNormal;
     DWORD savebgcolor;
     int interSpace[MAXNUMCOL];
 

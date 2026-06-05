@@ -1,0 +1,33 @@
+--- vt420.c	2024-12-05 13:43:14.000000000 +1300
++++ vt420.c	2026-04-16 19:39:32.890197441 +1200
+@@ -473,19 +473,21 @@
+ static void
+ fill_screen(void)
+ {
+-  if (do_colors) {
+-    int y, x;
++  int y, x;
+ 
++  if (do_colors) {
+     set_colors(WHITE_ON_BLUE);
+-    for (y = 0; y < max_lines - 4; ++y) {
+-      cup(y + 1, 1);
+-      for (x = 0; x < min_cols; ++x)
+-        putchar('E');
+-    }
++  }
++
++  for (y = 0; y < max_lines - 4; ++y) {
++    cup(y + 1, 1);
++    for (x = 0; x < min_cols; ++x)
++      putchar('E');
++  }
++
++  if (do_colors) {
+     /* make this a different color to show fill versus erase diffs */
+     set_colors(WHITE_ON_GREEN);
+-  } else {
+-    decaln();   /* fill the screen */
+   }
+ }
+ 

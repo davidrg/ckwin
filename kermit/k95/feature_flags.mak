@@ -35,6 +35,9 @@
 #   CKF_TOOLBAR    yes        Include the toolbar
 #   CKF_REXX       no         REXX support
 #   CKF_SAVE_IMG   yes        Save as an image file (excl. EMF)
+#   CKB_ASAN       no         Build with AddressSanitizer. Windows 10+,
+#                             x86/x86-64, Visual C++ 2019+ only. For debugging
+#                             only - not for release builds.
 #
 # The following flags are set automatically:
 #   CKF_SSH     Turned off when targeting OS/2 or when building with Open Watcom
@@ -61,6 +64,69 @@ ENABLED_FEATURE_DEFS = -DDOSYSLOG -DDOARROWKEYS
 
 # type /interpret doesn't work on windows currently.
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
+
+!if "$(CKB_BUILD_MINI)" == "yes"
+# Turn off as many features as we can to try and minimize executable size. This
+# nearly halves the size of the executable when built with Visual C++ 4.0 at
+# the expense of a bunch of features, and if you run it through something like
+# UPX it will shrink it down to only around 570K. You wouldn't really want to
+# *use* K95 like this, but it might be useful for bootstrapping a more
+# full-featured K95 onto a machine
+
+CKF_JUMPLISTS=no
+CKF_GDIPLUS=no
+CKF_SHELLNOTIFY=no
+CKF_SSH=no
+CKF_CONPTY=no
+CKF_LOGIN=no
+CKF_NTLM=no
+CKF_MOUSEWHEEL=no
+CKF_SAVE_IMG=no
+CKF_TAPI=no
+CKF_RICHEDIT=no
+CKF_TOOLBAR=no
+CKF_XYZ=no
+CKF_DECNET=no
+CKF_K4W=no
+CKF_K4W_KRB4=no
+CKF_K4W_SSL=no
+CKF_K4W_WSHELPER=no
+CKF_COLORS=16
+CKF_SSL=no
+CKF_TELNET_ENCRYPTION=no
+CKF_SRP=no
+CKF_INTERNAL_CRYPT=no
+CKF_CRYPTDLL=no
+CKF_ZLIB=no
+CKF_DEBUG=no
+CKF_SUPERLAT=no
+CKF_REXX=no
+CKF_MOUSE=no
+CKF_FTP=no
+CKF_HTTP=no
+CKF_RLOGIN=no
+CKF_HELP=no
+CKF_ALL_CSETS=no
+CKF_MODEM=no
+CKF_BROWSER=no
+
+# Saves ~20K, disables NETCMD, REDIRECT, BROWSER, LEARN and others
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOLEARN -DNOPUSH
+
+# Disabling NPIPE only saves ~2K
+
+# And turning these off saves around...
+# +mouse         49K
+# +all csets     87K
+# +help         353K
+# +toolbar        7K
+# +xyz           23K
+# +modem        106K
+# (when built with Visual C++ 4.0)
+
+# Optimize for small size rather than speed
+CKB_OPT_SIZE=yes
+!endif
 
 # ==============================================================================
 # ############################# Platform: WIN32 ################################
@@ -783,4 +849,63 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) ShellNotify
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY -D_WIN32_IE=0x0501
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) ShellNotify
+!endif
+
+!if "$(CKF_MOUSE)" != "no"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOS2MOUSE
+!endif
+
+!if "$(CKF_FTP)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) FTP
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOFTP
+!else
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DNEWFTP
+!endif
+
+!if "$(CKF_FTP)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) HTTP
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOHTTP
+!else
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DNEWFTP
+!endif
+
+!if "$(CKF_RLOGIN)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) RLogin
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNORLOGIN
+!else
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DRLOGCODE
+!endif
+
+!if "$(CKF_HELP)" == "no"
+DISABLED_FEATURES = $(DISABLED_FEATURES) Help
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOHELP
+!endif
+
+!if "$(CKF_ALL_CSETS)" == "no"
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOKANJI -DNOLATIN2 \
+    -DNOCYRILLIC -DNOHEBREW -DNOGREEK
+!endif
+
+!if "$(CKF_MODEM)" == "no"
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODIAL
+!endif
+
+# Check if ASAN can really be used. It requires:
+#   - Visual C++ 2019 v16.9 or newer
+#   - Windows 10 or newer
+#   - An x86 or x86-64 CPU
+#   - Is not suitable for Release builds.
+!if "$(CKB_ASAN)" == "yes"
+!if ($(MSC_VER) < 192)
+!message Disabling CKB_ASAN - Visual C++ 2019 v16.9 or newer required.
+CKB_ASAN=no
+!endif
+!if "$(TARGET_CPU)" != "x86" && "$(TARGET_CPU)" != "x86-64"
+!message Disabling CKB_ASAN - Not available for CPU architecture $(TARGET_CPU)
+CKB_ASAN=no
+!endif
+!if "$(CKF_BETATEST)" == "no"
+!message Disabling CKB_ASAN - Not available in Release builds.
+CKB_ASAN=no
+!endif
 !endif

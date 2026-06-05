@@ -82,11 +82,12 @@ COMMON_CFLAGS = /MD
 #!endif
 
 # These options are used for all Windows .exe targets
-!if "$(CKF_DEV_CHECKS)" == "yes"
+!if "$(CKB_DEV_CHECKS)" == "yes"
 # Enable extra runtime checks. These only work with a debug build and
 # Visual C++ 2002 and newer
 COMMON_CFLAGS = $(COMMON_CFLAGS) /RTCsu
 !else
+# Enable most speed optimizations
 COMMON_OPTS = /Ox
 !endif
 
@@ -170,6 +171,11 @@ OS2TCPDLLS=$(OS2TCPDLLS) cko32i20.dll
 # This turns features on and off based on set feature flags (CKF_*), the
 # platform being targeted, and the compiler currently in use.
 !include feature_flags.mak
+
+!if "$(CKB_OPT_SIZE)" == "yes"
+# Optimize for minimal size
+COMMON_OPTS = /O1
+!endif
 
 !message
 !message
@@ -299,6 +305,10 @@ LDDEBUG = $(LDDEBUG) /OPT:ICF
 !endif  # EndIf CKB_MAKE_PDB != no
 
 # End PDB Generation Stuff
+
+!if "$(CKB_ASAN)" == "yes"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /fsanitize=address
+!endif # If CKB_ASAN
 
 !else   # Else CMP == VCXX
 
@@ -888,10 +898,8 @@ DEFINES = -DNT -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRERROR \
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
-          -DDYNAMIC -DKANJI \
-          -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD  \
-          -DNEWFTP -DNO_DNS_SRV \
+          -DDYNAMIC -DHADDRLIST -DNPIPE -DTCPSOCKET  \
+          -DNETFILE -DONETERMUPD -DNO_DNS_SRV \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 !endif
 !if "$(CMP)" != "OWCL" && "$(CMP)" != "OWWCL"

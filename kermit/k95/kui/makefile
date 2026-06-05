@@ -48,6 +48,10 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
 
 # End PDB Generation Stuff
 
+!if "$(CKB_ASAN)" == "yes"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /fsanitize=address
+!endif # If CKB_ASAN
+
 !else   # Else CMP == VCXX
 
 !if "$(CKB_MAKE_PDB)" != "no"
@@ -120,10 +124,19 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 
 !MESSAGE Non-debugging build
 
-CFLAGS    = /c /W3 $(RTFLAG) /Ox /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
+!if "$(CKB_OPT_SIZE)" == "yes"
+# Optimize for size
+OPT = /O1
+!else
+# Enable most speed optimizations
+OPT = /Ox
+!endif
+
+CFLAGS    = /c /W3 $(RTFLAG) $(OPT) /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR) \
+			$(COMMON_CFLAGS)
 CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 \
-                -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
-                -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DOS2TEST -DKUI \
+                -DNT -DOS2 -DDYNAMIC -DNETCONN -DTCPSOCKET \
+                -DHADDRLIST -DSCRIPTTERM -DOS2TEST -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 !if "$(CMP)" == "VCXX"
@@ -171,10 +184,10 @@ DEBUG_CFLAGS = /Z7
 !endif
 
 CFLAGS    = /nologo /c /W3 $(RTFLAG) /Od $(DEBUG_CFLAGS) /J \
-                /Fo$(OUTDIR)\ /I$(KERMITDIR)
+                /Fo$(OUTDIR)\ /I$(KERMITDIR) $(COMMON_CFLAGS)
 CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET -DSUPERLAT\
-                -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DRLOGCODE \
+                -DHADDRLIST -DSCRIPTTERM -DRLOGCODE \
                 -DNETFILE -DONETERMUPD -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
