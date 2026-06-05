@@ -252,15 +252,13 @@ function curline {
 VERSION=" 3 . 0  B E T A  8 "
 BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
 
-# Features - some aren't supported by K95 yet, and none of them are available
-#            in releases prior to beta 8.
+# Features - some aren't supported by K95 yet
 F_STATUS_LINE=1    # New in 1.1.8 (November 1996)
 F_TRUE_COLOR=1     # New in beta 8
 F_STRIKETHROUGH=1  # New in beta 8
 F_RULED_LINES=1    # New in beta 8
-F_EXTENDED_UL=0    # -- not supported -- | When turning one of these on, check
-F_SOFT_FONT=0      # -- not supported -- | a gap still appears above the VT420
-#                                        | line in non-paged terminals
+F_SOFT_FONT=1      # New in beta 8
+F_EXTENDED_UL=0    # -- Additional underline styles not supported yet
 
 # VT420 features:-
 # K95 Version 2.1 (2002) supported most rectangular area operations, but the
