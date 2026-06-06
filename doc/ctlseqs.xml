@@ -1435,8 +1435,8 @@ DECTSR		462
             <b>Build Date:</b> <k95info val="version-date"/>
         </p>
         <p>
-            The tables on this page show which control sequences are supported
-            by which of the following popular terminals:
+            The tables on this page show which control sequences and escape
+            sequences are supported by which of the following popular terminals:
         </p>
         <dl>
             <dt>DEC VT100, VT102</dt>
@@ -1460,13 +1460,20 @@ DECTSR		462
             </dd>
             <dt>DEC VT420</dt>
             <dd>
-                Not currently emulated by Kermit 95. Most of the rectangular
-                area operations are implemented, but left/right
-                margins, multiple sessions and multiple pages are not currently
-                supported.
+                Not currently emulated by Kermit 95, though most of its major
+                features are implemented including Paging, Macros, Left/Right
+                Margins, and all of the Rectangular Area Operations. What
+                remains to be done can be found
+                <a href="https://github.com/davidrg/ckwin/issues/493">in this
+                    GitHub ticket</a>.
             </dd>
             <dt>DEC VT510, VT520, VT525</dt>
-            <dd>Not currently emulated by Kermit 95</dd>
+            <dd>Not currently emulated by Kermit 95, though all of the ANSI
+                control sequences it added along with all of the VT525s colour
+                modes are supported. What remains to be done can be found
+                <a href="https://github.com/davidrg/ckwin/issues/524">in this
+                    GitHub ticket</a>.
+            </dd>
             <dt>xterm</dt>
             <dd>Not currently emulated by Kermit 95</dd>
             <dt>tt (Tera Term)</dt>
@@ -1496,10 +1503,14 @@ DECTSR		462
         </dl>
 
         <p>
-            The primary purpose of this page is to gauge Kermit 95s
+            The primary purpose of this page is to gauge
+            <a href="https://davidrg.github.io/ckwin/">Kermit 95</a>s
             compatibility with a selection of important hardware terminals and
             Terminal Emulators. So it forms a sort of to-do list for future
-            enhancements to Kermit 95s terminal emulations.
+            enhancements to Kermit 95s terminal emulations. Importantly, this
+            page doesn't capture <em>differences</em> in the implementations of
+            these features between the listed terminals which can sometimes be
+            significant.
         </p>
 
         <p>
@@ -1529,7 +1540,7 @@ DECTSR		462
                 columns, each one representing a particular terminal (or
                 terminal emulator). If the background color of the row is
                 <em>orange</em>, that indicates Kermit 95 does not currently
-                implement that control sequence.
+                implement that control sequence for any of its emulations.
             </p>
             <p>
                 If an 'X' or an 'O' appears in one of the terminal columns, that
@@ -1560,8 +1571,10 @@ DECTSR		462
                 emulated them), and forms a kind of to-do list for completing
                 any emulation that is not yet complete (or adding any emulation
                 that is not yet present). At the bottom of the terminal columns
-                you'll find the percentage of control sequences for that table
-                that Kermit 95 implements.
+                you'll find the percentage of control sequences for that
+                terminal that Kermit 95 implements - 100% would mean that Kermit
+                95s emulation of that terminal would be comprehensive (ignoring
+                any bugs of course).
             </p>
         </section>
     </section>
@@ -1623,7 +1636,8 @@ DECTSR		462
         </p>
         <p>
             This document doesn't <em>really</em> list
-            <em>All Known Control Sequences</em>, nor does it aim to &mdash; that
+            <em>All Known Control Sequences</em> much less All Known Escape
+            Sequences, nor does it aim to &mdash; that
             would be a large job indeed. But the XML document from which
             <a href="ctlseqs.html">Kermit 95's Control Sequences Documentation</a>
             is generated does contain basic information on a great many
@@ -1675,8 +1689,9 @@ DECTSR		462
             <b>Build Date:</b> <k95info val="version-date"/>
         </p>
         <p>
-            This document attempts to describe the control sequences implemented
-            by Kermit 95s ANSI terminal emulator. It is roughly modeled on
+            This document attempts to describe the control sequences and
+            escape sequences implemented by Kermit 95s ANSI terminal emulator.
+            It is roughly modeled on
             <a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html">
             xterms excellent ctlseqs document</a> to make comparing implemented control
             sequences easier. For quicker lookup,
@@ -1687,12 +1702,15 @@ DECTSR		462
             <a href="keyb.html">Kermit 95 Default Keymaps</a>
         </p>
         <p>
-            Prior to 2025 there was no documentation on the control sequences supported
-            by Kermit 95. This document was produced by reading through <em>several
+            Prior to 2025 there was no documentation on the control sequences or
+            escape sequences supported by any of Kermit 95s many terminal
+            emulations. This document was produced by reading through <em>several
             thousand lines of ANSI C</em> recording what appeared to be implemented and
             what, if any, terminal type restrictions applied to various behaviors.
             There is sure to be errors, and many of the descriptions are unhelpfully
-            brief.
+            brief. For now its <em>mostly</em> limited to ECMA-48/ANSI X3.64-compatible
+            terminals (plus the VT52). Similar documentation for K95s various
+            ASCII emulations will be produced in time.
         </p>
         <p>
             Importantly, this document describes what Kermit 95 currently
@@ -7068,7 +7086,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>K95</td>
-                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 1 ; 2 2 ; 2 8 ; 3 2 ; 4 2 ; 4 4 ; 5 2 c</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 1 ; 2 2 ; 2 8 ; 3 2 ; 4 2 ; 4 3 ; 4 4 ; 5 2 c</td>
                 </tr>
             </table>
 
@@ -7099,7 +7117,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">4</dt>  <!-- vt510, vt340, vt330, xt -->
                 <dd>Sixel</dd>
 
-                <dt not-implemented="true">5</dt>
+                <dt not-implemented="true">5</dt>  <!-- vt382-J -->
                 <dd>Katakana</dd>
 
                 <dt>6</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220, xt -->
@@ -7123,7 +7141,7 @@ DCS $ q 3 , } ST</pre>
                     respectively
                 -->
 
-                <dt not-implemented="true">10</dt>  <!-- vt382 -->
+                <dt not-implemented="true">10</dt>  <!-- vt382-J -->
                 <dd>Kanji</dd>
 
                 <dt>11</dt>  <!-- vt1000 -->
@@ -7133,7 +7151,7 @@ DCS $ q 3 , } ST</pre>
                 -->
 
                 <dt not-implemented="true">12</dt>  <!-- vt510 -->
-                <dd>Yugoslavian (SCS)</dd>
+                <dd>Serbo-Croatian (SCS)</dd>
 
                 <dt not-implemented="true">13</dt>  <!-- vt340, vt330 -->
                 <dd>Block Mode</dd>
@@ -8140,13 +8158,6 @@ DCS $ q 3 , } ST</pre>
                     <a href="#decscusr">DECSCUSR</a>.
                 </p>
             </section>
-            <section role="parameter" id="sbc-mrc" mnemonic=""
-                     title="Start blinking cursor (set only via resource or menu)"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 13</ctlseq>
-                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-3.1EC1"/>
-                <termsupp first="xterm" series="xt" additional=""/>
-            </section>
             <section role="parameter" id="decscfdm" mnemonic="DECSCFDM" title="Space Compression/Field Delimiting Mode"
                      not-implemented="true" todo="true" >
                 <ctlseq><param-single/> = 13</ctlseq>
@@ -8162,13 +8173,6 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt340:162"/>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
-            </section>
-            <section role="parameter" id="bc-xor" mnemonic=""
-                     title="Enable XOR of blinking cursor ctlseq and menu"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 14</ctlseq>
-                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-4.1EC2"/>
-                <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decekem" mnemonic="DECEKEM" title="Edit Key Execution Mode"
                      not-implemented="true" todo="true" >
@@ -13690,11 +13694,29 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt340:234"/>
                     <termsupp first="vt330" series="vt" additional="vt340"/>
                 </section>
+                <section role="parameter" id="sbc-mrc" mnemonic=""
+                         title="Start blinking cursor (set only via resource or menu)"
+                         not-implemented="true" todo="true">
+                    <ctlseq><param-single/> = 13</ctlseq>
+                    <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-3.1EC1"/>
+                    <termsupp first="xterm" series="xt" additional=""/>
+                    <p>xterm only allows this setting to be read with DECRQM.
+                        It can not be set/reset with DECSM/DECRM.</p>
+                </section>
                 <section role="parameter" id="decrqm-14" mnemonic="DECTEM" title="Transmit Execution Mode"
                          not-implemented="true" todo="true" >
                     <ctlseq><param-single/> = 14</ctlseq>
                     <ref src="vt340:234"/>
                     <termsupp first="vt330" series="vt" additional="vt340"/>
+                </section>
+                <section role="parameter" id="bc-xor" mnemonic=""
+                         title="Enable XOR of blinking cursor ctlseq and menu"
+                         not-implemented="true" todo="true">
+                    <ctlseq><param-single/> = 14</ctlseq>
+                    <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-4.1EC2"/>
+                    <termsupp first="xterm" series="xt" additional=""/>
+                    <p>xterm only allows this setting to be read with DECRQM.
+                        It can not be set/reset with DECSM/DECRM.</p>
                 </section>
                 <section role="parameter" id="decrqm-16" mnemonic="DECEKEM" title="Edit Key Execution Mode"
                          not-implemented="true" todo="true" >
@@ -14246,6 +14268,42 @@ DCS $ q 3 , } ST</pre>
                     <ctlseq><param-single/> = 1016</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-6.1F7F"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                </section>
+                <section role="parameter" id="rqm-1020" mnemonic=""
+                         title="utf8 resource setting"
+                         not-implemented="true" todo="true">
+                    <ctlseq><param-single/> = 1020</ctlseq>
+                    <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-$-p.1D6D"/>
+                    <termsupp first="xterm" series="xt" additional=""/>
+                    <p>xterm only allows this setting to be read with DECRQM.
+                        It can not be set/reset with DECSM/DECRM.</p>
+                </section>
+                <section role="parameter" id="rqm-1021" mnemonic=""
+                         title="cjkWidth resource setting"
+                         not-implemented="true" todo="true">
+                    <ctlseq><param-single/> = 1021</ctlseq>
+                    <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-$-p.1D6D"/>
+                    <termsupp first="xterm" series="xt" additional=""/>
+                    <p>xterm only allows this setting to be read with DECRQM.
+                        It can not be set/reset with DECSM/DECRM.</p>
+                </section>
+                <section role="parameter" id="rqm-1022" mnemonic=""
+                         title="emojiWidth resource setting"
+                         not-implemented="true" todo="true">
+                    <ctlseq><param-single/> = 1022</ctlseq>
+                    <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-$-p.1D6D"/>
+                    <termsupp first="xterm" series="xt" additional=""/>
+                    <p>xterm only allows this setting to be read with DECRQM.
+                        It can not be set/reset with DECSM/DECRM.</p>
+                </section>
+                <section role="parameter" id="rqm-1023" mnemonic=""
+                         title="privateWidth resource setting"
+                         not-implemented="true" todo="true">
+                    <ctlseq><param-single/> = 1023</ctlseq>
+                    <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-$-p.1D6D"/>
+                    <termsupp first="xterm" series="xt" additional=""/>
+                    <p>xterm only allows this setting to be read with DECRQM.
+                        It can not be set/reset with DECSM/DECRM.</p>
                 </section>
                 <section role="parameter" id="rqm-1034" mnemonic=""
                          title="Interpret &quot;meta&quot; key">
@@ -18756,6 +18814,19 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="wt" series="wt" additional=""/>
                 <!--
                     Shell completion stuff?
+                -->
+            </section>
+
+            <section role="parameter" id="osc-777" mnemonic=""
+                     title="Send Notification" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 777 ; ...</ctlseq>
+                <termsupp first="wt" series="wt" additional=""/>
+                <!--
+                    Not sure where this comes from originally, but Windows
+                    Terminal implemented it in commit
+                    93bdbfaa3d62304f4b50b4ca4484da4dd08e4a1f.
+
+                    Format is: OSC 777 ; notify ; title ; body ST
                 -->
             </section>
 
