@@ -1197,6 +1197,50 @@ decdld(int font_number, int starting_character, int erase_control,
         char bits;
         int bit;
 
+        if (sixel >= BS && sixel <= CK_CR) {
+            /* STD070: Bit combinations 0/8 (BS) to 0/13 (CR) may be included in
+             * the command string and have no effect on the interpretation of
+             * the data */
+            continue;
+        }
+
+        /* The following are undefined behaviour per STD-070. The actions are
+         * STD-070s recommended behaviour. */
+        if (sixel >= 0xA1 && sixel <= 0xFE) {
+            /* STD-070: 10/1 to 15/14 undefined behaviour, recommended
+             * interpret as 2/1 to 7/14 */
+            sixel &= 0x7F; /* Clear 7th bit */
+        }
+        if (((sixel >= NUL && sixel <= BEL) || (sixel >= SO && sixel <= US)) &&
+            sixel != ESC) {
+            /* STD070: Bit combinations 0/0 through 0/7 and 0/14 through 1/15
+             * except for 1/11 (ESC) are undefined behaviour. Recommended to
+             * ignore */
+            continue;
+        }
+        if (sixel == SP || sixel == DEL) {
+            /* STD-070: undefined behaviour, recommended ignore */
+            continue;
+        }
+        if ((sixel >= '!' && sixel <= '>') && sixel != '/' && sixel != ';') {
+            /* STD-070: undefined behaviour, recommended ignore */
+            continue;
+        }
+        if ((sixel >= 0x80 && sixel <= 0x9F) && sixel != 0x9C) {
+            /* STD-070: undefined behaviour, recommended abort */
+            break;
+        }
+        if (sixel == 0xA0 || sixel <= 0x0F) {
+            /* STD-070: undefined behaviour, recommended ignore */
+            continue;
+        }
+
+        /* STD-070 also makes the following recommendations
+         *  - 10/1 to 15/14 should be interpreted as 2/1 to 7/14
+         * TODO: Determine what VT220, VT420 and VT520 do with these!
+         */
+
+
         if (sixel == ';') {
             /* ';' means next glyph */
 
