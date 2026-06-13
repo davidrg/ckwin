@@ -1397,7 +1397,7 @@ typedef struct _drcs_glyph_t {
 #define DRCS_RENDER_HINT_RES_A          0x80
 
 typedef struct _drcs_t {
-    char name[3];
+    char name[4];      /* Not null terminated! 0-3 intermediates then a final */
     drcs_glyph_t glyphs[96];
     char cell_height;
     char cell_width;

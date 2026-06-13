@@ -817,7 +817,11 @@ decdld(int font_number, int starting_character, int erase_control,
     BOOL is_132cols = FALSE, is_full_cell = FALSE, is_vt220_font = FALSE;
     BOOL default_height = FALSE, default_width = FALSE, erased = FALSE;
     int glyph = 0, row = 0, column = 0;
-    char name[3] = {0, 0, 0};
+    char name[4] = {0, 0, 0, 0};
+
+    /* VT220, 420 and 520 only allow two intermediates and a final. STD-070
+     * allows three intermediates and a final */
+    int name_max_len = tt_type_mode == TT_K95 ? 4 : 3;
 
     is_132cols = font_set_size == 2 || font_set_size == 12 ||
         font_set_size == 22;
@@ -1063,15 +1067,16 @@ decdld(int font_number, int starting_character, int erase_control,
     }
 
     /* Dscs - the name for the soft character set
-     * 0-2 intermediate characters, followed by a final character.
+     * 0-3 intermediate characters, followed by a final character.
      */
     if (length < 1) return;
-    for (start = 0; start <= 3; start++) {
+    for (start = 0; start <= name_max_len; start++) {
         name[start] = definition[start];
-        if (start == 3) {
+        if (start == 4) {
             return; /* Didn't get a final character in 0...2 */
         }
-        if (definition[start] >= ' ' && definition[start] <= '/') {
+        if (definition[start] >= ' ' && definition[start] <= '/' &&
+            start <= name_max_len-1) {
             continue;  /* Intermediate character */
         }
         if (definition[start] >= '0' && definition[start] <= '~') {
@@ -1101,7 +1106,9 @@ decdld(int font_number, int starting_character, int erase_control,
                 if (drcsbuf[bufid] != NULL &&
                     drcsbuf[bufid]->name[0] == name[0] &&
                     drcsbuf[bufid]->name[1] == name[1] &&
-                    drcsbuf[bufid]->name[2] == name[2] /*&&
+                    drcsbuf[bufid]->name[2] == name[2] &&
+                    drcsbuf[bufid]->name[3] == name[3] &&
+                    drcsbuf[bufid]->is_96_chars == (character_set_size == 1) /* &&
                     drcsbuf[bufid]->cell_width == width &&
                     drcsbuf[bufid]->cell_height == height &&
                     drcsbuf[bufid]->full_cell == is_full_cell &&
@@ -1160,6 +1167,7 @@ decdld(int font_number, int starting_character, int erase_control,
     drcs->name[0] = name[0];
     drcs->name[1] = name[1];
     drcs->name[2] = name[2];
+    drcs->name[3] = name[3];
     drcs->cell_width = width;
     drcs->cell_height = height;
     drcs->full_cell = is_full_cell;
@@ -11300,14 +11308,29 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
     unsigned char cs = TX_UNDEF ;
     unsigned char bchar = 0;
     unsigned char cchar = 0;
+    unsigned char dchar = 0;
+    BOOL bchar_is_intermediate = FALSE;
     int i;
 
+    /* Read the character set name.
+     * Soft-character sets allow 0-3 intermediate charaters followed by a final
+     * while all of K95s built-in character sets have 0-1 intermediates followd
+     * by a final.
+     */
     if (achar >= ' ' && achar <= '/') {
+        /* achar is an intermediate. */
         bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
         if (bchar >= ' ' && bchar <= '/') {
+            /* bchar is an intermediate */
+            bchar_is_intermediate = TRUE;
+
             cchar = (escnext<=esclast)?escbuffer[escnext++]:0;
-            /* cchar should be between '0' and '~' though I'm not sure there
-             * is much we can usefully do if that isn't the case */
+            if (cchar >= ' ' && cchar <= '/') {
+                /* bchar is an intermediate */
+                dchar = (escnext<=esclast)?escbuffer[escnext++]:0;
+                /* dchar should be between '0' and '~' though I'm not sure there
+                 * is much we can usefully do if that isn't the case */
+            }
         }
     }
 
@@ -11317,7 +11340,8 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
         if (drcsbuf[i] != NULL && drcsbuf[i]->is_96_chars == (size == cs96)) {
             if (drcsbuf[i]->name[0] == achar &&
                 drcsbuf[i]->name[1] == bchar &&
-                drcsbuf[i]->name[2] == cchar) {
+                drcsbuf[i]->name[2] == cchar &&
+                drcsbuf[i]->name[3] == dchar) {
                 switch (i) {
                     case 0: cs = TX_DRCS_1; break;
                     case 1: cs = TX_DRCS_2; break;
@@ -11329,7 +11353,12 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
     }
 #endif /* KUI */
 
-    if (cs == TX_UNDEF) {
+    /* For all built-in character sets:
+     * achar - intermediate or final
+     * bchar - final or empty
+     */
+
+    if (cs == TX_UNDEF && !bchar_is_intermediate) {
         switch ( size ) {
             case cs94:
                 switch ( achar ) {
