@@ -1040,7 +1040,7 @@ decdld(int font_number, int starting_character, int erase_control,
     if (usage > 2) return;
     if (!ISVT320(tt_type_mode) && is_full_cell) return;
 
-    if (ISVT320(tt_type_mode)) {
+    if (ISVT320(tt_type_mode) && !is_vt220_font) {
         /* Pcmh - Character Cell Matrix height - VT320+
          * This is ignored (set to 10) if PCmw is 2, 3 or 4.
          * VT320: 1-12, 0=12
