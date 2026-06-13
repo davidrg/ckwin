@@ -1143,11 +1143,14 @@ decdld(int font_number, int starting_character, int erase_control,
         erase_font_buffer(drcs);
     } else {
         drcs = drcsbuf[font_number];
-        if (drcs->full_cell != is_full_cell) {
-            /* STD 070: "Changes to this [the full cell ] parameter since the
-             * last DECDLD sequence to this buffer will result in the erasure of
-             * the entire set, and cause a new load to start" */
-            erase_control = 1;
+        if (drcs->full_cell != is_full_cell ||
+            drcs->cell_width != width ||
+            drcs->cell_height != height ) {
+            /* STD 070: "Changes to this {the full cell, character cell matrix
+             * width or height} parameter since the last DECDLD sequence to this
+             * buffer will result in the erasure of the entire set, and cause a
+             * new load to start" */
+            erase_control = 0;
         }
     }
 
