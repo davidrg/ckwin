@@ -248,6 +248,31 @@ function curline {
     fi
 }
 
+function da_has_extension {
+        # Transform to an easier to process format
+        X=$(echo $1 | sed -e 's/?/;/g' -e 's/$/;/')
+        if [[ $X == *";$2;"* ]]; then
+                echo 1
+        else
+                echo 0
+        fi
+}
+
+function da_device_class {
+        echo $1 | awk -F'\?|;' '{print $2}'
+}
+
+function da_implied_extensions {
+        case $(da_device_class $1) in
+                61)  echo ""               ;;  # Level 1
+                62)  echo ""               ;;  # Level 2
+                63)  echo "11;14;17"       ;;  # Level 3
+                64)  echo "11;14;17;18;28" ;;  # Level 4
+                65)  echo "11;14;17;18;28" ;;  # Level 5 - same as L4 as far as
+                *)   echo ""               ;;  #           anyone knows
+        esac
+}
+
 # Top Banner
 VERSION=" 3 . 0  B E T A  8 "
 BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
@@ -264,6 +289,7 @@ F_EXTENDED_UL=0    # -- Additional underline styles not supported yet
 # K95 Version 2.1 (2002) supported most rectangular area operations, but the
 # implementation is buggy. Text macros, paging, and DECLRMM are new in v3.0 b8.
 F_VT420_FEATURES=1
+F_RECTOPS=1        # Rectangular area operations
 F_DECLRMM=1        # L/R Margins
 F_PAGING=1         # Lack of Paging really breaks this script, so it can be
                    # turned off separately as its rarely implemented.
@@ -294,22 +320,42 @@ elif [[ $TERM == "vt320" ]]; then
     F_VT520_FEATURES=0
     F_RULED_LINES=0
     F_PAGING=0
+    F_DECLRMM=0
+    F_RECTOPS=0
 elif [[ $TERM == "vt220" ]]; then
     F_VT420_FEATURES=0
     F_VT520_FEATURES=0
     F_RULED_LINES=0
     F_PAGING=0
     F_STATUS_LINE=0
+    F_DECLRMM=0
+    F_RECTOPS=0
 elif [[ $PRODUCT_ID == "28" ]]; then
     # DECterm - a VT340 with some extra features but no soft-fonts.
     F_VT420_FEATURES=0
     F_VT520_FEATURES=0
     F_SOFT_FONT=0
     F_DECLRMM=0
-fi
+    F_RECTOPS=0
+elif [[ "$BE_NICE" == "1" ]]; then
+    # Be nice and only enable features the terminal advertises as being
+    # supported
+    DA_ALL="$DA;$(da_implied_extensions $DA)"
+    F_STATUS_LINE=$(da_has_extension "$DA_ALL" 11)  # 11 - Status Display
+    F_RULED_LINES=$(da_has_extension "$DA_ALL" 43)  # 43 - Ruled Lines
+    F_SOFT_FONT=$(da_has_extension "$DA_ALL" 7)     #  7 - Soft character sets
+    F_DECLRMM=$(da_has_extension "$DA_ALL" 21)      # 21 - Horizontal Scrolling
+    F_PAGING=$(da_has_extension "$DA_ALL" 18)       # 18 - Windowing Capability
+    F_RECTOPS=$(da_has_extension "$DA_ALL" 28)      # 28 - Rectangular Editing
 
-if [ "$F_VT420_FEATURES" != "1" ]; then
-  F_DECLRMM=0
+    # Turn on features that are just guarded by VT level
+    case $(da_device_class $1) in
+        64) F_VT420_FEATURES=1    ;;  # Level 4 character cell display
+        65) F_VT420_FEATURES=1        # Level 5 character cell display
+            F_VT520_FEATURES=1    ;;
+        *)  F_VT420_FEATURES=0        # Unknown, or level 3 or lower.
+            F_VT520_FEATURES=0    ;;
+    esac
 fi
 
 if [ "$F_VT520_FEATURES" = "1" ]; then
@@ -641,7 +687,7 @@ fi
 FRA_1=""
 FRA_2=""
 FRA_3=""
-if [ "$F_VT420_FEATURES" = "1" ]; then
+if [ "$F_RECTOPS" = "1" ]; then
   # Reverse video on - we'll undo it later.
   printf '\x1b[7m'
 
@@ -710,7 +756,7 @@ printf '\n'
 # This section is a bit mean. It uses a bunch of VT420 features (macros, pages,
 # copy/erase rectangle, change attributes in rectangle). Any terminal not
 # supporting all of these *correctly* will end up making a mess.
-if [ "$F_VT420_FEATURES" = "1" ]; then
+if [ "$F_RECTOPS" = "1" ]; then
   # Go to the VT420 line.
   printf '\x1b[%sH' $VT420_LINE
 
@@ -827,13 +873,13 @@ printf 'architectures,\n   with reduced feature builds for vintage Windows '
 printf 'and 32bit IBM OS/2 Systems\n'
 
 # NEW in Beta 8!
-if [ "$F_SOFT_FONT" = "1" ] && [ "$F_VT520_FEATURES" = "1"  ]; then
+if [ "$F_SOFT_FONT" = "1" ] && [ "$F_RECTOPS" = "1"  ]; then
   if [ "$F_STRIKETHROUGH" = "1" ]; then
     printf '\x1b7'  # Save cursor
     printf '\x1b[5;65H\x1b[18*z\x1b[5H'
     printf '\x1b8'  # Restore cursor
   fi
-  if [ "$F_VT420_FEATURES" = "1" ]; then
+  if [ "$F_RECTOPS" = "1" ]; then
       printf '\x1b7'  # Save cursor
       printf '\x1b[%s;77H\x1b[16*z\x1b[5H' $((VT420_LINE))
       printf '\x1b8'  # Restore cursor
