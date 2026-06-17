@@ -11414,8 +11414,12 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
     }
 
 #ifdef KUI
-    /* First, check DRCS buffers. They're searched in reverse order. */
-    for (i = DRCS_BUFFERS-1; i >= 0; i--) {
+    /* First, check DRCS buffers. The VT520 manual says if two fonts have the
+     * same name the most recently loaded is used and specifically says that
+     * the terminal searches for fonts in reverse order. My VT520 (v2.1) does
+     * not do that - given the choice of two fonts with the same name, it always
+     * picks the one in the first font buffer. */
+    for (i = 0; i < DRCS_BUFFERS; i++) {
         if (drcsbuf[i] != NULL && drcsbuf[i]->is_96_chars == (size == cs96)) {
             if (drcsbuf[i]->name[0] == achar &&
                 drcsbuf[i]->name[1] == bchar &&
