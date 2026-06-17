@@ -297,6 +297,9 @@ F_PAGING=1         # Lack of Paging really breaks this script, so it can be
 # Not many of these are really used.
 F_VT520_FEATURES=1
 
+# Which soft font size to use. VT420/520 by default.
+F_SOFT_FONT_SIZE=420
+
 # Eventually: "PCTERM and win32 direct keyboard modes"
 KB_MODES="PCTERM direct keyboard mode"
 #        "|------Max Length-----------------------------|"
@@ -322,6 +325,7 @@ elif [[ $TERM == "vt320" ]]; then
     F_PAGING=0
     F_DECLRMM=0
     F_RECTOPS=0
+    F_SOFT_FONT_SIZE=320
 elif [[ $TERM == "vt220" ]]; then
     F_VT420_FEATURES=0
     F_VT520_FEATURES=0
@@ -330,6 +334,7 @@ elif [[ $TERM == "vt220" ]]; then
     F_STATUS_LINE=0
     F_DECLRMM=0
     F_RECTOPS=0
+    F_SOFT_FONT_SIZE=220
 elif [[ $PRODUCT_ID == "28" ]]; then
     # DECterm - a VT340 with some extra features but no soft-fonts.
     F_VT420_FEATURES=0
@@ -337,6 +342,17 @@ elif [[ $PRODUCT_ID == "28" ]]; then
     F_SOFT_FONT=0
     F_DECLRMM=0
     F_RECTOPS=0
+elif [[ $PRODUCT_ID == "66" ]]; then
+    # Multia VTstar - a VT320 with some extra features (TD/SMP, windowing and
+    # the text locator)
+    F_VT420_FEATURES=0
+    F_VT520_FEATURES=0
+    F_DECLRMM=0
+    F_RECTOPS=0
+
+    # It *does* support soft fonts, though it doesn't like any of the ones we've
+    # got here for some reason.
+    F_SOFT_FONT=0
 elif [[ "$BE_NICE" == "1" ]]; then
     # Be nice and only enable features the terminal advertises as being
     # supported
@@ -359,7 +375,7 @@ elif [[ "$BE_NICE" == "1" ]]; then
 fi
 
 if [ "$F_VT520_FEATURES" = "1" ]; then
-  # Only the VT52x has two font buffers.
+  # Only the VT52x has two font buffers, and the VT520 also supports macros.
   if [ "$F_SOFT_FONT" = "1" ]; then
     # Define font 2, named &%C
     printf '\x1bP2;3;0;10;0;2;16;0{&%%C;'
@@ -540,7 +556,7 @@ if [ "$F_SOFT_FONT" = "1" ]; then
 
 	printf ' * VT220 '
 
-  if [[ $TERM == "vt220" ]]; then
+  if [[ $F_SOFT_FONT_SIZE == "220" ]]; then
     # A subset of the IBM CGA/EGA?VGA 8x8 font, adapted for the VT220. Only
     # the characters a, c, e, f, h, o, r, s and t are populated (enough
     # to output 'soft character sets')
@@ -548,7 +564,7 @@ if [ "$F_SOFT_FONT" = "1" ]; then
     ;ogggo???/@AAA????;O{QAC???/ABA?????;;A}O?Go??/AB???B??;;;;;;;
     oGGGo???/@AAA@???;;;GoOGGo??/ABA?????;OgggG???/AAAA@???;
     ?G}G????/??@A?@??\x1b\\'
-  elif [[ $TERM == "vt320" ]]; then
+  elif [[ $F_SOFT_FONT_SIZE == "320" ]]; then
     # Jetpac font by Paul Flo Williams
     # https://vt100.net/dec/vt320/fonts (no license stated)
     # This is a 15x12 VT320 font
