@@ -819,9 +819,15 @@ decdld(int font_number, int starting_character, int erase_control,
     int glyph = 0, row = 0, column = 0;
     char name[4] = {0, 0, 0, 0};
 
+    /* Note that we use tt_type rather than tt_type_mode here as DRCS behaviour
+     * depends on the terminal K95 is emulating, not the terminal the emulated
+     * terminal is emulating (DECTME, DECSCL, etc). Not that any VT seems to let
+     * you emulate a VT220...VT420.
+     */
+
     /* VT220, 420 and 520 only allow two intermediates and a final. STD-070
      * allows three intermediates and a final */
-    int name_max_len = tt_type_mode == TT_K95 ? 4 : 3;
+    int name_max_len = tt_type == TT_K95 ? 4 : 3;
 
     is_132cols = font_set_size == 2 || font_set_size == 12 ||
         font_set_size == 22;
@@ -829,8 +835,9 @@ decdld(int font_number, int starting_character, int erase_control,
 
     /* Figure out how many font buffers we should allow access to based on
      * current terminal emulation. No DEC terminals support more than two, but
-     * their printers all support at least 3 if they support any at all. */
-    switch (tt_type_mode) {
+     * their printers all support at least 3 if they support any at all.
+     * */
+    switch (tt_type) {
         case TT_VT220:
         case TT_VT220PC:
         case TT_VT320:     /* The VT300 and VT420 actually have two - one for */
@@ -850,7 +857,7 @@ decdld(int font_number, int starting_character, int erase_control,
     }
 
     /* And max cell dimensions */
-    switch (tt_type_mode) {
+    switch (tt_type) {
         case TT_VT220:
         case TT_VT220PC:
             cell_height = 10;
@@ -983,7 +990,7 @@ decdld(int font_number, int starting_character, int erase_control,
     switch (width) {
         case 0:
             default_width = TRUE;
-            if (ISVT320(tt_type_mode))
+            if (ISVT320(tt_type))
                 width = cell_width;
             else
                 width = 7;
@@ -1002,7 +1009,7 @@ decdld(int font_number, int starting_character, int erase_control,
         default:
             if (width > cell_width) return;
             /* Arbitrary widths are only supported by the VT320 and up */
-            if (!ISVT320(tt_type_mode)) return;
+            if (!ISVT320(tt_type)) return;
             break;
     }
 
@@ -1025,9 +1032,9 @@ decdld(int font_number, int starting_character, int erase_control,
         case 22: columns = 132; lines = 48; break;
         default: return; /* Invalid */
     }
-    if (lines > 24 && tt_type_mode != TT_VT420 &&
-                     /*tt_type_mode != TT_VT510 &&*/
-                     tt_type_mode != TT_K95) {
+    if (lines > 24 && tt_type != TT_VT420 &&
+                     /*tt_type != TT_VT510 &&*/
+                     tt_type != TT_K95) {
         // TODO: Confirm VT52x really does not except 11..22
         return; /* Invalid */
     }
@@ -1038,9 +1045,9 @@ decdld(int font_number, int starting_character, int erase_control,
      *     2 - full-cell (Not supported on VT220)
      * */
     if (usage > 2) return;
-    if (!ISVT320(tt_type_mode) && is_full_cell) return;
+    if (!ISVT320(tt_type) && is_full_cell) return;
 
-    if (ISVT320(tt_type_mode) && !is_vt220_font) {
+    if (ISVT320(tt_type) && !is_vt220_font) {
         /* Pcmh - Character Cell Matrix height - VT320+
          * This is ignored (set to 10) if PCmw is 2, 3 or 4.
          * VT320: 1-12, 0=12
@@ -1112,7 +1119,6 @@ decdld(int font_number, int starting_character, int erase_control,
                     drcsbuf[bufid]->cell_width == width &&
                     drcsbuf[bufid]->cell_height == height &&
                     drcsbuf[bufid]->full_cell == is_full_cell &&
-                    drcsbuf[bufid]->is_96_chars == (character_set_size == 1) &&
                     drcsbuf[bufid]->start_character == glyph*/) {
                     font_number = i;
                     break;
@@ -1180,12 +1186,12 @@ decdld(int font_number, int starting_character, int erase_control,
 
     if (is_vt220_font) drcs->render_hints =
         DRCS_RENDER_HINT_VT220 | DRCS_RENDER_HINT_VT220_TEXT;
-    else if (tt_type_mode == TT_VT320) drcs->render_hints = DRCS_RENDER_HINT_VT320;
+    else if (tt_type == TT_VT320) drcs->render_hints = DRCS_RENDER_HINT_VT320;
 
     /* Center text glyphs within the cell. The VT220 does not do this - at least
      * not in a normal way; its behaviour really has to be dealt with at render
      * time. */
-    if (!is_full_cell && ISVT320(tt_type_mode)) {
+    if (!is_full_cell && ISVT320(tt_type)) {
         int hspace = cell_width - width;
         int vspace = cell_height - height;
         h_offset = hspace/2;
@@ -1245,7 +1251,7 @@ decdld(int font_number, int starting_character, int erase_control,
             /* ';' means next glyph */
 
             if ((drcs->render_hints & DRCS_RENDER_HINT_VT220_TEXT) &&
-                    (tt_type_mode == TT_VT220 || tt_type_mode == TT_VT220PC)) {
+                    (tt_type == TT_VT220 || tt_type == TT_VT220PC)) {
                 if (column >= 8) {
                     /* The 8th column is stretched to three pixels to join up
                      * with the next cell, so text fonts will never put anything
@@ -1275,8 +1281,8 @@ decdld(int font_number, int starting_character, int erase_control,
          * specifies a smaller width.
          *
          * Note, column here is zero-based, while width is not.*/
-        if (ISVT320(tt_type_mode) && column >= width) continue;
-        if (!ISVT320(tt_type_mode) && column >= 8) continue;
+        if (ISVT320(tt_type) && column >= width) continue;
+        if (!ISVT320(tt_type) && column >= 8) continue;
         if (column > cell_width) continue;
 
         /* Ignore entire glyph if we're trying to load a 94-character set
@@ -10229,7 +10235,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     decscpp_resize = FALSE;
 
 #ifdef KUI
-    /* Erase DRCS font buffers */
+    /* Erase DRCS font buffers, but only on hard reset*/
     if (x) {
         int i;
         EnterDRCSBufferCriticalSection();
