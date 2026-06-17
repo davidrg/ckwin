@@ -17568,7 +17568,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                 vtescape();                               /* Go act on it. */
             }
         case 'P':                       /* Device Control String (DCS) Introducer */
-            if ( !xprint ) {
+            if ( !xprint) {
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
 #ifdef CK_APC
                 dcsrecv = TRUE ;        /* Set DCS-Active flag */
@@ -17583,10 +17583,16 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             break;
         case 'Q':                       /* Private Use One (PU1) Introducer 97801-5xx */
-            if ( !xprint && !ISANSI(tt_type_mode) ) {
+            if ( !xprint && !ISANSI(tt_type_mode) &&
+                    (!ISVT220(tt_type_mode) || ISK95(tt_type_mode)) ) {
                 /* 
                  * SCOANSI used ESC Q to prefix keyboard assignments
-                 * so do not enter the string state
+                 * so do not enter the string state.
+                 *
+                 * And VT220/420/520 don't do anything with PU1 either - they
+                 * just write the string to the screen. Probably this applies
+                 * to the VT10x too, but I don't have one of those to test
+                 * against to know for sure.
                  */
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
 #ifdef CK_APC
@@ -17603,7 +17609,11 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             break;
         case 'R':                       /* Private Use Two (PU2) Introducer 97801-5xx */
-            if ( !xprint ) {
+            if ( !xprint && (!ISVT220(tt_type_mode) || ISK95(tt_type_mode))) {
+                /* VT220/420/520 don't do anything with PU2 - they just write
+                 * the string to the screen. Probably this applies
+                 * to the VT10x too, but I don't have one of those to test
+                 * against to know for sure. */
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
 #ifdef CK_APC
                 pu2recv = TRUE ;        /* Set PU2-Active flag */
