@@ -1210,7 +1210,8 @@ decdld(int font_number, int starting_character, int erase_control,
             continue;
         }
 
-        /* The following are undefined behaviour per STD-070. The actions are
+        /***********************************
+         * The following are undefined behaviour per STD-070. The actions are
          * STD-070s recommended behaviour. */
         if (sixel >= 0xA1 && sixel <= 0xFE) {
             /* STD-070: 10/1 to 15/14 undefined behaviour, recommended
@@ -1222,30 +1223,55 @@ decdld(int font_number, int starting_character, int erase_control,
             /* STD070: Bit combinations 0/0 through 0/7 and 0/14 through 1/15
              * except for 1/11 (ESC) are undefined behaviour. Recommended to
              * ignore */
+
+            /* VT220, VT420, VT520: 0x13 seems to get the terminal stuck,
+             * requiring clear comms to get it working again.*/
+
+            /* The VT220, VT420 and VT520 cancel the DECDLD if they receive a
+             * CAN or a SUB leaving the font partially downloaded. For SUB, the
+             * VT220 and 420 additionally output a reverse question mark while
+             * the VT520 seems to glitch. The area above the titlebar where the
+             * session icons live is briefly replaced with garbage from
+             * somewhere in memory and NUL is written to the terminal screen
+             * while the rest of the DECDLD sequence disappears. We don't
+             * implement /that/ behaviour here.
+             *
+             * Partial processing of the DECDLD as per the hardware terminals is
+             * special cased over in cwrite() which will hand a canceled DCS
+             * string off for processing if it looks like a DECDLD>
+             */
             continue;
         }
         if (sixel == SP || sixel == DEL) {
-            /* STD-070: undefined behaviour, recommended ignore */
+            /* STD-070: 2/0 and 7/15 undefined behaviour, recommended ignore */
             continue;
         }
         if ((sixel >= '!' && sixel <= '>') && sixel != '/' && sixel != ';') {
-            /* STD-070: undefined behaviour, recommended ignore */
+            /* STD-070: 2/1 to 3/14 (excluding 2/15 and 3/11) undefined
+             * behaviour, recommended ignore */
             continue;
         }
         if ((sixel >= 0x80 && sixel <= 0x9F) && sixel != 0x9C) {
-            /* STD-070: undefined behaviour, recommended abort */
-            break;
+            /* STD-070: C1 controls 8/10 to 9/15 (excl 9/12 ST) undefined
+             * behaviour, recommended abort
+             *
+             * For most of these we won't get here - thet escape-sequence state
+             * table will catch and handle them, dispatching the DCS sequence
+             * specially if it looks like the DCString contains a DECDLD.
+             */
+
+            /* The VT220 ignores 0x80, VT420/520 don't */
+            if (sixel > 0x80 || (tt_type != TT_VT220 && tt_type != TT_VT220PC)) {
+                break;
+            }
         }
-        if (sixel == 0xA0 || sixel <= 0x0F) {
-            /* STD-070: undefined behaviour, recommended ignore */
+        if (sixel == 0xA0 || sixel == 0xFF) {
+            /* STD-070: 10/0 and 15/15 undefined behaviour, recommended
+             * ignore */
             continue;
         }
-
-        /* STD-070 also makes the following recommendations
-         *  - 10/1 to 15/14 should be interpreted as 2/1 to 7/14
-         * TODO: Determine what VT220, VT420 and VT520 do with these!
-         */
-
+        /* End of undefined behaviour handling
+         ************************************/
 
         if (sixel == ';') {
             /* ';' means next glyph */
@@ -16938,6 +16964,37 @@ dodcs( void )
         }
     }
 }
+
+void
+process_canceled_decdld() {
+    /* The VT220 and up will process a DECDLD right up to the CAN or SUB. To
+     * the user, it is as though the CAN/SUB is treated as an ST (though all
+     * but the VT220-420 will also display a reverse question mark for SUB).
+     * This likely isn't *intentional* behaviour, but rather just a case of
+     * these terminals not being able to spend memory on guarding against a
+     * partial font download (would require downloading to a temporary space so
+     * as to not overwrite the existing font until the new one is received
+     * fully). But the why doesn't matter now - it only matters how these
+     * things actually behave. So figure out if we're dealing with a DECDLD and
+     * if we are, process what we've got as the real terminals do. */
+    if (ISVT220(tt_type) && !debses) {
+        int i;
+        for (i = 0; i < apclength; i++) {
+            /* Scan through the buffer looking for zero or more
+             * parameters followed by a '{'. Any other characters would
+             * not be a valid DECDLD */
+            char c = apcbuf[i];
+            if (isdigit(c)) continue; /* parameter */
+            if (c == ';') continue;   /* parameter separator */
+            if (c == '{') {           /* DECDLD */
+                dodcs();
+            }
+            break;
+        }
+
+    }
+}
+
 #endif /* CK_APC */
 
 /* ------------------------------------------------------------------ */
@@ -17370,6 +17427,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             /* the escape sequence. However, the only noticeable difference on   */
             /* the VT320 is that a backwards question mark is printed whenever a */
             /* SUB is received.                                                  */
+
+            if (dcsrecv) {
+                process_canceled_decdld();
+            }
             escstate = ES_NORMAL;            /* Go back to normal. */
 #ifdef CK_APC
             apclength = 0;
@@ -17823,9 +17884,16 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                 oscterm = 0;
             }
 #endif /* CK_APC */
+        } else if (ch == '@' && dcsrecv &&
+            (tt_type == TT_VT220 || tt_type == TT_VT220PC) ) {
+            /* VT220 ignores a PAD character in the DCS string - at least for
+             * DECDLD */
+            escstate = ES_STRING;
         } else {
 #ifdef CK_APC
             if ( dcsrecv ) {
+                process_canceled_decdld();
+
                 dcsrecv = FALSE ;
                 apcbuf[0] = NUL ;
                 apclength = 0 ;
