@@ -786,8 +786,6 @@ CHAR sni_term_firmware[7]="830851";     /* 97801 Terminal Firmware Version */
  * ------------------------
  * TODO: - Support multiple renditions for those terminals that support it
  *       - Have erase_font_buffer set the pixels to a reverse question mark
- *       - Rendering!
- *       - Mark it all as KUI-only
  */
 drcs_t *drcsbuf[DRCS_BUFFERS] = {NULL, NULL};
 
@@ -811,7 +809,7 @@ decdld(int font_number, int starting_character, int erase_control,
     drcs_t *drcs;
     int i=0, j=0, start=0;
     int max_font_buffers;
-    int cell_height, cell_width, used_height = 0;
+    int cell_height, cell_width, max_width, used_height = 0;
     int h_offset = 0, v_offset = 0;
     int lines = 24, columns = 80;
     BOOL is_132cols = FALSE, is_full_cell = FALSE, is_vt220_font = FALSE;
@@ -862,6 +860,7 @@ decdld(int font_number, int starting_character, int erase_control,
         case TT_VT220PC:
             cell_height = 10;
             cell_width = 10;
+            max_width = 8;  /* Columns 9 and 10 are copies of 8 */
             /* DECCOLM doesn't affect the cell width (at least not the
              * addressable portion) - it primarily seems to result in narrower
              * pixels. */
@@ -875,12 +874,20 @@ decdld(int font_number, int starting_character, int erase_control,
              * EK-VT320-UU *does* say is that the *default* width is 15 for 80
              * columns and 9 for 132, so perhaps 9 is the max for 132 cols? */
             cell_width = is_132cols ? 9 : 15;
+            max_width = cell_width;  /* full cell */
+            if (!is_full_cell) { /* text cell */
+                /* These numbers are a complete guess. EK-VT320-UU doesn't say
+                 * what the max width for a text cell is, and I don't have
+                 * access to a VT320 to try and find out. */
+                max_width = is_132cols ? 8 : 13;
+            }
+
             break;
         case TT_VT340:
-            if (is_full_cell) { /* full cell */
-                cell_width = is_132cols ? 6 : 10;
-            } else { /* text cell */
-                cell_width = is_132cols ? 5 : 9;
+            cell_width = is_132cols ? 6 : 10;
+            max_width = cell_width;  /* full cell */
+            if (!is_full_cell) { /* text cell */
+                max_width = is_132cols ? 5 : 9;
             }
             cell_height = 20;  /* The docs say so, but it feels wrong */
             break;
@@ -895,12 +902,13 @@ decdld(int font_number, int starting_character, int erase_control,
              * apparently supports a 52-line display which affects the cell
              * height, but this also doesn't seem to be signaled via font set
              * size like it is on later DEC terminals. */
-            if (is_full_cell) { /* full cell */
-                /* TODO: 161 column display uses a width of 8 */
-                cell_width = is_132cols ? 10 : 16;
-            } else { /* text cell */
+
+            /* TODO: 161 column display uses a width of 8 */
+            cell_width = is_132cols ? 10 : 16;
+            max_width = cell_width;  /* full cell */
+            if (!is_full_cell) { /* text cell */
                 /* 161 column display also uses a width of 7 */
-                cell_width = is_132cols ? 7 : 12;
+                max_width = is_132cols ? 7 : 12;
             }
             /* TODO: 52 line display uses a height of 8 */
             cell_height = 16;
@@ -911,13 +919,13 @@ decdld(int font_number, int starting_character, int erase_control,
         case TT_VT525:
         case TT_K95:
         default:
-            if (is_full_cell) { /* full cell */
-                cell_width = 10;
-            } else { /* text cell */
+            cell_width = is_132cols ? 6 : 10;
+            max_width = cell_width; /* full cell */
+            if (!is_full_cell) { /* text cell */
                 /* While the manual says the maximum widths are 6 and 9, the
                  * terminal rejects these - the actual implemented maximum is
                  * 5 and 8. */
-                cell_width = is_132cols ? 5 : 8;
+                max_width = is_132cols ? 5 : 8;
             }
             cell_height = 16;
             break;
@@ -991,7 +999,7 @@ decdld(int font_number, int starting_character, int erase_control,
         case 0:
             default_width = TRUE;
             if (ISVT320(tt_type))
-                width = cell_width;
+                width = max_width;
             else
                 width = 7;
             break;
@@ -1007,7 +1015,7 @@ decdld(int font_number, int starting_character, int erase_control,
             is_vt220_font = TRUE;
             width = 7; height = 10; break;
         default:
-            if (width > cell_width) return;
+            if (width > max_width) return;
             /* Arbitrary widths are only supported by the VT320 and up */
             if (!ISVT320(tt_type)) return;
             break;
@@ -1144,8 +1152,8 @@ decdld(int font_number, int starting_character, int erase_control,
     drcs->name[1] = name[1];
     drcs->name[2] = name[2];
     drcs->name[3] = name[3];
-    drcs->cell_width = width;
-    drcs->cell_height = height;
+    drcs->cell_width = cell_width;
+    drcs->cell_height = cell_height;
     drcs->full_cell = is_full_cell;
     drcs->is_96_chars = character_set_size == 1;
     drcs->start_character = glyph;
@@ -1187,10 +1195,12 @@ decdld(int font_number, int starting_character, int erase_control,
             case TT_K95: {
                 /* As all the DEC terminals seem to do something different, for
                  * K95 we'll center properly. */
-                int hspace = cell_width - width;
+                /*int hspace = cell_width - width;
                 int vspace = cell_height - height;
                 h_offset = hspace/2;
-                v_offset = vspace/2;
+                v_offset = vspace/2;*/
+                h_offset=0;
+                v_offset=0;
             }
 
         }
@@ -1307,7 +1317,7 @@ decdld(int font_number, int starting_character, int erase_control,
          * Note, column here is zero-based, while width is not.*/
         if (ISVT320(tt_type) && column >= width) continue;
         if (!ISVT320(tt_type) && column >= 8) continue;
-        if (column > cell_width) continue;
+        if (column >= max_width || column >= cell_width) continue;
 
         /* Ignore entire glyph if we're trying to load a 94-character set
          * starting at position 0, or a position past the range for the
