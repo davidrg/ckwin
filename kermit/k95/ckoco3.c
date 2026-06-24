@@ -1184,7 +1184,7 @@ decdld(int font_number, int starting_character, int erase_control,
     drcs->start_character = glyph;
     drcs->render_hints = DRCS_RENDER_HINT_NONE;
 
-    if (is_vt220_font) drcs->render_hints =
+    if (is_vt220_font && !ISVT320(tt_type)) drcs->render_hints =
         DRCS_RENDER_HINT_VT220 | DRCS_RENDER_HINT_VT220_TEXT;
     else if (tt_type == TT_VT320) drcs->render_hints = DRCS_RENDER_HINT_VT320;
 
