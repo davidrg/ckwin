@@ -1195,12 +1195,10 @@ decdld(int font_number, int starting_character, int erase_control,
             case TT_K95: {
                 /* As all the DEC terminals seem to do something different, for
                  * K95 we'll center properly. */
-                /*int hspace = cell_width - width;
+                int hspace = cell_width - width;
                 int vspace = cell_height - height;
                 h_offset = hspace/2;
-                v_offset = vspace/2;*/
-                h_offset=0;
-                v_offset=0;
+                v_offset = vspace/2;
             }
 
         }
@@ -1345,8 +1343,9 @@ decdld(int font_number, int starting_character, int erase_control,
             if (row+bit > height && ISVT520(tt_type)) continue;
 
             if (bits & (1 << bit)) {
-                drcs->glyphs[glyph].pixels[row+bit+v_offset] =
-                    drcs->glyphs[glyph].pixels[row+bit] | 0x8000 >> (column+h_offset);
+                int r = row + bit + v_offset;
+                drcs->glyphs[glyph].pixels[r] =
+                    drcs->glyphs[glyph].pixels[r] | 0x8000 >> (column+h_offset);
                 if (row+bit > used_height) used_height = row+bit;
             }
         }
