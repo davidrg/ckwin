@@ -1362,7 +1362,10 @@ decdld(int font_number, int starting_character, int erase_control,
         drcs->glyphs[glyph].undefined = 0;
 
         for (bit = 0; bit < 6; bit++) {
-            if (row+bit > height) continue;
+            /* Only the VT520 crops glyphs to the specified height - the rest
+             * will draw as much as you give them regardless of the height
+             * specified. */
+            if (row+bit > height && ISVT520(tt_type)) continue;
 
             if (bits & (1 << bit)) {
                 drcs->glyphs[glyph].pixels[row+bit+v_offset] =
