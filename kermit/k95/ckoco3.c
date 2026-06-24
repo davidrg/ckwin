@@ -1101,44 +1101,11 @@ decdld(int font_number, int starting_character, int erase_control,
 
     /* Decide which font buffer we're going to use*/
     if (font_number == 0) {
-        if (max_font_buffers > 1) {
-            /* For the VT510 and up, 0 means first empty buffer, or buffer 1 if
-             * they're all populated. For all other terminals, 0 means buffer 1.
-             */
-
-            /* Try and find an existing font buffer with the same name and
-                * other settings. */
-            for (i = 1; i <= max_font_buffers; i++) {
-                int bufid = i - 1;
-                if (drcsbuf[bufid] != NULL &&
-                    drcsbuf[bufid]->name[0] == name[0] &&
-                    drcsbuf[bufid]->name[1] == name[1] &&
-                    drcsbuf[bufid]->name[2] == name[2] &&
-                    drcsbuf[bufid]->name[3] == name[3] &&
-                    drcsbuf[bufid]->is_96_chars == (character_set_size == 1) /* &&
-                    drcsbuf[bufid]->cell_width == width &&
-                    drcsbuf[bufid]->cell_height == height &&
-                    drcsbuf[bufid]->full_cell == is_full_cell &&
-                    drcsbuf[bufid]->start_character == glyph*/) {
-                    font_number = i;
-                    break;
-                }
-            }
-
-            /* If we didn't find an existing font buffer with the same name,
-             * find an empty one. */
-            if (font_number == 0) {
-                for (i = 1; i <= max_font_buffers; i++) {
-                    if (drcsbuf[i-1] == NULL) {
-                        font_number = i;
-                        break;
-                    }
-                }
-            }
-        }
-
-        /* And if there were no empty ones, use the first */
-        if (font_number == 0) font_number = 1;
+        /* For the VT510 and up, 0 is supposed to mean the first empty
+         * buffer, or buffer 1 if they're all populated. But the VT520 v2.1
+         * actually behaves the same as all terminals: 0 means 1.
+         */
+        font_number = 1;
     }
     font_number -= 1;
 
