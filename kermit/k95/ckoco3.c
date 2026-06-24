@@ -862,22 +862,19 @@ decdld(int font_number, int starting_character, int erase_control,
         case TT_VT220PC:
             cell_height = 10;
             cell_width = 10;
+            /* DECCOLM doesn't affect the cell width (at least not the
+             * addressable portion) - it primarily seems to result in narrower
+             * pixels. */
             break;
         case TT_VT320:
         case TT_VT320PC:
-#ifdef COMMENT
-            /* Not sure where I got this from, but it doesn't seem to be right
-             * for the available VT320 fonts. */
-            if (is_full_cell) {
-                /* full cell */
-                cell_height = is_132cols ? 9 : 15;
-            } else { /* text cell */
-                cell_height = is_132cols ? 7 : 12;
-            }
-#else
             cell_height = 12;
-#endif
-            cell_width = 15;
+
+            /* TODO: What is the cell width in 132 column mode? EK-VT320-UU
+             * doesn't say and EK-VT320-RM is nowhere to be found. What
+             * EK-VT320-UU *does* say is that the *default* width is 15 for 80
+             * columns and 9 for 132, so perhaps 9 is the max for 132 cols? */
+            cell_width = is_132cols ? 9 : 15;
             break;
         case TT_VT340:
             if (is_full_cell) { /* full cell */
@@ -917,7 +914,10 @@ decdld(int font_number, int starting_character, int erase_control,
             if (is_full_cell) { /* full cell */
                 cell_width = 10;
             } else { /* text cell */
-                cell_width = is_132cols ? 6 : 9;
+                /* While the manual says the maximum widths are 6 and 9, the
+                 * terminal rejects these - the actual implemented maximum is
+                 * 5 and 8. */
+                cell_width = is_132cols ? 5 : 8;
             }
             cell_height = 16;
             break;
