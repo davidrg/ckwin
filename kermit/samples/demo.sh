@@ -116,6 +116,9 @@ if [ "$PROBE_TERM" = "1" ]; then
         # Something pretending to be xterm, so not K95
         IS_K95="false"
         IS_OLD_K95="false"
+      elif [[ "$TERM" == "vt320" ]]; then
+        IS_K95="false"
+        IS_OLD_K95="false"
       elif [[ "$TERM" == "vt420" ]]; then
         # Old K95 doesn't have a vt420 emulation
         IS_K95="false"
@@ -188,14 +191,11 @@ if [ "$PROBE_TERM" = "1" ]; then
 
   ####### Output some basic info we discovered
 
-  echo "ENQ: '$ENQ'"
-  echo "XTVERSION: '$XTVERSION'"
-  echo "DA1: '$DA'"
-  echo "DA2: '$DA2'"
-  echo "PRODUCT: $PRODUCT_ID"
-  echo "TERM: '$TERM'"
-  echo "Is K95: $IS_K95"
-  echo "IS Old K95: $IS_OLD_K95"
+  printf "DA1: '^[[${DA}c'\n"
+  printf "DA2: '${DA2}c'\x1b[40\`  PRODUCT: $PRODUCT_ID\n"
+  printf "ENQ: '$ENQ'\x1b[40\`XTVERSION: '$XTVERSION'\n"
+  printf "TERM: '$TERM'\n"
+  printf "Is K95: $IS_K95\x1b[39\`IS Old K95: $IS_OLD_K95\n"
 
   if [ "$IS_K95" == "false" ]; then
     PROBLIST="$PROBLIST    -> Not Kermit 95\n"
