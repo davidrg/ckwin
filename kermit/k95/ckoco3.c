@@ -16458,6 +16458,7 @@ dodcs( void )
                                          fmt, 1, buf);
                             }
                             break;
+#ifdef KUI
                         case 'z':     /*  DECDLDA */
                             if (ISVT520(tt_type_mode)) {
                                 char buf[20];
@@ -16473,6 +16474,7 @@ dodcs( void )
                                          fmt, 1, buf);
                             }
                             break;
+#endif /* KUI */
                         case '}': {    /*  DECATC  */
                             char buf[20];
 
@@ -26740,11 +26742,13 @@ vtcsi(void)
                      *  are 1 and 2 - all other values are ignored. This
                      *  setting is reset to two on hard reset.
                      */
+#ifdef KUI
                     if (ISVT520(tt_type_mode) && !ISVT525(tt_type_mode)) {
                         if (k >= 1 && (pn[1] == 1 || pn[1] == 2)) {
                             decdlda = pn[1];
                         }
                     }
+#endif /* KUI */
                     break;
                 case '}': {    /* DECATC - Alternate Text Color */
                     if (ISVT525(tt_type_mode)) {
