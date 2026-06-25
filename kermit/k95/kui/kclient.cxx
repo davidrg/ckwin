@@ -718,7 +718,6 @@ void KClient::refreshSoftFonts() {
 
             int display_width = drcsbuf[i]->cell_width;
             int h = drcsbuf[i]->cell_height;
-            int w = display_width * 96;
 
             if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
                 /* To account for VT220 glyphs being stretched horizontally
@@ -729,6 +728,8 @@ void KClient::refreshSoftFonts() {
                  * nearly 3 so 2 will have to do */
                 h = h * 3;
             }
+
+            int w = display_width * 96;
 
             HBITMAP hbmp = CreateBitmap(w,h,1,1,NULL);
 
@@ -752,11 +753,12 @@ void KClient::refreshSoftFonts() {
                         int bit = 0x8000 >> col;
 
                         /* VT220 terminals implement dot stretching: at render
-                         * time, the value of any given pixel is the value of
-                         * that pixel ORd with the pixel to the immediate left.
-                         * It would be too expensive to draw pixels individually
-                         * at render time, so instead we'll apply the dot
-                         * stretching to the glyphs here.
+                         * time, each pixel is stretched about half-way into the
+                         * next pixel to the right. We can't really do
+                         * half-pixels here, and it would be too expensive to
+                         * do this dot stretching at render time so instead we
+                         * stretch pixel all the way into its neighbour to the
+                         * right when turning the glyphs to a bitmap here.
                          *
                          * Additionally, columns 9 and 10 are not addressable.
                          * These columns are just a copy of column 8. And dot
@@ -784,6 +786,11 @@ void KClient::refreshSoftFonts() {
                          * So, to summarise the rendering differences from a
                          * real VT220:
                          *   - No scan lines (they're quite visible on the VT220)
+                         *   - We stretch each pixel fully into its neighbour
+                         *     rather than half-way. This means the glyph
+                         *     ~?~~~~~~/~~~~~~~~ will appear as a solid block
+                         *     when it should have a thin vertical line in the
+                         *     top half where the ? is.
                          *   - Column 10 doesn't stretch into column 1 on the
                          *     adjacent cell
                          *   - Dot stretching is applied before rather than after
