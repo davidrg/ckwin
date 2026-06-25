@@ -788,6 +788,7 @@ CHAR sni_term_firmware[7]="830851";     /* 97801 Terminal Firmware Version */
  *       - Have erase_font_buffer set the pixels to a reverse question mark
  */
 drcs_t *drcsbuf[DRCS_BUFFERS] = {NULL, NULL};
+char decdlda = 2;
 
 void
 erase_font_buffer(drcs_t *drcs) {
@@ -846,6 +847,8 @@ decdld(int font_number, int starting_character, int erase_control,
             break;
             /*case TT_VT510:*/
         case TT_VT520:
+            max_font_buffers = decdlda;
+            break;
         case TT_VT525:
         case TT_K95:
             max_font_buffers = 2;
@@ -10283,6 +10286,10 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
             }
         }
         LeaveDRCSBufferCriticalSection();
+
+        /* Restore number of available font buffers for VT520 only on hard reset
+         * only */
+        decdlda = 2;
     }
 #endif /* KUI */
 
@@ -16447,6 +16454,21 @@ dodcs( void )
                                 char buf[20];
                                 _snprintf(buf, sizeof(buf), "%d;0;0;0,x",
                                     term_max_page(VTERM) + 1);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 1, buf);
+                            }
+                            break;
+                        case 'z':     /*  DECDLDA */
+                            if (ISVT520(tt_type_mode)) {
+                                char buf[20];
+                                /* TODO: I am *assuming* the VT525 still
+                                 * supports querying DECDLDA via DECRQSS even if
+                                 * it doesn't implement DECDLDA itself. So for
+                                 * VT525 we report 2 buffers as that terminal
+                                 * always supports two (which is why it doesn't
+                                 * implement DECDLDA). */
+                                _snprintf(buf, sizeof(buf), "%d,z",
+                                    ISVT525(tt_type_mode) ? 2 : decdlda);
                                 _snprintf(decrpss, DECRPSS_LEN,
                                          fmt, 1, buf);
                             }
@@ -26703,6 +26725,24 @@ vtcsi(void)
                          * us. */
                         if (k >= 1 && pn[1] > 0) {
                             decspma_max_page = pn[1] - 1; /* Session 1 */
+                        }
+                    }
+                    break;
+                case 'z':     /*  DECDLDA */
+                    /* Only available for VT520:
+                     * "The color terminal does not use this command
+                     *  because it has enough memory to give all four
+                     *  sessions *Two each.*"
+                     *
+                     *  Switches between one drcs font buffer per
+                     *  session, or two font buffers each for sessions
+                     *  one and two. The only valid parameter values
+                     *  are 1 and 2 - all other values are ignored. This
+                     *  setting is reset to two on hard reset.
+                     */
+                    if (ISVT520(tt_type_mode) && !ISVT525(tt_type_mode)) {
+                        if (k >= 1 && (pn[1] == 1 || pn[1] == 2)) {
+                            decdlda = pn[1];
                         }
                     }
                     break;

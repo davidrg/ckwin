@@ -4572,7 +4572,6 @@ DECTSR		462
                     DECSPPCS    * p         Select ProPrinter Character Set
                     DECSSL        p         Select Set-Up Language
                     DECSZS      , {         Select Zero Symbol
-                    DECSPMA     , x         Session Page Memory Allocation
                     DECSKCV    SP r         Set Key Click Volume
                     DECSLCK    SP v         Set Lock Key Style
                     DECSMBV    SP u         Set Margin Bell Volume
@@ -4845,9 +4844,20 @@ DECTSR		462
                 <p>
                     Reports the number of pages available
                 </p>
-                <pre><cc>DCS</cc> 3 $ q , x <cc>ST</cc></pre>
+                <pre><cc>DCS</cc> $ q , x <cc>ST</cc></pre>
                 <p>And the response might be something like:
                     <tt><cc>DCS</cc> 1 $ r 9 ; 0 ; 0 ; 0 , x <cc>ST</cc></tt></p>
+            </section>
+            <section role="parameter" id="decrqss-decdlda" mnemonic="DECDLDA"
+                     title="Down Line Load Allocation" groups="isvt520">
+                <ctlseq><param-text/> = , z</ctlseq>
+                <ref src="vt52x:257"/>
+                <p>
+                    Reports the number of DRCS font buffers available
+                </p>
+                <pre><cc>DCS</cc> $ q , z <cc>ST</cc></pre>
+                <p>And the response might be something like:
+                    <tt><cc>DCS</cc> 1 $ r 2 , z <cc>ST</cc></tt></p>
             </section>
             <section role="parameter" id="decrqss-decatc" mnemonic="DECATC"
                      title="Alternate Text Color" groups="isvt525">
@@ -17179,11 +17189,20 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional=""/>
         </section>
         <section role="ctlseq" id="decdlda" mnemonic="DECDLDA"
-                 title="Down Line Load Allocation"
-                 not-implemented="true" todo="true">
+                 title="Down Line Load Allocation" badges="vt520">
             <ctlseq>CSI <param-single/> ; , z</ctlseq>
             <ref src="vt52x:201"/>
             <termsupp first="vt520" series="vt" additional=""/>
+            <p>
+                Sets the number of DRCS font buffers available. Valid options
+                are 1 or 2. Any other values (or no parameter at all) will
+                have no effect. Only available for VT520 emulation. Not
+                available for VT525 or K95 terminal types as the VT525 always
+                supports two font buffers per session.
+            </p>
+            <p>
+                This setting can be queried via <a href="#decrqss">DECRQSS</a>.
+            </p>
         </section>
 
 
