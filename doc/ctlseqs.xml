@@ -7411,10 +7411,31 @@ DCS $ q 3 , } ST</pre>
             -->
             <p>
                 Secondary Device Attributes Report Request. If <param-single/>
-                is 0 then K95 claims to be a VT320 with firmware version 0 and ROM
-                cartridge registration number 0 by responding with:
-                <tt><cc>CSI</cc> > 2 4 ; 0 ; 0 c</tt>
+                is 0 then K95 reports one of the following:
             </p>
+            <table>
+                <tr>
+                    <th>Terminal Type</th>
+                    <th>Report</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>K95</td>
+                    <td><tt><cc>CSI</cc> > 41 ; 0 ; 0 c</tt></td>
+                    <td>VT420 with firmware version 0 and no options</td>
+                </tr>
+                <tr>
+                    <td>VT220</td>
+                    <td><tt><cc>CSI</cc> > 1 ; 0 ; 0 c</tt></td>
+                    <td>VT220 with firmware version 0 and no options</td>
+                </tr>
+                <tr>
+                    <td>All other emulations</td>
+                    <td><tt><cc>CSI</cc> > 2 4 ; 0 ; 0 c</tt></td>
+                    <td>VT320 with firmware version 0 and ROM
+                        cartridge registration number 0</td>
+                </tr>
+            </table>
             <!-- Windows Terminal responds as xterm does: 0;10;1c -->
         </section>
         <section role="ctlseq" id="hsc" mnemonic="HSC" title="Set cursor type (SCO)" badges="scoansi">

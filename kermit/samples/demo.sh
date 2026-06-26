@@ -118,8 +118,10 @@ PROBLIST="\n"
         # Old K95 doesn't have a vt520 emulation either
         IS_K95="false"
         IS_OLD_K95="false"
-      elif [[ "$PRODUCT_ID" != "24" ]]; then
-        # All released versions of K95 report their Product ID as 24 (VT320)
+      elif [ "$PRODUCT_ID" != "1" ] && [ "$PRODUCT_ID" != "24" ] && [ "$PRODUCT_ID" != "41" ]; then
+        # Starting with 3.0 beta 8, K95 may report its product Id as either 1,
+        # 24 or 41 depending on the selected terminal type. Any other value is
+        # guaranteed to not be K95.
         IS_K95="false"
         IS_OLD_K95="false"
       else
@@ -1006,8 +1008,8 @@ printf '\x1b[?25h'
 
 if [ "$F_STATUS_LINE" = "1" ]; then
   # Status line back to whatever it was before
-  if [ "$F_DECRQSS" = "1" ]; then
-    printf '\x1b[%s' DECSSDT_INITIAL
+  if [ "$DECSSDT_INITIAL" != "" ]; then
+    printf '\x1b[%s' $DECSSDT_INITIAL
   fi
 fi
 

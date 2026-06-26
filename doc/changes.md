@@ -237,6 +237,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - System
  - Improved throughput for pipe connections on Windows 
  - Upgraded to zlib 1.3.2
+ - The Secondary DA response when the terminal type is set to VT220 or VT220PC
+   now reports the VT220 identification code, rather than the code for VT320.
 
 ### New terminal control sequences
 > [!NOTE]

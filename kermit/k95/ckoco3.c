@@ -21394,7 +21394,68 @@ vtcsi(void)
                 if ( zdsext && ISVT220(tt_type) ) {
                     /* Secondary Device Attributes Report Request */
                     if (pn[1] == 0) {
-                        sendescseq("[>24;0;0c");
+                        /* Switch on tt_type (users selected terminal type)
+                         * rather than tt_type_mode (host selected emulation via
+                         * DECTME, DECSCL, etc) as setting a VT to emulate
+                         * something else doesn't seem to change its secondary
+                         * DA response. */
+                        switch (tt_type) {
+                            case TT_VT220:
+                            case TT_VT220PC:
+                                sendescseq("[>1;0;0c");     /* VT220 */
+                                break;
+                            case TT_K95:
+                                /* The K95 terminal type isn't fully
+                                 * VT420-compatible yet, but it isn't far off
+                                 * and importantly it uses the same character
+                                 * cell size for soft-fonts. DEC didn't provide
+                                 * any way to identify character cell size
+                                 * directly so this is about the only thing the
+                                 * host can rely on. */
+                                sendescseq("[>41;0;0c");    /* VT420 */
+                                break;
+                            case TT_VT320:
+                            case TT_VT320PC:
+                            case TT_WY370:    /* Responds as a VT320 */
+                            default:
+                                sendescseq("[>24;0;0c");    /* VT320 */
+                                break;
+#ifdef COMMENT
+                            /* None of these emulations are implemented yet */
+                            case TT_VT22Z:
+                            case TT_VT22ZPC:
+                                /* This is what my VT220Z reports. The meaning
+                                 * of option 2 is currently unknown, but regular
+                                 * VT220s apparently don't report it so it is
+                                 * possibly significant for the VT220Z. */
+                                sendescseq("[>1;31;2c");
+                                break;
+                            case TT_DECTERM:
+                                sendescseq("[>28;0;0c");    /* DECterm */
+                                break;
+                            case TT_VTSTAR:
+                                sendescseq("[>66;0;0c");    /* Multia VTStar */
+                                break;
+                            case TT_VT420:
+                            case TT_VT420PC:
+                                /* TODO: Maybe TT_VT420PC should report option 1
+                                 *       (PC Keyboard)? */
+                                sendescseq("[>41;0;0c");    /* VT420 */
+                                break;
+                            case TT_VT510:
+                            case TT_VT510PC:
+                                sendescseq("[>61;0;0c");    /* VT510 */
+                                break;
+                            case TT_VT520:
+                            case TT_VT520PC:
+                                sendescseq("[>64;0;0c");    /* VT520 */
+                                break;
+                            case TT_VT525:
+                            case TT_VT525PC:
+                                sendescseq("[>65;0;0c");    /* VT520 */
+                                break;
+#endif
+                        }
                     }
                 }
                 else if ( ansiext && ISVT220(tt_type) ) {
