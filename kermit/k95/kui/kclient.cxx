@@ -737,6 +737,19 @@ void KClient::refreshSoftFonts() {
 
             HBITMAP hOldBmp = (HBITMAP)SelectObject(hMDC, hbmp);
 
+            // Paint the bitmap white
+            RECT r;
+            r.left = r.top = 0;
+            r.right = w;
+            r.bottom = h;
+            HBRUSH bgBrush = CreateSolidBrush( RGB(255, 255, 255) );
+            FillRect( hMDC, &r, bgBrush);
+            DeleteObject( bgBrush );
+
+            // And draw pixels in black. This gives vastly better scaling using
+            // the BLACKONWHITE StretchBlt mode.
+            COLORREF pixelValue = RGB(0, 0, 0);
+
             for (int glyph = 0; glyph < 96; glyph++) {
                 if (glyph == 0 && !drcsbuf[i]->is_96_chars) continue;
                 if (glyph == 95 && !drcsbuf[i]->is_96_chars) continue;
@@ -814,7 +827,7 @@ void KClient::refreshSoftFonts() {
 
                             if (row_pixels & bit || row_pixels & prevbit) {
                                 SetPixel(hMDC, col + offset, row,
-                                    RGB(255, 255, 255));
+                                    pixelValue);
                             }
                         } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
                             /* The VT320 apparently (I don't have one to test
@@ -826,17 +839,17 @@ void KClient::refreshSoftFonts() {
                              */
                             if (row_pixels & bit) {
                                 SetPixel(hMDC, col + offset, target_row,
-                                    RGB(255, 255, 255));
+                                    pixelValue);
                                 SetPixel(hMDC, col + offset, target_row+1,
-                                    RGB(255, 255, 255));
+                                    pixelValue);
                                 SetPixel(hMDC, col + offset, target_row+2,
-                                    RGB(255, 255, 255));
+                                    pixelValue);
                             }
                         } else if (row_pixels & bit) {
                             /* Not VT220 and not VT320. Don't do any weird
                              * tweaks - just render as is */
                             SetPixel(hMDC, col + offset, row,
-                                RGB(255, 255, 255));
+                                pixelValue);
                         }
                     }
                 }
@@ -904,9 +917,7 @@ void KClient::stretchSoftFont(int fontId) {
             display_height *= 3;
         }
 
-        // This gives better quality at larger sizes, but at smaller ones it
-        // makes it a bit fuzzy.
-        //SetStretchBltMode(hMDCdest, HALFTONE);
+        SetStretchBltMode(hMDCdest, BLACKONWHITE);
 
         StretchBlt(hMDCdest, 0, 0, fontWidth * 96, fontHeight,
                    hMDCsrc,  0, 0, display_width * 96,
@@ -1324,11 +1335,6 @@ void KClient::writeMe()
                     stretchSoftFont(0);
                 }
 
-                // Flip the FG/BG colors around to match how the bitmap will be
-                // painted.
-                COLORREF oldBkColor = SetBkColor( hdc(), textColor);
-                SetTextColor( hdc(), cell_video_attr_background_rgb(kws->attr));
-
                 for (int j = kws->offset; j < kws->offset+kws->length; j++) {
                     int glyph = textBuffer[j] - font_start;
 
@@ -1352,10 +1358,6 @@ void KClient::writeMe()
                 }
                 SelectObject(hMDC, hOldBmp);
                 DeleteDC(hMDC);
-
-                // Restore previous colours
-                SetBkColor( hdc(), oldBkColor);
-                SetTextColor( hdc(), textColor);
             }
         }
         else {
