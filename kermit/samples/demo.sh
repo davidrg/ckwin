@@ -58,7 +58,6 @@ TIMEOUT=5
 #         out detected features and lists them.
 # TODO: Play with some of the VT525 colour modes? Perhaps cycle through some
 #       different palettes?
-# TODO: Restore the status line to its previous state at the end
 
 IS_K95="true"
 IS_OLD_K95="false"
@@ -273,6 +272,25 @@ function da_implied_extensions {
         esac
 }
 
+# Request String
+function decrqss() {
+        REQ=$1   # String to request
+
+        read -s -t 5 -d '\\' -r -p $'\eP$q'$REQ$'\e\\' RESP
+        # '
+
+        # Response is something like: ^Px$rD....D^\
+        # where x indicates if the response is valid or not, and D...D is the r>
+        STAT=$(echo $RESP | cat -v | awk -F'\^\[P|\$r|\^\[' '{print $2;}')
+        RESP=$(echo $RESP | cat -v | awk -F'\^\[P|\$r|\^\[' '{print $3;}')
+
+        if [ "$STAT" = "0" ]; then
+                echo "Invalid Request"
+        else
+                echo $RESP
+        fi
+}
+
 # Top Banner
 VERSION=" 3 . 0  B E T A  8 "
 BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
@@ -284,6 +302,7 @@ F_STRIKETHROUGH=1  # New in beta 8
 F_RULED_LINES=1    # New in beta 8
 F_SOFT_FONT=1      # New in beta 8
 F_EXTENDED_UL=0    # -- Additional underline styles not supported yet
+F_DECRQSS=1
 
 # VT420 features:-
 # K95 Version 2.1 (2002) supported most rectangular area operations, but the
@@ -334,6 +353,7 @@ elif [[ $TERM == "vt220" ]]; then
     F_STATUS_LINE=0
     F_DECLRMM=0
     F_RECTOPS=0
+    F_DECRQSS=0
     F_SOFT_FONT_SIZE=220
 elif [[ $PRODUCT_ID == "28" ]]; then
     # DECterm - a VT340 with some extra features but no soft-fonts.
@@ -345,6 +365,7 @@ elif [[ $PRODUCT_ID == "28" ]]; then
 elif [[ $PRODUCT_ID == "66" ]]; then
     # Multia VTstar - a VT320 with some extra features (TD/SMP, windowing and
     # the text locator)
+    F_DECRQSS=0   # Doesn't seem to work
     F_VT420_FEATURES=0
     F_VT520_FEATURES=0
     F_DECLRMM=0
@@ -909,7 +930,13 @@ fi
 #   timer.
 # -------------------------------------------------------------------
 
+DECSSDT_INITIAL=''
 if [ "$F_STATUS_LINE" = "1" ]; then
+
+  if [ "$F_DECRQSS" = "1" ]; then
+    DECSSDT_INITIAL=$(decrqss '$~')
+  fi
+
   # Status line type to host-writable
   printf '\x1b[2$~'
 
@@ -949,14 +976,19 @@ printf '\x1b[5m\t\t\t'
 printf '\x1b[?25l'
 
 read -n 1 -s -r -p "Strike any key to continue..."
+
 # Blinking off
 printf '\x1b[0m\n'
 
 # Cursor back on
 printf '\x1b[?25h'
 
-# Status line back to indicator, and ensure attributes are back off.
-printf '\x1b[1$~\x1b[0m\x1b[25h'
+if [ "$F_STATUS_LINE" = "1" ]; then
+  # Status line back to whatever it was before
+  if [ "$F_DECRQSS" = "1" ]; then
+    printf '\x1b[%s' DECSSDT_INITIAL
+  fi
+fi
 
 if [ "$F_SOFT_FONT" = "1" ]; then
 	# Erase font buffers
@@ -969,8 +1001,8 @@ fi
 # DECOM and DECLRMM off
 printf '\x1b[?6;69l'
 
-# Clear margins
-printf '\x1b[r\x1b[s'
+# Clear margins and make sure attributes are normal
+printf '\x1b[r\x1b[s\x1b[m'
 
 # Go to the bottom line, as clearing the margins will have put the cursor at 1,1
 # which is a double-height line.
