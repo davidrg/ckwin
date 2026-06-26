@@ -298,6 +298,18 @@ function decrqss() {
         fi
 }
 
+function vtstar_drcs_fix {
+  # Multia VTstar has a wierd bug that causes it to hang after receiving a
+  # DECDLD. j4james found that flooding it with a bunch of SGR gets it unstuck.
+  # This has to be done after every DECDLD.
+  if [[ $PRODUCT_ID == "66" ]]; then
+    for i in $(seq 1 100); do
+      printf '\x1b[0;1m'
+    done
+    printf '\x1b[m'
+  fi
+}
+
 # Top Banner
 VERSION=" 3 . 0  B E T A  8 "
 BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
@@ -380,10 +392,6 @@ elif [[ $PRODUCT_ID == "66" ]]; then
     F_VT520_FEATURES=0
     F_DECLRMM=0
     F_RECTOPS=0
-
-    # It *does* support soft fonts, though it doesn't like any of the ones we've
-    # got here for some reason.
-    F_SOFT_FONT=0
 elif [[ "$BE_NICE" == "1" ]]; then
     # Be nice and only enable features the terminal advertises as being
     # supported
@@ -418,6 +426,7 @@ if [ "$F_VT520_FEATURES" = "1" ]; then
     printf '??????o_??/EEEEEE~^NE/??????????;'  # ) Right Arrow
     printf '?GKM~~MKG?/EEEEFF????/??????????;'  # * Up Arrow
     printf '\x1b\\'
+    vtstar_drcs_fix
 
     # And some macros
     # 10: Output the NEW badge characters: $%&
@@ -700,6 +709,8 @@ if [ "$F_SOFT_FONT" = "1" ]; then
     ????{{????/????~~????/????BB????;??CKwo????/????x~AA??/??AB@?????;
     ??ooo_?oo?/?FF?BFEF@?/??????????\x1b\\'
   fi
+
+  vtstar_drcs_fix
 
 	# Switch to ISO-2022 mode
 	printf '\x1b%%@'
@@ -1003,8 +1014,10 @@ fi
 if [ "$F_SOFT_FONT" = "1" ]; then
 	# Erase font buffers
 	printf '\x1bP0;0;2{ @\x1b\\'
+	vtstar_drcs_fix
 	if [ "$F_VT520_FEATURES" = "1" ]; then
 	  printf '\x1bP2;0;0{&%%C\x1b\\'
+	  vtstar_drcs_fix
 	fi
 fi
 
