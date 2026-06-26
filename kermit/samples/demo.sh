@@ -35,12 +35,6 @@
 #  * Double-height lines - often not supported
 #
 
-# Probe the terminal? All this really does at the moment is is disable some
-# stuff if it detects K95 3.0 beta 7 or older, or show a warning to expect
-# borkage if some other terminal. It can take a while though if the terminal
-# doesn't respond to ENQ, XTVERSION, DA and/or DA2
-PROBE_TERM=1
-
 # How long to wait for responses from the terminal. Larger numbers for slower
 # connections, but will also introduce significant delays if the terminal simply
 # doesn't respond.
@@ -63,8 +57,6 @@ IS_K95="true"
 IS_OLD_K95="false"
 PROBLEMS="false"
 PROBLIST="\n"
-
-if [ "$PROBE_TERM" = "1" ]; then
 
   ####### Probe the terminal
   printf '\x1b[2JProbing Terminal...\r\n'
@@ -233,7 +225,6 @@ if [ "$PROBE_TERM" = "1" ]; then
     printf '\n'
     read -n 1 -s -r -p "Strike any key to continue..."
   fi
-fi
 
 # Function to get the line the cursor is on
 function curline {
