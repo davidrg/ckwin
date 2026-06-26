@@ -193,6 +193,22 @@ PROBLIST="\n"
     PROBLEMS="true"
   fi
 
+  if [[ $IS_OLD_K95 == "true" ]]; then
+    PROBLEMS="false"
+  elif [[ $TERM == "vt320" ]]; then
+    PROBLIST="$PROBLIST    -> VT420 features will not be attempted\n"
+    PROBLEMS="true"
+  elif [[ $TERM == "vt220" ]]; then
+    PROBLIST="$PROBLIST    -> VT420 and VT320 features will not be attempted\n"
+    PROBLEMS="true"
+  elif [[ $PRODUCT_ID == "28" ]]; then
+    PROBLIST="$PROBLIST    -> VT420 and soft-font features will not be attempted\n"
+    PROBLEMS="true"
+  elif [[ $PRODUCT_ID == "66" ]]; then
+    PROBLIST="$PROBLIST    -> VT420 features will not be attempted\n"
+    PROBLEMS="true"
+  fi
+
   if [[ $PROBLEMS == "true" ]]; then
     printf '\n\nProblems:%b' "$PROBLIST"
     if [[ $IS_OLD_K95 == "maybe" ]]; then
@@ -296,7 +312,7 @@ F_EXTENDED_UL=0    # -- Additional underline styles not supported yet
 F_DECRQSS=1
 
 # VT420 features:-
-# K95 Version 2.1 (2002) supported most rectangular area operations, but the
+# K95 Version 1.1.21 (2002) supported most rectangular area operations, but the
 # implementation is buggy. Text macros, paging, and DECLRMM are new in v3.0 b8.
 F_VT420_FEATURES=1
 F_RECTOPS=1        # Rectangular area operations
@@ -317,16 +333,19 @@ KB_MODES="PCTERM direct keyboard mode"
 
 if [[ $IS_K95 == "true" ]]; then
   if [[ $IS_OLD_K95 == "true" ]]; then
-    # Kermit 95 3.0 beta 7 and earlier did not support these things
     VERSION=$K95_VERSION_L
+    # These things all new in K95 3.0 Beta 8
     F_TRUE_COLOR=0
     F_STRIKETHROUGH=0
     F_RULED_LINES=0
-    F_EXTENDED_UL=0
     F_SOFT_FONT=0
     F_DECLRMM=0
-    # Rectangular area features should be present but a little buggy
     F_PAGING=0
+
+    if (( $K95_VERSION_L < 800202 )); then
+      # Rectangular area operations first supported (though buggy) in v1.1.21
+      F_RECTOPS=0
+    fi
   fi
 elif [[ $TERM == "vt320" ]]; then
     F_VT420_FEATURES=0
