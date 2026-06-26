@@ -870,19 +870,12 @@ decdld(int font_number, int starting_character, int erase_control,
             break;
         case TT_VT320:
         case TT_VT320PC:
+            /* Specs on page 90 of EK-VT320-UU */
             cell_height = 12;
-
-            /* TODO: What is the cell width in 132 column mode? EK-VT320-UU
-             * doesn't say and EK-VT320-RM is nowhere to be found. What
-             * EK-VT320-UU *does* say is that the *default* width is 15 for 80
-             * columns and 9 for 132, so perhaps 9 is the max for 132 cols? */
             cell_width = is_132cols ? 9 : 15;
             max_width = cell_width;  /* full cell */
             if (!is_full_cell) { /* text cell */
-                /* These numbers are a complete guess. EK-VT320-UU doesn't say
-                 * what the max width for a text cell is, and I don't have
-                 * access to a VT320 to try and find out. */
-                max_width = is_132cols ? 8 : 13;
+                max_width = is_132cols ? 7 : 12;
             }
 
             break;
@@ -1179,6 +1172,10 @@ decdld(int font_number, int starting_character, int erase_control,
                 break;
             case TT_VT320:
             case TT_VT320PC:
+                /* EK-VT320-UU says two pixels before the glyph and one after */
+                h_offset = 2;
+                v_offset = 0;
+                break;
             case TT_VT420:
             case TT_WY370:
                 /* TODO: No idea how the VT320 and WY370 work - just assuming
@@ -1187,7 +1184,7 @@ decdld(int font_number, int starting_character, int erase_control,
                 h_offset = 1;
                 v_offset = 0;
                 break;
-                /*case TT_VT510:*/
+            /*case TT_VT510:*/
             case TT_VT520:
             case TT_VT525:
                 /* The VT520 (v2.1) doesn't do any font centering at all. */
