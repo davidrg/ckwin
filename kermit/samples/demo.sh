@@ -346,6 +346,8 @@ if [[ $IS_K95 == "yes" ]]; then
       F_RECTOPS=0
     fi
   fi
+elif [[ $TERM == "vt420" ]]; then
+    F_VT520_FEATURES=0
 elif [[ $TERM == "vt320" ]]; then
     F_VT420_FEATURES=0
     F_VT520_FEATURES=0
@@ -918,7 +920,7 @@ printf 'architectures,\n   with reduced feature builds for vintage Windows '
 printf 'and 32bit IBM OS/2 Systems\n'
 
 # NEW in Beta 8!
-if [ "$F_SOFT_FONT" = "1" ] && [ "$F_RECTOPS" = "1"  ]; then
+if [ "$F_SOFT_FONT" = "1" ] && [ "$F_VT520_FEATURES" = "1" ]; then
   if [ "$F_STRIKETHROUGH" = "1" ]; then
     printf '\x1b7'  # Save cursor
     printf '\x1b[5;65H\x1b[18*z\x1b[5H'
