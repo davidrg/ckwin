@@ -1124,23 +1124,13 @@ void KClient::writeMe()
     for( i = 0; i < totlen; i++ )
     {
         int bufferId = DRCS_BUFFER_ID(textBuffer[i]);
-        if (bufferId != NO_SOFT_FONT) {
-            if (drcs_fonts[bufferId-1] == NULL || drcs_fonts[bufferId-1] == NULL
-                || drcs_stretched_fonts[bufferId-1] == NULL) {
-                // soft-font is undefined - replace with backwards question mark
-                bufferId = NO_SOFT_FONT;
-                textBuffer[i] = 0x2426; // backwards question mark
-            } else {
-                int font_start = DRCS_START(bufferId);
-                int glyph = textBuffer[i] - font_start;
-                if (drcsbuf[bufferId-1]->glyphs[glyph].undefined &&
-                    (drcsbuf[bufferId-1]->is_96_chars ||
-                        (glyph > 0 && glyph < 95))) {
-                    // Glyph is undefined - replace with backwards question mark
-                    bufferId = NO_SOFT_FONT;
-                    textBuffer[i] = 0x2426; // backwards question mark
-                }
-            }
+        if (bufferId != NO_SOFT_FONT && drcs_stretched_fonts[bufferId-1] == NULL) {
+            /* This character is associated with a soft-font, but the font
+             * doesn't exist. This shouldn't really happen outside of looking at
+             * the scrollback after a hard reset, so just replace the character
+             * with the backwards question mark in the normal font. */
+            bufferId = NO_SOFT_FONT;
+            textBuffer[i] = 0x2426; // backwards question mark
         }
 
         xpos = i % twid;
