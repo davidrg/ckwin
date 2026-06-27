@@ -14,8 +14,10 @@
 # the following exceptions:
 #  * No colour at all
 #  * No crossed-out or italic attributes
-# When run on a VT320 or VT220 (assuming $TERM is set properly), features not
-# supported by those terminals will be turned off.
+#  * No DECterm ruled lines
+# When run on a VT320 or VT220 (assuming $TERM is set properly), DECterm or
+# VTStar features not supported by those terminals will be turned off and the
+# script should otherwise show correctly.
 #
 # In most other terminal emulators, the output will appear fairly broken due to
 # missing or incorrectly implemented features, especially those from the VT420.
@@ -23,9 +25,7 @@
 #  * The VT320 host-programmable status line is rarely supported.
 #  * VT420 rectangular area operations are often not supported or buggy.
 #    Failure to implement DECRARA properly tends to be quite visible.
-#  * VT420 paging is almost never supported, and when it is there can be bugs
-#    like not treating margins as a per-page setting
-#  * VT420 macros are almost never supported
+#  * VT420 paging and macros are almost never implemented
 #  * A lot of terminals still enforce L/R margins when outside the top/bottom
 #    margins when they shouldn't.
 #  * 24-bit indexed colors - while Kermit 95 supports both formats, this script
@@ -33,8 +33,12 @@
 #    support.
 #  * Blinking text attribute - often not supported (because its annoying)
 #  * Double-height lines - often not supported
+#  * Soft-fonts - rarely supported
 #
-
+# If the terminal doesn't lie about its capabilities, you can run it with as
+# follows to disable features the terminal doesn't claim to support:
+#     BE_NICE=1 ./demo.sh
+#
 # How long to wait for responses from the terminal. Larger numbers for slower
 # connections, but will also introduce significant delays if the terminal simply
 # doesn't respond.
@@ -44,8 +48,6 @@ TIMEOUT=5
 #       - Probe for colour support
 #       - Probe for supported attributes
 #       - Probe for 24-bit colour support
-#       - Probe for DECLRMM support
-#       - Probe for status line support
 #       - Number of lines and columns per page
 #       List missing things on the warning screen.
 #       Maybe add test mode that instead of producing a K95 feature list, tests
@@ -53,103 +55,83 @@ TIMEOUT=5
 # TODO: Play with some of the VT525 colour modes? Perhaps cycle through some
 #       different palettes?
 
-IS_K95="true"
-IS_OLD_K95="false"
+IS_K95="unknown"
+IS_OLD_K95="unknown"
 PROBLEMS="false"
 PROBLIST="\n"
+K95_TERM="k95"
 
-  ####### Probe the terminal
-  printf '\x1b[2JProbing Terminal...\r\n'
+####### Probe the terminal
+printf '\x1b[2J\x1b[999HProbing Terminal...\r\n'
 
-  # As *most* terminals have ENQ disabled (including K95 by default), stick a DA
-  # request on the end so we're not waiting for a timeout. Then throw away the
-  # DA response.
-  # Read it in two goes as we cant rely on the ENQ response not containing 'c'
-  read -s -t $TIMEOUT -d '[' -p $'\x05\x1b[c' ENQ_A
-  read -s -t $TIMEOUT -d 'c' ENQ_B
-  ENQ=$(echo $ENQ_A$ENQ_B | cat -v | awk -F'\^\[' '{ print $1; }')
-  DA=$(echo $ENQ_B | cat -v | awk -F'\?' '{ print $2; }')
+# As *most* terminals have ENQ disabled (including K95 by default), stick a DA
+# request on the end so we're not waiting for a timeout. Then throw away the
+# DA response.
+# Read it in two goes as we cant rely on the ENQ response not containing 'c'
+read -s -t $TIMEOUT -d '[' -p $'\x05\x1b[c' ENQ_A
+read -s -t $TIMEOUT -d 'c' ENQ_B
+ENQ=$(echo $ENQ_A$ENQ_B | cat -v | awk -F'\^\[' '{ print $1; }')
+DA=$(echo $ENQ_B | cat -v | awk -F'\?' '{ print $2; }')
 
-  # Get secondary device attributes
-  read -s -t 5 -d 'c' -r -p $'\e[>c'
-  DA2=$(echo $REPLY | cat -v)
-  PRODUCT_ID=$(echo $DA2 | awk -F'>|;' '{print $2}')
+# Get secondary device attributes
+read -s -t 5 -d 'c' -r -p $'\e[>c'
+DA2=$(echo $REPLY | cat -v)
+PRODUCT_ID=$(echo $DA2 | awk -F'>|;' '{print $2}')
 
-  # Get XTVERSION. Most stuff supports this too, but just in case we'll do what
-  # we did with ENQ and stick a DA request on the end which we'll just throw
-  # away.
-  read -s -t $TIMEOUT -d '[' -p $'\e[>0q\x1b[c' ENQ_A    # Grab XTVERSION
-  read -s -t $TIMEOUT -d 'c' ENQ_B                       # Grab DA
-  # Extract XTVERSION if its there
-  XTVERSION=$(echo $ENQ_A$ENQ_B | cat -v | awk -F'\^\[P>\||\^\[' '{ print $2; }')
+# Get XTVERSION. Most stuff supports this too, but just in case we'll do what
+# we did with ENQ and stick a DA request on the end which we'll just throw
+# away.
+read -s -t $TIMEOUT -d '[' -p $'\e[>0q\x1b[c' ENQ_A    # Grab XTVERSION
+read -s -t $TIMEOUT -d 'c' ENQ_B                       # Grab DA
+# Extract XTVERSION if its there
+XTVERSION=$(echo $ENQ_A$ENQ_B | cat -v | awk -F'\^\[P>\||\^\[' '{ print $2; }')
 
-  # If XTVERSION didn't reply, ENQ_A will just contain ESC, so set it to empty.
-  if [[ "$(echo $ENQ_A | cat -v)" == "^[" ]]; then
-    XTVERSION=""
-  fi
+# If XTVERSION didn't reply, ENQ_A will just contain ESC, so set it to empty.
+if [[ "$(echo $ENQ_A | cat -v)" == "^[" ]]; then
+  XTVERSION=""
+fi
 
-  ####### Determine if Kermit 95 or not
-  # Figure out if we're dealing with Kermit 95. Starting with 3.0 beta 8, the
-  # most reliable way to do that is by looking at what the XTVERSION sequence
-  # returns. The alternative is ENQ which is disabled by default.
-  if [[ "$XTVERSION" == "Kermit 95"* ]]; then
-    # XTVERSION is new in K95 v3.0 beta 8
-    IS_K95="true"
-    echo "Detected Kermit 95"
-  else
-    if [[ "$XTVERSION" != "" ]]; then
-      # Got an XTVERSION response, and it said we're not dealing with Kermit 95
-      IS_K95="false"
-      PROBLEMS="true"
-    else
-      # Didn't get an XTVERSION response - either old K95, or not K95.
-      if [[ "$TERM" == *"xterm"* ]]; then
-        # Something pretending to be xterm, so not K95
-        IS_K95="false"
-        IS_OLD_K95="false"
-      elif [[ "$TERM" == "vt320" ]]; then
-        IS_K95="false"
-        IS_OLD_K95="false"
-      elif [[ "$TERM" == "vt420" ]]; then
-        # Old K95 doesn't have a vt420 emulation
-        IS_K95="false"
-        IS_OLD_K95="false"
-      elif [[ "$TERM" == "vt520" ]]; then
-        # Old K95 doesn't have a vt520 emulation either
-        IS_K95="false"
-        IS_OLD_K95="false"
-      elif [ "$PRODUCT_ID" != "1" ] && [ "$PRODUCT_ID" != "24" ] && [ "$PRODUCT_ID" != "41" ]; then
-        # Starting with 3.0 beta 8, K95 may report its product Id as either 1,
-        # 24 or 41 depending on the selected terminal type. Any other value is
-        # guaranteed to not be K95.
-        IS_K95="false"
-        IS_OLD_K95="false"
-      else
-        IS_OLD_K95="true"
-      fi
-    fi
-  fi
+####### Determine if Kermit 95 or not
+# Figure out if we're dealing with Kermit 95. Starting with 3.0 beta 8, the
+# most reliable way to do that is by looking at what the XTVERSION sequence
+# returns. The alternative is ENQ which is disabled by default.
+if [[ "$XTVERSION" == "Kermit 95"* ]]; then
+  # XTVERSION is new in K95 v3.0 beta 8. K95 is pretty obscure so its very
+  # unlikely anything out there would like and claim to be K95.
+  IS_K95="yes"
+  IS_OLD_K95="false"
+  echo "Detected Kermit 95 3.0 beta 8 or newer"
+elif [[ "$XTVERSION" != "" ]]; then
+  # Got an XTVERSION response, and it said we're not dealing with Kermit 95.
+  # We'll just believe it.
+  IS_K95="no"
+  PROBLEMS="true"
+  PROBLIST="$PROBLIST  -> Not Kermit 95 according to XTVERSION response\n"
+fi
 
-  # See if we have an ENQ response. By default K95 ignores ENQ, but you can turn
-  # it on. If its on we should be able to figure out *which* version of K95.
+# XTVERSION couldn't tell us what we're dealing with, see if ENQ can.
+if [[ "$IS_K95" == "unknown" ]]; then
   if [[ "$ENQ" == "" ]]; then
-    if [[ $IS_K95 == "true" ]]; then
-      if [[ $IS_OLD_K95 == "true" ]]; then
-        # We didn't get an ENQ or XTVERSION response. No way to tell if we're
-        # dealing with K95 or not, so we'll just assume we are.
-        IS_OLD_K95="maybe"
-        PROBLEMS="true"
-      fi
+    PROBLEMS="true"
+    PROBLIST="$PROBLIST  -> ENQ is disabled and XTVERSION did not respond."
+    PROBLIST="$PROBLIST Unable to identify terminal\n     with any certainty."
+    if [[ "$TERM" == "vt"* ]]; then
+      PROBLIST="$PROBLIST Terminal will be treated as $TERM.\n"
+    else
+      PROBLIST="$PROBLIST\n"
     fi
   else
     # Parse the ENQ response. K95 should give something like:
     #     K-95 1000415 K95
     # Where "K-95" indicates we're Kermit 95, 1000415 is the C-Kermit version
-    # number, and K95 is the selected terminal type.
+    # number, and K95 is the selected terminal type. The user *can* customise
+    # the ENQ response, but only slightly buy appending a message separated by
+    # the '_' character, so even with user customisation we should be able to
+    # parse something useful.
 
     # Firstly, check if we're K95
     if [[ "$ENQ" == "K-95"* ]]; then
-      IS_K95="true"
+      IS_K95="yes"
 
       # Next, see if we're running 3.0 beta8 or newer.
       K95_VERSION_L=$(echo $ENQ | awk '{print $2}')
@@ -162,8 +144,18 @@ PROBLIST="\n"
 
         # Check the terminal type. This script really needs it to be set to 'K95'
         if [[ "$K95_TERM" != *"K95"* ]]; then
-          PROBLEMS="true"
-          PROBLEM_TERMTYPE="true"
+          TERM="${K95_TERM:0:5}"
+          TERM="${TERM,,}"
+
+          PROBLIST="$PROBLIST  -> This script requires your Terminal Type to be"
+          PROBLIST="$PROBLIST set to K95 for best results.\n"
+          PROBLIST="$PROBLIST     It is currently set to: $K95_TERM\n"
+          PROBLIST="$PROBLIST  -> Terminal will be treated as $TERM\n"
+
+          # Treat the terminal as whatever $TERM says, as thats what K95 will be
+          # emulating.
+          IS_K95="emulating"
+          IS_OLD_K95="false"
         fi
       else
         echo "Kermit 95 3.0.0 beta 7 or older detected"
@@ -172,77 +164,70 @@ PROBLIST="\n"
         # Check the terminal type. For pre-beta8 it really needs to be set to vt320
         if [[ "$K95_TERM" != *"VT320"* ]]; then
           PROBLEMS="true"
-          PROBLEM_TERMTYPE="true"
+          PROBLIST="$PROBLIST  -> This script requires your Terminal Type to be"
+          PROBLIST="$PROBLIST set to VT320 for best results.\n"
+          PROBLIST="$PROBLIST     It is currently set to: $K95_TERM\n"
+          PROBLIST="$PROBLIST  -> Terminal will be treated as ${K95_TERM,,}\n"
+
+          # Treat the terminal as whatever $TERM says, as thats what K95 will be
+          # emulating.
+          IS_K95="emulating"
+          TERM="${K95_TERM,,}"
+          IS_OLD_K95="false"
         fi
       fi
     else
-      IS_K95="false"
-      IS_OLD_K95="false"
       PROBLEMS="true"
+      PROBLIST="$PROBLIST  -> Not Kermit 95 according to ENQ response\n"
+      IS_K95="no"
+      IS_OLD_K95="false"
     fi
   fi
+fi
 
-  ####### Output some basic info we discovered
-
-  printf "DA1: '^[[${DA}c'\n"
-  printf "DA2: '${DA2}c'\x1b[40\`  PRODUCT: $PRODUCT_ID\n"
-  printf "ENQ: '$ENQ'\x1b[40\`XTVERSION: '$XTVERSION'\n"
-  printf "TERM: '$TERM'\n"
-  printf "Is K95: $IS_K95\x1b[39\`IS Old K95: $IS_OLD_K95\n"
-
-  if [ "$IS_K95" == "false" ]; then
-    PROBLIST="$PROBLIST    -> Not Kermit 95\n"
-    PROBLEMS="true"
-  fi
-
-  if [[ $IS_OLD_K95 == "true" ]]; then
-    PROBLEMS="false"
-  elif [[ $TERM == "vt320" ]]; then
-    PROBLIST="$PROBLIST    -> VT420 features will not be attempted\n"
+if [[ $IS_K95 != "yes" ]]; then
+  K95_TERM='n/a'
+  if [[ $TERM == "vt320" ]]; then
+    PROBLIST="$PROBLIST  -> VT420 features will not be attempted\n"
     PROBLEMS="true"
   elif [[ $TERM == "vt220" ]]; then
-    PROBLIST="$PROBLIST    -> VT420 and VT320 features will not be attempted\n"
+    PROBLIST="$PROBLIST  -> VT420 and VT320 features will not be attempted\n"
     PROBLEMS="true"
   elif [[ $PRODUCT_ID == "28" ]]; then
-    PROBLIST="$PROBLIST    -> VT420 and soft-font features will not be attempted\n"
+    PROBLIST="$PROBLIST  -> VT420 and soft-font features will not be attempted\n"
     PROBLEMS="true"
   elif [[ $PRODUCT_ID == "66" ]]; then
-    PROBLIST="$PROBLIST    -> VT420 features will not be attempted\n"
+    PROBLIST="$PROBLIST  -> VT420 features will not be attempted\n"
     PROBLEMS="true"
   fi
+fi
 
-  if [[ $PROBLEMS == "true" ]]; then
-    printf '\n\nProblems:%b' "$PROBLIST"
-    if [[ $IS_OLD_K95 == "maybe" ]]; then
-      IS_OLD_K95="true"
-      printf ' -> ENQ is disabled and XTVERSION did not respond. Assuming K95 3.0 beta 7 or\n'
-      printf '    earlier. You can enable ENQ by entering the following at the command\n'
-      printf '    screen to enable this script to detect the version of K95 you''re running:\n'
-      printf '\tSET TERMINAL ANSWERBACK ON\n'
-    else
-      if [[ $IS_K95 == "false" ]]; then
-        echo ""
-        echo "This script makes completely unnecessary use of a number of VT320 and VT420"
-        echo "features that are either missing or buggy in most other terminal emulators."
-        echo "As you don't appear to be running Kermit 95 (make sure answerback is enabled"
-        echo "if you are), the output probably will not appear as intended. Rest assured that,"
-        echo "with the exception of 24-bit color and the italic & crossed-out attributes, this"
-        echo "script *does* display correctly on a real VT420 or VT520."
-        echo ""
-      fi
-    fi
-    if [[ $PROBLEM_TERMTYPE == "true" ]]; then
-      if [[ $IS_OLD_K95 == "true" ]]; then
-        echo "-> This script requires your Terminal Type to be set to VT320 for best results."
-        echo "   It is currently set to: $K95_TERM"
-      else
-        echo "-> This script requires your Terminal Type to be set to K95 for best results."
-        echo "   It is currently set to: $K95_TERM"
-      fi
-    fi
-    printf '\n'
-    read -n 1 -s -r -p "Strike any key to continue..."
+####### Output some basic info we discovered
+
+printf "DA1: '^[[${DA}c'\n"
+printf "DA2: '${DA2}c'\x1b[999;40H  PRODUCT: $PRODUCT_ID\n"
+printf "ENQ: '$ENQ'\x1b[999;40HXTVERSION: '$XTVERSION'\n"
+printf "TERM: '$TERM'\x1b[999;36HK95 Emulation: '$K95_TERM'\n"
+printf "Is K95: $IS_K95\x1b[999;39HIS Old K95: $IS_OLD_K95\n"
+
+if [[ $PROBLEMS == "true" ]]; then
+  printf '\n\nProblems:%b' "$PROBLIST"
+
+  if [ $IS_K95 == "no" ] || [ $IS_K95 == "unknown" ]; then
+    echo ""
+    echo "This script makes completely unnecessary use of a number of VT220, VT320 and "
+    echo "VT420 features that are either missing or buggy in most other terminal "
+    echo "emulators. As you don't appear to be running Kermit 95 (make sure answerback is"
+    echo "enabled if you are), the output probably will probably only appear as intended"
+    echo "on a real DEC VT220 or newer, DECterm, or Multia VTStar (excluding features "
+    echo "those terminals do not support). Running 'BE_NICE=1 ./demo.sh' may produce less"
+    echo "broken results if the terminal does not lie about its capabilities."
+    echo ""
   fi
+  printf '\n'
+  printf '\n'
+  read -n 1 -s -r -p "Strike any key to continue..."
+fi
 
 # Function to get the line the cursor is on
 function curline {
@@ -345,7 +330,7 @@ KB_MODES="PCTERM direct keyboard mode"
 #        "|------Max Length-----------------------------|"
 
 
-if [[ $IS_K95 == "true" ]]; then
+if [[ $IS_K95 == "yes" ]]; then
   if [[ $IS_OLD_K95 == "true" ]]; then
     VERSION=$K95_VERSION_L
     # These things all new in K95 3.0 Beta 8
