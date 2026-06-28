@@ -49,6 +49,10 @@ TIMEOUT=5
 #       - Probe for supported attributes
 #       - Probe for 24-bit colour support
 #       - Number of lines and columns per page
+#       - Restore character sets in place at the start
+#         Currently we switch the terminal to UTF-8 at the end even if it wasn't
+#         UTF-8 at the start which may break other programs using DRCS. Probably
+#         this needs save/restore presentation state.
 #       List missing things on the warning screen.
 #       Maybe add test mode that instead of producing a K95 feature list, tests
 #         out detected features and lists them.
