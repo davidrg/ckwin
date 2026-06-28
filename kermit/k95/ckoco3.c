@@ -1095,6 +1095,7 @@ decdld(int font_number, int starting_character, int erase_control,
     char name[4] = {0, 0, 0, 0};
     int rendition = DRCS_RENDITION_01_80x24;
     int erase_rendition = rendition;
+    int name_max_len = 0;
 
     /* TODO:  VTStars behaviour has not been fully characterised and full
      *        testing will be required if that is ever offered as a terminal
@@ -1119,7 +1120,7 @@ decdld(int font_number, int starting_character, int erase_control,
 
     /* VT220, 420 and 520 only allow two intermediates and a final. STD-070
      * allows three intermediates and a final */
-    int name_max_len = tt_type == TT_K95 ? 4 : 3;
+    name_max_len = tt_type == TT_K95 ? 4 : 3;
 
     is_132cols = font_set_size == 2 || font_set_size == 12 ||
         font_set_size == 22;
