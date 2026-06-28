@@ -1398,17 +1398,21 @@ decdld(int font_number, int starting_character, int erase_control,
                 v_offset = 0;
                 break;
             case TT_VT420:
-            case TT_WY370:
-                /* TODO: No idea how the VT320 and WY370 work - just assuming
-                 * they're the same as the VT420 which offsets glyphs
-                 * horizontally by a single column */
                 h_offset = 1;
                 v_offset = 0;
                 break;
+            case TT_WY370:
+                /* WY-370 Programmers Manual, 881133-02 Rev. A, June 1990,
+                 * Page 4-9 (53) */
+                h_offset = is_132cols ? 1 : 2;
+                v_offset = 0;
+                break;
+            case TT_VTSTAR:
             /*case TT_VT510:*/
             case TT_VT520:
             case TT_VT525:
-                /* The VT520 (v2.1) doesn't do any font centering at all. */
+                /* The VT520 (v2.1) doesn't do any font centering at all.
+                 * And VTStar doesn't seem to either */
                 h_offset = 0;
                 v_offset = 0;
                 break;
