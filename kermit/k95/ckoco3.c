@@ -1002,6 +1002,8 @@ erase_font_buffer_rendition(drcs_rendition_t *drcs_rendition,
 
     if (drcs_rendition == NULL) return;
 
+    debug(F101, "Erasing DRCS font rendition", 0, rendition);
+
     /* Figure out which replacement character to use */
     switch (tt_type) {
         case TT_VT220:
@@ -1070,6 +1072,8 @@ erase_font_buffer(drcs_t *drcs) {
     int i;
 
     if (drcs == NULL) return;
+
+    debug(F100, "Erasing DRCS font buffer", 0, 0);
 
     for (i = 0; i < DRCS_RENDITIONS_TOTAL; i++) {
         erase_font_buffer_rendition(
@@ -1490,6 +1494,7 @@ decdld(int font_number, int starting_character, int erase_control,
 
     if (drcsbuf[font_number] == NULL) {
         int i;
+        debug(F101, "DECDLD allocating and pre-erasing font buffer", 0, font_number);
         drcs = (drcs_t*)malloc(sizeof(drcs_t));
         memset((void*)drcs, 0, sizeof(drcs_t));
 
@@ -1504,17 +1509,27 @@ decdld(int font_number, int starting_character, int erase_control,
     } else {
         drcs = drcsbuf[font_number];
         if (drcs->renditions[rendition]->full_cell != is_full_cell ||
-            drcs->renditions[rendition]->cell_width != width ||
-            drcs->renditions[rendition]->cell_height != height ) {
+            drcs->renditions[rendition]->width != width ||
+            drcs->renditions[rendition]->height != height ) {
             /* STD 070: "Changes to this {the full cell, character cell matrix
              * width or height} parameter since the last DECDLD sequence to this
              * buffer will result in the erasure of the entire set, and cause a
              * new load to start" */
+
+            debug(F100, "DECDLD forcing erase control to 0 because one of these changed...", 0 , 0);
+            debug(F111, "   old", "full-cell", drcs->renditions[rendition]->full_cell);
+            debug(F111, "   new", "full-cell", is_full_cell);
+            debug(F111, "   old", "width", drcs->renditions[rendition]->width);
+            debug(F111, "   new", "width", width);
+            debug(F111, "   old", "height", drcs->renditions[rendition]->height);
+            debug(F111, "   new", "height", height);
+
             erase_control = 0;
         }
         if (drcs->is_96_chars != (character_set_size == 1)) {
             /* On the VT420, changing the size of the character set erases all
              * renditions of it */
+            debug(F100, "DECDLD forcing erase control to 2 because character set size changed", 0 , 0);
             erase_control = 2;
         }
     }
