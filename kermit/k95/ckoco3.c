@@ -822,7 +822,7 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     },
     {   /* VT320 */
         {
@@ -846,7 +846,7 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     },
     {   /* VT525, 80x27 (10x16) */
         {
@@ -870,7 +870,7 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     },
     {   /* VT525, 80x43 (10x10) */
         {
@@ -894,7 +894,7 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     },
     {   /* VT525, 80x54 (10x8) */
         {
@@ -918,7 +918,7 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     },
     {   /* VT525, 132x27 (6x16) */
         {
@@ -942,7 +942,7 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     },
     {   /* VT525, 132x43 (6x10) */
         {
@@ -966,7 +966,7 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     },
     {   /* VT525, 132x54 (6x8) */
         {
@@ -990,14 +990,17 @@ static drcs_glyph_t replacement_characters[8] = {
             0x0000,	/* 0b0000000000000000 */
             0x0000,	/* 0b0000000000000000 */
             0x0000 	/* 0b0000000000000000 */
-        }
+        }, 1
     }
 };
 
-
+/* Erases a single rendition of a particular font buffer */
 void
-erase_font_buffer(drcs_t *drcs) {
+erase_font_buffer_rendition(drcs_rendition_t *drcs_rendition,
+                            int rendition) {
     int i, glyph_id;
+
+    if (drcs_rendition == NULL) return;
 
     /* Figure out which replacement character to use */
     switch (tt_type) {
@@ -1008,19 +1011,70 @@ erase_font_buffer(drcs_t *drcs) {
         case TT_VT320:
         case TT_VT320PC:
         case TT_WY370:
+            /* TODO: 132 column glyph */
             glyph_id = DRCS_REPLACEMENT_VT320;
             break;
         case TT_VT420:
         case TT_VT520:
         case TT_VT525:
         case TT_K95:
-        default:
-            glyph_id = DRCS_REPLACEMENT_VT525_80x27;
+        default: {
+            drcs_rendition->width = 10;
+            switch (rendition) {
+                default:
+                case DRCS_RENDITION_01_80x24:
+                    glyph_id = DRCS_REPLACEMENT_VT525_80x27;
+                    drcs_rendition->height = 16;
+                    break;
+                case DRCS_RENDITION_02_132_24:
+                    glyph_id = DRCS_REPLACEMENT_VT525_132x27;
+                    drcs_rendition->height = 16;
+                    drcs_rendition->width = 6;
+                    break;
+                case DRCS_RENDITION_11_80x36:
+                    glyph_id = DRCS_REPLACEMENT_VT525_80x43;
+                    drcs_rendition->height = 10;
+                    break;
+                case DRCS_RENDITION_12_132x36:
+                    glyph_id = DRCS_REPLACEMENT_VT525_132x43;
+                    drcs_rendition->height = 10;
+                    drcs_rendition->width = 6;
+                    break;
+                case DRCS_RENDITION_21_80x48:
+                    glyph_id = DRCS_REPLACEMENT_VT525_80x54;
+                    drcs_rendition->height = 8;
+                    break;
+                case DRCS_RENDITION_22_132x48:
+                    glyph_id = DRCS_REPLACEMENT_VT525_132x54;
+                    drcs_rendition->height = 8;
+                    drcs_rendition->width = 6;
+                    break;
+            }
             break;
+        }
     }
 
+    // The renderer needs to know how big the replacement glyphs are...
+    drcs_rendition->cell_width = drcs_rendition->width;
+    drcs_rendition->cell_height = drcs_rendition->height;
+    drcs_rendition->undefined = TRUE;
+
     for (i = 0; i < 96; i++) {
-        drcs->glyphs[i] = replacement_characters[glyph_id];
+        drcs_rendition->glyphs[i] = replacement_characters[glyph_id];
+    }
+}
+
+/* Erases all renditions for a particular font buffer */
+void
+erase_font_buffer(drcs_t *drcs) {
+    int i;
+
+    if (drcs == NULL) return;
+
+    for (i = 0; i < DRCS_RENDITIONS_TOTAL; i++) {
+        erase_font_buffer_rendition(
+            drcs->renditions[i],
+            i);
     }
 }
 
@@ -1035,9 +1089,27 @@ decdld(int font_number, int starting_character, int erase_control,
     int h_offset = 0, v_offset = 0;
     int lines = 24, columns = 80;
     BOOL is_132cols = FALSE, is_full_cell = FALSE, is_vt220_font = FALSE;
+    BOOL is_36_line = FALSE, is_48_line = FALSE;
     BOOL default_height = FALSE, default_width = FALSE, erased = FALSE;
     int glyph = 0, row = 0, column = 0;
     char name[4] = {0, 0, 0, 0};
+    int rendition = DRCS_RENDITION_01_80x24;
+    int erase_rendition = rendition;
+
+    /* TODO:  VTStars behaviour has not been fully characterised and full
+     *        testing will be required if that is ever offered as a terminal
+     *        type. But here are some notes based on observations:
+     *          - /Seems/ to treat all fonts as full-cell
+     *          - Doesn't leave a gap on the left for text fonts
+     *          - Undefined behaviour hasn't been tested at all.
+     *          - It generally seems quite buggy. Glyphs seem to start out with
+     *              random garbage in them (memory not erased?), you have to
+     *              spam it with something like SGR after sending a DECDLD or it
+     *              gets stuck, result of switching to DECCOLM is odd
+     *          - Only supports 80 column and 132 column fonts
+     */
+
+    debug(F100, "DECDLD", "", 0);
 
     /* Note that we use tt_type rather than tt_type_mode here as DRCS behaviour
      * depends on the terminal K95 is emulating, not the terminal the emulated
@@ -1051,6 +1123,8 @@ decdld(int font_number, int starting_character, int erase_control,
 
     is_132cols = font_set_size == 2 || font_set_size == 12 ||
         font_set_size == 22;
+    is_36_line = font_set_size == 11 || font_set_size == 12;
+    is_48_line = font_set_size == 21 || font_set_size == 22;
     is_full_cell = usage == 2;
 
     /* Figure out how many font buffers we should allow access to based on
@@ -1075,6 +1149,7 @@ decdld(int font_number, int starting_character, int erase_control,
             max_font_buffers = 2;
             break;
         default:
+            debug(F111, "DECDLD", "End - Not supported by terminal type", tt_type);
             return; /* DECDLD not supported by this terminal type */
     }
 
@@ -1109,31 +1184,27 @@ decdld(int font_number, int starting_character, int erase_control,
             cell_height = 20;  /* The docs say so, but it feels wrong */
             break;
         case TT_WY370:
-            /* The WY-370 apparently supports a 161 column mode which affects
-             * font cell dimensions. It looks like it doesn't have a separate
-             * font set size parameter value though. I don't have a WY-370 to
-             * test against, so I guess you just send the font as a 132-column
-             * one, and if the terminal isn't in 161-column mode it won't
-             * display properly. If thats the case there isn't much we can
-             * really do to handle 161-column fonts here. The terminal also
-             * apparently supports a 52-line display which affects the cell
-             * height, but this also doesn't seem to be signaled via font set
-             * size like it is on later DEC terminals. */
+            /* The WY-370 apparently supports a 161 column and 52 line modes,
+             * but it doesn't have different font set size parameters for them.
+             * Like the VT520 it just has a wide and a narrow font, and you
+             * have to handle switching fonts for different heights yourself.
+             * And for 132 vs 161 columns I guess its the same - you have to
+             * track which mode you're in and send the right font.
+             */
 
-            /* TODO: 161 column display uses a width of 8 */
             cell_width = is_132cols ? 10 : 16;
             max_width = cell_width;  /* full cell */
             if (!is_full_cell) { /* text cell */
                 /* 161 column display also uses a width of 7 */
                 max_width = is_132cols ? 7 : 12;
             }
-            /* TODO: 52 line display uses a height of 8 */
             cell_height = 16;
             break;
-        case TT_VT420:
+        case TT_VT420:  /* VT420 and up all have the same cell dimensions */
         /*case TT_VT510:*/
         case TT_VT520:
         case TT_VT525:
+        case TT_VTSTAR:
         case TT_K95:
         default:
             cell_width = is_132cols ? 6 : 10;
@@ -1145,6 +1216,8 @@ decdld(int font_number, int starting_character, int erase_control,
                 max_width = is_132cols ? 5 : 8;
             }
             cell_height = 16;
+            if (is_36_line) cell_height = 10;
+            if (is_48_line) cell_height = 8;
             break;
     }
 
@@ -1167,12 +1240,16 @@ decdld(int font_number, int starting_character, int erase_control,
     /* Pfn - font number
      * If font number is 0, then we pick the first empty font buffer, or the
      * first font buffer. */
-    if (font_number > max_font_buffers) return;
+    if (font_number > max_font_buffers) {
+        debug(F111, "DECDLD", "End - invalid font number", font_number);
+        return;
+    }
 
 
     /* Pcn - Starting Character
      * This defines the first glyph we're expecting to receive */
     if (starting_character > (character_set_size == 1 ? 95 : 93)) {
+        debug(F111, "DECDLD", "End - invalid starting character", starting_character);
         return;
     }
     glyph = starting_character;
@@ -1185,7 +1262,10 @@ decdld(int font_number, int starting_character, int erase_control,
      * The VT220 docs say this erases all font buffers, but it only has one so
      * that's probably meaningless
      */
-    if (erase_control > 2) return;
+    if (erase_control > 2) {
+        debug(F111, "DECDLD", "End - invalid erase control", erase_control);
+        return;
+    }
 
     /* Pcmw - Character Matrix Width
      * One of these values:
@@ -1232,9 +1312,16 @@ decdld(int font_number, int starting_character, int erase_control,
             is_vt220_font = TRUE;
             width = 7; height = 10; break;
         default:
-            if (width > max_width) return;
+            if (width > max_width) {
+                debug(F111, "DECDLD", "End - invalid width", width);
+                debug(F111, "DECDLD", "Note - max width", max_width);
+                return;
+            }
             /* Arbitrary widths are only supported by the VT320 and up */
-            if (!ISVT320(tt_type)) return;
+            if (!ISVT320(tt_type)) {
+                debug(F111, "DECDLD", "End - invalid width for VT220", width);
+                return;
+            }
             break;
     }
 
@@ -1248,20 +1335,65 @@ decdld(int font_number, int starting_character, int erase_control,
      *    22 - 132 columns, 48 lines  (VT420 & VT510 only)
      * */
     switch (font_set_size) {
-        case 0:  break;
-        case 1:  break;
-        case 2:  columns = 132; break;
-        case 11: lines = 36; break;
-        case 12: columns = 132; lines = 36; break;
-        case 21: lines = 48; break;
-        case 22: columns = 132; lines = 48; break;
-        default: return; /* Invalid */
+        case 0:
+        case 1: {
+            rendition = DRCS_RENDITION_01_80x24;
+            break;
+        }
+        case 2:  if ISVT320(tt_type) {
+            rendition = DRCS_RENDITION_02_132_24;
+            break;
+        } else {
+            /* VT220 doesn't switch fonts for DECCOLM */
+            rendition = DRCS_RENDITION_01_80x24;
+            break;
+        }
+        case 11: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_11_80x36;
+            break;
+        }
+        case 12: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_12_132x36;
+            break;
+        }
+        case 21: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_21_80x48;
+            break;
+        }
+        case 22: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_22_132x48;
+            break;
+        }
+        default: {
+            debug(F111, "DECDLD", "End - invalid font set size", font_set_size);
+            return; /* Invalid */
+        }
     }
-    if (lines > 24 && tt_type != TT_VT420 &&
-                     /*tt_type != TT_VT510 &&*/
-                     tt_type != TT_K95) {
-        // TODO: Confirm VT52x really does not except 11..22
-        return; /* Invalid */
+    erase_rendition = rendition;
+    if (tt_type_mode == TT_VT520 || tt_type_mode == TT_VT525) {
+        /* The VT520 (v2.1) doesn't switch fonts for different screen heights.
+         * It only has slots for a single 80 column rendition and a single
+         * 132 column rendition, and it uses those two renditions for all screen
+         * heights. Loading an 80x24 font then switching to an 80x48 screen
+         * won't result in reverse question-marks - it seems to just truncate
+         * glyphs to fit.
+         *
+         * TODO: Does the VT525 behave the same? It has more memory, so it
+         *       *could* behave as the VT420 does.
+         */
+        switch (rendition) {
+            case DRCS_RENDITION_01_80x24:
+            case DRCS_RENDITION_11_80x36:
+            case DRCS_RENDITION_21_80x48:
+            default:
+                rendition = DRCS_RENDITION_01_80x24;
+                break;
+            case DRCS_RENDITION_02_132_24:
+            case DRCS_RENDITION_12_132x36:
+            case DRCS_RENDITION_22_132x48:
+                rendition = DRCS_RENDITION_02_132_24;
+                break;
+        }
     }
 
     /* Pu - Font Usage. VT220 and VT510 calls this Pt.
@@ -1269,8 +1401,14 @@ decdld(int font_number, int starting_character, int erase_control,
      *     1 - text
      *     2 - full-cell (Not supported on VT220)
      * */
-    if (usage > 2) return;
-    if (!ISVT320(tt_type) && is_full_cell) return;
+    if (usage > 2) {
+        debug(F111, "DECDLD", "End - invalid font usage", usage);
+        return;
+    }
+    if (!ISVT320(tt_type) && is_full_cell) {
+        debug(F110, "DECDLD", "End - full cell not supported for VT220 ", 0);
+        return;
+    }
 
     if (ISVT320(tt_type) && !is_vt220_font) {
         /* Pcmh - Character Cell Matrix height - VT320+
@@ -1280,7 +1418,12 @@ decdld(int font_number, int starting_character, int erase_control,
          * VT420: 1-16, 0=16, >16 is illegal
          * VT5xx: 1-16, 0=16, >16 is illegal
          * */
-        if (height > cell_height) return;
+
+        if (height > cell_height) {
+            debug(F111, "DECDLD", "End - invalid height", height);
+            debug(F111, "DECDLD", "Note - max height", cell_height);
+            return;
+        }
         if (height == 0) {
             default_height = TRUE;
             height = cell_height;
@@ -1290,7 +1433,11 @@ decdld(int font_number, int starting_character, int erase_control,
          *     0 - 94-character set
          *     1 - 96-character set
          * */
-        if (character_set_size > 1) return;
+        if (character_set_size > 1) {
+            debug(F111, "DECDLD", "End - invalid character set size",
+                character_set_size);
+            return;
+        }
     } else {
         /* VT220 */
         height = 10;
@@ -1301,10 +1448,14 @@ decdld(int font_number, int starting_character, int erase_control,
     /* Dscs - the name for the soft character set
      * 0-3 intermediate characters, followed by a final character.
      */
-    if (length < 1) return;
+    if (length < 1) {
+        debug(F110, "DECDLD", "End - no character set name", 0);
+        return;
+    }
     for (start = 0; start <= name_max_len; start++) {
         name[start] = definition[start];
         if (start == 4) {
+            debug(F110, "DECDLD", "End - didn't get a file character for character set name", 0);
             return; /* Didn't get a final character in 0...2 */
         }
         if (definition[start] >= ' ' && definition[start] <= '/' &&
@@ -1314,6 +1465,8 @@ decdld(int font_number, int starting_character, int erase_control,
         if (definition[start] >= '0' && definition[start] <= '~') {
             break; /* Final character */
         }
+        debug(F111, "DECDLD", "End - invalid character in character set name",
+            definition[start]);
         return; /* Something invalid */
     }
 
@@ -1335,50 +1488,62 @@ decdld(int font_number, int starting_character, int erase_control,
     font_number -= 1;
 
     if (drcsbuf[font_number] == NULL) {
+        int i;
         drcs = (drcs_t*)malloc(sizeof(drcs_t));
         memset((void*)drcs, 0, sizeof(drcs_t));
+
+        for (i = 0; i < DRCS_RENDITIONS_TOTAL; i++) {
+            drcs->renditions[i] = (drcs_rendition_t*)malloc(
+                sizeof(drcs_rendition_t));
+            memset((void*)drcs->renditions[i], 0, sizeof(drcs_rendition_t));
+            drcs->renditions[i]->rendition_id = i;
+        }
         drcsbuf[font_number] = drcs;
         erase_font_buffer(drcs);
     } else {
         drcs = drcsbuf[font_number];
-        if (drcs->full_cell != is_full_cell ||
-            drcs->cell_width != width ||
-            drcs->cell_height != height ) {
+        if (drcs->renditions[rendition]->full_cell != is_full_cell ||
+            drcs->renditions[rendition]->cell_width != width ||
+            drcs->renditions[rendition]->cell_height != height ) {
             /* STD 070: "Changes to this {the full cell, character cell matrix
              * width or height} parameter since the last DECDLD sequence to this
              * buffer will result in the erasure of the entire set, and cause a
              * new load to start" */
             erase_control = 0;
         }
+        if (drcs->is_96_chars != (character_set_size == 1)) {
+            /* On the VT420, changing the size of the character set erases all
+             * renditions of it */
+            erase_control = 2;
+        }
     }
 
     if (erase_control == 0) {
         /* Erase target font buffer only */
-        erase_font_buffer(drcs);
+        debug(F101, "DECDLD Erase Rendition", 0, rendition);
+        debug(F101, "DECDLD For Buffer", 0, font_number);
+        erase_font_buffer_rendition(drcs->renditions[rendition], erase_rendition);
     } else if (erase_control == 2) {
-        int i;
-        /* Erase all font buffers */
-        for (i = 0; i < max_font_buffers; i++) {
-            if (drcsbuf[i] != NULL) {
-                erase_font_buffer(drcsbuf[i]);
-            }
-        }
+        debug(F101, "DECDLD Erase All Renditions for buffer", 0, font_number);
+        erase_font_buffer(drcs);
     } /* Else we'll erase glyphs as they're defined */
 
     drcs->name[0] = name[0];
     drcs->name[1] = name[1];
     drcs->name[2] = name[2];
     drcs->name[3] = name[3];
-    drcs->cell_width = cell_width;
-    drcs->cell_height = cell_height;
-    drcs->full_cell = is_full_cell;
+    drcs->name[4] = 0;
+    drcs->renditions[rendition]->cell_width = cell_width;
+    drcs->renditions[rendition]->cell_height = cell_height;
+    drcs->renditions[rendition]->width = width;
+    drcs->renditions[rendition]->height = height;
+    drcs->renditions[rendition]->full_cell = is_full_cell;
+    drcs->renditions[rendition]->undefined = FALSE;
     drcs->is_96_chars = character_set_size == 1;
-    drcs->start_character = glyph;
     drcs->render_hints = DRCS_RENDER_HINT_NONE;
 
     if (is_vt220_font && !ISVT320(tt_type)) drcs->render_hints =
         DRCS_RENDER_HINT_VT220 | DRCS_RENDER_HINT_VT220_TEXT;
-    else if (tt_type == TT_VT320) drcs->render_hints = DRCS_RENDER_HINT_VT320;
 
     /* Center text glyphs within the cell. The VT220 does not do this - at least
      * not in a normal way; its behaviour really has to be dealt with at render
@@ -1428,6 +1593,20 @@ decdld(int font_number, int starting_character, int erase_control,
 
         }
     }
+
+    debug(F100, "DECDLD Loading with these settings...", "", 0);
+    debug(F101, "DECDLD Font Buffer", 0, font_number);
+    debug(F110, "DECDLD Name", drcs->name, 0);
+    debug(F101, "DECDLD Rendition", 0, rendition);
+    debug(F101, "DECDLD Cell Width", 0, cell_width);
+    debug(F101, "DECDLD Cell Height", 0, cell_height);
+    debug(F101, "DECDLD Width", 0, width);
+    debug(F101, "DECDLD Height", 0, height);
+    debug(F101, "DECDLD Is Full Cell", 0, is_full_cell);
+    debug(F101, "DECDLD Is 96 chars", 0, drcs->is_96_chars);
+    debug(F101, "DECDLD Render Hits", 0, drcs->render_hints);
+    debug(F101, "DECDLD H-Offset", 0, h_offset);
+    debug(F100, "DECDLD V-Offset", 0, v_offset);
 
     for (i=start+1; i < length; i++) {
         char sixel = definition[i];
@@ -1493,6 +1672,9 @@ decdld(int font_number, int starting_character, int erase_control,
 
             /* The VT220 ignores 0x80, VT420/520 don't */
             if (sixel > 0x80 || (tt_type != TT_VT220 && tt_type != TT_VT220PC)) {
+                debug(F111, "DECDLD",
+                    "End - character 0x80-0x9F (excl 0x9C) in sixel string",
+                    sixel);
                 break;
             }
         }
@@ -1554,12 +1736,12 @@ decdld(int font_number, int starting_character, int erase_control,
 
         if (!erased) {
             for (j = 0; j < DRCS_MAX_CELL_HEIGHT; j++) {
-                drcs->glyphs[glyph].pixels[j] = 0;
+                drcs->renditions[rendition]->glyphs[glyph].pixels[j] = 0;
             }
             erased = TRUE;
         }
 
-        drcs->glyphs[glyph].undefined = 0;
+        drcs->renditions[rendition]->glyphs[glyph].undefined = FALSE;
 
         for (bit = 0; bit < 6; bit++) {
             /* Only the VT520 crops glyphs to the specified height - the rest
@@ -1569,8 +1751,9 @@ decdld(int font_number, int starting_character, int erase_control,
 
             if (bits & (1 << bit)) {
                 int r = row + bit + v_offset;
-                drcs->glyphs[glyph].pixels[r] =
-                    drcs->glyphs[glyph].pixels[r] | 0x8000 >> (column+h_offset);
+                drcs->renditions[rendition]->glyphs[glyph].pixels[r] =
+                    drcs->renditions[rendition]->glyphs[glyph].pixels[r]
+                        | 0x8000 >> (column+h_offset);
                 if (row+bit > used_height) used_height = row+bit;
             }
         }
@@ -1579,11 +1762,14 @@ decdld(int font_number, int starting_character, int erase_control,
 
     /* mark the font buffer as changed */
     drcs->serial++;
+    debug(F101, "DECDLD Serial", 0, drcs->serial);
+    debug(F101, "DECDLD Glyphs Loaded", 0, glyph);
 
     LeaveDRCSBufferCriticalSection();
 
     /* mark the vscreen as dirty */
     VscrnIsDirty(VTERM);
+    debug(F110, "DECDLD", "Finished", 0);
 }
 #endif /* KUI */
 
@@ -10498,12 +10684,15 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 #ifdef KUI
     /* Erase DRCS font buffers, but only on hard reset*/
     if (x) {
-        int i;
+        int i, j;
         EnterDRCSBufferCriticalSection();
         for (i = 0; i < DRCS_BUFFERS; i++) {
             if (drcsbuf[i] != NULL) {
                 drcs_t *buf = drcsbuf[i];
                 drcsbuf[i] = NULL;
+                for (j = 0; j < DRCS_RENDITIONS_TOTAL; j++) {
+                    free(buf->renditions[j]);
+                }
                 free(buf);
             }
         }
@@ -11664,6 +11853,7 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
                 drcsbuf[i]->name[1] == bchar &&
                 drcsbuf[i]->name[2] == cchar &&
                 drcsbuf[i]->name[3] == dchar) {
+                debug(F111, "Designate soft-font", drcsbuf[i]->name, i);
                 switch (i) {
                     case 0: cs = TX_DRCS_1; break;
                     case 1: cs = TX_DRCS_2; break;

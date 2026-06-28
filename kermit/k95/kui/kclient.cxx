@@ -43,6 +43,7 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int tt_update;
+extern int tt_type_mode;
 extern vscrn_t vscrn[];
 extern int scrollflag[];
 extern enum markmodes markmodeflag[] ;
@@ -707,26 +708,121 @@ void KClient::getDrawInfo()
 // Refreshes the KUI bitmap representation of soft fonts from the DRCS
 // font buffer(s)
 void KClient::refreshSoftFonts() {
+    int rendition = DRCS_RENDITION_01_80x24;
+
+//#define SWITCH_SOFTFONT_RENDITION
+#ifdef SWITCH_SOFTFONT_RENDITION
+    /* This all works correctly, its just not worth *only* switching the
+     * soft-font based on screen size if we're not also going to switch the
+     * main font to match */
+
+    int twid, thi;
+    int cell_height = 0;
+    ::getDimensions( vmode /* clientID */, &twid, &thi );
+
+    // getDimensions gives us the height including the status line.
+    thi -= tt_status[vmode];
+
+    // The VT520 doesn't switch fonts for different screen heights.
+
+    if (twid < 132) { /* 80 columns */
+        rendition = DRCS_RENDITION_01_80x24;
+        if (thi > 24) rendition = DRCS_RENDITION_11_80x36;
+        if (thi > 36) rendition = DRCS_RENDITION_21_80x48;
+    } else { /* 132 columns */
+        rendition = DRCS_RENDITION_02_132_24;
+        if (thi > 24) rendition = DRCS_RENDITION_12_132x36;
+        if (thi > 36) rendition = DRCS_RENDITION_22_132x48;
+    }
+
+    int screen_rendition = rendition;
+
+    if (tt_type_mode == TT_VT520 || tt_type_mode == TT_VT525) {
+        /* The VT520 doesn't switch soft-fonts when the screen height changes.
+         * It only switches when the width changes. But we still want to render
+         * a correct-sized replacement character, so we'll still keep track of
+         * the proper rendition but only use it for that. */
+
+        if (twid < 132) { /* 80 columns */
+            rendition = DRCS_RENDITION_01_80x24;
+            cell_height = 16;
+
+            if (thi > 24) {
+                cell_height = 10;
+            }
+            if (thi > 36) {
+                cell_height = 8;
+            }
+        } else { /* 132 columns */
+            rendition = DRCS_RENDITION_02_132_24;
+            cell_height = 16;
+
+            if (thi > 24) {
+                cell_height = 10;
+            }
+            if (thi > 36) {
+                cell_height = 8;
+            }
+        }
+    }
+#endif
+
     EnterDRCSBufferCriticalSection();
     for (int i = 0; i < DRCS_BUFFERS; i++) {
         if (drcsbuf[i] != NULL && (drcsbuf[i]->serial != drcs_serials[i] ||
-            drcs_fonts[i] == NULL)) {
+            drcs_fonts[i] == NULL || rendition != drcs_rendition[i])) {
             // Soft font has changed or is new. Render to a bitmap.
+
+            debug(F101, "KClient::refreshSoftFonts - refresh soft font", 0, i);
+
+            int font_rendition = rendition;
+
+#ifdef SWITCH_SOFTFONT_RENDITION
+            // The VT520 only stores two renditions: an 80 column, and a 132
+            // column. It does not switch renditions for different screen
+            // heights. K95 uses the 80x24 and 132x24 renditions for 80 and 132
+            // columns.
+            //
+            // On the VT520 both renditions start out as null and when the
+            // rendition is null the appropriate replacement character from the
+            // hard font will be used instead. A DECDLD will 'create' which ever
+            // rendition it's pointed at (80x24 by default) and bake in a
+            // suitable replacement character. If Pe=2, the other rendition will
+            // be left null. This has the effect that doing a DCS 0;0;2{ @ ST
+            // will display the replacement characters chopped in half on an
+            // 80x48 screen while they'll render correctly on a 132x48 screen.
+            // The 80 column rendition has the 24-line replacement character
+            // baked in, while the 132 column rendition is null so the character
+            // from the hard font is used instead.
+            //
+            // K95 always initializes all renditions with a suitable replacement
+            // character when a DRCS buffer is initialized, and the
+            // uninitialised flag tracks whether its null (true) or not (false)
+            // to produce the same behaviour. When a rendition is null, instead
+            // of using the 80x24 or 132x24 rendition we'll use the correct
+            // rendition for the screen to get the correct replacement
+            // character.
+            if (drcsbuf[i]->renditions[rendition]->undefined) {
+                font_rendition = screen_rendition;
+            }
+#endif /* SWITCH_SOFTFONT_RENDITION */
 
             HDC hDC = GetDC(NULL);
             HDC hMDC = CreateCompatibleDC(hDC);
 
-            int display_width = drcsbuf[i]->cell_width;
-            int h = drcsbuf[i]->cell_height;
+            int display_width = drcsbuf[i]->renditions[font_rendition]->cell_width;
+            int h = drcsbuf[i]->renditions[font_rendition]->cell_height;
+
+#ifdef SWITCH_SOFTFONT_RENDITION
+            // For VT520, take the cell height from the current screen
+            // dimensions rather than the current font rendition
+            if (cell_height != 0) h = cell_height;
+#endif /* SWITCH_SOFTFONT_RENDITION */
 
             if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
                 /* To account for VT220 glyphs being stretched horizontally
                  * into the next cell, which we don't really do. */
                 display_width += 1;
-            } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
-                /* Apparently the aspect ratio is nearly 3:1. Well, we can't do
-                 * nearly 3 so 2 will have to do */
-                h = h * 3;
             }
 
             int w = display_width * 96;
@@ -755,8 +851,8 @@ void KClient::refreshSoftFonts() {
                 if (glyph == 95 && !drcsbuf[i]->is_96_chars) continue;
                 int offset = glyph * display_width;
                 int target_row = -3;
-                for (int row = 0; row < drcsbuf[i]->cell_height; row++) {
-                    int row_pixels = drcsbuf[i]->glyphs[glyph].pixels[row];
+                for (int row = 0; row < h; row++) {
+                    int row_pixels = drcsbuf[i]->renditions[font_rendition]->glyphs[glyph].pixels[row];
                     target_row += 3;
                     if (row_pixels == 0) {
                         continue;
@@ -829,22 +925,6 @@ void KClient::refreshSoftFonts() {
                                 SetPixel(hMDC, col + offset, row,
                                     pixelValue);
                             }
-                        } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
-                            /* The VT320 apparently (I don't have one to test
-                             * against) has a pixel aspect ratio of
-                             * "nearly 3:1". Well, we can't do *neary* three,
-                             * but we can do three which is closer to nearly
-                             * three than two is.
-                             * https://vt100.net/dec/vt320/soft_characters
-                             */
-                            if (row_pixels & bit) {
-                                SetPixel(hMDC, col + offset, target_row,
-                                    pixelValue);
-                                SetPixel(hMDC, col + offset, target_row+1,
-                                    pixelValue);
-                                SetPixel(hMDC, col + offset, target_row+2,
-                                    pixelValue);
-                            }
                         } else if (row_pixels & bit) {
                             /* Not VT220 and not VT320. Don't do any weird
                              * tweaks - just render as is */
@@ -868,10 +948,13 @@ void KClient::refreshSoftFonts() {
             drcs_fonts[i] = hbmp;
             drcs_serials[i] = drcsbuf[i]->serial;
             drcs_render_hints[i] = drcsbuf[i]->render_hints;
+            drcs_rendition[i] = rendition;
             stretchSoftFont(i);
         } else if (drcsbuf[i] == NULL) {
+            debug(F101, "KClient::refreshSoftFonts - buffer is null", 0, i);
             // drcs font buffer has been *completely* erased.
             drcs_serials[i] = 0;
+            drcs_rendition[i] = -1;
             drcs_render_hints[i] = DRCS_RENDER_HINT_NONE;
             DeleteObject(drcs_fonts[i]);
             drcs_fonts[i] = NULL;
@@ -896,7 +979,14 @@ void KClient::stretchSoftFont(int fontId) {
 
     EnterDRCSBufferCriticalSection();
     for (int i = fontId; i <= maxFont; i++) {
-        if (drcs_fonts[i] == NULL) continue;
+        if (drcs_fonts[i] == NULL) {
+            debug(F101, "KClient::stretchSoftFont - buffer is null", 0, i);
+            continue;
+        }
+        debug(F101, "KClient::stretchSoftFont - buffer", 0, i);
+
+        BITMAP bitmapInfo;
+        GetObject(drcs_fonts[i], sizeof(BITMAP), &bitmapInfo);
 
         HDC hDC = GetDC(NULL);
 
@@ -907,14 +997,12 @@ void KClient::stretchSoftFont(int fontId) {
         HBITMAP hbmp = CreateBitmap(fontWidth * 96,fontHeight,1,1,NULL);
         HBITMAP hOldDestBmp = (HBITMAP)SelectObject(hMDCdest, hbmp);
 
-        int display_height = drcsbuf[i]->cell_height;
-        int display_width = drcsbuf[i]->cell_width;
+        int display_height = bitmapInfo.bmHeight;
+        int display_width = drcsbuf[i]->renditions[drcs_rendition[i]]->cell_width;
         if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
             /* To account for VT220 glyphs being stretched horizontally one
              * pixel into the next cell, which we don't really do. */
             display_width += 1;
-        } else if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT320) {
-            display_height *= 3;
         }
 
         SetStretchBltMode(hMDCdest, BLACKONWHITE);

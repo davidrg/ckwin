@@ -1386,9 +1386,28 @@ typedef struct _drcs_glyph_t {
     char undefined;
 } drcs_glyph_t;
 
+#define DRCS_RENDITION_01_80x24     0
+#define DRCS_RENDITION_02_132_24    1
+#define DRCS_RENDITION_11_80x36     2
+#define DRCS_RENDITION_12_132x36    3
+#define DRCS_RENDITION_21_80x48     4
+#define DRCS_RENDITION_22_132x48    5
+#define DRCS_RENDITIONS_TOTAL       6
+
+typedef struct _drcs_rendition_t {
+    drcs_glyph_t glyphs[96];
+    char cell_height;  /* Terminal cell height */
+    char cell_width;   /* Terminal cell width  */
+    char height;       /* Font glyph height */
+    char width;        /* Font glyph width */
+    char full_cell;
+    char rendition_id;
+    char undefined;    /* If all glyphs are undefined */
+} drcs_rendition_t;
+
 #define DRCS_RENDER_HINT_NONE           0x00
 #define DRCS_RENDER_HINT_VT220          0x01
-#define DRCS_RENDER_HINT_VT320          0x02
+#define DRCS_RENDER_HINT_RES_F          0x02
 #define DRCS_RENDER_HINT_VT220_TEXT     0x04
 #define DRCS_RENDER_HINT_RES_E          0x08
 #define DRCS_RENDER_HINT_RES_D          0x10
@@ -1397,14 +1416,9 @@ typedef struct _drcs_glyph_t {
 #define DRCS_RENDER_HINT_RES_A          0x80
 
 typedef struct _drcs_t {
-    char name[4];      /* Not null terminated! 0-3 intermediates then a final */
-    drcs_glyph_t glyphs[96];
-    char cell_height;
-    char cell_width;
+    char name[5];      /* 0-3 intermediates then a final */
+    drcs_rendition_t* renditions[6];
     char is_96_chars;
-    char cell_count;
-    char full_cell;
-    char start_character;
     char render_hints;
     char serial; /* So we can track changes - this is an incrementing number. */
 } drcs_t;

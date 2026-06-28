@@ -194,6 +194,7 @@ private:    // this section is for performance
     Bool processKey;
     long _msgret;
 
+    char drcs_rendition[DRCS_BUFFERS];
     char drcs_serials[DRCS_BUFFERS];
     char drcs_render_hints[DRCS_BUFFERS];
     HBITMAP drcs_fonts[DRCS_BUFFERS];
