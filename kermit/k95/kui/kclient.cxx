@@ -4,6 +4,7 @@
 #include "khwndset.hxx"
 #include "ksysmets.hxx"
 #include "kfont.hxx"
+#include "ksoftfont.hxx"
 #include "karray.hxx"
 #include "ikterm.h"
 #include "ikcmd.h"
@@ -43,7 +44,6 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int tt_update;
-extern int tt_type_mode;
 extern vscrn_t vscrn[];
 extern int scrollflag[];
 extern enum markmodes markmodeflag[] ;
@@ -57,8 +57,6 @@ int tt_old_update;
 extern int tt_sync_output;  /* ckoco3.c */
 extern int tt_sync_output_timeout;
 extern bool     decscnm;
-
-extern drcs_t *drcsbuf[];
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
@@ -195,14 +193,6 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
 
-    for (int i = 0; i < DRCS_BUFFERS; i++) {
-        drcs_serials[i] = 0;
-        drcs_fonts[i] = NULL;
-        drcs_stretched_fonts[i] = NULL;
-        drcs_fontStretchedHeight = 0;
-        drcs_fontStretchedWidth = 0;
-    }
-
     memset( &cursorRect, '\0', sizeof(RECT) );
     cursorCount = 0;
 
@@ -241,15 +231,6 @@ KClient::~KClient()
     delete vert;
 
     delete clientPaint;
-
-    for (int i = 0; i < DRCS_BUFFERS; i++) {
-        if (drcs_fonts[i] != NULL) {
-            DeleteObject(drcs_fonts[i]);
-        }
-        if (drcs_stretched_fonts[i] != NULL) {
-            DeleteObject(drcs_stretched_fonts[i]);
-        }
-    }
 
     delete workStore;
     delete workTemp;
@@ -336,9 +317,17 @@ void KClient::setFont( KFont* f )
 
     setInterSpacing( f );
     setDimensions( TRUE );
+    softFont.setSize(font->getFontW(), font->getFontSpacedH());
 
     prevEffect = uchar(-1);     // reset the effect flag
 	saveTermHeight = saveTermWidth = 0;
+}
+
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KClient::fontChanged() {
+    softFont.setSize(font->getFontW(), font->getFontSpacedH());
 }
 
 /*------------------------------------------------------------------------
@@ -695,337 +684,8 @@ void KClient::getDrawInfo()
 {
     //debug(F100,"KClient::getDrawInfo()","",0);
     memset( workTemp, '\0', workTempSize );
-
-    // Update DRCS fonts if they've changed
-    refreshSoftFonts();
-
     if( ikterm->getDrawInfo() )
         writeMe();
-}
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-// Refreshes the KUI bitmap representation of soft fonts from the DRCS
-// font buffer(s)
-void KClient::refreshSoftFonts() {
-    int rendition = DRCS_RENDITION_01_80x24;
-
-//#define SWITCH_SOFTFONT_RENDITION
-#ifdef SWITCH_SOFTFONT_RENDITION
-    /* This all works correctly, its just not worth *only* switching the
-     * soft-font based on screen size if we're not also going to switch the
-     * main font to match */
-
-    int twid, thi;
-    int cell_height = 0;
-    ::getDimensions( vmode /* clientID */, &twid, &thi );
-
-    // getDimensions gives us the height including the status line.
-    thi -= tt_status[vmode];
-
-    // The VT520 doesn't switch fonts for different screen heights.
-
-    if (twid < 132) { /* 80 columns */
-        rendition = DRCS_RENDITION_01_80x24;
-        if (thi > 24) rendition = DRCS_RENDITION_11_80x36;
-        if (thi > 36) rendition = DRCS_RENDITION_21_80x48;
-    } else { /* 132 columns */
-        rendition = DRCS_RENDITION_02_132_24;
-        if (thi > 24) rendition = DRCS_RENDITION_12_132x36;
-        if (thi > 36) rendition = DRCS_RENDITION_22_132x48;
-    }
-
-    int screen_rendition = rendition;
-
-    if (tt_type_mode == TT_VT520 || tt_type_mode == TT_VT525) {
-        /* The VT520 doesn't switch soft-fonts when the screen height changes.
-         * It only switches when the width changes. But we still want to render
-         * a correct-sized replacement character, so we'll still keep track of
-         * the proper rendition but only use it for that. */
-
-        if (twid < 132) { /* 80 columns */
-            rendition = DRCS_RENDITION_01_80x24;
-            cell_height = 16;
-
-            if (thi > 24) {
-                cell_height = 10;
-            }
-            if (thi > 36) {
-                cell_height = 8;
-            }
-        } else { /* 132 columns */
-            rendition = DRCS_RENDITION_02_132_24;
-            cell_height = 16;
-
-            if (thi > 24) {
-                cell_height = 10;
-            }
-            if (thi > 36) {
-                cell_height = 8;
-            }
-        }
-    }
-#endif
-
-    EnterDRCSBufferCriticalSection();
-    for (int i = 0; i < DRCS_BUFFERS; i++) {
-        if (drcsbuf[i] != NULL && (drcsbuf[i]->serial != drcs_serials[i] ||
-            drcs_fonts[i] == NULL || rendition != drcs_rendition[i])) {
-            // Soft font has changed or is new. Render to a bitmap.
-
-            debug(F101, "KClient::refreshSoftFonts - refresh soft font", 0, i);
-
-            int font_rendition = rendition;
-
-#ifdef SWITCH_SOFTFONT_RENDITION
-            // The VT520 only stores two renditions: an 80 column, and a 132
-            // column. It does not switch renditions for different screen
-            // heights. K95 uses the 80x24 and 132x24 renditions for 80 and 132
-            // columns.
-            //
-            // On the VT520 both renditions start out as null and when the
-            // rendition is null the appropriate replacement character from the
-            // hard font will be used instead. A DECDLD will 'create' which ever
-            // rendition it's pointed at (80x24 by default) and bake in a
-            // suitable replacement character. If Pe=2, the other rendition will
-            // be left null. This has the effect that doing a DCS 0;0;2{ @ ST
-            // will display the replacement characters chopped in half on an
-            // 80x48 screen while they'll render correctly on a 132x48 screen.
-            // The 80 column rendition has the 24-line replacement character
-            // baked in, while the 132 column rendition is null so the character
-            // from the hard font is used instead.
-            //
-            // K95 always initializes all renditions with a suitable replacement
-            // character when a DRCS buffer is initialized, and the
-            // uninitialised flag tracks whether its null (true) or not (false)
-            // to produce the same behaviour. When a rendition is null, instead
-            // of using the 80x24 or 132x24 rendition we'll use the correct
-            // rendition for the screen to get the correct replacement
-            // character.
-            if (drcsbuf[i]->renditions[rendition]->undefined) {
-                font_rendition = screen_rendition;
-            }
-#endif /* SWITCH_SOFTFONT_RENDITION */
-
-            HDC hDC = GetDC(NULL);
-            HDC hMDC = CreateCompatibleDC(hDC);
-
-            int display_width = drcsbuf[i]->renditions[font_rendition]->cell_width;
-            int h = drcsbuf[i]->renditions[font_rendition]->cell_height;
-
-#ifdef SWITCH_SOFTFONT_RENDITION
-            // For VT520, take the cell height from the current screen
-            // dimensions rather than the current font rendition
-            if (cell_height != 0) h = cell_height;
-#endif /* SWITCH_SOFTFONT_RENDITION */
-
-            if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
-                /* To account for VT220 glyphs being stretched horizontally
-                 * into the next cell, which we don't really do. */
-                display_width += 1;
-            }
-
-            int w = display_width * 96;
-
-            HBITMAP hbmp = CreateBitmap(w,h,1,1,NULL);
-
-            ReleaseDC(NULL, hDC);
-
-            HBITMAP hOldBmp = (HBITMAP)SelectObject(hMDC, hbmp);
-
-            // Paint the bitmap white
-            RECT r;
-            r.left = r.top = 0;
-            r.right = w;
-            r.bottom = h;
-            HBRUSH bgBrush = CreateSolidBrush( RGB(255, 255, 255) );
-            FillRect( hMDC, &r, bgBrush);
-            DeleteObject( bgBrush );
-
-            // And draw pixels in black. This gives vastly better scaling using
-            // the BLACKONWHITE StretchBlt mode.
-            COLORREF pixelValue = RGB(0, 0, 0);
-
-            for (int glyph = 0; glyph < 96; glyph++) {
-                if (glyph == 0 && !drcsbuf[i]->is_96_chars) continue;
-                if (glyph == 95 && !drcsbuf[i]->is_96_chars) continue;
-                int offset = glyph * display_width;
-                int target_row = -3;
-                for (int row = 0; row < h; row++) {
-                    int row_pixels = drcsbuf[i]->renditions[font_rendition]->glyphs[glyph].pixels[row];
-                    target_row += 3;
-                    if (row_pixels == 0) {
-                        continue;
-                    }
-
-                    for (int col = 0; col < display_width; col++) {
-                        int bit = 0x8000 >> col;
-
-                        /* VT220 terminals implement dot stretching: at render
-                         * time, each pixel is stretched about half-way into the
-                         * next pixel to the right. We can't really do
-                         * half-pixels here, and it would be too expensive to
-                         * do this dot stretching at render time so instead we
-                         * stretch pixel all the way into its neighbour to the
-                         * right when turning the glyphs to a bitmap here.
-                         *
-                         * Additionally, columns 9 and 10 are not addressable.
-                         * These columns are just a copy of column 8. And dot
-                         * stretching is applied, so column 10 stretches into
-                         * column 11 (the first column of the cell to the
-                         * right).
-                         *
-                         * At render time, the VT220 appears to render glyphs
-                         * one pixel to the right; so column 1 in the glyph is
-                         * really column 2 in the character cell. And the 10th
-                         * column stretches into the first column of the next
-                         * cell. We don't currently implement the "stretches
-                         * into the next cell" rendering behaviour, so instead
-                         * we treat glyphs as being 11 columns wide with columns
-                         * 8-11 having the same value.
-                         *
-                         * The rendering we do here doesn't quite match the
-                         * behaviour of the VT220 as described here:
-                         *   https://www.masswerk.at/nowgobang/2019/dec-crt-typography
-                         * but it's the best that can be reasonably done here
-                         * without a significant performance impact. Doing it
-                         * properly with reasonable performance might require
-                         * something like pixel shaders.
-                         *
-                         * So, to summarise the rendering differences from a
-                         * real VT220:
-                         *   - No scan lines (they're quite visible on the VT220)
-                         *   - We stretch each pixel fully into its neighbour
-                         *     rather than half-way. This means the glyph
-                         *     ~?~~~~~~/~~~~~~~~ will appear as a solid block
-                         *     when it should have a thin vertical line in the
-                         *     top half where the ? is.
-                         *   - Column 10 doesn't stretch into column 1 on the
-                         *     adjacent cell
-                         *   - Dot stretching is applied before rather than after
-                         *     double-wide stretching, so double-wide characters
-                         *     come out less detailed than on a real VT220.
-                         */
-                        if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
-                            int prevbit;
-
-                            if (col < 10) {
-                                prevbit = bit;
-                            }
-
-                            if (col == 9 || col == 10) {
-                                /* Columns 9 and 10 are copies of Column 8 */
-                                bit = 0x8000 >> 8;
-                                prevbit = 0x8000 >> 7;
-                            } else if (col > 0) { /* Stretch pixels */
-                                prevbit = 0x8000 >> (col-1);
-                            }
-
-                            if (row_pixels & bit || row_pixels & prevbit) {
-                                SetPixel(hMDC, col + offset, row,
-                                    pixelValue);
-                            }
-                        } else if (row_pixels & bit) {
-                            /* Not VT220 and not VT320. Don't do any weird
-                             * tweaks - just render as is */
-                            SetPixel(hMDC, col + offset, row,
-                                pixelValue);
-                        }
-                    }
-                }
-            }
-
-            SelectObject(hMDC, hOldBmp);
-            DeleteDC(hMDC);
-            if (drcs_fonts[i] != NULL) {
-                DeleteObject(drcs_fonts[i]);
-                drcs_fonts[i] = NULL;
-            }
-            if (drcs_stretched_fonts[i] != NULL) {
-                DeleteObject(drcs_stretched_fonts[i]);
-                drcs_stretched_fonts[i] = NULL;
-            }
-            drcs_fonts[i] = hbmp;
-            drcs_serials[i] = drcsbuf[i]->serial;
-            drcs_render_hints[i] = drcsbuf[i]->render_hints;
-            drcs_rendition[i] = rendition;
-            stretchSoftFont(i);
-        } else if (drcsbuf[i] == NULL) {
-            debug(F101, "KClient::refreshSoftFonts - buffer is null", 0, i);
-            // drcs font buffer has been *completely* erased.
-            drcs_serials[i] = 0;
-            drcs_rendition[i] = -1;
-            drcs_render_hints[i] = DRCS_RENDER_HINT_NONE;
-            DeleteObject(drcs_fonts[i]);
-            drcs_fonts[i] = NULL;
-            DeleteObject(drcs_stretched_fonts[i]);
-            drcs_stretched_fonts[i] = NULL;
-        }
-    }
-    LeaveDRCSBufferCriticalSection();
-}
-
-
-/*------------------------------------------------------------------------
-------------------------------------------------------------------------*/
-// Stretches the original soft-font bitmap representation to match the
-// currently selected font size.
-void KClient::stretchSoftFont(int fontId) {
-    int maxFont = DRCS_BUFFERS - 1;
-    if (fontId != 0) maxFont = fontId;
-
-    int fontWidth = font->getFontW();
-    int fontHeight = font->getFontSpacedH();
-
-    EnterDRCSBufferCriticalSection();
-    for (int i = fontId; i <= maxFont; i++) {
-        if (drcs_fonts[i] == NULL) {
-            debug(F101, "KClient::stretchSoftFont - buffer is null", 0, i);
-            continue;
-        }
-        debug(F101, "KClient::stretchSoftFont - buffer", 0, i);
-
-        BITMAP bitmapInfo;
-        GetObject(drcs_fonts[i], sizeof(BITMAP), &bitmapInfo);
-
-        HDC hDC = GetDC(NULL);
-
-        HDC hMDCsrc = CreateCompatibleDC(hDC);
-        HBITMAP hOldSrcBmp = (HBITMAP)SelectObject(hMDCsrc, drcs_fonts[i]);
-
-        HDC hMDCdest = CreateCompatibleDC(hDC);
-        HBITMAP hbmp = CreateBitmap(fontWidth * 96,fontHeight,1,1,NULL);
-        HBITMAP hOldDestBmp = (HBITMAP)SelectObject(hMDCdest, hbmp);
-
-        int display_height = bitmapInfo.bmHeight;
-        int display_width = drcsbuf[i]->renditions[drcs_rendition[i]]->cell_width;
-        if (drcsbuf[i]->render_hints & DRCS_RENDER_HINT_VT220) {
-            /* To account for VT220 glyphs being stretched horizontally one
-             * pixel into the next cell, which we don't really do. */
-            display_width += 1;
-        }
-
-        SetStretchBltMode(hMDCdest, BLACKONWHITE);
-
-        StretchBlt(hMDCdest, 0, 0, fontWidth * 96, fontHeight,
-                   hMDCsrc,  0, 0, display_width * 96,
-                   display_height, SRCCOPY);
-
-        ReleaseDC(NULL, hDC);
-        SelectObject(hMDCdest, hOldDestBmp);
-        SelectObject(hMDCsrc, hOldSrcBmp);
-        DeleteDC(hMDCdest);
-        DeleteDC(hMDCsrc);
-        if (drcs_stretched_fonts[i] != NULL) {
-            DeleteObject(drcs_stretched_fonts[i]);
-            drcs_stretched_fonts[i] = NULL;
-        }
-        drcs_stretched_fonts[i] = hbmp;
-    }
-    LeaveDRCSBufferCriticalSection();
-
-    drcs_fontStretchedWidth = fontWidth;
-    drcs_fontStretchedHeight = fontHeight;
 }
 
 void KClient::ToggleCursor( HDC hdc, LPRECT lpRect )
@@ -1192,6 +852,15 @@ void KClient::writeMe()
         ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
     }
 
+    // Make sure soft-fonts are ready
+    softFont.refresh(twid, thi - tt_status[vmode]);
+
+    // Figure out which soft fonts are valid
+    int validSoftFonts[DRCS_BUFFERS];
+    for (int j = 1; j <= DRCS_BUFFERS; j++) {
+        validSoftFonts[j-1] = softFont.fontValid(j);
+    }
+
     // Then paint the data
     // This code batches up strings with matching attributes so multiple
     // characters can be painted in one go. Soft-fonts are counted as a kind of
@@ -1205,14 +874,13 @@ void KClient::writeMe()
     vt_char_attr_t effect = ushort(-1);
     vt_cell_attr_t cellAttr = 0;
     int lastDrcsBufferId = NO_SOFT_FONT;
-    EnterDRCSBufferCriticalSection();
     // The following collects up contiguous strings of text that are all on the
     // same line and have the same attributes, allowing the text to be painted
     // in one go rather than a character at a time.
     for( i = 0; i < totlen; i++ )
     {
         int bufferId = DRCS_BUFFER_ID(textBuffer[i]);
-        if (bufferId != NO_SOFT_FONT && drcs_stretched_fonts[bufferId-1] == NULL) {
+        if (bufferId != NO_SOFT_FONT && !validSoftFonts[bufferId-1]) {
             /* This character is associated with a soft-font, but the font
              * doesn't exist. This shouldn't really happen outside of looking at
              * the scrollback after a hard reset, so just replace the character
@@ -1242,7 +910,6 @@ void KClient::writeMe()
             wc++;
         }
     }
-    LeaveDRCSBufferCriticalSection();
     if( wc )
         workStore[wc-1].length = i - workStore[wc-1].offset;
 
@@ -1387,7 +1054,7 @@ void KClient::writeMe()
         // with the selected attributes.
         SetWorkStoreRect(&rect, kws, font, twid, thi, margin());
 
-        if( !blink || blinkOn ) {
+        if( !blink || blinkOn, kws ) {
             if (kws->fontBuffer == NO_SOFT_FONT) {
                 ExtTextOutW( hdc(), rect.left, rect.top,
                     ETO_CLIPPED | ETO_OPAQUE,
@@ -1396,46 +1063,13 @@ void KClient::writeMe()
                     kws->length,
                     (int*)&interSpace );
             } else {
-                // Paint the characters one at a time by copying from the font
-                HDC hMDC = CreateCompatibleDC(hdc());
-                HBITMAP hOldBmp = (HBITMAP)SelectObject(
-                    hMDC, drcs_stretched_fonts[kws->fontBuffer-1]);
-                DeleteObject(hOldBmp);
-                int target_width = font->getFontW();
-                int target_height = font->getFontH();
-                int font_start = DRCS_START(kws->fontBuffer);;
-                int render_hints = drcs_render_hints[kws->fontBuffer-1];
-
-                /* Re-stretch the soft-fonts to fit the current normal font
-                 * dimensions if the font size has changed */
-                if (target_width != drcs_fontStretchedWidth ||
-                    target_height != drcs_fontStretchedHeight) {
-                    stretchSoftFont(0);
-                }
-
-                for (int j = kws->offset; j < kws->offset+kws->length; j++) {
-                    int glyph = textBuffer[j] - font_start;
-
-                    /* The VT220s centering effectively draws glyphs offset by
-                     * 1 from the grid, so the 10th column gets rendered in the
-                     * first column of the next cell to the right. The VT220
-                     * does this for all fonts, but we'll only do this for fonts
-                     * that don't use columns 8+, so that drawing soft-fonts can
-                     * still line up with regular non-soft-fonts that aren't
-                     * offset like this. */
-
-                    BitBlt(hdc(),
-                           rect.left + (j-kws->offset) * target_width
-                                + (render_hints & DRCS_RENDER_HINT_VT220_TEXT ? 1 : 0),
-                           rect.top,
-                           target_width+1,
-                           target_height,
-                           hMDC,
-                           glyph * target_width, 0,
-                           SRCCOPY);
-                }
-                SelectObject(hMDC, hOldBmp);
-                DeleteDC(hMDC);
+                softFont.textOut(
+                    hdc(),
+                    rect.left,
+                    rect.top,
+                    (wchar_t*) &(textBuffer[ kws->offset ]),
+                    kws->length,
+                    kws->fontBuffer);
             }
         }
         else {
@@ -1662,10 +1296,20 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     twid = VscrnGetWidth(vnum);
     thi = VscrnGetDisplayHeight(vnum);
 
+    // Initialise soft-fonts
+    KSoftFont softFont;
+    softFont.setSize(font->getFontW(), font->getFontSpacedH());
+    softFont.refresh(twid, thi - tt_status[vmode]);
+
     // Get dimensions
     int w, h;
     h = thi * font->getFontSpacedH();
     w = twid * font->getFontW();
+
+    int validSoftFonts[DRCS_BUFFERS];
+    for (int j = 1; j <= DRCS_BUFFERS; j++) {
+        validSoftFonts[j-1] = softFont.fontValid(j);
+    }
 
     // Erase the background with default color
     RECT r;
@@ -1712,12 +1356,24 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
     ushort lattr = ushort(-1);
     vt_char_attr_t effect = ushort(-1);
 	vt_cell_attr_t cellAttr = 0;
+    int lastDrcsBufferId = NO_SOFT_FONT;
     for( i = 0; i < totlen; i++ )
     {
+        int bufferId = DRCS_BUFFER_ID(textBuffer[i]);
+        if (bufferId != NO_SOFT_FONT && !validSoftFonts[bufferId-1]) {
+            /* This character is associated with a soft-font, but the font
+             * doesn't exist. This shouldn't really happen outside of looking at
+             * the scrollback after a hard reset, so just replace the character
+             * with the backwards question mark in the normal font. */
+            bufferId = NO_SOFT_FONT;
+            textBuffer[i] = 0x2426; // backwards question mark
+        }
+
         xpos = i % twid;
         if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr)
 					|| effectBuffer[i] != effect
-					|| cellAttrBuffer[i] != cellAttr )
+					|| cellAttrBuffer[i] != cellAttr
+                    || lastDrcsBufferId != bufferId )
         {
             kws = &(workStore[wc]);
 
@@ -1730,6 +1386,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
             attr = kws->attr = attrBuffer[i];
             effect = kws->effect = effectBuffer[i];
 			cellAttr = kws->cellAttr = cellAttrBuffer[i];
+            lastDrcsBufferId = kws->fontBuffer = bufferId;
             wc++;
         }
     }
@@ -1764,7 +1421,9 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
             SetTextColor( hdc, cell_video_attr_foreground_rgb(prevAttr));
         }
 
-        if( prevEffect != kws->effect )
+        // If a soft-font is being used, we can skip all of this as none of
+        // these attributes will apply.
+        if( prevEffect != kws->effect && kws->fontBuffer == NO_SOFT_FONT)
         {
             prevEffect = kws->effect;
             Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
@@ -1865,12 +1524,22 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
         SetWorkStoreRect(&rect, kws, font, twid, thi, margin);
 
         // This is where writeMe() decides whether or not to render blinking text.
-        ExtTextOutW( hdc, rect.left, rect.top,
-                     ETO_CLIPPED | ETO_OPAQUE,
-                     &rect,
-                     (wchar_t*) &(textBuffer[ kws->offset ]),
-                     kws->length,
-                     (int*)&interSpace );
+        if (kws->fontBuffer == NO_SOFT_FONT) {
+            ExtTextOutW( hdc, rect.left, rect.top,
+                         ETO_CLIPPED | ETO_OPAQUE,
+                         &rect,
+                         (wchar_t*) &(textBuffer[ kws->offset ]),
+                         kws->length,
+                         (int*)&interSpace );
+        } else {
+            softFont.textOut(
+                    hdc,
+                    rect.left,
+                    rect.top,
+                    (wchar_t*) &(textBuffer[ kws->offset ]),
+                    kws->length,
+                    kws->fontBuffer);
+        }
     }
 
     // Stretch the contents of any double-height or double-wide lines to
@@ -2159,12 +1828,11 @@ BOOL KClient::saveFontBuffer(int buffer_number, const char* filename,
         stretched = TRUE;
     }
     if (buffer_number > DRCS_BUFFERS) return FALSE;
-    if (drcs_fonts[buffer_number-1] == NULL) return FALSE;
 
-    if (stretched) {
-        return saveBitmap(drcs_stretched_fonts[buffer_number-1], filename, format);
-    }
-    return saveBitmap(drcs_fonts[buffer_number-1], filename, format);
+    HBITMAP font = softFont.getFontBitmap(buffer_number, stretched);
+
+    if (font == NULL) return FALSE;
+    return saveBitmap(font, filename, format);
 }
 
 #endif /* CK_HAVE_GDIPLUS */
