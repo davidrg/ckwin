@@ -70,7 +70,11 @@ void KSoftFont::refresh(int width, int height) {
     int cell_height = 0;
     int screen_rendition = rendition = terminalRendition;
 
-    if (width != terminalWidth || height != terminalHeight) {
+    // The VT220 does not switch renditions for DECCOLM. It stores only one
+    // rendition, and it uses it for both 80 column and 132 column views
+    if (ISVT320(tt_type_mode) &&
+        (width != terminalWidth || height != terminalHeight)) {
+
         if (width < 132) { /* 80 columns */
             rendition = DRCS_RENDITION_01_80x24;
             if (height > 24) rendition = DRCS_RENDITION_11_80x36;
