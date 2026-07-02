@@ -133,6 +133,8 @@ private:    // this section is for performance
         long maxcells,
         uchar** workTempOut);
 
+    CRITICAL_SECTION csDraw;
+
     IKTerm* ikterm;
     BYTE clientID;
     _K_CLIENT_PAINT* clientPaint;

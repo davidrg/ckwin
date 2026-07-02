@@ -167,6 +167,8 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , cursor_displayed( 0 )
     , screenNormal(FALSE)
 {
+    InitializeCriticalSection(&csDraw);
+
 #ifdef CK_COLORS_24BIT
 #if _MSC_VER < 1800
     prevAttr = cell_video_attr_from_vio_attribute(255);
@@ -236,6 +238,8 @@ KClient::~KClient()
     delete workTemp;
 
     delete ikterm;
+
+    DeleteCriticalSection(&csDraw);
 }
 
 void KClient::stopTimer() {
@@ -682,9 +686,13 @@ Bool KClient::paint()
 ------------------------------------------------------------------------*/
 void KClient::getDrawInfo()
 {
+    EnterCriticalSection(&csDraw);
     //debug(F100,"KClient::getDrawInfo()","",0);
     memset( workTemp, '\0', workTempSize );
-    if( ikterm->getDrawInfo() )
+    BOOL success = ikterm->getDrawInfo();
+    LeaveCriticalSection(&csDraw);
+
+    if( success )
         writeMe();
 }
 
