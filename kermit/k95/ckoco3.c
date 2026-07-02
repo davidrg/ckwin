@@ -8717,8 +8717,42 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
 /*----------------------------------------------------------+----------------*/
 /* change_attributes_in_rectangle (DECCARA)                 | Page: cursor   */
 /*----------------------------------------------------------+----------------*/
+static vt_char_attr_t
+deccara_attribute(vt_char_attr_t a, int pn) {
+    switch ( pn ) {
+        case 0:
+            a = VT_CHAR_ATTR_NORMAL;
+            break;
+        case 1:
+            a |= VT_CHAR_ATTR_BOLD;
+            break;
+        case 4:
+            a |= VT_CHAR_ATTR_UNDERLINE;
+            break;
+        case 5:
+            a |= VT_CHAR_ATTR_BLINK;
+            break;
+        case 7:
+            a |= VT_CHAR_ATTR_REVERSE;
+            break;
+        case 22:
+            a &= ~VT_CHAR_ATTR_BOLD;
+            break;
+        case 24:
+            a &= ~VT_CHAR_ATTR_UNDERLINE;
+            break;
+        case 25:
+            a &= ~VT_CHAR_ATTR_BLINK;
+            break;
+        case 27:
+            a &= ~VT_CHAR_ATTR_REVERSE;
+            break;
+    }
+    return a;
+}
+
 static void
-change_attributes_in_rectangle(int *pn, int k) {
+change_attributes_in_rectangle(int vmode, int pn[], int k) {
     int w, h, x, y, z;
     /*
      * pn[1] - top-line border      default=1
@@ -8741,9 +8775,9 @@ change_attributes_in_rectangle(int *pn, int k) {
      */
     if ( k < 1 ) pn[1] = 1;
     if ( k < 2 ) pn[2] = 1;
-    if ( k < 3 ) pn[3] = VscrnGetHeight(VTERM)
-         -(tt_status[VTERM]?1:0);
-    if ( k < 4 ) pn[4] = VscrnGetWidth(VTERM);
+    if ( k < 3 ) pn[3] = VscrnGetHeight(vmode)
+         -(tt_status[vmode]?1:0);
+    if ( k < 4 ) pn[4] = VscrnGetWidth(vmode);
     if ( k < 5 ) {
         pn[5] = 0;
         k = 5;
@@ -8752,15 +8786,15 @@ change_attributes_in_rectangle(int *pn, int k) {
     if (relcursor) {
         /* Add top and left margins to the vertical and
          * horizontal coordinates */
-        pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
-        pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
-        pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
-        pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+        pn[1] += vscrn_c_page_margin_top(vmode)-1; /* top */
+        pn[2] += vscrn_c_page_margin_left(vmode)-1;/* lft */
+        pn[3] += vscrn_c_page_margin_top(vmode)-1; /* bot */
+        pn[4] += vscrn_c_page_margin_left(vmode)-1;/* rt */
 
-        if (pn[3] > vscrn_c_page_margin_bot(VTERM))
-            pn[3] = vscrn_c_page_margin_bot(VTERM);
-        if (pn[4] > vscrn_c_page_margin_right(VTERM))
-            pn[4] = vscrn_c_page_margin_right(VTERM);
+        if (pn[3] > vscrn_c_page_margin_bot(vmode))
+            pn[3] = vscrn_c_page_margin_bot(vmode);
+        if (pn[4] > vscrn_c_page_margin_right(vmode))
+            pn[4] = vscrn_c_page_margin_right(vmode);
     }
 
     if ( pn[3] < pn[1] || pn[4] < pn[2] )
@@ -8771,54 +8805,25 @@ change_attributes_in_rectangle(int *pn, int k) {
 
     if ( decsace ) {        /* rectangle */
         for ( y=0; y<h; y++ ) {
-            videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
+            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
             for ( x=0; x<w; x++ ) {
                 for ( z=5; z<=k; z++ ) {
-                    USHORT a = line->vt_char_attrs[pn[2]+x-1];
+                    vt_char_attr_t a = line->vt_char_attrs[pn[2]+x-1];
                     if (a == VT_CHAR_ATTR_ERASED) {
                         /* In rectangle mode, unoccuped (erased)
                          * character positions are changed to
                          * blanks (become unerased) */
                         a = VT_CHAR_ATTR_NORMAL;
                     }
-                    switch ( pn[z] ) {
-                    case 0:
-                        a = VT_CHAR_ATTR_NORMAL;
-                        break;
-                    case 1:
-                        a |= VT_CHAR_ATTR_BOLD;
-                        break;
-                    case 4:
-                        a |= VT_CHAR_ATTR_UNDERLINE;
-                        break;
-                    case 5:
-                        a |= VT_CHAR_ATTR_BLINK;
-                        break;
-                    case 7:
-                        a |= VT_CHAR_ATTR_REVERSE;
-                        break;
-                    case 22:
-                        a &= ~VT_CHAR_ATTR_BOLD;
-                        break;
-                    case 24:
-                        a &= ~VT_CHAR_ATTR_UNDERLINE;
-                        break;
-                    case 25:
-                        a &= ~VT_CHAR_ATTR_BLINK;
-                        break;
-                    case 27:
-                        a &= ~VT_CHAR_ATTR_REVERSE;
-                        break;
-                    }
-                    line->vt_char_attrs[pn[2]+x-1] = a;
+                    line->vt_char_attrs[pn[2]+x-1] = deccara_attribute(a, pn[z]);
                 }
             }
         }
     } else {                /* stream */
         for ( y=0; y<h; y++ ) {
-            videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
-            int rlimit = relcursor ? vscrn_c_page_margin_right(VTERM) : VscrnGetWidth(VTERM);
-            int llimit = relcursor ? vscrn_c_page_margin_left(VTERM)-1 : 0;
+            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
+            int rlimit = relcursor ? vscrn_c_page_margin_right(vmode) : VscrnGetWidth(vmode);
+            int llimit = relcursor ? vscrn_c_page_margin_left(vmode)-1 : 0;
             for ( x = (y==0 ? pn[2] - 1 : llimit);
                   x < ((y==h-1) ? pn[4] : rlimit);
                   x++ ) {
@@ -8828,43 +8833,14 @@ change_attributes_in_rectangle(int *pn, int k) {
                     continue;
                 }
                 for ( z=5; z<=k; z++ ) {
-                    USHORT a = line->vt_char_attrs[x];
-                    switch ( pn[z] ) {
-                    case 0:
-                        a = VT_CHAR_ATTR_NORMAL;
-                        break;
-                    case 1:
-                        a |= VT_CHAR_ATTR_BOLD;
-                        break;
-                    case 4:
-                        a |= VT_CHAR_ATTR_UNDERLINE;
-                        break;
-                    case 5:
-                        a |= VT_CHAR_ATTR_BLINK;
-                        break;
-                    case 7:
-                        a |= VT_CHAR_ATTR_REVERSE;
-                        break;
-                    case 22:
-                        a &= ~VT_CHAR_ATTR_BOLD;
-                        break;
-                    case 24:
-                        a &= ~VT_CHAR_ATTR_UNDERLINE;
-                        break;
-                    case 25:
-                        a &= ~VT_CHAR_ATTR_BLINK;
-                        break;
-                    case 27:
-                        a &= ~VT_CHAR_ATTR_REVERSE;
-                        break;
-                    }
-                    line->vt_char_attrs[x] = a;
+                    vt_char_attr_t a = line->vt_char_attrs[x];
+                    line->vt_char_attrs[x] = deccara_attribute(a, pn[z]);;
                 }
             }
         }
     }
-    if (cursor_on_visible_page(VTERM)) {
-        VscrnIsDirty(VTERM);
+    if (cursor_on_visible_page(vmode)) {
+        VscrnIsDirty(vmode);
     }
 }
 
@@ -21088,7 +21064,7 @@ vtcsi(void)
                 case 'r':       /* DECCARA - Change Attr in Rect Area */
                     if ( ISVT420(tt_type_mode) )
                     {
-                        change_attributes_in_rectangle(&pn, k);
+                        change_attributes_in_rectangle(vmode, pn, k);
                     }
                     break;
                 case 't':       /* DECRARA - Reverse Attr in Rect Area */
