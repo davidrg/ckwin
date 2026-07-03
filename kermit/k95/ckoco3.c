@@ -8715,6 +8715,148 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
 
 
 /*----------------------------------------------------------+----------------*/
+/* sgr_38_48                                                | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+/* Implements SGR-38 and SGR-48 returning the result. If no parameter elements
+ * are encountered, it will fall back to assuming the old non-compliant
+ * semicolon format advancing j (the pointer to the current pn) as necessary.
+ * If allow_malformed_sequence is false, it will return the original attribute
+ * without modification for the non-compliant semicolon format but j will still
+ * be advanced.
+ *
+ * Parameters:
+ *  pn[]    - CSI parameters
+ *  pe[]    - Parameter elements for pn[*j]
+ *  k       - Number of parameters supplied in pn[]
+ *  *pn_pos - Position of this invocation of SGR-38 or SGR-48 in pn[]
+ *  pn_pe_start[] - Position of first value in pe[], or -1 if pe[] is empty
+ *  pn_pe_count[] - Number of values in pe[]
+ *  allow_malformed_sequence - If false, return original attribute for
+ *              non-compliant semicolon format while still advancing *j
+ *  attribute - initial value of cell video attribute to possibly modify
+ *
+ *  Returns:
+ *      attribute, potentially modified as a result of processing an SGR-38 or
+ *      SGR-48 control sequence.
+ */
+static cell_video_attr_t
+sgr_38_48(int pn[], int pe[], int k, unsigned short *pn_pos, int pn_pe_start[],
+    int pn_pe_count[], bool allow_manformed_sequence,
+    cell_video_attr_t attribute) {
+
+    int mode=0, index=0, r=0, g=0, b=0;
+    unsigned short j = *pn_pos;
+	int fg = (pn[j] == 38);
+
+	debug(F111, "SGR 38/48", "SGR", pn[j]);
+
+    if ( !sgrcolors )
+        return attribute;
+
+	if (pn_pe_start[j] == -1) {
+		int i, pn_rem = 0;
+		debug(F111, "SGR 38/48: Using semicolons", "pn_pe_start[j]", pn_pe_start[j]);
+
+		mode = pn[j+1];
+		pn_rem = k - j;   /* for (j = 1; j <= k; ++j) */
+
+		if (mode == 2 && pn_rem >= 3) {
+			j+=2; /* SGR 38/48 + mode */
+			r = pn[j]; j++;
+			g = pn[j]; j++;
+			b = pn[j];
+		} else if (mode == 5 && pn_rem >= 1) {
+			j+=2; /* mode */
+			index = pn[j];
+		}
+
+	    if (!allow_manformed_sequence) {
+	        debug(F100, "Rejecting malformed SGR-38/-48 sequence using semicolons instead of parameter elements", 0, 0);
+	        *pn_pos = j;
+	        return attribute;
+	    }
+
+		debug(F111, "SGR 38/48: Using semicolons", "j", j);
+		debug(F111, "SGR 38/48: Using semicolons", "k", k);
+	} else {
+		int st = pn_pe_start[j];
+		int c = pn_pe_count[j];
+		debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_start[j]", st);
+		debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_count[j]", c);
+
+		if (c == 4 && pe[st] == 2) {
+			mode = pe[st];
+			r = pe[st+1];
+			g = pe[st+2];
+			b = pe[st+3];
+		} else if (c == 5 && pe[st] == 2) {
+			mode = pe[st];
+			/* colorspace = pe[st+1];  Not used */
+			r = pe[st+2];
+			g = pe[st+3];
+			b = pe[st+4];
+		} else if (c == 2 && pe[st] == 5) {
+			mode = pe[st];
+			index = pe[st+1];
+		} else {
+			debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-count", c);
+			debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-start", st);
+			debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "mode", pe[st]);
+		}
+	}
+
+    debug(F111, "SGR 38/48:", "mode", mode);
+
+	if (mode == 5) {
+		int max_colors = current_palette_max_index();
+        /* K95s color IDs for colors 1-15 are different
+		 * from those used by xterm due to its OS/2
+		 * origins.
+		 */
+        index = color_index_to_vio(index);
+
+		debug(F111, "SGR 38/48:", "index", index);
+
+        if (index <= max_colors) {
+			debug(F111, "SGR 38/48: set indexed color", "index", index);
+#ifdef CK_COLORS_16
+            /* For 16-color builds, map from the currently
+			 * set palette on to the aixterm-16 palette.
+             */
+            index = nearest_palette_color_palette(colorpalette, index);
+#endif /* CK_COLORS_16 */
+			if (fg) attribute = cell_video_attr_set_fg_color(attribute,index);
+			else	attribute = cell_video_attr_set_bg_color(attribute,index);
+        }
+	}
+	/* Direct (24-bit) color value? */
+	else if (mode == 2) {
+		debug(F111, "SGR 38/48: set RGB color", "r", r);
+		debug(F111, "SGR 38/48: set RGB color", "g", g);
+		debug(F111, "SGR 38/48: set RGB color", "b", b);
+#ifdef CK_COLORS_24BIT
+		if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+			if (fg) attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
+			else    attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
+        } else
+#endif /* CK_COLORS_24BIT */
+		{
+			int idx;
+			/* Can't store 24-bit color, so look for the nearest
+			 * color in the current palette and use that.*/
+			idx = nearest_palette_color_rgb(colorpalette, r, g, b);
+			if (fg) attribute = cell_video_attr_set_fg_color(attribute,idx);
+			else    attribute = cell_video_attr_set_bg_color(attribute,idx);
+		}
+	} else {
+		debug(F111, "SGR 38/48 - ERROR - invalid mode", "mode", mode);
+	}
+
+    *pn_pos = j;
+    return attribute;
+}
+
+/*----------------------------------------------------------+----------------*/
 /* change_attributes_in_rectangle (DECCARA)                 | Page: cursor   */
 /*----------------------------------------------------------+----------------*/
 static vt_char_attr_t
@@ -8751,9 +8893,90 @@ deccara_attribute(vt_char_attr_t a, int pn) {
     return a;
 }
 
+static cell_video_attr_t
+deccara_video_attribute(cell_video_attr_t a, int pn) {
+    int fg = -1, bg = -1;
+    switch ( pn ) {
+    case 30: /* Colors */
+    case 31:
+    case 32:
+    case 33:
+    case 34:
+    case 35:
+    case 36:
+    case 37:
+        /* Select foreground color */
+        if ( !sgrcolors )
+            break;
+        fg = sgrcols[pn - 30];
+        break;
+    case 40:
+    case 41:
+    case 42:
+    case 43:
+    case 44:
+    case 45:
+    case 46:
+    case 47:
+        /* Select background color */
+        if ( !sgrcolors )
+            break;
+        bg = sgrcols[pn - 40];
+        break;
+    case 90: /* Colors */
+    case 91:
+    case 92:
+    case 93:
+    case 94:
+    case 95:
+    case 96:
+    case 97:
+        /* Select foreground color (8-bit high) */
+        if ( !sgrcolors || !ISK95(tt_type_mode) )
+            break;
+        fg = sgrcols[pn - 90] + 8;
+        break;
+    case 100:
+    case 101:
+    case 102:
+    case 103:
+    case 104:
+    case 105:
+    case 106:
+    case 107:
+        /* Select background color (8-bit high) */
+        if ( !sgrcolors || !ISK95(tt_type_mode) )
+            break;
+        bg = sgrcols[pn - 100] + 8;
+        break;
+    default:
+        return a;
+    }
+
+    if ((fg >= 0 || bg >= 0)) {
+        if (fg >= 0)
+            a = cell_video_attr_set_fg_color(a, fg);
+        if (bg >= 0)
+            a = cell_video_attr_set_bg_color(a, bg);
+    }
+    return a;
+}
+
+/* Parameters:
+ *  vmode   - should be VTERM
+ *  pn[]    - Array of CSI parameters
+ *  k       - Count of CSI parameters
+ *  *j      - Current position in the CSI parameters. May be advanced if
+ *            SGR-38 or SGR-48 is encountered
+ *  pe[]    - CSI parameter elements
+ *  pn_pe_start[] - first Pe for each Pn
+ *  pn_pe_count[] - Number of Pe for each Pn
+ */
 static void
-change_attributes_in_rectangle(int vmode, int pn[], int k) {
-    int w, h, x, y, z;
+change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
+    int pe[], int pn_pe_start[], int pn_pe_count[]) {
+    int w, h, x, y;
+    unsigned short z;
     /*
      * pn[1] - top-line border      default=1
      * pn[2] - left-col border      default=1
@@ -8770,6 +8993,10 @@ change_attributes_in_rectangle(int vmode, int pn[], int k) {
      * 24 - no underline
      * 25 - no blink
      * 27 - positive image
+     * 30..38 - foreground color
+     * 40..48 - background color
+     * 90..97 - bright foreground color
+     * 100..107 - bright background color
      *
      * decsace == FALSE, stream else rectangle
      */
@@ -8816,6 +9043,35 @@ change_attributes_in_rectangle(int vmode, int pn[], int k) {
                         a = VT_CHAR_ATTR_NORMAL;
                     }
                     line->vt_char_attrs[pn[2]+x-1] = deccara_attribute(a, pn[z]);
+
+                    /* Changing colours with DECCARA is an extension which
+                     * STD-070 implies should be supported by the VT525:
+                     * https://j4james.github.io/vtdocs/EL-00070-05.html#5-174
+                     * So for now the VT525 is assumed to support it.
+                     */
+                    if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
+                        cell_video_attr_t attr = line->cells[pn[2]+x-1].video_attr;
+                        if (pn[z] == 0 && colorreset) {
+                            attr = defaultattribute;
+                        }
+                        else if ((pn[z] == 38 || pn[z] == 48) && ISK95(tt_type_mode)) {
+                            /* Handle indexed or RGB colour. We explicitly do
+                             * not support the semi-colon based syntax because:
+                             *  - It breaks the standard
+                             *  - The user has no reason to expect it to work here
+                             * We *only* support that broken semicolon syntax in
+                             * SGR because its already so widespread there. So
+                             * if a user tries to use it here we'll detect it
+                             * and skip over the next few Pn anyway. */
+                            attr = sgr_38_48(pn, pe, k, &z, pn_pe_start,
+                                pn_pe_count, FALSE, attr);
+                        }
+                        else {
+                            /* Handle 30..37, 40..47, 90..97 and 100..107 */
+                            attr = deccara_video_attribute(attr, pn[z]);
+                        }
+                        line->cells[pn[2]+x-1].video_attr = attr;
+                    }
                 }
             }
         }
@@ -8834,7 +9090,31 @@ change_attributes_in_rectangle(int vmode, int pn[], int k) {
                 }
                 for ( z=5; z<=k; z++ ) {
                     vt_char_attr_t a = line->vt_char_attrs[x];
-                    line->vt_char_attrs[x] = deccara_attribute(a, pn[z]);;
+                    line->vt_char_attrs[x] = deccara_attribute(a, pn[z]);
+
+                    if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
+                        cell_video_attr_t attr = line->cells[x].video_attr;
+                        if (pn[z] == 0 && colorreset) {
+                            attr = defaultattribute;
+                        }
+                        else if ((pn[z] == 38 || pn[z] == 48) && ISK95(tt_type_mode)) {
+                            /* Handle indexed or RGB colour. We explicitly do
+                             * not support the semi-colon based syntax because:
+                             *  - It breaks the standard
+                             *  - The user has no reason to expect it to work here
+                             * We *only* support that broken semicolon syntax in
+                             * SGR because its already so widespread there. So
+                             * if a user tries to use it here we'll detect it
+                             * and skip over the next few Pn anyway. */
+                            attr = sgr_38_48(pn, pe, k, &z, pn_pe_start,
+                                pn_pe_count, FALSE, attr);
+                        }
+                        else {
+                            /* Handle 30..37, 40..47, 90..97 and 100..107 */
+                            attr = deccara_video_attribute(attr, pn[z]);
+                        }
+                        line->cells[x].video_attr = attr;
+                    }
                 }
             }
         }
@@ -21064,7 +21344,11 @@ vtcsi(void)
                 case 'r':       /* DECCARA - Change Attr in Rect Area */
                     if ( ISVT420(tt_type_mode) )
                     {
-                        change_attributes_in_rectangle(vmode, pn, k);
+                        /* Because of malformed SGR-38/48 sequences, this needs
+                         * to be able to advance j as well as access to any
+                         * parameter elements for this CSI sequence */
+                        change_attributes_in_rectangle(vmode, pn, k, &j, pe,
+                            pn_pe_start, pn_pe_count);
                     }
                     break;
                 case 't':       /* DECRARA - Reverse Attr in Rect Area */
@@ -24811,109 +25095,15 @@ vtcsi(void)
                             }
                             break;
 						case 48:    /* 48 - Extended color - background */
-                        case 38: {  /* 38 - Extended Color */
+                        case 38:    /* 38 - Extended Color */
 									/* 38 - Enable underline option (for what terminal? linux console before 3.16 probably) */
-							int mode=0, index=0, r=0, g=0, b=0;
-							int fg = (pn[j] == 38);
-
-							debug(F111, "SGR 38/48", "SGR", pn[j]);
-
-                            if ( !sgrcolors )
-                                break;
-
-							if (pn_pe_start[j] == -1) {
-								int i, pn_rem = 0;
-								debug(F111, "SGR 38/48: Using semicolons", "pn_pe_start[j]", pn_pe_start[j]);
-
-								mode = pn[j+1];
-								pn_rem = k - j;   /* for (j = 1; j <= k; ++j) */
-
-								if (mode == 2 && pn_rem >= 3) {
-									j+=2; /* SGR 38/48 + mode */
-									r = pn[j]; j++;
-									g = pn[j]; j++;
-									b = pn[j];
-								} else if (mode == 5 && pn_rem >= 1) {
-									j+=2; /* mode */
-									index = pn[j];
-								}
-								debug(F111, "SGR 38/48: Using semicolons", "j", j);
-								debug(F111, "SGR 38/48: Using semicolons", "k", k);
-							} else {
-								int st = pn_pe_start[j];
-								int c = pn_pe_count[j];
-								debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_start[j]", st);
-								debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_count[j]", c);
-
-								if (c == 4 && pe[st] == 2) {
-									mode = pe[st];
-									r = pe[st+1];
-									g = pe[st+2];
-									b = pe[st+3];
-								} else if (c == 5 && pe[st] == 2) {
-									mode = pe[st];
-									/* colorspace = pe[st+1];  Not used */
-									r = pe[st+2];
-									g = pe[st+3];
-									b = pe[st+4];
-								} else if (c == 2 && pe[st] == 5) {
-									mode = pe[st];
-									index = pe[st+1];
-								} else {
-									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-count", c);
-									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-start", st);
-									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "mode", pe[st]);
-								}
-							}
-
-						debug(F111, "SGR 38/48:", "mode", mode);
-
-							if (mode == 5) {
-								int max_colors = current_palette_max_index();
-                                /* K95s color IDs for colors 1-15 are different
-								 * from those used by xterm due to its OS/2
-								 * origins.
-								 */
-                                index = color_index_to_vio(index);
-
-								debug(F111, "SGR 38/48:", "index", index);
-
-                                if (index <= max_colors) {
-									debug(F111, "SGR 38/48: set indexed color", "index", index);
-#ifdef CK_COLORS_16
-                                    /* For 16-color builds, map from the currently
-									 * set palette on to the aixterm-16 palette.
-                                     */
-                                    index = nearest_palette_color_palette(colorpalette, index);
-#endif /* CK_COLORS_16 */
-									if (fg) attribute = cell_video_attr_set_fg_color(attribute,index);
-									else	attribute = cell_video_attr_set_bg_color(attribute,index);
-                                }
-							}
-							/* Direct (24-bit) color value? */
-							else if (mode == 2) {
-								debug(F111, "SGR 38/48: set RGB color", "r", r);
-								debug(F111, "SGR 38/48: set RGB color", "g", g);
-								debug(F111, "SGR 38/48: set RGB color", "b", b);
-#ifdef CK_COLORS_24BIT
-								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									if (fg) attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
-									else    attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
-                            	} else
-#endif /* CK_COLORS_24BIT */
-								{
-									int idx;
-									/* Can't store 24-bit color, so look for the nearest
-									 * color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
-									if (fg) attribute = cell_video_attr_set_fg_color(attribute,idx);
-									else    attribute = cell_video_attr_set_bg_color(attribute,idx);
-								}
-							} else {
-								debug(F111, "SGR 38/48 - ERROR - invalid mode", "mode", mode);
-							}
+						    if (ISXTERM(tt_type_mode) || ISK95(tt_type_mode) ||
+						        ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+						        attribute = sgr_38_48(pn, pe, k, &j, pn_pe_start,
+						            pn_pe_count, TRUE, attribute);
+						    }
                             break;
-							}
+
                         case 39:  /* disable underline option */
                             /* Supported by SCO ANSI */
                             /* QANSI - restore fg color saved with */

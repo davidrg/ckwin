@@ -15089,7 +15089,9 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>0</td>
-                    <td>All attributes off (normal)</td>
+                    <td>All attributes off (normal). For VT525 and K95 this
+                        includes color.
+                    </td>
                 </tr>
                 <tr>
                     <td>1</td>
@@ -15122,6 +15124,82 @@ DCS $ q 3 , } ST</pre>
                 <tr>
                     <td>27</td>
                     <td>Positive image</td>
+                </tr>
+                <tr>
+                    <td>
+                        30...37
+                    </td>
+                    <td>Set foreground color.
+                        See <a href="#sgr-30">SGR-30..37</a> for colour
+                        assignments. VT525 and K95 terminal types only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        38:2:Pi:Pr:Pg:Pb
+                    </td>
+                    <td>Set foreground to an RGB color.
+                        <a href="#sgr-38-rgb">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        38:5:Ps
+                    </td>
+                    <td>Set foreground to an Indexed color.
+                        <a href="#sgr-38-ic">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        40...47
+                    </td>
+                    <td>Set background color.
+                        See <a href="#sgr-40">SGR-40..47</a> for colour
+                        assignments. VT525 and K95 terminal types only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        48:2:Pi:Pr:Pg:Pb
+                    </td>
+                    <td>Set foreground to an RGB color.
+                        <a href="#sgr-48-rgb">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        48:5:Ps
+                    </td>
+                    <td>Set foreground to an Indexed color.
+                        <a href="#sgr-48-ic">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        90...97
+                    </td>
+                    <td>Set bright foreground color.
+                        See <a href="#sgr-90">SGR-90..97</a> for colour
+                        assignments. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        100...107
+                    </td>
+                    <td>Set bright background color.
+                        See <a href="#sgr-100">SGR-100..107</a> for colour
+                        assignments. K95 terminal type only.
+                    </td>
                 </tr>
             </table>
         </section>
