@@ -1062,7 +1062,7 @@ void KClient::writeMe()
         // with the selected attributes.
         SetWorkStoreRect(&rect, kws, font, twid, thi, margin());
 
-        if( !blink || blinkOn, kws ) {
+        if( !blink || blinkOn ) {
             if (kws->fontBuffer == NO_SOFT_FONT) {
                 ExtTextOutW( hdc(), rect.left, rect.top,
                     ETO_CLIPPED | ETO_OPAQUE,
