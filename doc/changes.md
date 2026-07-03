@@ -165,6 +165,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - GIF (Windows XP+ only)
  - New option to not clear the terminal screen when it is resized: 
    `SET TERM CLEAR-ON-RESIZE { ON, OFF }` 
+ - Soft-fonts (DRCS) for VT220 and higher emulations are now supported
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -381,6 +382,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECDRLBR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdrlbr)
    - [DECERLBRP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbrp)
    - [DECERLBRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbra)
+ - [DECDLD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdld) - Download soft-font
+ - [DECDLDA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdlda) - Set how many font buffers are available (VT520 only), queryable with DECRQSS
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
