@@ -3401,6 +3401,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         cellattrmem[vmode] = malloc( (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t) ) ;
         if ( !cellattrmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for cellattrmem[]!");
+        memset(cellattrmem[vmode], 0, (total_lines + 1) * CELL_ATTR_LEN * sizeof(vt_cell_attr_t));
 #endif /* KUI */
 
 		/* Loop over all lines in all pages assigning memory to them. As the
