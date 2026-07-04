@@ -2584,12 +2584,12 @@ jobs:
         shell: cmd
 
       - name: Delete old full artifact
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: k2-full-install
 
       - name: Delete old mini artifact
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: k2-mini-install
 
