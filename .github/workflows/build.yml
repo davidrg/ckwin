@@ -100,7 +100,7 @@ jobs:
           ls -l
         shell: bash
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ca_certs
           path: |
@@ -139,7 +139,7 @@ jobs:
           ) >> ssh-readme.html
         shell: cmd
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: markdown-docs
           path: |
@@ -176,7 +176,7 @@ jobs:
           move ckwart.exe ..\..\ckwart.exe
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wart-x86
           path: ${{github.workspace}}/ckwart.exe
@@ -224,7 +224,7 @@ jobs:
           
           nmake -f makefile.win.vc trexx.exe
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trexx-x86
           path: ${{github.workspace}}/trexx/regina/trexx.exe
@@ -850,7 +850,7 @@ jobs:
         shell: cmd
     
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-vs${{env.toolsetvc}}-${{matrix.arch}}
           path: ${{github.workspace}}/ckwin
@@ -1083,7 +1083,7 @@ jobs:
           move dist ${{github.workspace}}\ckwin
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-vs2010-${{matrix.arch}}
           path: ${{github.workspace}}/ckwin
@@ -1270,7 +1270,7 @@ jobs:
 
       - name: Upload K95 Artifact
         if: matrix.os.id == 'nt'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ow${{matrix.ver}}-x86
           path: ${{github.workspace}}/ckwin
@@ -1278,7 +1278,7 @@ jobs:
           retention-days: 7
       - name: Upload Dialer Artifact
         if: matrix.os.id == 'nt'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dialer-ow${{matrix.ver}}-x86
           path: ${{github.workspace}}/dialer
@@ -1286,7 +1286,7 @@ jobs:
           retention-days: 7
       - name: Upload Artifact
         if: matrix.os.id == 'nt-legacy'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ow${{matrix.ver}}-x86-nt350
           path: ${{github.workspace}}/ckwin
@@ -1294,7 +1294,7 @@ jobs:
           retention-days: 7
       - name: Upload Zip Artifact
         if: matrix.os.id == 'os2'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-ow${{matrix.ver}}-x86
           path: ${{github.workspace}}/ckos2
@@ -1302,7 +1302,7 @@ jobs:
           retention-days: 7
       - name: Upload Full Installer Artifact
         if: matrix.os.id == 'os2'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-full-install
           path: ${{github.workspace}}/dist-full
@@ -1310,7 +1310,7 @@ jobs:
           retention-days: 7
       - name: Upload Minimal Installer Artifact
         if: matrix.os.id == 'os2'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-mini-install
           path: ${{github.workspace}}/dist-mini
@@ -1615,7 +1615,7 @@ jobs:
           move dist-misc ${{github.workspace}}\ckwin-extra
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'no'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}
@@ -1623,7 +1623,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (extra)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'no'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-extra
@@ -1631,7 +1631,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (legacy)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'yes'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-insecure
@@ -1639,7 +1639,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (legacy-extra)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'yes'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-insecure-extra
@@ -1780,7 +1780,7 @@ jobs:
           move dist ${{github.workspace}}\ckwin
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}
           path: ${{github.workspace}}/ckwin
@@ -1880,7 +1880,7 @@ jobs:
         shell: bash
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-mingw64-cross
           path: ${{github.workspace}}/ckwin
@@ -1995,7 +1995,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ctlseqs-doc
           path: |
@@ -2044,7 +2044,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-web
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2098,7 +2098,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-for-github-pages
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2269,7 +2269,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2312,7 +2312,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2367,7 +2367,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-x86
           path: ${{ github.workspace }}\k95
@@ -2401,7 +2401,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-x86-64
           path: ${{ github.workspace }}\k95
@@ -2435,7 +2435,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-arm32
           path: ${{ github.workspace }}\k95
@@ -2470,7 +2470,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-arm64
           path: ${{ github.workspace }}\k95
@@ -2501,7 +2501,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ia64
           path: ${{ github.workspace }}\k95
@@ -2594,7 +2594,7 @@ jobs:
           name: k2-mini-install
 
       - name: Upload Full Installer Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-full-install
           path: ${{github.workspace}}/dist-full
@@ -2602,7 +2602,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Minimal Installer Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-mini-install
           path: ${{github.workspace}}/dist-mini
