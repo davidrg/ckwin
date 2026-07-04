@@ -1639,10 +1639,22 @@ decdld(int font_number, int starting_character, int erase_control,
     debug(F101, "DECDLD H-Offset", 0, h_offset);
     debug(F100, "DECDLD V-Offset", 0, v_offset);
 
-    for (i=start+1; i < length; i++) {
+    for (i=start+1; i <= length; i++) {
         char sixel = definition[i];
         char bits;
         int bit;
+
+        if (!erased) {
+            for (j = 0; j < DRCS_MAX_CELL_HEIGHT; j++) {
+                drcs->renditions[rendition]->glyphs[glyph].pixels[j] = 0;
+            }
+            erased = TRUE;
+
+            /* To ensure that the next character after the end of the sixel
+             * string gets erased (this is what the VT420 and VT520 do) */
+            if (i == length)
+                break;
+        }
 
         if (sixel >= BS && sixel <= CK_CR) {
             /* STD070: Bit combinations 0/8 (BS) to 0/13 (CR) may be included in
@@ -1764,13 +1776,6 @@ decdld(int font_number, int starting_character, int erase_control,
         else if (glyph > 95) continue;
 
         bits = sixel - '?';
-
-        if (!erased) {
-            for (j = 0; j < DRCS_MAX_CELL_HEIGHT; j++) {
-                drcs->renditions[rendition]->glyphs[glyph].pixels[j] = 0;
-            }
-            erased = TRUE;
-        }
 
         drcs->renditions[rendition]->glyphs[glyph].undefined = FALSE;
 
