@@ -2231,7 +2231,7 @@ jobs:
 # See:  https://github.com/actions/deploy-pages/issues/383
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # This is the normal version for distribution with the application. HTML
   # files end in .htm, index.htm is the front page of the K95 documentation,
