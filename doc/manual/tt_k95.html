@@ -8,7 +8,7 @@
 
 <p>
 
-This is Kermit 95s <em>own</em> terminal personality which, while not emulating
+This is Kermit 95s <em>own</em> terminal personality that, while not emulating
 xterm, aims to be broadly compatible with software written for other
 "xterm compatible" terminals. And while not aiming specifically to emulate
 xterm, the K95 terminal type is in general more xterm-compatible than many other
@@ -23,13 +23,15 @@ curses applications to take full advantage of its capabilities, which include:
     <li>Support for full 24-bit direct RGB color</li>
     <li>Settable color palette</li>
     <li>Optional host-writable status line. When turned on or off, it alters
-        the window size, rather than adding/removing terminal lines like other
+        the window size rather than adding/removing terminal lines like other
         emulations.
     </li>
     <li>Both of xterms Meta key modes</li>
     <li>A more xterm-compatible default keymap</li>
-    <li>VT420 rectangular area operations</li>
-    <li>Some VT525 color control sequences</li>
+    <li>VT420 rectangular area operations, paging, macros and left/right margins</li>
+    <li>VT525 color control sequences</li>
+    <li>Soft-fonts (DRCS)</li>
+    <li>DECterm Ruled Lines</li>
     <li>A selection of additional control sequences for improved
         compatibility with xterm</li>
     <li>Synchronized Output Mode</li>
@@ -111,6 +113,32 @@ file to get the best results:
     work. As a workaround, you can add the following to your k95custom.ini:
 <pre>   set terminal key meta \2829 \{3}\{24}M</pre>
 
+<h3><a name="drcs"><hr>Soft-fonts (DRCS)</h3>
+<p>The K95 terminal types support for downloadable character sets/soft-fonts is
+    similar to that of the VT520, though with a few features of the VT420 added
+    in:
+</p>
+<ul>
+    <li>Two font buffers</li>
+    <li>Each font buffer can store all six renditions, though only the 80x24
+        rendition is currently rendered. Character cell size for each rendition
+        is the same as the VT420/5xx (10x16 for a full-cell font on an 80x24
+        screen).
+    </li>
+    <li>Glyphs are centered in their character cells horizontally and vertically
+    </li>
+</ul>
+<p>
+    K95 does not stretch VT220 fonts to fit the emulated terminals character
+    cell size (no DEC VT does this either). They are simply rendered at their
+    specified size, which will result in them appearing a bit small.
+</p>
+<p>
+    The K95 terminal type will <em>not</em> correctly display soft-fonts
+    designed for a VT320 terminal, as the VT320 has a larger character cell
+    size. To correctly display soft-fonts designed for a VT320 terminal, use
+    the VT320 Emulation.
+</p>
 <p>
 <hr>
 <p>

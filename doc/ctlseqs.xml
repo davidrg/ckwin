@@ -97,6 +97,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST p exclude-badges IDREFS #IMPLIED>
 
         <!ELEMENT th (#PCDATA|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
+        <!ATTLIST th colspan CDATA #IMPLIED>
 
         <!ELEMENT td (#PCDATA|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info|br|table)*>
         <!ATTLIST td not-implemented (true|false) "false">
@@ -2971,7 +2972,7 @@ DECTSR		462
                  title="Delay terminal processing" not-implemented="true" todo="true">
             <ref src="wy370:36"/>
         </section>
-        <section role="ctlseq" id="sg1-vt300" ctlseq="ESC - C" mnemonic="SCS" title="Designate G1 Character Set (VT300)">
+        <section role="ctlseq" id="sg1-vt300" ctlseq="ESC - C" mnemonic="SCS" title="Designate G1 96-Character Set (VT300)">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC---C.CCB"/>
             <ref src="vt340:88"/>
             <ref src="vt420:115"/>
@@ -3087,7 +3088,7 @@ DECTSR		462
                 </tr>
             </table>
         </section>
-        <section role="ctlseq" id="sg2-vt300" ctlseq="ESC . C" mnemonic="SCS" title="Designate G2 Character Set (VT300)" groups="isvt220 isansi">
+        <section role="ctlseq" id="sg2-vt300" ctlseq="ESC . C" mnemonic="SCS" title="Designate G2 96-Character Set (VT300)" groups="isvt220 isansi">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-.-C.CCC"/>
             <ref src="vt340:88"/>
             <ref src="vt420:115"/>
@@ -3100,7 +3101,7 @@ DECTSR		462
                 <a href="#sg1-vt300"><tt><cc>ESC</cc> - C</tt></a>
             </p>
         </section>
-        <section role="ctlseq" id="sg3-vt300" ctlseq="ESC / C" mnemonic="SCS" title="Designate G3 Character Set (VT300)" groups="isvt220 isansi">
+        <section role="ctlseq" id="sg3-vt300" ctlseq="ESC / C" mnemonic="SCS" title="Designate G3 96-Character Set (VT300)" groups="isvt220 isansi">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-slash-C.EB9"/>
             <ref src="vt340:88"/>
             <ref src="vt420:115"/>
@@ -3931,17 +3932,1645 @@ DECTSR		462
             </section>
         </section>
 
-        <section role="ctlseq" id="decdld" mnemonic="DECDLD" title="Down-Line-Load Soft Character Set"
-            not-implemented="true" todo="true">
+        <section role="ctlseq" id="decdld" mnemonic="DECDLD"
+                 title="Down-Line-Load Soft Character Set (Soft Font)"
+                 badges="vt220 vt220pc vt320 vt320pc vt420 wy370 vt520 vt525 k95">
             <ref src="vt220:S4.16"/>
             <ref src="vt340:104"/>
             <ref src="vt420:136"/>
             <ref src="vt510:DECDLD.html"/>
-            <ref src="vt52x:183"/>
+            <ref src="vt52x:193"/>
             <ref src="wy370:49"/>  <!-- WY370 populates all characters initially as reverse questionmark -->
             <!-- dtterm recognises it, but doesn't do anything with it -->
-            <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 wt"/>
-            <ctlseq>DCS <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/>  { .... ST</ctlseq>
+            <ref src="070:944"/>
+            <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 vtstar wt"/>
+            <ctlseq>DCS <param-single symbol="Pfn"/> ;
+                <param-single symbol="Pcn"/> ;
+                <param-single symbol="Pe"/> ;
+                <param-single symbol="Pcmw"/> ;
+                <param-single symbol="Pss"/> ;
+                <param-single symbol="Pu"/> ;
+                <param-single symbol="Pcmh"/> ;
+                <param-single symbol="Pcss"/> {
+                <param-text symbol="Dscs"/>
+                <param-text symbol="sixel-font-pattern"/>
+                ST </ctlseq>
+
+            <p>
+                Most DEC terminals starting with the VT220 support a feature
+                called <em>Dynamically Redefinable Character Sets</em> (DRCS)
+                which allows you to download a soft-character set (a soft-font)
+                to the terminal and designate it as you would any character set
+                built in to the terminal.
+            </p>
+
+            <p>
+                Soft-character sets are downloaded into a specific
+                <em>font buffer</em>. Some terminals only provide one
+                font buffer allowing only a single soft-font to be on screen at
+                a time, and some provide two. A single font buffer may
+                contain multiple different <em>renditions</em> (font set sizes)
+                of a single soft-font, with each rendition being suitable only
+                for a specific screen size. If multiple renditions are
+                supported, the terminal chooses the rendition appropriate for
+                the current screen size. If there is no appropriate rendition
+                available, the soft-font is ignored and text is rendered as
+                reverse question-marks.
+            </p>
+
+            <p>
+                The GUI version of Kermit 95 on Windows (K95G) fully implements
+                the DRCS feature for all DEC VT models that supported it as well
+                as the Wyse WY370 and the K95 terminal type.
+            </p>
+
+            <p>
+                The implementation has been tested against a VT220, VT420 and
+                VT520 and it should closely match the behaviour of those
+                terminals. There has so far been no VT320 or WY370 available for
+                testing, so Kermit 95s behaviour for those emulations is subject
+                to change should future testing demonstrate that they do not
+                behave as currently assumed.
+            </p>
+
+            <p>
+                The documentation here <em>does</em> differ from DECs
+                description of the feature in some of the VT Programmer
+                Reference Manuals due to errors and omissions in those manuals.
+                The behaviour described here and implemented by Kermit 95 is a
+                result of testing how the VT220, VT420 and VT520 actually
+                behave, not how DECs documentation imagines they behave.</p>
+            <p>
+                That said, if something looks or sounds wrong its not impossible
+                that it may in fact be wrong. This is a complex feature and each
+                of DECs terminals implements it slightly differently which makes
+                the testing and implementation that much more difficult. If in
+                doubt,
+                <a href="https://github.com/davidrg/ckwin/discussions">please ask</a>
+                supplying a test case you'd like confirmed if possible.
+            </p>
+
+            <p>The format of this sequence is:
+                <tt><cc>DCS</cc>
+                    <a href="#decdld-pfn">Pfn</a> ;
+                    <a href="#decdld-pcn">Pcn</a> ;
+                    <a href="#decdld-pe">Pe</a> ;
+                    <a href="#decdld-pcmw">Pcmw</a> ;
+                    <a href="#decdld-pss">Pss</a> ;
+                    <a href="#decdld-pt">Pu</a> ;
+                    <a href="#decdld-pcmh">Pcmh</a> ;
+                    <a href="#decdld-pcss">Pcss</a> {
+                    <a href="#decdld-dscs">Dscs</a>
+                    <a href="#decdld-glyphs">sixel-font-pattern</a>
+                    <cc>ST</cc></tt>. Read on for a description of each
+                parameter.
+            </p>
+
+            <!--
+            A quick paragraph about the format - parameters, a '{', then Dscs
+            then the sixel string
+            -->
+
+            <section role="text" title="Parameter Pfn: Font Number"
+                     id="decdld-pfn">
+                <p>
+                    This specifies which font buffer is being loaded. The VT220,
+                    VT320, VT420 and WY370 have a single font buffer, while the
+                    VT520 and the K95 terminal type provide two font buffers.
+                </p>
+                <p>
+                    A value of 0 or 1 will load font buffer 1, and a value of 2
+                    will load font buffer 2.
+                </p>
+                <p>
+                    The documentation for the VT520 indicates that specifying
+                    a value of zero should load <em>the first empty</em> font
+                    buffer. This appears to be an error as Firmware version 2.1
+                    reliably loads the first font buffer. K95 follows this
+                    behaviour for now in the absence of any VT520 examples
+                    that behave as documented.
+                </p>
+                <p>
+                    When both font buffers contain fonts with the same name, the
+                    the VT520 manual claims that the most recently loaded font
+                    is used. This again appears to be an error as the VT520 v2.1
+                    reliably uses font buffer 1 in this scenario. K95 follows
+                    this behaviour for now in the absence of any VT520 examples
+                    that behave as documented.
+                </p>
+            </section>
+            <section role="text" title="Parameter Pcn: Starting Character"
+                     id="decdld-pcn">
+                <p>
+                    This is the first character in the font buffer to load,
+                    starting from character 2/0 (Space) which has a value of 0
+                    and ending with character 7/15 (DEL) which has a value of 95.
+                </p>
+                <p>
+                    Characters 2/0 and 7/15 can only be loaded if this is
+                    a 96-character set. When loading a 94-character set, any
+                    attempt to load characters 2/0 and 7/15 will be ignored.
+                    This means that specifying Pcn=0 for a 94-character set
+                    will result in the first glyph being ignored.
+                </p>
+                <p>
+                    Because of this, 94 character fonts (including all fonts
+                    intended for the VT220) should use a Pcn value greater than
+                    zero, or alternatively lead with an empty glyph.
+                </p>
+            </section>
+            <section role="text" title="Parametr Pe: Erase Control"
+                     id="decdld-pe">
+                <p>Selects which glyphs to erase in the target font buffer.
+                </p>
+                <p>Pe=0 erases all glyphs in the target rendition
+                    (<a href="#decdld-pss">Pss</a>) of the target
+                    font buffer before beginning to load glyphs.</p>
+                <p>Pe=1 erases only individual glyphs as they are loaded,
+                    allowing specific characters in the specified font buffer
+                    and rendition to be altered without altering the rest of the
+                    font.</p>
+                <p>Pe=2 erases all renditions of all font buffers before
+                    beginning to load characters.
+                </p>
+                <p>
+                    Erasing a soft-character set does not make it unavailable.
+                    It just replaces all glyphs with the replacement character,
+                    a reverse question-mark, of a suitable size for the
+                    specified rendition. This means that when the font buffer or
+                    rendition is erased, all characters on screen using that
+                    soft-character set will immediately be replaced with reverse
+                    question-marks.
+                </p>
+                <!--
+                Clearing a DRCS set (eg with DCS 1;1;2{sp@ST) does *not* deallocate it. It
+                just clears all characters. If you designate it you'll get reverse
+                question marks, but the character set with the name still exists and can
+                still be designated unlike when the terminal is fresh from power on.
+                A soft-reset doesn't clear the DRCS buffers either - you've got to
+                power-cycle the terminal (a hard reset)
+                -->
+            </section>
+            <section role="text" title="Parameter Pcmw: Character Matrix Width"
+                     id="decdld-pcmw">
+                <p>
+                    For values 5 and above, this sets the width of glyphs being
+                    loaded in pixels. If the value specified differs from the
+                    last value used when loading glyphs into the specified
+                    rendition of the specified font buffer, the entire rendition
+                    is erased before any glyphs are loaded (equivalent to
+                    setting Pe=0).
+                </p>
+                <p>
+                    On the VT220 this parameter was known as <em>Pcms</em>, the
+                    Character Matrix Size, and it set both a width and a height.
+                    Valid values for the VT220 terminal type are given in the
+                    table below, and all other emulations treat these values
+                    in the same way as the VT220. Despite what some DEC
+                    documentation says, no special treatment is given to VT220
+                    fonts besides having a fixed height.
+                </p>
+                <!--
+                VT420 doc says it will stretch the glyphs for values 2, 3, 4 but
+                doesn't appear to actually do this. The VT520 doc doesn't mention
+                any stretching and it doesn't appear to do any.
+                -->
+                <table>
+                    <tr>
+                        <th>Pcmw</th>
+                        <th>Width</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>0</td>
+                        <td>Varies</td>
+                        <td>For VT220, this is treated the same as a value of 4
+                            setting the width to 7 and height to 10. For all
+                            other terminals, its the same as the maximum width
+                            for the specified terminal type, target rendition
+                            and font usage. See the next table for values.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>n/a</td>
+                        <td>Not valid - causes the DECDLD sequence to be ignored</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>5</td>
+                        <td>VT220 font. Causes Pcmh to be ignored and the height
+                            set to 10 pixels
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>6</td>
+                        <td>VT220 font. Causes Pcmh to be ignored and the height
+                            set to 10 pixels</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>7</td>
+                        <td>VT220 font. Causes Pcmh to be ignored and the height
+                            set to 10 pixels</td>
+                    </tr>
+                </table>
+
+                <p>Pcmw values 5 and above are supported only by the VT320 and
+                    up as well as the WYSE WY370. The maximum value depends on
+                    the terminal type, target rendition, and font usage (text or
+                    full cell):
+                </p>
+                <table>
+                    <tr>
+                        <th></th>
+                        <th colspan="2">80 columns</th>
+                        <th colspan="2">132 columns</th>
+                    </tr>
+                    <tr>
+                        <th>Terminal Type</th>
+                        <th>Text</th>
+                        <th>Full Cell</th>
+                        <th>Text</th>
+                        <th>Full Cell</th>
+                    </tr>
+                    <tr>
+                        <td>VT320</td>
+                        <td>12</td>
+                        <td>15</td>
+                        <td>7</td>
+                        <td>9</td>
+                    </tr>
+                    <tr>
+                        <td>WY370</td>
+                        <td>12</td>
+                        <td>16</td>
+                        <td>7</td>
+                        <td>10</td>
+                    </tr>
+                    <tr>
+                        <td>VT420, VT5xx, K95</td>
+                        <td>8</td>
+                        <td>10</td>
+                        <td>6</td>
+                        <td>5</td>
+                    </tr>
+                </table>
+                <p>If a Pcmw value greater than the applicable maximum value
+                    from the table above is given then the DECDLD sequence will
+                    be ignored.
+                </p>
+            </section>
+            <section role="text" title="Parameter Pss: Font Set Size (rendition)"
+                     id="decdld-pss">
+                <p>
+                    With the exception of the VT220, terminals switch to a
+                    different font rendition when changing the width or height
+                    of the terminal screen. The Pss value specifies what screen
+                    size this font rendition is intended for. If a font
+                    rendition suitable for the screen size is not available,
+                    then the terminal renders the replacement character (reverse
+                    question mark) for all characters using that font.
+                </p>
+                <p>
+                    While Kermit 95 does support loading multiple renditions to
+                    a single font buffer (when the terminal being emulated
+                    does), at this time it will only ever make use of the 80x24
+                    rendition as Kermit 95 does not yet support changing fonts
+                    when the screen size changes. So if a soft-font does not
+                    supply an 80x24 rendition it will just display as reverse
+                    question-marks. Fonts designed for Kermit 95 should
+                    currently use the 80x24 rendition only.
+                </p>
+
+                <table>
+                    <tr>
+                        <th>Pss</th>
+                        <th>Columns</th>
+                        <th>Lines</th>
+                        <th>Valid on...</th>
+                    </tr>
+                    <tr>
+                        <td>0</td>
+                        <td>80</td>
+                        <td>24</td>
+                        <td>All emulations</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>80</td>
+                        <td>24</td>
+                        <td>All emulations</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>132</td>
+                        <td>24</td>
+                        <td>All emulations</td>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td>80</td>
+                        <td>36</td>
+                        <td>VT420, K95</td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td>132</td>
+                        <td>36</td>
+                        <td>VT420, K95</td>
+                    </tr>
+                    <tr>
+                        <td>21</td>
+                        <td>80</td>
+                        <td>48</td>
+                        <td>VT420, K95</td>
+                    </tr>
+                    <tr>
+                        <td>22</td>
+                        <td>132</td>
+                        <td>48</td>
+                        <td>VT420, K95</td>
+                    </tr>
+                </table>
+
+                <p>
+                    On the VT220 this parameter was known as <em>Pw</em>, the
+                    Width Attribute, and its value was effectively ignored
+                    beyond ensuring it was a valid value (0, 1 or 2). This is
+                    because instead of switching fonts when in
+                    <a href="#deccolm">DECCOLM</a>, the VT220 changed the width
+                    of its pixels causing the existing fonts width to shrink.
+                    For the VT220 terminal type, Kermit 95 treats values of 0, 1
+                    or 2 as the 80x24 rendition.
+                </p>
+                <p>
+                    The VT320 supports storing an 80x24 and a 132x24 rendition,
+                    and it will use the appropraite rendition for the current
+                    <a href="#deccolm">DECCOLM</a> setting. K95 will store both
+                    renditions if supplied, but will only use the 80x24
+                    rendition.
+                </p>
+                <p>
+                    The VT420 supports storing all six renditions
+                    simultaneously, and it will switch between them based on the
+                    screen width (<a href="#deccolm">DECCOLM</a>,
+                    <a href="#decscpp">DECSCPP</a>) and height
+                    (<a href="#decsnls">DECSNLS</a>). The K95 terminal type
+                    behaves the same, but at this time it does not switch
+                    renditions so only the 80x24 rendition is used.
+                </p>
+                <p>
+                    While K95 does not yet emulate a VT520, its behaviour is
+                    is different again. The Pss values it accepts are the same
+                    as for the VT420, but unlike the VT420 it does not switch
+                    soft-font renditions when the screen height changes - only
+                    when the width changes. Because of this it only stores a
+                    single 80 column and a single 132 column rendition per font
+                    buffer. Pss values 0, 1, 11 and 21 load the 80 column
+                    rendition, while the values 2, 12 and 22 load the 132-column
+                    rendition. When the screen height changes the terminal just
+                    truncates the soft-font vertically, so applications must
+                    handle re-loading soft-fonts whenever the screen height
+                    changes. For this reason it was decided that the K95
+                    terminal type would follow the VT420 behaviour when support
+                    for switching renditions based on screen size eventually
+                    happens.
+                </p>
+            </section>
+            <section role="text" title="Parameter Pu: Font Usage" id="decdld-pt">
+                <p>
+                    This setting controls the maximum value for
+                    <a href="#decdld-pcmw">Pcmw</a>, and if glyphs
+                    are centered in the character cell or not. If the value
+                    specified differs from the last value used when loading
+                    glyphs into the specified rendition of the specified font
+                    buffer, the entire rendition is erased before any glyphs are
+                    loaded (equivalent to setting Pe=0).
+                </p>
+                <p>
+                    Valid values are:
+                </p>
+                <ul>
+                    <li>0, 1 = text (default).</li>
+                    <li>2 = full cell</li>
+                </ul>
+                <p>Full cell fonts can address all pixels in the character cell,
+                    while text fonts have a reduced maximum width to allow space
+                    for centering the glyph in the character cell. Glyphs are
+                    centered as follows for the different terminal types:
+                </p>
+                <ul>
+                    <li>VT320, WY370: Offset to the right by 2 pixels (80 columns) or
+                        1 pixel (132 columns)</li>
+                    <li>VT420: Offset to the right by one pixel</li>
+                    <li>VT520: Two pixel gap on the right side of the glyph</li>
+                    <li>K95: centers the glyph horizontally and vetically in
+                        the cell</li>
+                </ul>
+                <!-- Also known as pt - type - on the VT220 -->
+                <p>The VT220 ignores this setting beyond checking that the value
+                    is valid. It otherwise treats text and full cell fonts the
+                    same <a href="#drcs-vt220">unique way</a>.
+                </p>
+            </section>
+            <section role="text" title="Parameter Pcmh: Character Matrix Height"
+                     badges="vt320 vt320pc vt420 wy370 vt520 vt525 k95"
+                     id="decdld-pcmh">
+                <p>
+                    Specifies the height of the glyphs being loaded. If the
+                    value specified differs from the last value used when
+                    loading glyphs into the specified rendition of the specified
+                    font buffer, the entire rendition is erased before any
+                    glyphs are loaded (equivalent to setting Pe=0).
+                </p>
+                <p>
+                    If a <a href="#decdld-pcmw">Pcmw</a> value of 2, 3 or 4 is
+                    specified then the value of Pcmh is ignored and a height of
+                    10 is used instead.
+                </p>
+                <p>
+                    The VT420 does not appear to do anything with this
+                    information, while the VT520 crops glyphs to the height
+                    specified. Due to lack of access to a VT320 for testing, it
+                    is currently <em>assumed</em> that the VT320 behaves as the
+                    VT420 does and this is what Kermit 95 implements. The VT220
+                    does not support this setting. The K95 terminal type behaves
+                    as the VT520 does.
+                </p>
+                <p>Valid values are 1 up to the cell height in pixels:</p>
+                <ul>
+                    <li>VT320: 12 pixels</li>
+                    <!-- <li>VT340: 20 pixels</li> -->
+                    <li>VT420, VT5xx, K95: 16 pixels for 24 line display, 10
+                        pixels for a 36 line display, and 8 pixels for a 48
+                        line display.
+                    </li>
+                </ul>
+                <p>A value of zero will use cause the cell height (above) to be
+                    used. Values greater than the cell height are invalid and
+                    will cause the DECDLD sequence to be ignored.
+                </p>
+            </section>
+            <section role="text" title="Parameter Pcss: Character Set Size"
+                     id="decdld-pcss"
+                     badges="vt320 vt320pc vt420 wy370 vt520 vt525 k95">
+                <p>
+                    Specifies whether a 94-character set (0) or a 96-character
+                    set (1) is being loaded. If the value specified differs from
+                    the last value used when loading glyphs into the specified
+                    font buffer, then all renditions for the specified font
+                    buffer are erased before any glyphs are loaded.
+                </p>
+                <p>
+                    When the Pcss value is 0 then glyphs in positions 0
+                    (2/0, space) and 95 (7/15, delete) can not be used.
+                    Glyphs loaded into these positions will be ignored, so
+                    either the first glyph should be empty or a
+                    <a href="#decdld-pcn">Pcn</a> value of 1 or greater should
+                    be used.
+                </p>
+                <p>
+                    When the Pcss value is 1 then the font must be designated
+                    as a 96-character set and so can only be selected into
+                    <a href="#sg1-vt300">G1</a>, <a href="#sg2-vt300">G2</a>,
+                    or <a href="#sg3-vt300">G3</a>.
+                </p>
+            </section>
+            <section role="text" title="Dscs: Character Set Name" id="decdld-dscs">
+                <p>
+                    This defines the name of the character set this font will be
+                    associated with consisting of 0, 1, or 2 intermediate
+                    characters followed by a final character. The K95 terminal
+                    type allows a 3rd intermediate character if needed.
+                </p>
+                <p>
+                    Intermediate characters are: SPACE and
+                    <tt>!"#$%&amp;'()*+,-./</tt>
+                </p>
+                <p>
+                    And the Final Character must be one of:
+                    <tt>@A–Z[\]^_`a–z{|}~</tt>
+                </p>
+                <p>
+                    DEC recommended using two unregistered character set names
+                    for soft-character sets: <tt>SPACE @</tt> (the space
+                    character followed by the @ character) for the first font
+                    buffer, and <tt>&amp;%C</tt> for the second font buffer if
+                    needed. But any character set name can be used, including
+                    names of built-in character sets.
+                </p>
+                <p>
+                    When a soft-character set has the same name as a built-in
+                    character set, the soft-character set will be used instead.
+                    This means that, for example, downloading a soft-character
+                    set with a Dscs value of <tt>B</tt> will cause the
+                    soft character set to replace the ASCII character set, and
+                    where ever ASCII is used will be rendered using the
+                    soft-font.
+                </p>
+                <p>
+                    If a built-in character set is replaced by a soft-character
+                    set, the only way to make the the built-in character set
+                    available again is to download a soft-character set with a
+                    different name to the same font buffer (renaming the
+                    soft-character set in the font buffer).
+                </p>
+                <p>
+                    When both font buffers are loaded with fonts that have the
+                    same name, the K95 terminal type behaves as the VT520 does:
+                    font buffer 1 takes priority.
+                </p>
+                <!--
+                    The VT520 manual says font buffers are searched in reverse
+                    order so as to pick up the most recently loaded font but
+                    real VT520s (v2.1 tested) do not appear to do this - they
+                    just pick font buffer 1.
+                -->
+
+            </section>
+            <section title="Sixel String" role="text" id="decdld-glyphs">
+                <p>
+                    Glyphs in the soft-character set are defined by one or more
+                    sixels, and each glyph is separated by the semicolon
+                    character. The first glyph specified will be stored at the
+                    position identified by <a href="#decdld-pcn">Pcn</a>. If
+                    Pcn=0 and <a href="#decdld-pcss">Pcss</a>=0 (a
+                    94-character set) then the first glyph will be ignored.
+                </p>
+                <p>
+                    A sixel is a single character representing a certain
+                    combination of six pixels in a vertical orientation. For
+                    example, the character <tt>~</tt> is a vertical line of six
+                    pixels. For glyphs taller than six pixels, the <tt>/</tt>
+                    character moves to the next row of sixels.
+                </p>
+
+                <p>
+                    The reverse question-mark can be represented as the sixel
+                    string <tt>{}~FFFF~}{/@BF^][????/???FFF????</tt> as shown
+                    below where a 'X' is a set pixel and '.' is a cleared pixel:
+                </p>
+                <table>
+                    <tr>
+                        <th>Column</th>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>4</th>
+                        <th>5</th>
+                        <th>6</th>
+                        <th>7</th>
+                        <th>8</th>
+                        <th>9</th>
+                        <th>10</th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th>Sixel:</th>
+                        <td><tt>{</tt></td>
+                        <td><tt>}</tt></td>
+                        <td><tt>~</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>~</tt></td>
+                        <td><tt>}</tt></td>
+                        <td><tt>{</tt></td>
+                        <td><tt>/</tt></td>
+                    </tr>
+                    <tr>
+                        <th>Row 1</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 2</th>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 3</th>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 4</th>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 5</th>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 6</th>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Sixel:</th>
+                        <td><tt>@</tt></td>
+                        <td><tt>B</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>^</tt></td>
+                        <td><tt>]</tt></td>
+                        <td><tt>[</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>/</tt></td>
+                    </tr>
+                    <tr>
+                        <th>Row 7</th>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 8</th>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 9</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 10</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 11</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 12</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Sixel:</th>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>F</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>?</tt></td>
+                        <td><tt>;</tt></td>
+                    </tr>
+                    <tr>
+                        <th>Row 13</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 14</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 15</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th>Row 16</th>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td></td>
+                    </tr>
+                </table>
+
+                <p>
+                    In the bottom row above, the sixels are only shown above as
+                    being four pixels high. The K95 terminal type, like the
+                    VT520, will crop the glyph to fit the specified height but
+                    the VT420 does not. When choosing sixels for the bottom (or
+                    only) row, choose sixels that leave any pixels below the
+                    bottom of the glyph unset.
+                </p>
+
+                <p>
+                    The full set of valid sixels is:
+                </p>
+                <!--
+                <pre>
+    ?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+    .X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X.X
+    ..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX..XX
+    ....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX....XXXX
+    ........XXXXXXXX........XXXXXXXX........XXXXXXXX........XXXXXXXX
+    ................XXXXXXXXXXXXXXXX................XXXXXXXXXXXXXXXX
+    ................................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                </pre>
+                -->
+                <table>
+                    <tr>
+                        <th><tt>?</tt></th>
+                        <th><tt>@</tt></th>
+                        <th><tt>A</tt></th>
+                        <th><tt>B</tt></th>
+                        <th><tt>C</tt></th>
+                        <th><tt>D</tt></th>
+                        <th><tt>E</tt></th>
+                        <th><tt>F</tt></th>
+                        <th><tt>G</tt></th>
+                        <th><tt>H</tt></th>
+                        <th><tt>I</tt></th>
+                        <th><tt>J</tt></th>
+                        <th><tt>K</tt></th>
+                        <th><tt>L</tt></th>
+                        <th><tt>M</tt></th>
+                        <th><tt>N</tt></th>
+                        <th><tt>O</tt></th>
+                        <th><tt>P</tt></th>
+                        <th><tt>Q</tt></th>
+                        <th><tt>R</tt></th>
+                        <th><tt>S</tt></th>
+                        <th><tt>T</tt></th>
+                        <th><tt>U</tt></th>
+                        <th><tt>V</tt></th>
+                        <th><tt>W</tt></th>
+                        <th><tt>X</tt></th>
+                        <th><tt>Y</tt></th>
+                        <th><tt>Z</tt></th>
+                        <th><tt>[</tt></th>
+                        <th><tt>\</tt></th>
+                        <th><tt>]</tt></th>
+                        <th><tt>^</tt></th>
+                        <th><tt>_</tt></th>
+                        <th><tt>`</tt></th>
+                        <th><tt>a</tt></th>
+                        <th><tt>b</tt></th>
+                        <th><tt>c</tt></th>
+                        <th><tt>d</tt></th>
+                        <th><tt>e</tt></th>
+                        <th><tt>f</tt></th>
+                        <th><tt>g</tt></th>
+                        <th><tt>h</tt></th>
+                        <th><tt>i</tt></th>
+                        <th><tt>j</tt></th>
+                        <th><tt>k</tt></th>
+                        <th><tt>l</tt></th>
+                        <th><tt>m</tt></th>
+                        <th><tt>n</tt></th>
+                        <th><tt>o</tt></th>
+                        <th><tt>p</tt></th>
+                        <th><tt>q</tt></th>
+                        <th><tt>r</tt></th>
+                        <th><tt>s</tt></th>
+                        <th><tt>t</tt></th>
+                        <th><tt>u</tt></th>
+                        <th><tt>v</tt></th>
+                        <th><tt>w</tt></th>
+                        <th><tt>x</tt></th>
+                        <th><tt>y</tt></th>
+                        <th><tt>z</tt></th>
+                        <th><tt>{</tt></th>
+                        <th><tt>|</tt></th>
+                        <th><tt>}</tt></th>
+                        <th><tt>~</tt></th>
+                    </tr>
+                    <tr>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>X</td>
+                    </tr>
+                    <tr>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                    </tr>
+                    <tr>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                    </tr>
+                    <tr>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                    </tr>
+                    <tr>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                    </tr>
+                    <tr>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>.</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                        <td>X</td>
+                    </tr>
+                </table>
+
+                <p>
+                    Any occurrences of the characters BS, HT, LF, VT, FF and CR
+                    in a sixel string are ignored, allowing line breaks and tabs
+                    to be used for formatting.
+                </p>
+
+                <p>
+                    As laying out an entire font by selecting appropriate sixels
+                    can be rather tiresome, the
+                    <a href="https://github.com/j4james/vtfontmaker">VT Font
+                    Maker</a> utility by James Holderness can make the job quite
+                    a lot easier.
+                </p>
+
+                <section title="Example" role="text" id="drcs-example">
+                    <p>
+                        This is a simple example of a soft-character set
+                        containing only a single glyph - the reverse
+                        question-mark above.
+                    </p>
+                    <p><tt><cc>DCS</cc>0;1;0;10;0;2;16;0{ @{}~FFFF~}{/@BF^][????/???FFF????<cc>ST</cc></tt>
+                    </p>
+                    <p>Which is...</p>
+                    <ul>
+                        <li>Pfn=0: Load font buffer 1</li>
+                        <li>Pcn=1: Start loading at character 1 (!)</li>
+                        <li>Pe=0: Erase all glyphs in the target rendition</li>
+                        <li>Pcmw=10: Glyphs are 10 pixels wide</li>
+                        <li>Pss=0: 80x24 rendition</li>
+                        <li>Pu=2: This is a Full Cell font</li>
+                        <li>Pcmh=16: Glyphs are 16 pixels tall</li>
+                        <li>Pcss=0: This is a 94-character set</li>
+                        <li>'<tt>{</tt>': Final character indicating this is a DECDLD DCS sequence</li>
+                        <li>'<tt> @</tt>': The name of the soft-character set is the space character followed by the @ character (' @')</li>
+                        <li>'<tt>{}~FFFF~}{/@BF^][????/???FFF????</tt>': the glyph</li>
+                    </ul>
+                    <p>The following unix shell script demonstrates the soft-font.
+                        For this to work, Kermit 95 must be in ISO-2022 mode rather than UTF-8 mode
+                        (<tt>set term character-set latin1</tt> at the Kermit prompt, or pick
+                        latin1-iso from the drop-down list on the toolbar).
+                    </p>
+                    <pre>
+    printf '\x1bP0;1;0;10;0;2;16;0{ @{}~FFFF~}{/@BF^][????/???FFF????\x1b\\'    # Send the soft-font to the terminal
+    printf '\x1b) @'    # Designate the soft font as G1
+    printf '\x0e'       # Invoke G1 as GL: the soft character set is now in use
+    printf '!'          # Output a ! character using the soft-character set. This will render using the reverse question-mark glyph defined earlier
+    printf '\x0f'       # Invoke G0 as GL: the soft-character set is no longer in use
+                    </pre>
+                </section>
+
+                <section title="Undefined Behaviour" role="text" id="drcs-undefined">
+                    <p>
+                        The DRCS specification leaves some behaviour undefined due
+                        to variation in behaviour between existing products.
+                        Kermit 95 attempts to match the behaviour of the DEC
+                        products it emulations regardless, though at the time this
+                        feature was implemented neither a VT320 nor a Wyse WY370 was
+                        available for testing so behaviour may not be an exact match
+                        for those terminals. Below is a description of how K95
+                        handles various characters appearing in the DRCS sixel
+                        string:
+                    </p>
+                    <ul>
+                        <li>Bytes 0x00 to 0x07 inclusive are ignored.</li>
+                        <li>Bytes 0x0E to 0x1F inclusive and excluding 0x18, 0x1A,
+                            and 0x1B are ignored.</li>
+                        <li>0x18 (CAN) cancels further processing of the DECDLD
+                            string leaving the font partially loaded. Any following
+                            characters sent are treated as regular input.
+                        </li>
+                        <li>0x1B (SUB) on the VT220 and VT420 outputs a reverse
+                            question mark then cancels further processing of the
+                            DECDLD string leaving the font partially loaded. Any
+                            following characters sent are treated as regular input.
+                            For the VT520 Kermit 95 provides the same behaviour as
+                            the VT220 and VT420 rather than doing as a VT520 does
+                            (which is to briefly display garbage from somewhere in
+                            memory in the session icon area above the titlebar
+                            before writing a NUL character at the cursor position
+                            and discarding the rest of the DECDLD string). </li>
+                        <li>SP (0x20) and DEL (0x7F) are ignored.</li>
+                        <li>Characters from '!' to '>' inclusive and excluding
+                            '/' and ';' are ignored. </li>
+                        <li>Characters 0x80 to 0x9F (0x81 to 0x9F on VT220)
+                            excluding 0x9C cancels further processing of the DECDLD
+                            sequence with following characters possibly being as
+                            normal input.
+                        </li>
+                        <li>Bytes 0xA1 to 0xFE inclusive have the 8th bit cleared
+                            and are then processed as per other rules.</li>
+                    </ul>
+                </section>
+            </section>
+            <section title="VT220 Rendering Details" role="text" id="drcs-vt220">
+                <p>
+                    When the VT220 terminal type is chosen, Kermit 95 tries to
+                    match the unique rendering behaviour of the VT220 terminal
+                    which is a bit different from later terminals.
+                </p>
+
+                <p>
+                    Firstly, columns 9 and 10 are not directly addressable. They
+                    are always copies of column 8 and so column 8 should not be
+                    used by text fonts. Column 8 (and its copies) are intended
+                    to be used by line drawing characters so that they can join
+                    up with the character in the ajacent cell.
+                </p>
+
+                <p>
+                    All pixels in a font are also copied half of a pixel to the
+                    right. This is called dot stretching and was done to
+                    ensure bright rendering on a slightly slow CRT. The terminal
+                    applied dot stretching <em>after</em> glyphs were stretched
+                    for double-height/double-wide lines, while K95 currently
+                    does dot stretching first which may result in a minor
+                    visible difference on double-height/double-wide lines. At
+                    this time K95 also copies a whole pixel to the right rather
+                    than half a pixel.
+                </p>
+
+                <p>
+                    The VT220 <em>does</em> apply dot stretching to the 10th
+                    column of a glyph, causing it to overflow into half of the
+                    first column of the next character cell. K95 doesn't currently
+                    replicate this behaviour, instead treating character cells
+                    as 11 pixels wide so that glyphs making use of the 8th (and
+                    so 9th and 10th) column better match their appearance on a
+                    real VT220.
+                </p>
+
+                <p>
+                    When the VT220 renders glyphs to the screen, they are offset
+                    from the grid by one pixel (glyph column 1 goes into
+                    character cell column 2) to center text glyphs. K95 only
+                    does this for fonts that do not make use of the 8th column.
+                </p>
+
+                <p>
+                    Lastly, the VT220 has quite visible scan lines which K95
+                    does not currently attempt to reproduce.
+                </p>
+
+                <p>
+                    For more information on how a real VT220 renders text, see
+                    the excellent article by Norbert Landsteiner:
+                    <a href="https://www.masswerk.at/nowgobang/2019/dec-crt-typography">
+                        Raster CRT Typography (According to DEC)
+                    </a>
+                </p>
+            </section>
+
+<!--
+
+ * VT220
+    * DECDLD differs from later terminals in taking only six parameters which
+        have different names:
+        * Pfn   Font number. 0 or 1, doesn't matter - they're both the same
+        * Pcn   Starting Character
+        * Pe    Erase Control
+        * Pcms  Character Matrix Size.  (renamed to pcmw)
+        * Pw    Width Attribute (1=80col, 2=132col)   (renamed to pss)
+        * Pt    Text/Full cell. Only options are 0 and 1 which are both text.
+                    (renamed to Pu)
+    * Has a single font buffer
+    * It does not have a full-cell usage. DRCS sequences specifying a full cell
+        font are ignored.
+    * Character cells are 10 pixels wide, but columns 9 and 10 are not directly
+        addressable regardless of font usage (text vs full cell) - they are
+        copies of column 8. In 132 column mode the width in pixels isn't
+        obviously less (unless one or two of the non-addressable columns are
+        removed), the pixels just appear to be narrower.
+    * Glyphs are not cropped to the specified size. The VT220 treats all
+        character matrix sixes the same (2=5x10, 3=6x10, 4=7x10 all act as 8x10).
+        Only the values 0, 2, 3 and 4 are accepted however - anything else will
+        cause the DECDLD sequence to be ignored
+    * The only parameters that actually ever *worth* specifying if you only care
+        about it working on a VT220 are:
+        - Pcn: starting characte number, if you don't want to start from 0
+        - Pe: erase control, if you want to patch the existing character set
+                rather than erasing it and reloading the whole thing
+        - Pw: if you're loading a 132 column font.
+      All of the others can always be left at their default values as all
+      valid values behave the same. If you care about the font working on later
+      terminals, then everything will need to be specified correctly.
+ * VT320
+    * ?
+ * VT420
+    * Character Cells are 10 pixels wide and 16 pixels tall.
+        ** 132 column mode??? Other screen heights???
+    * Has a single font buffer which can store two fonts for different screen
+        resolutions (eg, 80x24, 132x24, etc). The terminal automatically chooses
+        the font that matches the current screen resolution.
+    * Fonts with text usage are rendered offset 1px to the right within the
+        character cell.
+    * In 80 column mode, the maximum width for text usage is 8. Higher values
+        will cause the DECDLD sequence to be ignored.
+    * In 132 column mode, the maximum width for text usage is 5. Higher values
+        will cause the DECDLD sequence to be ignored.
+    * Maximum height???
+    * If more sixels than required for the specified width are supplied, the
+        additional sixels are ignored. STD-070 does not require glyphs to be
+        cropped to the specified Pcmw width value.
+    * Glyphs are drawn to the full height possible for the supplied sixels. They
+        are not cropped to the specified height, just cropped to fit the
+        character cell height
+    * Up to six variants of a font can be loaded for different screen heights
+      and widths
+    * ///Apparently the VT420 gives the second session a single 80 column font
+        buffer (it doesn't get to define both an 80 and 132 column font)///
+    * While the Pcmw doc says that values of 2, 3 or 4 get their height doubled
+      this isn't obviously the case.
+ * VT520
+    * Character Cells are 10 pixels wide and 16 pixels tall in 80x24 mode
+    * Has zero, one or two font buffers depending on configuration. These can
+        store two fonts each - one for an 80 column display and one for a 132
+        column display. The terminal selects the appropriate font for the
+        current screen width. The manual talks about different fonts for
+        different screen *heights*, but the terminal treats all heights the
+        same. It won't store and use separate fonts for a 24 line and a 36 line
+        display like the VT420 does. The Pss values 11 and 21 are treated as 1,
+        and the Pss values 12 and 22 are treated as 2.
+    * In 80 column mode, the maximum width for text usage is 8. Higher values
+        will cause the DECDLD sequence to be ignored. The manual says 9, but the
+        manual is wrong.
+    * In 132 column mode, the maximum width for text usage is 5. Higher values
+        will cause the DECDLD sequence to be ignored. The manual says 6, but the
+        manual is wrong.
+    * If more sixels than required for the specified width or height are
+        supplied, the additional sixels (or part sixels) are ignored and the
+        glyph is cropped to the cell size.
+    * If you're using two fonts, DEC recommended naming the second one "&%C"
+    * While the manual says a font number 0 goes into the first empty font
+        buffer or font buffer 1 if all are used, in practice it seems to always
+        go to font buffer 1 regardless. Likely a bug.
+    * If both font buffers have the same name, font buffer 1 is used.
+        (eg, load a font named ' @' into buffer 1, and a different font named
+            ' @' into buffer 2. When you designate ' @' youll get the font in
+            buffer 1.)
+    * If the font number is zero, the font goes into the first font buffer
+        always. This differs from the behaviour described by the manual - either
+        the manual is wrong or there is a firmware bug. Doesn't really matter
+        which unless someone turns up with a different firmware version that
+        works as described in the manual.
+    * If a SUB (0xA1) is received during DCS processing, the VT520 aborts,
+        the area above the title bar where the session icons live is briefly
+        replaced with garbage, and the NUL chracter is written to the terminal
+        screen. K95 does not emulate this behaviour.
+ * STD-070-10
+    * STD-070 recommends that when a built-in character set is overwritten via
+        DECDLD, erasing the font via the Pe parameter should make the built-in
+        character set available again. This isn't mandatory, and the
+        VT220/420/520 don't do it - you have to rename the font buffer to get
+        the original charset back.
+    * A soft-reset does not erase font files loaded by DECDLD, though the
+        designation of character sets assocated with them optionally can
+    * RIS (ESC c) should erase font buffers though (hard reset?)
+    * If loading a 94-character font, specifying a first character to load of 0
+        will cause the first character in the font to be ignored.
+    * A DECDLD sequence with a different Pcmw or Pu or Pcmh value from the buffers
+        current contents will set Pe=0 and erase the entire font buffer first.
+    * Changes to Pss should also set Pe=0, but the VT420 and VT520 don't do
+        this - they both allow at least two renditions to be stored
+        simultaenously in one font buffer which wouldn't be possible if this
+        instruction were followed
+    * Pcmh is ignored if Pcmw is 2, 3 or 4.
+    * Pcmw of 2, 3 or 4 must be scaled to the terminals character cell size
+        >>>>!!!! a narrow font should result in glyphs that leave part of the
+            cell empty, and that empty space is scaled up along with the filled
+            space. A VT220 font would in effect pretend to have a different cell
+            size so it wouldn't leave as much empty space.
+ * K95
+    * Centers glyphs horizontally and vertically in the cell
+
+DEC STD 070:
+    -> Give it a quick read to capture any other details to add to the notes
+        above.
+K95:
+    -> Does it allow control characters in DCS strings? STD070 says we should
+        just ignore them (except for ESC and ST of course)
+VT420:
+    -> What are the maximum heights for various line counts?
+    -> Which settings can vary between renditions?
+        - Width?
+        - Height?
+        - Full Cell/Text?
+        - Character Set Size?
+-->
+
         </section>
 
         <section role="ctlseq" id="wylsfnt" mnemonic="WYLSFNT" title="Load softfont"
@@ -4575,7 +6204,6 @@ DECTSR		462
                     DECSPPCS    * p         Select ProPrinter Character Set
                     DECSSL        p         Select Set-Up Language
                     DECSZS      , {         Select Zero Symbol
-                    DECSPMA     , x         Session Page Memory Allocation
                     DECSKCV    SP r         Set Key Click Volume
                     DECSLCK    SP v         Set Lock Key Style
                     DECSMBV    SP u         Set Margin Bell Volume
@@ -4848,9 +6476,20 @@ DECTSR		462
                 <p>
                     Reports the number of pages available
                 </p>
-                <pre><cc>DCS</cc> 3 $ q , x <cc>ST</cc></pre>
+                <pre><cc>DCS</cc> $ q , x <cc>ST</cc></pre>
                 <p>And the response might be something like:
                     <tt><cc>DCS</cc> 1 $ r 9 ; 0 ; 0 ; 0 , x <cc>ST</cc></tt></p>
+            </section>
+            <section role="parameter" id="decrqss-decdlda" mnemonic="DECDLDA"
+                     title="Down Line Load Allocation" groups="isvt520">
+                <ctlseq><param-text/> = , z</ctlseq>
+                <ref src="vt52x:257"/>
+                <p>
+                    Reports the number of DRCS font buffers available
+                </p>
+                <pre><cc>DCS</cc> $ q , z <cc>ST</cc></pre>
+                <p>And the response might be something like:
+                    <tt><cc>DCS</cc> 1 $ r 2 , z <cc>ST</cc></tt></p>
             </section>
             <section role="parameter" id="decrqss-decatc" mnemonic="DECATC"
                      title="Alternate Text Color" groups="isvt525">
@@ -7123,7 +8762,7 @@ DCS $ q 3 , } ST</pre>
                 <dt>6</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220, xt -->
                 <dd>Selective erase</dd>
 
-                <dt not-implemented="true">7</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220 -->
+                <dt>7</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220 -->
                 <dd>Soft character sets (DRCS)</dd>
 
                 <dt>8</dt>  <!-- vt510, vt420, vt382, vt340, vt330, vt320, vt220, xt -->
@@ -7404,10 +9043,31 @@ DCS $ q 3 , } ST</pre>
             -->
             <p>
                 Secondary Device Attributes Report Request. If <param-single/>
-                is 0 then K95 claims to be a VT320 with firmware version 0 and ROM
-                cartridge registration number 0 by responding with:
-                <tt><cc>CSI</cc> > 2 4 ; 0 ; 0 c</tt>
+                is 0 then K95 reports one of the following:
             </p>
+            <table>
+                <tr>
+                    <th>Terminal Type</th>
+                    <th>Report</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>K95</td>
+                    <td><tt><cc>CSI</cc> > 41 ; 0 ; 0 c</tt></td>
+                    <td>VT420 with firmware version 0 and no options</td>
+                </tr>
+                <tr>
+                    <td>VT220</td>
+                    <td><tt><cc>CSI</cc> > 1 ; 0 ; 0 c</tt></td>
+                    <td>VT220 with firmware version 0 and no options</td>
+                </tr>
+                <tr>
+                    <td>All other emulations</td>
+                    <td><tt><cc>CSI</cc> > 2 4 ; 0 ; 0 c</tt></td>
+                    <td>VT320 with firmware version 0 and ROM
+                        cartridge registration number 0</td>
+                </tr>
+            </table>
             <!-- Windows Terminal responds as xterm does: 0;10;1c -->
         </section>
         <section role="ctlseq" id="hsc" mnemonic="HSC" title="Set cursor type (SCO)" badges="scoansi">
@@ -15087,7 +16747,9 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>0</td>
-                    <td>All attributes off (normal)</td>
+                    <td>All attributes off (normal). For VT525 and K95 this
+                        includes color.
+                    </td>
                 </tr>
                 <tr>
                     <td>1</td>
@@ -15120,6 +16782,82 @@ DCS $ q 3 , } ST</pre>
                 <tr>
                     <td>27</td>
                     <td>Positive image</td>
+                </tr>
+                <tr>
+                    <td>
+                        30...37
+                    </td>
+                    <td>Set foreground color.
+                        See <a href="#sgr-30">SGR-30..37</a> for colour
+                        assignments. VT525 and K95 terminal types only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        38:2:Pi:Pr:Pg:Pb
+                    </td>
+                    <td>Set foreground to an RGB color.
+                        <a href="#sgr-38-rgb">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        38:5:Ps
+                    </td>
+                    <td>Set foreground to an Indexed color.
+                        <a href="#sgr-38-ic">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        40...47
+                    </td>
+                    <td>Set background color.
+                        See <a href="#sgr-40">SGR-40..47</a> for colour
+                        assignments. VT525 and K95 terminal types only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        48:2:Pi:Pr:Pg:Pb
+                    </td>
+                    <td>Set foreground to an RGB color.
+                        <a href="#sgr-48-rgb">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        48:5:Ps
+                    </td>
+                    <td>Set foreground to an Indexed color.
+                        <a href="#sgr-48-ic">See SGR for details</a>.
+                        Note that only the parameter element syntax (colons)
+                        shown here is supported. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        90...97
+                    </td>
+                    <td>Set bright foreground color.
+                        See <a href="#sgr-90">SGR-90..97</a> for colour
+                        assignments. K95 terminal type only.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        100...107
+                    </td>
+                    <td>Set bright background color.
+                        See <a href="#sgr-100">SGR-100..107</a> for colour
+                        assignments. K95 terminal type only.
+                    </td>
                 </tr>
             </table>
         </section>
@@ -17208,11 +18946,20 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional=""/>
         </section>
         <section role="ctlseq" id="decdlda" mnemonic="DECDLDA"
-                 title="Down Line Load Allocation"
-                 not-implemented="true" todo="true">
+                 title="Down Line Load Allocation" badges="vt520">
             <ctlseq>CSI <param-single/> ; , z</ctlseq>
             <ref src="vt52x:201"/>
             <termsupp first="vt520" series="vt" additional=""/>
+            <p>
+                Sets the number of DRCS font buffers available. Valid options
+                are 1 or 2. Any other values (or no parameter at all) will
+                have no effect. Only available for VT520 emulation. Not
+                available for VT525 or K95 terminal types as the VT525 always
+                supports two font buffers per session.
+            </p>
+            <p>
+                This setting can be queried via <a href="#decrqss">DECRQSS</a>.
+            </p>
         </section>
 
 

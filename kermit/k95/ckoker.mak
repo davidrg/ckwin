@@ -1103,7 +1103,7 @@ KUIOBJS = \
     $(OUTDIR)\kszpopup.obj $(OUTDIR)\kflstat.obj  $(OUTDIR)\kcustdlg.obj \
     $(OUTDIR)\kmenu.obj    $(OUTDIR)\kstatus.obj  $(OUTDIR)\ktoolbar.obj \
     $(OUTDIR)\kscroll.obj  \
-    $(OUTDIR)\kfont.obj    \
+    $(OUTDIR)\kfont.obj    $(OUTDIR)\ksoftfont.obj \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
     $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
