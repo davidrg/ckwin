@@ -1387,9 +1387,6 @@ decdld(int font_number, int starting_character, int erase_control,
          *       *could* behave as the VT420 does.
          *
          * TODO: This still isn't *quite* right for VT520:
-         *      - It only seems to support having a single 132 column font
-         *          rendition loaded. Doesn't seem to matter which font buffer
-         *          it goes into. First in wins.
          *      - Loading an 80x24 font, then a 132x24 font. Now if you load a
          *          80x36 font it seems to wipe the 132x24 rendition for some
          *          reason. Loading an 80x24 font after a 132x24 font doesn't
@@ -1541,8 +1538,8 @@ decdld(int font_number, int starting_character, int erase_control,
         if (drcs->is_96_chars != (character_set_size == 1)) {
             /* On the VT420, changing the size of the character set erases all
              * renditions of it */
-            debug(F100, "DECDLD forcing erase control to 2 because character set size changed", 0 , 0);
-            erase_control = 2;
+            debug(F100, "DECDLD erasing entire font buffer because character set size changed", 0 , 0);
+            erase_font_buffer(drcs);
         }
     }
 
@@ -1594,18 +1591,16 @@ decdld(int font_number, int starting_character, int erase_control,
                 break;
             case TT_VT320:
             case TT_VT320PC:
-                /* EK-VT320-UU says two pixels before the glyph and one after */
-                h_offset = 2;
+            case TT_WY370:
+                /* EK-VT320-UU says two pixels before the glyph and one after
+                 * for 80 columns and one pixel before for 132 columns. */
+                /* WY-370 Programmers Manual, 881133-02 Rev. A, June 1990,
+                 * Page 4-9 (53) */
+                h_offset = is_132cols ? 1 : 2;
                 v_offset = 0;
                 break;
             case TT_VT420:
                 h_offset = 1;
-                v_offset = 0;
-                break;
-            case TT_WY370:
-                /* WY-370 Programmers Manual, 881133-02 Rev. A, June 1990,
-                 * Page 4-9 (53) */
-                h_offset = is_132cols ? 1 : 2;
                 v_offset = 0;
                 break;
             case TT_VTSTAR:
