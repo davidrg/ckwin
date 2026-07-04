@@ -112,7 +112,7 @@ jobs:
   Prepare-Docs:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: HTMLise Markdown Docs
         working-directory: ${{github.workspace}}
         run: |
@@ -150,7 +150,7 @@ jobs:
   Build-Wart:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache Wart
         uses: "./.github/actions/cache"
         id: cache-wart
@@ -188,7 +188,7 @@ jobs:
   Build-TREXX:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache TREXX
         uses: "./.github/actions/cache"
         id: cache-trexx
@@ -244,7 +244,7 @@ jobs:
       commit-sha: ${{ steps.check-for-tag.outputs.commit_sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Check if commit is tagged
         id: check-for-tag
         shell: bash
@@ -335,7 +335,7 @@ jobs:
     name: Build-${{matrix.toolset}} (${{matrix.arch}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Select configuration
         id: cfg
         run: |
@@ -875,7 +875,7 @@ jobs:
     name: Build-VS2010-PSDK71 (${{matrix.arch}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Select configuration
         id: cfg
         run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
@@ -1112,7 +1112,7 @@ jobs:
     name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.os.id}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select configuration
         id: cfg
@@ -1342,7 +1342,7 @@ jobs:
     name: Build-VS${{matrix.arch.vsversion}}-PSDK2003SP1 (${{matrix.arch.id}}, ${{matrix.legacy_dependencies}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
@@ -1664,7 +1664,7 @@ jobs:
     name: Build-VS${{matrix.arch.vsversion}}-PSDK2003SP1 (${{matrix.arch.id}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
@@ -1798,7 +1798,7 @@ jobs:
     needs: [Get-CACerts-Bundle, Prepare-Docs]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Select configuration
         id: cfg
         run: echo "openssl=${{env.OPENSSL_MINGW_VERSION}}" >> "$GITHUB_OUTPUT"
@@ -1902,7 +1902,7 @@ jobs:
   Test-C-Kermit-Linux-Build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -1965,7 +1965,7 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
@@ -2017,7 +2017,7 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
@@ -2062,7 +2062,7 @@ jobs:
       - Build-Ctlseqs-Doc
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
@@ -2129,7 +2129,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -2243,7 +2243,7 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
@@ -2286,7 +2286,7 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
@@ -2511,7 +2511,7 @@ jobs:
     runs-on: windows-latest
     needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
         with:
