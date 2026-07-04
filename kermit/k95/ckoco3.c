@@ -1385,6 +1385,18 @@ decdld(int font_number, int starting_character, int erase_control,
          *
          * TODO: Does the VT525 behave the same? It has more memory, so it
          *       *could* behave as the VT420 does.
+         *
+         * TODO: This still isn't *quite* right for VT520:
+         *      - It only seems to support having a single 132 column font
+         *          rendition loaded. Doesn't seem to matter which font buffer
+         *          it goes into. First in wins.
+         *      - Loading an 80x24 font, then a 132x24 font. Now if you load a
+         *          80x36 font it seems to wipe the 132x24 rendition for some
+         *          reason. Loading an 80x24 font after a 132x24 font doesn't
+         *          seem to produce the same behaviour.
+         *      Further tests will need to be done to properly determine exact
+         *      behaviour. It would be interesting to test other firmware
+         *      versions as the observed behaviour seems kind of odd.
          */
         switch (rendition) {
             case DRCS_RENDITION_01_80x24:
@@ -1535,13 +1547,21 @@ decdld(int font_number, int starting_character, int erase_control,
     }
 
     if (erase_control == 0) {
-        /* Erase target font buffer only */
+        /* Erase target font buffer only. STD-070 says it should erase *all*
+         * charcters in the specified font buffer, but the VT420 and VT520 only
+         * erase all characters in the *specified rendition* of the specified
+         * font buffer. */
         debug(F101, "DECDLD Erase Rendition", 0, rendition);
         debug(F101, "DECDLD For Buffer", 0, font_number);
         erase_font_buffer_rendition(drcs->renditions[rendition], erase_rendition);
     } else if (erase_control == 2) {
-        debug(F101, "DECDLD Erase All Renditions for buffer", 0, font_number);
-        erase_font_buffer(drcs);
+        int i;
+        debug(F101, "DECDLD Erase All Renditions for all buffers", 0, font_number);
+        for (i = 0; i < DRCS_BUFFERS; i++) {
+            if (drcsbuf[i] != NULL) {
+                erase_font_buffer(drcsbuf[i]);
+            }
+        }
     } /* Else we'll erase glyphs as they're defined */
 
     drcs->name[0] = name[0];
