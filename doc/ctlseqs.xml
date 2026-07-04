@@ -10167,13 +10167,6 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
             </section>
-            <section role="parameter" id="decrst-13" mnemonic=""
-                     title="Disable blinking cursor (reset only by resource or menu)"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 13</ctlseq>
-                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-3.1EC5"/>
-                <termsupp first="xterm" series="xt" additional=""/>
-            </section>
             <section role="parameter" id="r-dectem" mnemonic="DECTEM" title="Transmit Execution Mode"
                      not-implemented="true" todo="true" >
                 <ctlseq><param-single/> = 14</ctlseq>
@@ -10181,13 +10174,6 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt340:162"/>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
-            </section>
-            <section role="parameter" id="decrst-14" mnemonic=""
-                     title="Disable XOR of blinking cursor ctlseq and menu"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 14</ctlseq>
-                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-4.1EC6"/>
-                <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-16" mnemonic="TTM"
                      title="Transfer Termination Mode"
