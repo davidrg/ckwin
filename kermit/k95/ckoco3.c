@@ -784,7 +784,6 @@ CHAR sni_term_firmware[7]="830851";     /* 97801 Terminal Firmware Version */
 #ifdef KUI
 /* VT level 2 DRCS Support
  * ------------------------
- * TODO: - Support multiple renditions for those terminals that support it
  */
 drcs_t *drcsbuf[DRCS_BUFFERS] = {NULL, NULL};
 char decdlda = 2;
@@ -1056,7 +1055,7 @@ erase_font_buffer_rendition(drcs_rendition_t *drcs_rendition,
         }
     }
 
-    // The renderer needs to know how big the replacement glyphs are...
+    /* The renderer needs to know how big the replacement glyphs are... */
     drcs_rendition->cell_width = drcs_rendition->width;
     drcs_rendition->cell_height = drcs_rendition->height;
     drcs_rendition->undefined = TRUE;
@@ -1226,15 +1225,6 @@ decdld(int font_number, int starting_character, int erase_control,
             break;
     }
 
-
-    /* VT420 supports six renditions per font:
-     *   80 columns, 24/36/48 lines
-     *   132 columns, 24/36/48 lines
-     * The VT5xx only supports two I think: 80columns or 132columns
-     * For now we're not storing additional renditions though, as K95 does not
-     * yet support a compressed/narrow font for DECCOLM.
-     */
-
     /******* Validate Parameters *******/
     /* Which are:
      *  Pfn ; Pcn ; Pe ; Pcmw ; Pss ; Pu ; Pcmh ; Pcss
@@ -1242,9 +1232,7 @@ decdld(int font_number, int starting_character, int erase_control,
      *  Pfn ; Pcn ; Pe ; Pcmw ; Pss ; Pu ; Pcmh ; Pcss ; Psgr
      */
 
-    /* Pfn - font number
-     * If font number is 0, then we pick the first empty font buffer, or the
-     * first font buffer. */
+    /* Pfn - font number */
     if (font_number > max_font_buffers) {
         debug(F111, "DECDLD", "End - invalid font number", font_number);
         return;
@@ -1338,7 +1326,12 @@ decdld(int font_number, int starting_character, int erase_control,
      *    12 - 132 columns, 36 lines  (VT420 & VT510 only)
      *    21 - 80 columns, 48 lines   (VT420 & VT510 only)
      *    22 - 132 columns, 48 lines  (VT420 & VT510 only)
-     * */
+     *
+     * VT420 supports six renditions per font:
+     *   80 columns, 24/36/48 lines
+     *   132 columns, 24/36/48 lines
+     * The VT5xx only supports two: 80columns or 132columns
+     */
     switch (font_set_size) {
         case 0:
         case 1: {
@@ -1426,7 +1419,7 @@ decdld(int font_number, int starting_character, int erase_control,
 
     if (ISVT320(tt_type) && !is_vt220_font) {
         /* Pcmh - Character Cell Matrix height - VT320+
-         * This is ignored (set to 10) if PCmw is 2, 3 or 4.
+         * This is ignored (set to 10) if Pcmw is 2, 3 or 4.
          * VT320: 1-12, 0=12
          * VT340: 1-20, 0=20, >20 is illegal
          * VT420: 1-16, 0=16, >16 is illegal
@@ -1466,10 +1459,11 @@ decdld(int font_number, int starting_character, int erase_control,
         debug(F110, "DECDLD", "End - no character set name", 0);
         return;
     }
-    for (start = 0; start <= name_max_len; start++) {
+    for (start = 0; start <= name_max_len && start <= length; start++) {
         name[start] = definition[start];
         if (start == 4) {
-            debug(F110, "DECDLD", "End - didn't get a file character for character set name", 0);
+            debug(F110, "DECDLD",
+                "End - didn't get a final character for character set name", 0);
             return; /* Didn't get a final character in 0...2 */
         }
         if (definition[start] >= ' ' && definition[start] <= '/' &&
@@ -1491,7 +1485,7 @@ decdld(int font_number, int starting_character, int erase_control,
 
     EnterDRCSBufferCriticalSection();
 
-    /* Decide which font buffer we're going to use*/
+    /* Decide which font buffer we're going to use */
     if (font_number == 0) {
         /* For the VT510 and up, 0 is supposed to mean the first empty
          * buffer, or buffer 1 if they're all populated. But the VT520 v2.1
@@ -1637,7 +1631,7 @@ decdld(int font_number, int starting_character, int erase_control,
     debug(F101, "DECDLD Is 96 chars", 0, drcs->is_96_chars);
     debug(F101, "DECDLD Render Hits", 0, drcs->render_hints);
     debug(F101, "DECDLD H-Offset", 0, h_offset);
-    debug(F100, "DECDLD V-Offset", 0, v_offset);
+    debug(F101, "DECDLD V-Offset", 0, v_offset);
 
     for (i=start+1; i <= length; i++) {
         char sixel = definition[i];
@@ -1648,6 +1642,7 @@ decdld(int font_number, int starting_character, int erase_control,
             for (j = 0; j < DRCS_MAX_CELL_HEIGHT; j++) {
                 drcs->renditions[rendition]->glyphs[glyph].pixels[j] = 0;
             }
+            drcs->renditions[rendition]->glyphs[glyph].undefined = FALSE;
             erased = TRUE;
 
             /* To ensure that the next character after the end of the sixel
@@ -1776,8 +1771,6 @@ decdld(int font_number, int starting_character, int erase_control,
         else if (glyph > 95) continue;
 
         bits = sixel - '?';
-
-        drcs->renditions[rendition]->glyphs[glyph].undefined = FALSE;
 
         for (bit = 0; bit < 6; bit++) {
             /* Only the VT520 crops glyphs to the specified height - the rest

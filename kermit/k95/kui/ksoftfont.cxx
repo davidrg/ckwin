@@ -129,7 +129,7 @@ void KSoftFont::refresh(int width, int height) {
             fonts[i] == NULL || rendition != currentRenditions[i])) {
             // Soft font has changed or is new. Render to a bitmap.
 
-            debug(F101, "KClient::refreshSoftFonts - refresh soft font", 0, i);
+            debug(F101, "KSoftFont::refreshSoftFonts - refresh soft font", 0, i);
 
             int font_rendition = rendition;
 
@@ -307,7 +307,7 @@ void KSoftFont::refresh(int width, int height) {
             currentRenditions[i] = rendition;
             stretchSoftFont(i);
         } else if (drcsbuf[i] == NULL) {
-            debug(F101, "KClient::refreshSoftFonts - buffer is null", 0, i);
+            debug(F101, "KSoftFont::refreshSoftFonts - buffer is null", 0, i);
             // drcs font buffer has been *completely* erased.
             serials[i] = 0;
             currentRenditions[i] = -1;
@@ -337,10 +337,10 @@ void KSoftFont::stretchSoftFont(int fontId) {
     EnterDRCSBufferCriticalSection();
     for (int i = fontId; i <= maxFont; i++) {
         if (fonts[i] == NULL) {
-            debug(F101, "KClient::stretchSoftFont - buffer is null", 0, i);
+            debug(F101, "KSoftFont::stretchSoftFont - buffer is null", 0, i);
             continue;
         }
-        debug(F101, "KClient::stretchSoftFont - buffer", 0, i);
+        debug(F101, "KSoftFont::stretchSoftFont - buffer", 0, i);
 
         BITMAP bitmapInfo;
         GetObject(fonts[i], sizeof(BITMAP), &bitmapInfo);
