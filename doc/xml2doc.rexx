@@ -1310,7 +1310,9 @@ getTextHtml: procedure expose g. toc. badgeSet. settings. refSet. k95info.
         /* Handle HTML character entities */
         text = changestr("<",text,"&lt;")
         text = changestr(">",text,"&gt;")
-        text = changestr("&",text,"&amp;")
+        /*  This causes entities such as &lt; that appear in the XML doc to be
+            transformed into &amp;lt; - not what we want.
+            text = changestr("&",text,"&amp;")*/
         text = changestr('"',text,"&quot;")
         text = changestr("'",text,"&apos;")
 
@@ -1556,7 +1558,13 @@ doTableHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
                 name = getName(trChild)
 
                 if name = 'th' then do
-                    call outputHtml indentLevel,'<th>'
+                    attrs = ''
+                    if hasAttribute(trChild, 'colspan') then do
+                        cs = getAttribute(trChild, 'colspan')
+                        attrs = attrs' colspan="'cs'"'
+                    end
+
+                    call outputHtml indentLevel,'<th'attrs'>'
                     indentLevel = indentLevel + 1
 
                     call doTextHtml trChild, indentLevel, '', ''
