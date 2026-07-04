@@ -161,7 +161,10 @@
 #define TX_APL4       109               /* IBM APL/2 */
 #define TX_APL5       110               /* APL-2741 */
 
-#define MAXTXSETS     111               /* Number of terminal character sets */
+#define TX_DRCS_1     111               /* VT level 2+ soft-font buffer 1 */
+#define TX_DRCS_2     112               /* VT level 2+ soft-font buffer 2 */
+
+#define MAXTXSETS     113               /* Number of terminal character sets */
 
 /* The following are not implemented yet */
 /* UTF-8 is supported as a special mode in Kermit 95 (see utf8 flag) */

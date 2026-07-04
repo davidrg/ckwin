@@ -21,6 +21,7 @@ extern "C" {
 
 #include "kwin.hxx"
 #include "kscroll.hxx"
+#include "ksoftfont.hxx"
 
 /* MAXNUMCOL is also defined in ckocon.h */
 #if (defined(_MSC_VER) && _MSC_VER > 1400) || defined(__GNUC__)
@@ -46,6 +47,7 @@ public:
 
     void setDimensions( Bool sizeparent );
     void setFont( KFont* );
+    void fontChanged();
     void clearPaintRgn();
     void setInterSpacing( KFont* );
 
@@ -87,6 +89,8 @@ public:
 #ifdef CK_HAVE_GDIPLUS
     BOOL renderToPngFile(int vnum, char* filename);
     BOOL renderToGifFile(int vnum, char* filename);
+    BOOL saveFontBuffer(int buffer_number, const char* filename,
+        const wchar_t *format);
 #endif /* CK_HAVE_GDIPLUS */
 #endif /* CK_SAVE_TO_IMAGE */
 
@@ -121,12 +125,15 @@ private:    // this section is for performance
     HBITMAP renderToBitmap(int vnum, DWORD **outPixels);
 #ifdef CK_HAVE_GDIPLUS
     BOOL renderToImageFile(int vnum, char* filename, const wchar_t* format);
+    BOOL saveBitmap(HBITMAP hbmp, const char* filename, const wchar_t *format);
 #endif /* CK_HAVE_GDIPLUS */
 
     static size_t allocateClientPaintBuffers(
         struct _K_CLIENT_PAINT* clientPaint,
         long maxcells,
         uchar** workTempOut);
+
+    CRITICAL_SECTION csDraw;
 
     IKTerm* ikterm;
     BYTE clientID;
@@ -187,6 +194,8 @@ private:    // this section is for performance
 
     Bool processKey;
     long _msgret;
+
+    KSoftFont softFont;
 };
 
 #endif
