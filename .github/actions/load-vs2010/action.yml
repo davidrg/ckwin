@@ -21,7 +21,7 @@ runs:
   steps:
     - name: Load Cache VS2010
       if: inputs.nocache != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache-vs2010
       with:
         path: |

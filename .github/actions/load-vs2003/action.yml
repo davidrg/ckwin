@@ -27,7 +27,7 @@ runs:
         arch: x86
     - name: Load Cache VS2003
       if: inputs.nocache != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache-vs2003
       with:
         path: |

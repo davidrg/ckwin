@@ -38,7 +38,7 @@ runs:
   steps:
     - name: Load Build Tools Cache
       if: inputs.nocache != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache-tools
       with:
         path: |
