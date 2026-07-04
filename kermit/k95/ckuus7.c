@@ -14740,7 +14740,7 @@ dosave(xx) int xx;
                  * just a debugging feature, so the command is hidden. */
 
                 /* We need to collect a font buffer number, and a filename */
-                if (y = cmnum("Font buffer number", "1", 10, &bufnum, xxstring) < 0)
+                if ((y = cmnum("Font buffer number", "1", 10, &bufnum, xxstring)) < 0)
                     return(y);
 
                 y = cmofi("Filename",
@@ -14755,12 +14755,12 @@ dosave(xx) int xx;
                     return(-9);
                 }
 
+                if ((y = cmcfm()) < 0) return(y);
+
                 ckstrncpy(line,s,LINBUFSIZ);
                 if (zfnqfp(line,TMPBUFSIZ,tmpbuf)) {
                     ckstrncpy(line,tmpbuf,LINBUFSIZ);
                 }
-
-                if ((y = cmcfm()) < 0) return(y);
 
                 if (line[0]) {
                     success = KuiRenderSoftFontToFile(bufnum, line);
