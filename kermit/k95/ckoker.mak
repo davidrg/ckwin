@@ -87,8 +87,7 @@ COMMON_CFLAGS = /MD
 # Visual C++ 2002 and newer
 COMMON_CFLAGS = $(COMMON_CFLAGS) /RTCsu
 !else
-# Enable most speed optimizations
-COMMON_OPTS = /Ox
+COMMON_OPTS = /O2
 !endif
 
 # These are:

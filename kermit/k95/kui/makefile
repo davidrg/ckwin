@@ -130,7 +130,7 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 OPT = /O1
 !else
 # Enable most speed optimizations
-OPT = /Ox
+OPT = /O2
 !endif
 
 CFLAGS    = /c /W3 $(RTFLAG) $(OPT) /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR) \
