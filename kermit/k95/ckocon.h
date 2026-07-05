@@ -2045,10 +2045,8 @@ int gui_text_popup_append(unsigned short uch);
 int gui_text_popup_close(void);
 int gui_text_popup_wait(int seconds);
 
-#ifdef NT
 void OpenSoundDevice();
 void CloseSoundDevice();
 void MakeSound(UCHAR, UCHAR, int);
-#endif /* NT */
 
 #endif /* CKOCON_H */

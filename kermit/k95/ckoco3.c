@@ -1854,11 +1854,17 @@ void vt_macro_clear();		/* Calls vt_macro_reset(), then clears all definitions *
  * While this *probably* could be supported on OS/2, for now its Windows only.
  *
  */
-#ifdef NT
-HMIDIOUT midiDeviceHandle = NULL;
+#define SOUND_OUT_UNINITIALISED     0
+#define SOUND_OUT_NONE              1
+#define SOUND_OUT_MIDI              2
+#define SOUND_OUT_BEEP              3
+static int soundOutput = SOUND_OUT_UNINITIALISED;
 
-void
-OpenSoundDevice() {
+#ifdef NT
+static HMIDIOUT midiDeviceHandle = NULL;
+
+bool
+OpenMidiDevice() {
     midiOutOpen(
         &midiDeviceHandle,      /* [out] handle */
         MIDI_MAPPER,            /* Device to open */
@@ -1875,17 +1881,14 @@ OpenSoundDevice() {
          * https://learn.microsoft.com/en-us/windows/win32/multimedia/standard-midi-patch-assignments
          * I'm not really sure which is a closer match for the VT520.
          */
-        midiOutShortMsg(midiDeviceHandle, MAKELONG(MAKEWORD(0xC0, 80), 0));
+        midiOutShortMsg(midiDeviceHandle, MAKELONG(MAKEWORD(0xC0, 81), 0));
+        soundOutput = SOUND_OUT_MIDI;
+        return TRUE;
     }
-}
 
-void
-CloseSoundDevice() {
-    if (midiDeviceHandle != NULL) {
-        midiOutClose(midiDeviceHandle);
-    }
+    debug(F100, "Failed to open MIDI device", 0, 0);
+    return FALSE;
 }
-#endif /* NT */
 
 /* Plays a single note via MIDI with the specified velocity (volume) for the
  * specified duration in milliseconds. This function blocks.
@@ -1897,16 +1900,7 @@ CloseSoundDevice() {
  * enclosure. Or maybe using a sawtooth instrument (81) is closer? hard to say.
  */
 void
-MakeSound(UCHAR note, UCHAR velocity, int duration_ms) {
-    /* Try to open the MIDI device if it isn't already open. If this fails,
-     * we'll just treat every note as silent, but still do the sleep which is
-     * probably better than nothing as applications using it might be relying
-     * on its blocking nature. */
-#ifdef NT
-    if (midiDeviceHandle == NULL) OpenSoundDevice();
-
-    if (note == 0) velocity = 0;
-
+MakeMidiSound(UCHAR note, UCHAR velocity, int duration_ms) {
     if (velocity && midiDeviceHandle != NULL) {
         /* note on */
         midiOutShortMsg(midiDeviceHandle,
@@ -1918,9 +1912,129 @@ MakeSound(UCHAR note, UCHAR velocity, int duration_ms) {
         midiOutShortMsg(midiDeviceHandle,
             MAKELONG(MAKEWORD(0x80, note), MAKEWORD(velocity, 0)));
     }
-#else
-    msleep(duration_ms);
+}
+
 #endif /* NT */
+
+void
+OpenSoundDevice() {
+#ifdef NT
+    if (OpenMidiDevice()) {
+        return;
+    }
+
+    debug(F100, "Failed to open any sound output device. Falling back to beeper.", 0, 0);
+#endif /* NT */
+    soundOutput = SOUND_OUT_BEEP;
+}
+
+
+void
+CloseSoundDevice() {
+#ifdef NT
+    if (midiDeviceHandle != NULL) {
+        midiOutClose(midiDeviceHandle);
+    }
+#endif /* NT */
+}
+
+/* Makes no sound - for OS/2, or on windows platforms for which there are no
+ * sound devices. */
+void
+MakeNoSound(int duration_ms) {
+    msleep(duration_ms);
+}
+
+/* Plays a single note poorly via the system beeper. Starting with Windows XP
+ * 64bit and Windows Vista this plays through the sound device. The result isn't
+ * very good, but its perhaps better than silence.
+ *
+ * The beeper has no volume control.
+ */
+void MakeBeepSound(UCHAR note, int duration_ms) {
+    int freq;
+    switch (note) {
+        /* Turn the MIDI Note into a frequency. Frequencies in comments are
+         * those given by the VT520 manual - unfortunately it doesn't give them
+         * for every note, so they're not currently used. */
+        case 72: /* C5 */   freq = 523; break;
+        case 73: /* C#5 */  freq = 554; break;
+        case 74: /* D5 */   freq = 587; break;
+        case 75: /* D#5 */  freq = 622; break;  /* 632 Hz */
+        case 76: /* E5 */   freq = 659; break;
+        case 77: /* F5 */   freq = 698; break;
+        case 78: /* F#5 */  freq = 740; break;
+        case 79: /* G5 */   freq = 784; break;
+        case 80: /* G#5 */  freq = 830; break; /* 847 Hz */
+        case 81: /* A5 */   freq = 880; break;
+        case 82: /* A#5 */  freq = 932; break; /* 944 Hz */
+        case 83: /* B5 */   freq = 988; break;
+        case 84: /* C6 */   freq = 1047; break;
+        case 85: /* C#6 */  freq = 1109; break; /* 1047 Hz*/
+        case 86: /* D6 */   freq = 1175; break;
+        case 87: /* D#6 */  freq = 1245; break;
+        case 88: /* E6 */   freq = 1319; break;
+        case 89: /* F6 */   freq = 1397; break;
+        case 90: /* F#6 */  freq = 1479; break;
+        case 91: /* G6 */   freq = 1568; break;
+        case 92: /* G#6 */  freq = 1661; break;
+        case 93: /* A6 */   freq = 1760; break;
+        case 94: /* A#6 */  freq = 1865; break;
+        case 95: /* B6 */   freq = 1976; break;
+        case 96: /* C7 */   freq = 2093; break;
+        default: /* Unsupported note - just sleep */
+            msleep(duration_ms);
+            return;
+    }
+
+#ifdef NT
+    if (Beep(freq, duration_ms) == 0) {
+        debug(F100, "Beeper failed! Turning off sound out", 0, 0);
+        soundOutput = SOUND_OUT_NONE;
+    }
+#else
+    if (DosBeep(freq, duration_ms)) {
+        debug(F100, "Beeper failed! Turning off sound out", 0, 0);
+        soundOutput = SOUND_OUT_NONE;
+    }
+#endif
+}
+
+/* Tries to open a SoundDevice if one is not already open, then plays a single
+ * note with the specified velocity (volume) for the specified duration (in
+ * milliseconds) on it. This function blocks.
+ *
+ * If opening a sound device fails, then the function simply blocks for the
+ * specified duration.
+ */
+void
+MakeSound(UCHAR note, UCHAR velocity, int duration_ms) {
+    /* Try to open the MIDI device if it isn't already open. If this fails,
+     * we'll just treat every note as silent, but still do the sleep which is
+     * probably better than nothing as applications using it might be relying
+     * on its blocking nature. */
+    if (soundOutput == SOUND_OUT_UNINITIALISED) {
+        OpenSoundDevice();
+    }
+
+    if (note == 0) velocity = 0;
+
+#ifdef NT
+    if (soundOutput == SOUND_OUT_MIDI) {
+        MakeMidiSound(note, velocity, duration_ms);
+    } else
+#endif
+    if (soundOutput == SOUND_OUT_BEEP) {
+        MakeBeepSound(note, duration_ms);
+    } else
+    if (soundOutput == SOUND_OUT_NONE) {
+        MakeNoSound(duration_ms);
+    } else
+    if (soundOutput == SOUND_OUT_UNINITIALISED) {
+        /* Should not happen */
+        debug(F100, "Error - OpenSoundDevice failed", 0, 0);
+        MakeNoSound(duration_ms);
+    }
 }
 
 
@@ -19868,6 +19982,15 @@ settermtype( int x, int prompts )
         savcp = -1;
     }
 #endif /* COMMENT */
+
+    if (ISK95(tt_type) || ISVT520(tt_type)) {
+        /* The VT520 plays note B6 for 4/32nds of a second */
+        beepfreq = 1975;
+        beeptime = 125;
+    } else {
+        beepfreq = DEF_BEEP_FREQ;
+        beeptime = DEF_BEEP_TIME;
+    }
 
     if (ISK95(tt_type) && cell_video_attr_is_null(savcolor) ) {
         savcolor = colornormal;     /* Save coloration */

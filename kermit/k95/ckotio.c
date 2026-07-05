@@ -2534,8 +2534,8 @@ syscleanup() {
         CloseHandle(VioHandle);
     VioHandle = 0 ;
 #endif /* ! KUI */
-    CloseSoundDevice();
 #endif /* NT */
+    CloseSoundDevice();
     CloseThreadMgmtMutex() ;
     CloseZoutDumpMutex();
     debug(F100,"Close Mutexes and Semaphores done","",0);
