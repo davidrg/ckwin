@@ -1169,6 +1169,9 @@ jobs:
 
           call ${{github.workspace}}\setenv.bat
         
+          echo %INCLUDE%
+          set INCLUDE=%INCLUDE%;%WATCOM%\h\nt\directx
+          
           REM Enable Dynamic SSH just to be sure those bits are buildable
           REM with Open Watcom
           if not "${{matrix.os.id}}" == "nt-legacy" set CKF_SSH=yes
@@ -1566,6 +1569,9 @@ jobs:
           REM (though apparently you can get the required import library for
           REM dynamic linking from the .NET SDK 1.1)
           set CKB_STATIC_CRT_NT=yes
+          
+          REM DirectSound header isnt available
+          set CKF_DSOUND=no
           
           cd k95
           
