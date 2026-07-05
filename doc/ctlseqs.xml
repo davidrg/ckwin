@@ -19832,10 +19832,165 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <section role="ctlseq" id="decps" mnemonic="DECPS" title="Play Sound"
-                 not-implemented="true" todo="true">
-            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> , ~</ctlseq>
+                 badges="vt520 k95">
+            <ctlseq>CSI <param-single symbol="Pvolume"/> ;
+                <param-single symbol="Pduration"/> ;
+                <param-single symbol="Pnote"/> , ~</ctlseq>
             <ref src="vt52x:243"/>
             <termsupp first="vt510" series="vt" additional="wt"/>
+            <p>
+                Plays a sound using DirectSound if available, falling back to
+                Windows MIDI and then the system beeper. Only available on
+                Windows.
+            </p>
+            <p>
+                <param-single symbol="Pvolume"/> sets the volume of the note
+                to be played, from 0 (off) to 7 (high).
+            </p>
+            <p>
+                <param-single symbol="Pduration"/> is how long the note should
+                play. Units are 1/32 of a second.
+            </p>
+            <p>
+                <param-single symbol="Pnote"/> is the note that should play.
+                The VT520 only allows a single note to be specified, while the
+                K95 terminal type as an extension allows one or more notes to be
+                specified which will play in order with the specified volume and
+                duration. Playback of notes is blocking. The available notes
+                are:
+            </p>
+            <table>
+                <tr>
+                    <th><em>Pnote</em></th>
+                    <th>Duration</th>
+                    <th>Frequency (Hz)</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>C5</td>
+                    <td>523</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>C#5</td>
+                    <td>554</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>D5</td>
+                    <td>587</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>D#5</td>
+                    <td>622</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>E5</td>
+                    <td>659</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>F5</td>
+                    <td>698</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>F#5</td>
+                    <td>740</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>G5</td>
+                    <td>784</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td>G#5</td>
+                    <td>830</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td>A5</td>
+                    <td>880</td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td>A#5</td>
+                    <td>932</td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td>B5</td>
+                    <td>988</td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td>C6</td>
+                    <td>1047</td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td>C#6</td>
+                    <td>1109</td>
+                </tr>
+                <tr>
+                    <td>15</td>
+                    <td>D6</td>
+                    <td>1175</td>
+                </tr>
+                <tr>
+                    <td>16</td>
+                    <td>D#6</td>
+                    <td>1245</td>
+                </tr>
+                <tr>
+                    <td>17</td>
+                    <td>E6</td>
+                    <td>1319</td>
+                </tr>
+                <tr>
+                    <td>18</td>
+                    <td>F6</td>
+                    <td>1397</td>
+                </tr>
+                <tr>
+                    <td>19</td>
+                    <td>F#6</td>
+                    <td>1479</td>
+                </tr>
+                <tr>
+                    <td>20</td>
+                    <td>G6</td>
+                    <td>1568</td>
+                </tr>
+                <tr>
+                    <td>21</td>
+                    <td>G#6</td>
+                    <td>1661</td>
+                </tr>
+                <tr>
+                    <td>22</td>
+                    <td>A6</td>
+                    <td>1760</td>
+                </tr>
+                <tr>
+                    <td>23</td>
+                    <td>A#6</td>
+                    <td>1865</td>
+                </tr>
+                <tr>
+                    <td>24</td>
+                    <td>B6</td>
+                    <td>1976</td>
+                </tr>
+                <tr>
+                    <td>25</td>
+                    <td>C7</td>
+                    <td>2093</td>
+                </tr>
+            </table>
         </section>
 
         <section role="ctlseq" id="msk-pm" mnemonic="MSKPROD"
