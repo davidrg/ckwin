@@ -2044,9 +2044,4 @@ int gui_text_popup_create(char * title, int h, int w);
 int gui_text_popup_append(unsigned short uch);
 int gui_text_popup_close(void);
 int gui_text_popup_wait(int seconds);
-
-void OpenSoundDevice();
-void CloseSoundDevice();
-void MakeSound(UCHAR, UCHAR, int);
-
 #endif /* CKOCON_H */

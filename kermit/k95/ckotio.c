@@ -212,7 +212,7 @@ static char *ckxrev = "32-bit";
 #include "ckcsig.h"
 #include "ckokey.h"
 #include "ckoslp.h"
-
+#include "ckosnd.h"
 
 extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[],
              SavedVT525RGBTable[], SavedVT525MonoRGBTable[],
