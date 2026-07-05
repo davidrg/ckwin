@@ -10029,7 +10029,7 @@ static char *hmxybel[] = {
 "    VISIBLE, FLASH-WINDOW [ { ON, OFF } ], NONE }",
 #else
 "Syntax: SET BELL { AUDIBLE [ { BEEP, SOUND-DEVICE <volume>, SYSTEM-SOUNDS } ],",
-     VISIBLE, NONE }",
+"    VISIBLE, NONE }",
 #endif /* KUI */
 #else
 "Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, NONE }",
