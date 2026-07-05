@@ -6966,26 +6966,32 @@ setbell() {
 #ifdef OS2
       {
           int vol = -1;
+#ifdef NT
           extern int beepvolume;
+#endif /* NT */
           extern int tt_bell_usr;
           if ((x = cmkey(audibletab, naudibletab,
                  "how audible console and terminal\nbells should be generated",
                          "beep",xxstring))<0)
               return(x);
 
+#ifdef NT
           if (x == XYB_MIDI) {
               if ((vol = cmkey(audiblevolumetab, naudiblevolumetab,
                       "bell volume", "high",xxstring))<0)
                   return(vol);
           }
+#endif /* NT */
 
           if ((z = cmcfm()) < 0)
               return(z);
           tt_bell = tt_bell_usr = y | x;
 
+#ifdef NT
           if (vol >= 0 && x == XYB_MIDI) {
               beepvolume = vol == 1 ? BEEP_VOLUME_HIGH : BEEP_VOLUME_LOW;
           }
+#endif /* NT */
       }
 #else
         /* This lets C-Kermit accept but ignore trailing K95 keywords */
