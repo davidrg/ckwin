@@ -1900,6 +1900,9 @@ sysinit() {
     CreateDebugMutex( FALSE ) ;
     CreateTelnetMutex( FALSE ) ;
     CreateCommMutex( FALSE );
+#ifdef KUI
+    CreateDRCSBufferCriticalSection();
+#endif /* KUI */
 #ifdef CK_SSL
     CreateSSLMutex( FALSE );
 #endif /* CK_SSL */
@@ -2507,6 +2510,9 @@ syscleanup() {
     CloseTelnetMutex() ;
     CloseTCPIPMutex() ;
     CloseAlarmSem() ;
+#ifdef KUI
+    CloseDRCSBufferCriticalSection();
+#endif /* KUI */
 #ifdef CK_SSL
     CloseSSLMutex() ;
 #endif /* CK_SSL */

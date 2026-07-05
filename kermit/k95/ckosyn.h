@@ -261,6 +261,13 @@ _PROTOTYP( APIRET RequestCommMutex, (unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseCommMutex, (void) ) ;
 _PROTOTYP( APIRET CloseCommMutex, (void) ) ;
 
+#ifdef KUI
+_PROTOTYP( void CreateDRCSBufferCriticalSection, (void) ) ;
+_PROTOTYP( void EnterDRCSBufferCriticalSection, (void) ) ;
+_PROTOTYP( void LeaveDRCSBufferCriticalSection, (void) ) ;
+_PROTOTYP( void CloseDRCSBufferCriticalSection, (void) ) ;
+#endif /* KUI */
+
 #ifdef NETCMD
 _PROTOTYP( APIRET CreateNetCmdMutex, (BOOL) ) ;
 _PROTOTYP( APIRET RequestNetCmdMutex, (unsigned long) ) ;

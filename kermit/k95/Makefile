@@ -115,7 +115,7 @@ KUIOBJS = \
 	$(OUTDIR)/ktoolbar$(O)  $(OUTDIR)/kscroll$(O)	$(OUTDIR)/kfont$(O)		\
 	$(OUTDIR)/kfontdlg$(O)	$(OUTDIR)/kabout$(O)    $(OUTDIR)/kdwnload$(O)	\
 	$(OUTDIR)/kuikey$(O)	$(OUTDIR)/kclient$(O)	$(OUTDIR)/kappwin$(O)	\
-	$(OUTDIR)/ktermin$(O)	$(OUTDIR)/kui$(O)
+	$(OUTDIR)/ktermin$(O)	$(OUTDIR)/kui$(O)		$(OUTDIR)/ksoftfont$(O)
     
 # These are shared by all targets capable of making connections and doing
 # file transfer (K95G, KUI, CKNKER, IKSD, etc)
@@ -264,6 +264,7 @@ $(OUTDIR)/ktoolbar$(O): kui/ktoolbar.cxx kui/kui.hxx kui/ktermin.hxx \
 $(OUTDIR)/kscroll$(O): 	kui/kscroll.cxx kui/kscroll.hxx kui/ikextern.h
 $(OUTDIR)/kfont$(O):	kui/kfont.cxx kui/kfont.hxx kui/karray.hxx \
 	kui/ikextern.h
+$(OUTDIR)/ksoftfont$(O): kui/ksoftfont.cxx kui/ksoftfont.hxx kui/ikextern.h
 $(OUTDIR)/kfontdlg$(O): kui/kfontdlg.cxx kui/kfontdlg.hxx kui/khwndset.hxx \
 	kui/ikextern.h
 $(OUTDIR)/kabout$(O): 	kui/kabout.cxx kui/kabout.hxx kui/ikextern.h
@@ -271,7 +272,7 @@ $(OUTDIR)/kdwnload$(O): kui/kdwnload.cxx kui/kdwnload.hxx kui/ikextern.h
 $(OUTDIR)/kuikey$(O): 	kui/kuikey.cxx kui/kuidef.h
 $(OUTDIR)/kclient$(O): 	kui/kclient.cxx kui/kclient.hxx kui/kappwin.hxx \
 	kui/kscroll.hxx kui/khwndset.hxx kui/ksysmets.hxx kui/kfont.hxx \
-	kui/karray.hxx kui/ikterm.h kui/ikcmd.h kui/ikextern.h
+	kui/karray.hxx kui/ikterm.h kui/ikcmd.h kui/ikextern.h kui/ksoftfont.hxx
 $(OUTDIR)/kappwin$(O): 	kui/kappwin.cxx kui/kappwin.hxx kui/kmenu.hxx \
 	kui/ktoolbar.hxx kui/kstatus.hxx kui/kclient.hxx kui/kfontdlg.hxx \
 	kui/kabout.hxx kui/kfont.hxx kui/ksysmets.hxx kui/kszpopup.hxx \

@@ -353,5 +353,10 @@ BOOL KuiRenderToPngFile(int vmode, char* filename) {
 BOOL KuiRenderToGifFile(int vmode, char* filename) {
     return kui->getTerminal()->getClient()->renderToGifFile(vmode, filename);
 }
+
+BOOL KuiRenderSoftFontToFile(int fontbuffer, const char* filename) {
+    return kui->getTerminal()->getClient()->saveFontBuffer(
+        fontbuffer, filename, L"image/png");
+}
 #endif /* CK_HAVE_GDIPLUS */
 #endif /* CK_SAVE_TO_IMAGE */

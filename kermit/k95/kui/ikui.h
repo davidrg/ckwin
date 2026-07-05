@@ -99,6 +99,7 @@ BOOL KuiRenderToBmpFile(int vmode, char* filename);
 BOOL KuiRenderToPngFile(int vmode, char* filename);
 BOOL KuiRenderToGifFile(int vmode, char* filename);
 #endif /* CK_HAVE_GDIPLUS */
+BOOL KuiRenderSoftFontToFile(int fontbuffer, const char* filename);
 #endif /* CK_SAVE_TO_IMAGE */
 
 void KuiRefreshTerminal();

@@ -165,6 +165,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - GIF (Windows XP+ only)
  - New option to not clear the terminal screen when it is resized: 
    `SET TERM CLEAR-ON-RESIZE { ON, OFF }` 
+ - Soft-fonts (DRCS) for VT220 and higher emulations are now supported
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -199,7 +200,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    the `SHOW VERSIONS` output going forward
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
- - Upgrade OpenSSL to 3.5.6
+ - Upgrade OpenSSL to 3.5.7
  - Improved terminal throughput for SSH connections by around seven times, which
    helps when you accidentally cat a large log file.
  - Doubled maximum terminal lines to 256 in K95G on modern systems
@@ -237,6 +238,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - System
  - Improved throughput for pipe connections on Windows 
  - Upgraded to zlib 1.3.2
+ - The Secondary DA response when the terminal type is set to VT220 or VT220PC
+   now reports the VT220 identification code, rather than the code for VT320.
+ - DECCARA supports changing color attributes the K95 terminal type
 
 ### New terminal control sequences
 > [!NOTE]
@@ -378,6 +382,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECDRLBR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdrlbr)
    - [DECERLBRP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbrp)
    - [DECERLBRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbra)
+ - [DECDLD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdld) - Download soft-font
+ - [DECDLDA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdlda) - Set how many font buffers are available (VT520 only), queryable with DECRQSS
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made

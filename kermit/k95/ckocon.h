@@ -1373,6 +1373,88 @@ typedef struct vscrn_struct {
     BOOL          allow_alt_buf; /* Allow switching to alternate buffer? */
 } vscrn_t;
 
+
+#ifdef KUI
+/* VT level 2 DRCS Support
+ * ------------------------
+ *
+ */
+#define DRCS_MAX_CELL_HEIGHT 20
+typedef struct _drcs_glyph_t {
+    /* Enough for cells 16 pixels wide, 20 high, the max for the VT340 */
+    unsigned short pixels[DRCS_MAX_CELL_HEIGHT];
+    char undefined;
+} drcs_glyph_t;
+
+#define DRCS_RENDITION_01_80x24     0
+#define DRCS_RENDITION_02_132_24    1
+#define DRCS_RENDITION_11_80x36     2
+#define DRCS_RENDITION_12_132x36    3
+#define DRCS_RENDITION_21_80x48     4
+#define DRCS_RENDITION_22_132x48    5
+#define DRCS_RENDITIONS_TOTAL       6
+
+typedef struct _drcs_rendition_t {
+    drcs_glyph_t glyphs[96];
+    char cell_height;  /* Terminal cell height */
+    char cell_width;   /* Terminal cell width  */
+    char height;       /* Font glyph height */
+    char width;        /* Font glyph width */
+    char full_cell;
+    char rendition_id;
+    char undefined;    /* If all glyphs are undefined */
+} drcs_rendition_t;
+
+#define DRCS_RENDER_HINT_NONE           0x00
+#define DRCS_RENDER_HINT_VT220          0x01
+#define DRCS_RENDER_HINT_RES_F          0x02
+#define DRCS_RENDER_HINT_VT220_TEXT     0x04
+#define DRCS_RENDER_HINT_RES_E          0x08
+#define DRCS_RENDER_HINT_RES_D          0x10
+#define DRCS_RENDER_HINT_RES_C          0x20
+#define DRCS_RENDER_HINT_RES_B          0x40
+#define DRCS_RENDER_HINT_RES_A          0x80
+
+typedef struct _drcs_t {
+    char name[5];      /* 0-3 intermediates then a final */
+    drcs_rendition_t* renditions[6];
+    char is_96_chars;
+    char render_hints;
+    char serial; /* So we can track changes - this is an incrementing number. */
+} drcs_t;
+
+/* To increase this number:
+ *   - Update the macros below
+ *   - The soft font painting code in kclient.cxx will need updating to
+ *     deal with the additional font buffers
+ *   - A new TX_DRCS_x define needed in ckcuni.h, along with new entries in
+ *     txrinfo, xl_u and xl_tx in ckcuni.c
+ *   - update the charset and rtolxlat functions in ckoco3.c (search for
+ *     TX_DRCS_1 for the places to update - should be obvious enough).   */
+#define DRCS_BUFFERS 2
+
+#define DRCS_1_START 0xEF20
+#define DRCS_2_START 0xEF80
+
+#define IN_DRCS_RANGE(x) ((x) >= DRCS_1_START && (x) <= 0xEFDF)
+#define IN_DRCS_1_RANGE(x) ((x) >= DRCS_1_START && (x) <= 0xEF7F)
+#define IN_DRCS_2_RANGE(x) ((x) >= DRCS_2_START && (x) <= 0xEFDF)
+
+/* Gets the font buffer number the supplied character (in the Unicode PUA range)
+ * should reside in. Returns 0 if not a soft font. */
+#define DRCS_BUFFER_ID(x) ( \
+    IN_DRCS_1_RANGE((x)) ? 1 : \
+    IN_DRCS_2_RANGE((x)) ? 2 : \
+    0 \
+)
+
+#define DRCS_START(buffer) ( \
+    (buffer) == 1 ? DRCS_1_START : \
+    (buffer) == 2 ? DRCS_2_START : \
+    0 \
+)
+#endif /* KUI */
+
 /* Multiple Page support
  * ---------------------
  * There are at all times *two* current pages which may or may not be the same

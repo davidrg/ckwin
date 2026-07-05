@@ -20,7 +20,7 @@ runs:
   steps:
     - name: Cache Optional Dependencies
       if: inputs.nocache != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cachecmd
       with:
         path: ${{inputs.path}}
