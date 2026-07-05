@@ -143,7 +143,7 @@ OBJS =  $(OUTDIR)/ckcmai$(O)  $(OUTDIR)/ckcfns$(O)  $(OUTDIR)/ckcfn2$(O) \
 		$(OUTDIR)/cknnbi$(O)  $(OUTDIR)/ckop$(O)    $(OUTDIR)/p_callbk$(O) \
 		$(OUTDIR)/p_global$(O) $(OUTDIR)/p_omalloc$(O) $(OUTDIR)/p_error$(O) \
 		$(OUTDIR)/p_common$(O) $(OUTDIR)/p_tl$(O)   $(OUTDIR)/p_dir$(O) \
-		$(OUTDIR)/ckoads$(O)
+		$(OUTDIR)/ckoads$(O)  $(OUTDIR)/ckosnd$(O)
 
 # For SSH-enabled builds
 #OBJS = $(OBJS)  ckossh$(O) ckolssh$(O) ckorbf$(O) ckolsshs$(O)
@@ -372,14 +372,14 @@ $(OUTDIR)/ckosftp$(O): ckosftp.c ckoker.h ckclib.h ckosftp.h ckosftp.c
 $(OUTDIR)/ckozli$(O): ckozli.c ckcdeb.h ckoker.h ckozli.h
 $(OUTDIR)/ckocon$(O): ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckoker.h ckocon.h ckcnet.h ckctel.h ckonbi.h ckokey.h ckokvb.h ckuusr.h \
-	cknwin.h ckowin.h ckcuni.h ckossh.h kui/ikui.h
+	cknwin.h ckowin.h ckcuni.h ckossh.h kui/ikui.h ckosnd.h
 $(OUTDIR)/ckoco2$(O): ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckoker.h ckocon.h ckonbi.h ckopcf.h ckuusr.h ckokey.h ckokvb.h ckcuni.h \
 	kui/ikui.h
 $(OUTDIR)/ckoco3$(O): ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckoker.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckowys.h ckodg.h  ckoava.h \
 	ckoi31.h ckohp.h  ckoadm.h ckohzl.h ckoqnx.h ckotvi.h ckovc.h  ckcuni.h \
-    ckcnet.h ckctel.h kui/ikui.h ckossh.h
+    ckcnet.h ckctel.h kui/ikui.h ckossh.h ckosnd.h
 $(OUTDIR)/ckoco4$(O): ckoco4.c ckcdeb.h ckoker.h ckclib.h ckocon.h ckokey.h \
 	ckokvb.h ckuusr.h ckcasc.h ckokey.h ckokvb.h
 $(OUTDIR)/ckoco5$(O): ckoco5.c ckcdeb.h ckoker.h ckclib.h ckocon.h
@@ -404,7 +404,7 @@ $(OUTDIR)/ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h \
 $(OUTDIR)/ckotio$(O): ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h \
 	ckodir.h ckoker.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckoslp.h ckcsig.h \
 	ckop.h   ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h ckntap.h cknwin.h \
-	kui/ikui.h
+	kui/ikui.h ckosnd.h
 $(OUTDIR)/ckowys$(O): ckowys.c ckowys.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckcasc.h ckocon.h ckuusr.h ckcuni.h ckokey.h ckokvb.h ckctel.h
 $(OUTDIR)/ckodg$(O):  ckodg.c  ckodg.h  ckcdeb.h ckoker.h ckclib.h ckcker.h \
@@ -427,6 +427,7 @@ $(OUTDIR)/ckohp$(O):  ckohp.c  ckohp.h  ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckcasc.h ckocon.h ckuusr.h ckokey.h ckokvb.h
 $(OUTDIR)/ckoqnx$(O): ckoqnx.c ckoqnx.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckcasc.h ckocon.h ckuusr.h
+$(OUTDIR)/ckosnd$(O): ckosnd.c ckosnd.h
 $(OUTDIR)/cknnbi$(O): cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h
 $(OUTDIR)/ckop$(O):   ckop.c   ckop.h   ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h p_global.h p_callbk.h

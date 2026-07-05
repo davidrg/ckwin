@@ -1578,7 +1578,7 @@ ckofio$(O):	    ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h c
 ckoava$(O):     ckoava.c ckoava.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
 ckocon$(O):	    ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h \
                 ckctel.h ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h ckossh.h \
-                kui\ikui.h
+                kui\ikui.h ckosnd.h
 ckoco2$(O):     ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckonbi.h ckopcf.h ckuusr.h ckokey.h ckokvb.h ckcuni.h kui\ikui.h
 ckoco3$(O):     ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
@@ -1608,7 +1608,7 @@ ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoke
                 ckokey.h ckokvb.h ckuusr.h ckcnet.h ckctel.h
 ckotio$(O):	ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
                 ckocon.h ckokey.h ckokvb.h ckuusr.h ckoslp.h ckcsig.h ckop.h \
-                ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h \
+                ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h ckosnd.h \
 !if "$(PLATFORM)" == "NT"
                 ckntap.h cknwin.h  kui\ikui.h
 !else
