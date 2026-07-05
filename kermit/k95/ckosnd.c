@@ -343,6 +343,9 @@ CreateDSBuffer() {
 
     debug(F100, "Creating a DirectSoundBuffer...", 0, 0);
 
+    memset(&waveFormat, 0, sizeof(WAVEFORMATEX));
+    memset(&dsBufferDesc, 0, sizeof(DSBUFFERDESC));
+
     /* Create a DirectSound Buffer to hold our triangle wave PCM sample */
     waveFormat.wFormatTag = WAVE_FORMAT_PCM;
     waveFormat.nChannels = 1;
