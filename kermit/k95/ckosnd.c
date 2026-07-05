@@ -185,7 +185,7 @@ MakeMidiSound(UCHAR note, UCHAR velocity, int duration_ms) {
 #ifdef CK_HAVE_DSOUND
 /****************** DirectSound Output ******************/
 /* Sounds much better than the MIDI output, but needs DirectSound which isn't
- * available by default (or at all) on some anicient windows. */
+ * available by default (or at all) on some ancient windows. */
 
 /* DirectSound function pointers, etc */
 static HANDLE hDirectSound = NULL;

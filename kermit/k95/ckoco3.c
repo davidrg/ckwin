@@ -27485,7 +27485,6 @@ vtcsi(void)
 
                         /* duration (0-255) in 1/32nds of a second to
                          * milliseconds. This won't be perfect, but we don't
-                         * milliseconds. This won't be perfect, but we don't
                          * currently have a microsecond sleep function. So it's
                          * the best we can reasonably do for now.*/
                         duration = pn[2] * 1000 / 32;
