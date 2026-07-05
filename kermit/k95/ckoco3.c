@@ -201,6 +201,7 @@ extern int tn_b_nlm ;           /* TELNET BINARY newline mode */
 extern int tt_crd;              /* Carriage-return display mode */
 extern int tt_lfd;              /* Line-feed display mode */
 extern int tt_bell;             /* How to handle incoming Ctrl-G characters */
+extern int tt_bell_usr;
 #ifdef KUI
 extern int tt_bell_flash;
 extern int user_bell_flash;
@@ -11208,6 +11209,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     tt_autorepeat = TRUE;               /* Keyboard autorepeat ON */
 #endif /* NT */
     tt_wrap = TRUE;                     /* (FALSE for real VT terminal!) */
+    tt_bell = tt_bell_usr;
     send_c1 = send_c1_usr;              /* Don't send C1 controls */
     keylock = FALSE;                    /* Keyboard is not locked */
 
@@ -17296,7 +17298,26 @@ dodcs( void )
                                 );
                             break;
                         } /* 'q' */
+                        case 't': {     /* DECSWBV */
+                            if (ISVT520(tt_type_mode) || ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                extern int beepvolume;
+                                int val = 8; /* high */
+                                char buf[10];
 
+                                if (tt_bell == XYB_NONE) {
+                                    val = 1;
+                                }
+#ifdef NT
+                                else if (tt_bell == XYB_AUD | XYB_MIDI) {
+                                    val = beepvolume == BEEP_VOLUME_LOW ? 4 : 8;
+                                }
+#endif
+                                _snprintf(buf, sizeof(buf), "%d t", val);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+                                /* off is 1, low is 4, high is 8 */
+                            }
+                        } /* 't' */
                         } /* achar */
                         break;
                     } /* SP */
@@ -19794,15 +19815,6 @@ settermtype( int x, int prompts )
         savcp = -1;
     }
 #endif /* COMMENT */
-
-    if (ISK95(tt_type) || ISVT520(tt_type)) {
-        /* The VT520 plays note B6 for 4/32nds of a second */
-        beepfreq = 1975;
-        beeptime = 125;
-    } else {
-        beepfreq = DEF_BEEP_FREQ;
-        beeptime = DEF_BEEP_TIME;
-    }
 
     if (ISK95(tt_type) && cell_video_attr_is_null(savcolor) ) {
         savcolor = colornormal;     /* Save coloration */
@@ -27705,6 +27717,35 @@ vtcsi(void)
                     }
                     setcursormode() ;
                     cursorena[VTERM] = TRUE;
+                    break;
+                case 't':   /* DECSWBV - Set Warning Bell Volume */
+#ifdef NT
+                    if (ISVT520(tt_type_mode) || ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                        extern int beepvolume;
+                        if (k < 1) pn[1] = 5;
+                        switch ( pn[1] ) {
+                            case 1:
+                                /* off */
+                                tt_bell = XYB_NONE;
+                                break;
+                            case 2:
+                            case 3:
+                            case 4:
+                                /* low */
+                                tt_bell = XYB_AUD | XYB_MIDI;
+                                beepvolume = BEEP_VOLUME_LOW;
+                                break;
+                            case 5:
+                            case 6:
+                            case 7:
+                            case 8:
+                                /* high */
+                                tt_bell = XYB_AUD | XYB_MIDI;
+                                beepvolume = BEEP_VOLUME_HIGH;
+                                break;
+                        }
+                    }
+#endif /* NT */
                     break;
                 }
                 break;

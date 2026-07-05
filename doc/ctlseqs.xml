@@ -6301,6 +6301,24 @@ VT420:
                     character)
                 </p>
             </section>
+            <section role="parameter" id="decrqss-decswbv" mnemonic="DECSWBV"
+                     title="Set Waring Bell Volume" badges="vt520 k95">
+                <ctlseq><param-text/> = SP t</ctlseq>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:267"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
+                <p>
+                    Reports the current <a href="#decswbv">DECSWBV</a> setting.
+                    If the bell is off, 1 is reported. If the bell volume is
+                    high or the Audible bell type is something other than
+                    BEEP or SYSTEM-SOUNDS then 8 is reported, otherwise 4.
+                </p>
+                <p>
+                    A report for a high warning bell volume might look like:
+                    <tt><cc>DCS</cc> 1 $ r 8 SP t <cc>ST</cc></tt> (where SP is the space
+                    character)
+                </p>
+            </section>
             <section role="parameter" id="decrqss-decstbm" mnemonic="DECSTBM"
                      title="Set Top and Bottom Margins">
                 <ctlseq><param-text/> = r</ctlseq>
@@ -17581,13 +17599,54 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 3</ctlseq></section>
         </section>
         <section role="ctlseq" id="decswbv" mnemonic="DECSWBV"
-                 title="Set Warning Bell Volume"
-                 not-implemented="true" todo="true">
+                 title="Set Warning Bell Volume" badges="k95 xterm vt520">
             <ctlseq>CSI <param-single/> SP t</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-t.1D84"/>
             <ref src="vt510:DECSWBV.html"/>
             <ref src="vt52x:308"/>
             <termsupp first="vt510" series="vt" additional=""/>
+            <p>Sets the BELL volume. Only available on Windows where DirectSound
+                or a sutiable MIDI device is available. The current setting can
+                be queried via <a href="#decrqss-decswbv">DECRQSS</a>.
+            </p>
+            <section role="parameter" id="decswbv-0" title="Off">
+                <ctlseq><param-single/> = 1</ctlseq>
+                <p>Turns the BELL off, equivalent to <tt>SET BELL NONE</tt>.</p>
+            </section>
+            <section style="group" role="group">
+                <section role="parameter" id="decswbv-2">
+                    <ctlseq><param-single/> = 2</ctlseq>
+                </section>
+                <section role="parameter" id="decswbv-3">
+                    <ctlseq><param-single/> = 3</ctlseq>
+                </section>
+                <section role="parameter" id="decswbv-4" title="Low">
+                    <ctlseq><param-single/> = 4</ctlseq>
+                    <p>Sets the BELL volume to low, equivalent to
+                        <tt>SET BELL AUDIBLE SOUND-DEVICE LOW</tt>.
+                    </p>
+                </section>
+            </section>
+            <section style="group" role="group">
+                <section role="parameter" id="decswbv-5">
+                    <ctlseq><param-single/> = 5</ctlseq>
+                </section>
+                <section role="parameter" id="decswbv-6">
+                    <ctlseq><param-single/> = 6</ctlseq>
+                </section>
+                <section role="parameter" id="decswbv-7">
+                    <ctlseq><param-single/> = 7</ctlseq>
+                </section>
+                <section role="parameter" id="decswbv-8">
+                    <ctlseq><param-single/> = 8</ctlseq>
+                </section>
+                <section role="parameter" id="decswbv-0" title="High">
+                    <ctlseq><param-single/> = 0</ctlseq>
+                    <p>Sets the BELL volume to low, equivalent to
+                        <tt>SET BELL AUDIBLE SOUND-DEVICE HIGH</tt>.
+                    </p>
+                </section>
+            </section>
         </section>
         <section role="ctlseq" id="decsrfr" mnemonic="DECSRFR"
                  title="Select Refresh Rate"

@@ -1924,6 +1924,10 @@ _PROTOTYP( hyperlink * hyperlink_get, (int));
 #define DEF_BEEP_TIME 100
 #endif
 
+#define DEF_BEEP_VOLUME 127
+#define BEEP_VOLUME_LOW 54
+#define BEEP_VOLUME_HIGH 127
+
 #define ATTR_MODE_REAL 1
 #define ATTR_MODE_INTENSITY 2
 #define ATTR_MODE_COLOR 4

@@ -384,6 +384,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECERLBRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbra)
  - [DECDLD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdld) - Download soft-font
  - [DECDLDA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdlda) - Set how many font buffers are available (VT520 only), queryable with DECRQSS
+ - [DECSWBV](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decswbv) - Set Warning Bell Volume
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made

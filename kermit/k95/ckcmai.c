@@ -1285,6 +1285,7 @@ int cmd_rows = -1, cmd_cols = -1;       /* Command/console screen dimensions */
 #endif /* KUI */
 int k95stdio = 0;                       /* Stdio threads */
 int tt_bell = XYB_AUD | XYB_SYS;        /* BELL AUDIBLE (system sounds) */
+int tt_bell_usr = XYB_AUD | XYB_SYS;    /* User setting */
 int tt_term_scroll = 1;                 /* Scrolling allowed on VTERM */
 #else /* OS2 */
 int tt_rows = -1;                       /* Rows (height) */
