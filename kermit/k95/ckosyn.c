@@ -448,7 +448,7 @@ CloseScreenMutex( void )
 }
 
 APIRET
-CreateVscrnMutex( BOOL owned )
+CreateVscrnMutex()
 {
    int i;
 
@@ -461,12 +461,12 @@ CreateVscrnMutex( BOOL owned )
     if ( hmtxVscrn[i] )
 #ifdef NT
         CloseHandle( hmtxVscrn[i] ) ;
-    hmtxVscrn[i] = CreateMutex( NULL, owned, NULL ) ;
+    hmtxVscrn[i] = CreateMutex( NULL, FALSE, NULL ) ;
     if (hmtxVscrn[i] == NULL)
        return GetLastError() ;
 #else /* not NT */
       DosCloseMutexSem( hmtxVscrn[i] ) ;
-      rc = DosCreateMutexSem( NULL, &hmtxVscrn[i], 0, owned ) ;
+      rc = DosCreateMutexSem( NULL, &hmtxVscrn[i], 0, FALSE ) ;
       if ( rc )
          return rc;
 #endif /* NT */

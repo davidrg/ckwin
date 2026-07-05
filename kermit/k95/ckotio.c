@@ -1891,7 +1891,7 @@ sysinit() {
     CreateAlarmMutex( FALSE ) ;
 #ifndef NOLOCAL
     CreateScreenMutex( FALSE ) ;
-    CreateVscrnMutex( FALSE ) ;
+    CreateVscrnMutex(  ) ;
 #ifdef OLDDIRTY
     CreateVscrnDirtyMutex( FALSE );
 #endif /* OLDDIRTY */
@@ -2499,6 +2499,7 @@ syscleanup() {
 
     le_clean();
 
+	/* TODO: A lot of this should probably done for KUI too! */
     CloseAlarmMutex() ;
 #ifndef NOLOCAL
     CloseScreenMutex() ;

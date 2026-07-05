@@ -186,7 +186,7 @@ _PROTOTYP( APIRET RequestScreenMutex, (unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseScreenMutex, (void) ) ;
 _PROTOTYP( APIRET CloseScreenMutex, (void) ) ;
 
-_PROTOTYP( APIRET CreateVscrnMutex, (BOOL) ) ;
+_PROTOTYP( APIRET CreateVscrnMutex, () ) ;
 _PROTOTYP( APIRET RequestVscrnMutex, (int, unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseVscrnMutex, (int) ) ;
 _PROTOTYP( APIRET CloseVscrnMutex, (void) ) ;
