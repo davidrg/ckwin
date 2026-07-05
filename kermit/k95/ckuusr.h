@@ -2495,7 +2495,8 @@ struct stringint {			/* String and (wide) integer */
 #define VN_FULLVER  258			/* Full version number */
 #ifdef OS2
 #define VN_PALETTE  259         /* Terminal emulator color palette */
-#endif
+#define VN_NTIMS    260         /* Like VN_NTIM, but milliseconds */
+#endif /* OS2 */
 #endif /* NOSPL */
 
 /* INPUT status values */

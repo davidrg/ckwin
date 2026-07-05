@@ -56,6 +56,8 @@ _PROTOTYP(int vmsttyfd, (void) );
 #ifndef NT
 #define INCL_NOPM
 #define INCL_VIO                        /* Needed for ckocon.h */
+#define INCL_DOSDATETIME
+#define INCL_DOSERRORS
 #include <os2.h>
 #undef COMMENT
 #else
@@ -868,6 +870,9 @@ struct keytab vartab[] = {
     { "newline",   VN_NEWL,  0},
     { "nmonth",    VN_NMONTH,0},	/* 304 */
     { "ntime",     VN_NTIM,  0},
+#ifdef OS2
+    { "ntime_ms",           VN_NTIMS,       0},
+#endif /* OS2 */
     { "osname",    VN_OSNAM, 0},        /* 193 */
     { "osrelease", VN_OSREL, 0},        /* 193 */
     { "osversion", VN_OSVER, 0},        /* 193 */
@@ -13504,7 +13509,32 @@ char *                                  /* Evaluate builtin variable */
         z = atol(p+11) * 3600L + atol(p+14) * 60L + atol(p+17);
         sprintf(vvbuf,"%ld",z);         /* SAFE */
         return(vvbuf);
+#ifdef OS2
+      case VN_NTIMS: {                  /* Numeric time, milliseconds */
+          ULONG total_ms;
+#ifdef NT
+          SYSTEMTIME st;
+          GetLocalTime(&st);
+          total_ms = st.wHour * 3600000 +
+              st.wMinute * 60000 +
+              st.wSecond * 1000 +
+              st.wMilliseconds;
+#else /* !NT */
+          DATETIME dt;
+          APIRET rc;
 
+          rc = DosGetDateTime(&dt);
+          if (rc != NO_ERROR)
+            return(NULL);
+          total_ms = dt.hours * 3600000 +
+              dt.minutes * 60000 +
+              dt.seconds * 1000 +
+              dt.hundredths * 10;
+#endif /* !NT */
+          sprintf(vvbuf,"%ld", total_ms);         /* SAFE */
+          return(vvbuf);
+      }
+#endif /* OS2 */
 #ifdef CK_TTYFD
       case VN_TTYF:                     /* TTY file descriptor */
         sprintf(vvbuf,"%d",             /* SAFE */

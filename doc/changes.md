@@ -242,6 +242,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - The Secondary DA response when the terminal type is set to VT220 or VT220PC
    now reports the VT220 identification code, rather than the code for VT320.
  - DECCARA supports changing color attributes the K95 terminal type
+ - Added a new \v(ntime_ms) variable which provides the current time since
+   midnight in milliseconds.
 
 ### New terminal control sequences
 > [!NOTE]
