@@ -1169,7 +1169,7 @@ jobs:
 
           call ${{github.workspace}}\setenv.bat
         
-          echo %INCLUDE%
+          REM Adjust the include path so that DSound.h can be found
           set INCLUDE=%INCLUDE%;%WATCOM%\h\nt\directx
           
           REM Enable Dynamic SSH just to be sure those bits are buildable
