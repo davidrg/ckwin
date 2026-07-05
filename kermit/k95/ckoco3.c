@@ -27470,6 +27470,7 @@ vtcsi(void)
                     if (ISVT520(tt_type_mode) || ISK95(tt_type_mode)) {
                         UCHAR velocity;
                         int duration, note;
+                        int maxnote;
                         if (k < 1) pn[1] = 0;
                         if (pn[1] > 7) return;
                         if (k < 2) pn[2] = 0;
@@ -27489,7 +27490,11 @@ vtcsi(void)
                          * the best we can reasonably do for now.*/
                         duration = pn[2] * 1000 / 32;
 
-                        for (note = 3; note <= k; note++) {
+                        /* The VT520 only plays the first note. For K95, we'll
+                         * play more. */
+                        maxnote = ISK95(tt_type_mode) ? k : 3;
+
+                        for (note = 3; note <= maxnote; note++) {
                             /* A bunch of sites give 72 as the number for C5 in
                              * MIDI, and they progress up from there in the same
                              * order the VT520 manual gives, so... */
