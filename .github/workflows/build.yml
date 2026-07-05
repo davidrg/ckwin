@@ -1742,6 +1742,9 @@ jobs:
           set CKF_BETATEST=no
           :unstable
           
+          REM DirectSound header isnt available in this SDK
+          set CKF_DSOUND=no
+          
           call ${{github.workspace}}\setenv.bat
           
           REM Use the supplied x86 build of wart rather than building it for
