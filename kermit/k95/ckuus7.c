@@ -1475,9 +1475,20 @@ extern int scrninitialized[];
 
 struct keytab audibletab[] = {          /* Terminal Bell Audible mode */
     { "beep",          XYB_BEEP, 0 },   /* Values ORd with bell mode */
-    { "system-sounds", XYB_SYS,  0 }
+#ifdef NT
+    { "sound-device",  XYB_MIDI, 0 },
+#endif /* NT */
+    { "system-sounds", XYB_SYS,  0 },
 };
 int naudibletab = sizeof(audibletab)/sizeof(struct keytab);
+
+#ifdef NT
+struct keytab audiblevolumetab[] = {    /* Terminal Bell Volume*/
+    { "high",   1, 0 },
+    { "low",    0, 0 }
+};
+int naudiblevolumetab = sizeof(audiblevolumetab)/sizeof(struct keytab);
+#endif /* NT */
 
 struct keytab akmtab[] = {              /* Arrow key mode */
     { "application", TTK_APPL, 0 },
@@ -6953,13 +6964,35 @@ setbell() {
 
       case XYB_AUD:
 #ifdef OS2
-        if ((x = cmkey(audibletab, naudibletab,
-               "how audible console and terminal\nbells should be generated",
-                       "beep",xxstring))<0)
-          return(x);
-        if ((z = cmcfm()) < 0)
-          return(z);
-        tt_bell = y | x;
+      {
+          int vol = -1;
+#ifdef NT
+          extern int beepvolume;
+#endif /* NT */
+          extern int tt_bell_usr;
+          if ((x = cmkey(audibletab, naudibletab,
+                 "how audible console and terminal\nbells should be generated",
+                         "beep",xxstring))<0)
+              return(x);
+
+#ifdef NT
+          if (x == XYB_MIDI) {
+              if ((vol = cmkey(audiblevolumetab, naudiblevolumetab,
+                      "bell volume", "high",xxstring))<0)
+                  return(vol);
+          }
+#endif /* NT */
+
+          if ((z = cmcfm()) < 0)
+              return(z);
+          tt_bell = tt_bell_usr = y | x;
+
+#ifdef NT
+          if (vol >= 0 && x == XYB_MIDI) {
+              beepvolume = vol == 1 ? BEEP_VOLUME_HIGH : BEEP_VOLUME_LOW;
+          }
+#endif /* NT */
+      }
 #else
         /* This lets C-Kermit accept but ignore trailing K95 keywords */
         if ((x = cmtxt("Confirm with carriage return","",&s,xxstring)) < 0)

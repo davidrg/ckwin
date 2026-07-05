@@ -6250,6 +6250,9 @@ shotrm() {
       case XYB_AUD | XYB_BEEP:
         ckstrncat(bell,"beep",64);
         break;
+      case XYB_AUD | XYB_MIDI:
+        ckstrncat(bell, "sound device",64);
+        break;
       case XYB_AUD | XYB_SYS:
         ckstrncat(bell,"system sounds",64);
         break;
@@ -12918,6 +12921,11 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* SUPERLAT */
+#ifdef CK_HAVE_DSOUND
+    printf(" DirectSound support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif
 #endif /* NT */
 
 #ifdef OS2
@@ -13317,6 +13325,11 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* SUPERLAT */
+#ifdef CK_HAVE_DSOUND
+    printf(" No DirectSound support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif
 #endif /* NT */
 
 #ifdef OS2

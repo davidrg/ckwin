@@ -160,6 +160,13 @@ CKF_GDIPLUS=yes
 CKF_SHELLNOTIFY=yes
 !endif
 
+!if ($(MSC_VER) > 102)
+# Visual C++ 4.2
+!if "$(CKF_DSOUND)" != "no"
+CKF_DSOUND=yes
+!endif
+!endif
+
 !if "$(CMP)" == "OWCL"
 # No built-in SSH support for Open Watcom (yet), so if SSH support has been
 # requested, turn Dynamic SSH on.
@@ -849,6 +856,14 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) ShellNotify
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY -D_WIN32_IE=0x0501
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) ShellNotify
+!endif
+
+# DirectSound was first included with Visual C++ 4.2
+!if "$(CKF_DSOUND)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) DirectSound
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_DSOUND
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) DirectSound
 !endif
 
 !if "$(CKF_MOUSE)" != "no"

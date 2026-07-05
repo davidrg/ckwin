@@ -314,6 +314,9 @@ F_SOFT_FONT=1      # New in beta 8
 F_EXTENDED_UL=0    # -- Additional underline styles not supported yet
 F_DECRQSS=1
 
+# Note: Out of vertical space now - listing any more features will require
+#       either the terminal to resize or some lines to be combined.
+
 # VT420 features:-
 # K95 Version 1.1.21 (2002) supported most rectangular area operations, but the
 # implementation is buggy. Text macros, paging, and DECLRMM are new in v3.0 b8.
@@ -795,6 +798,13 @@ if [ "$F_RECTOPS" = "1" ]; then
   printf '\x1b[1"q'
 fi
 
+# Play a sound
+printf ' * VT520 Play Sound \x1b[4;2;13,~\x1b[4;2;17,~\x1b[4;4;25,~'
+if [ "$F_SOFT_FONT" = "1" ] && [ "$F_VT520_FEATURES" = "1"  ]; then
+  printf '\x1b[16*z'
+fi
+printf '\n'
+
 printf ' * Dozens of other emulations:\tADDS25\tADM3A\tADM5\tAIXTERM\tANNARBOR'
 printf '\n\tANSI-BBS\tAT386\tBA80\tBETERM\tDG200\tDG210\tDG217\tHEATH19'
 printf '\n%s\tHFT\tHP2621A\tHPTERM\tHZ1500\tIBM3151\tLINUX\tQANSI\tQNX\tSCOANSI' $FRA_1
@@ -815,7 +825,7 @@ if [ "$F_RECTOPS" = "1" ]; then
   printf '\x1b["q'
 
   # Put some garbage in the section above with DECFRA
-  printf '\x1b[92;%s;1;%s;8$x' $((VT420_LINE+2)) $((VT420_LINE+7))
+  printf '\x1b[92;%s;1;%s;8$x' $((VT420_LINE+3)) $((VT420_LINE+8))
 
   # Define a text macro with ID 0. If it works, "text macros" should
   # appear in the list of features!
@@ -877,12 +887,12 @@ if [ "$F_RECTOPS" = "1" ]; then
   printf '\x1b[2*x' # DECSACE - back to rectangles
 
   # Wipe out the slashes too, with DECSERA
-  printf '\x1b[%s;1;%s;80${' $((VT420_LINE+1)) $((VT420_LINE+7))
+  printf '\x1b[%s;1;%s;80${' $((VT420_LINE+2)) $((VT420_LINE+8))
 
   # And clear the background, as DECSERA won't do it
-  printf '\x1b[%s;1;%s;8;7$t' $((VT420_LINE+2)) $((VT420_LINE+7))
+  printf '\x1b[%s;1;%s;8;7$t' $((VT420_LINE+3)) $((VT420_LINE+8))
 
-  printf '\x1b[%sH' $((VT420_LINE+7))
+  printf '\x1b[%sH' $((VT420_LINE+8))
 
   # The feature list should look something like this if the terminal supports
   # all required features:
@@ -902,7 +912,7 @@ if [ "$F_DECLRMM" = "1" ]; then
   printf '\x1b[?6l'                # DECOM off
   printf '\x1b[?69h'               # DECLRMM on
   printf '\x1b[1;10r\x1b[20;60s'   # Margins set
-  printf '\x1b[%s;1H' $((VT420_LINE+9))
+  printf '\x1b[%s;1H' $((VT420_LINE+10))
 else
   printf '\x1b8'
 fi
@@ -911,7 +921,7 @@ printf '\x1b[32P'               # Fix indenting of scriptability line
 
 if [ "$F_DECLRMM" = "1" ]; then
   declrmm_off
-  printf '\x1b[%s;1H' $((VT420_LINE+9))
+  printf '\x1b[%s;1H' $((VT420_LINE+10))
 fi
 printf '\x1b[m'
 printf '\x1bE'   # Next line
@@ -991,6 +1001,9 @@ printf '\x1b[?25l'
 
 read -n 1 -s -r -p "Strike any key to continue..."
 
+# Clear the line
+printf '\x1b[2K'
+
 # Blinking off
 printf '\x1b[0m\n'
 
@@ -1013,6 +1026,10 @@ if [ "$F_SOFT_FONT" = "1" ]; then
 	  vtstar_drcs_fix
 	fi
 fi
+
+# Erase ruled lines in case a full screen app that doesn't know how to erase
+# them is launched next. DECterm requires all the semicolons, K95 doesn't.
+printf '\x1b[0;;;;,t'
 
 # DECOM and DECLRMM off
 printf '\x1b[?6;69l'

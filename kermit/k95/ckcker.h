@@ -77,6 +77,7 @@
 #ifdef OS2
 #define XYB_FLASH 8         /* Flash window on bell */
 #endif
+#define XYB_MIDI  16        /* Audible Beep via MIDI or Wave device */
 
 /* File status bits */
 

@@ -1169,6 +1169,9 @@ jobs:
 
           call ${{github.workspace}}\setenv.bat
         
+          REM Adjust the include path so that DSound.h can be found
+          set INCLUDE=%INCLUDE%;%WATCOM%\h\nt\directx
+          
           REM Enable Dynamic SSH just to be sure those bits are buildable
           REM with Open Watcom
           if not "${{matrix.os.id}}" == "nt-legacy" set CKF_SSH=yes
@@ -1510,6 +1513,9 @@ jobs:
           set srp_root_override=${{github.workspace}}\srp-2.1.2
           set k4w_root_override=${{github.workspace}}\kerberos\kfw-2.6.5\src
           
+          REM DirectSound head isnt in this SDK
+          set CKF_DSOUND=no
+          
           if "%TAG%" == "" goto :dev_build
           REM If the commit is tagged, assume its a release (or beta/rc) build,
           REM rather than a "Pre-Beta" or similar
@@ -1563,6 +1569,9 @@ jobs:
           REM (though apparently you can get the required import library for
           REM dynamic linking from the .NET SDK 1.1)
           set CKB_STATIC_CRT_NT=yes
+          
+          REM DirectSound header isnt available
+          set CKF_DSOUND=no
           
           cd k95
           
@@ -1738,6 +1747,9 @@ jobs:
           if "${{ github.event.inputs.stable_release }}" NEQ "true" goto :unstable
           set CKF_BETATEST=no
           :unstable
+          
+          REM DirectSound header isnt available in this SDK
+          set CKF_DSOUND=no
           
           call ${{github.workspace}}\setenv.bat
           

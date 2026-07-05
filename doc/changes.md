@@ -166,6 +166,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - New option to not clear the terminal screen when it is resized: 
    `SET TERM CLEAR-ON-RESIZE { ON, OFF }` 
  - Soft-fonts (DRCS) for VT220 and higher emulations are now supported
+ - The VT520 Play Sound control sequence is now supported.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -384,6 +385,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECERLBRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbra)
  - [DECDLD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdld) - Download soft-font
  - [DECDLDA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdlda) - Set how many font buffers are available (VT520 only), queryable with DECRQSS
+ - [DECSWBV](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decswbv) - Set Warning Bell Volume
+ - [DECPS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decps) - Play Sound (VT520)
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made

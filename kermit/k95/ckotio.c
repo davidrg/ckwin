@@ -212,7 +212,7 @@ static char *ckxrev = "32-bit";
 #include "ckcsig.h"
 #include "ckokey.h"
 #include "ckoslp.h"
-
+#include "ckosnd.h"
 
 extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[],
              SavedVT525RGBTable[], SavedVT525MonoRGBTable[],
@@ -2535,6 +2535,7 @@ syscleanup() {
     VioHandle = 0 ;
 #endif /* ! KUI */
 #endif /* NT */
+    CloseSoundDevice();
     CloseThreadMgmtMutex() ;
     CloseZoutDumpMutex();
     debug(F100,"Close Mutexes and Semaphores done","",0);
