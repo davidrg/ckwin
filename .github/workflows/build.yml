@@ -20,17 +20,18 @@ on:
 env:
   # Expected filename: https://zlib.net/zlib-1.3.1.tar.gz
   # old site: https://ftp.zx.net.nz/pub/dev/lib/zlib/
+  # new site: https://github.com/madler/zlib/releases/download/v${{env.ZLIB_VERSION}}/zlib-${{env.ZLIB_VERSION}}.tar.gz
   # As of 2023-01-21 downloads from zlib.net were coming back corrupted for an unknown reason,
   # so we switched fetching zlib from ftp.zx.net.nz instead. As of 2024-08-16 it seems to be
   # fine, so we've switched back to zlib.net.
   ZLIB_VERSION: 1.3.2
   # Expected filename: https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-  OPENSSL_VERSION: 3.5.5
+  OPENSSL_VERSION: 3.5.7
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
-  OPENSSL_ARM_VERSION: 3.5.5
+  OPENSSL_ARM_VERSION: 3.5.7
   # OpenSSL 3.5.5 isn't compatible with MinGW
-  OPENSSL_MINGW_VERSION: 3.5.4
+  OPENSSL_MINGW_VERSION: 3.5.7
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
   # If jom works ideally we use that as it results in shorter build times.
   OPENSSL_MAKE: nmake
@@ -99,7 +100,7 @@ jobs:
           ls -l
         shell: bash
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ca_certs
           path: |
@@ -111,7 +112,7 @@ jobs:
   Prepare-Docs:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: HTMLise Markdown Docs
         working-directory: ${{github.workspace}}
         run: |
@@ -138,7 +139,7 @@ jobs:
           ) >> ssh-readme.html
         shell: cmd
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: markdown-docs
           path: |
@@ -149,7 +150,7 @@ jobs:
   Build-Wart:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache Wart
         uses: "./.github/actions/cache"
         id: cache-wart
@@ -175,7 +176,7 @@ jobs:
           move ckwart.exe ..\..\ckwart.exe
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wart-x86
           path: ${{github.workspace}}/ckwart.exe
@@ -187,7 +188,7 @@ jobs:
   Build-TREXX:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache TREXX
         uses: "./.github/actions/cache"
         id: cache-trexx
@@ -223,7 +224,7 @@ jobs:
           
           nmake -f makefile.win.vc trexx.exe
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trexx-x86
           path: ${{github.workspace}}/trexx/regina/trexx.exe
@@ -243,7 +244,7 @@ jobs:
       commit-sha: ${{ steps.check-for-tag.outputs.commit_sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Check if commit is tagged
         id: check-for-tag
         shell: bash
@@ -334,7 +335,7 @@ jobs:
     name: Build-${{matrix.toolset}} (${{matrix.arch}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Select configuration
         id: cfg
         run: |
@@ -430,7 +431,8 @@ jobs:
           # Get and unpack zlib
           mkdir zlib
           cd zlib
-          wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          # wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          wget https://github.com/madler/zlib/releases/download/v${{env.ZLIB_VERSION}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
           7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
           7z x zlib-${{env.ZLIB_VERSION}}.tar
           del zlib-${{env.ZLIB_VERSION}}.tar 
@@ -518,7 +520,7 @@ jobs:
 
 
       - name: Fetch x86 trexx
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         if: matrix.arch != 'x86' && matrix.arch != 'x64' && matrix.arch != 'arm64'
         with:
           name: trexx-x86
@@ -722,7 +724,7 @@ jobs:
         shell: cmd
 
       - name: Fetch x86 wart
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         if: matrix.arch != 'x86' && matrix.arch != 'x64' && matrix.arch != 'arm64'
         with:
           name: wart-x86
@@ -830,13 +832,13 @@ jobs:
           list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
       - name: Fetch CA Certs bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ca_certs
           path: ${{github.workspace}}\kermit\k95\dist
     
       - name: Fetch Docs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: markdown-docs
           path: ${{github.workspace}}\kermit\k95\dist
@@ -848,7 +850,7 @@ jobs:
         shell: cmd
     
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-vs${{env.toolsetvc}}-${{matrix.arch}}
           path: ${{github.workspace}}/ckwin
@@ -873,7 +875,7 @@ jobs:
     name: Build-VS2010-PSDK71 (${{matrix.arch}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Select configuration
         id: cfg
         run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
@@ -1004,7 +1006,7 @@ jobs:
         shell: cmd
 
       - name: Fetch x86 wart
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         if: matrix.arch == 'ia64'
         with:
           name: wart-x86
@@ -1059,13 +1061,13 @@ jobs:
           list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
       - name: Fetch CA Certs bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ca_certs
           path: ${{github.workspace}}\kermit\k95\dist
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: markdown-docs
           path: ${{github.workspace}}\kermit\k95\dist
@@ -1081,7 +1083,7 @@ jobs:
           move dist ${{github.workspace}}\ckwin
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-vs2010-${{matrix.arch}}
           path: ${{github.workspace}}/ckwin
@@ -1110,7 +1112,7 @@ jobs:
     name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.os.id}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Select configuration
         id: cfg
@@ -1167,6 +1169,9 @@ jobs:
 
           call ${{github.workspace}}\setenv.bat
         
+          REM Adjust the include path so that DSound.h can be found
+          set INCLUDE=%INCLUDE%;%WATCOM%\h\nt\directx
+          
           REM Enable Dynamic SSH just to be sure those bits are buildable
           REM with Open Watcom
           if not "${{matrix.os.id}}" == "nt-legacy" set CKF_SSH=yes
@@ -1242,7 +1247,7 @@ jobs:
 
       - name: Fetch Docs
         if: matrix.os.id == 'nt' || matrix.os.id == 'nt-legacy'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: markdown-docs
           path: ${{github.workspace}}\ckwin
@@ -1268,7 +1273,7 @@ jobs:
 
       - name: Upload K95 Artifact
         if: matrix.os.id == 'nt'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ow${{matrix.ver}}-x86
           path: ${{github.workspace}}/ckwin
@@ -1276,7 +1281,7 @@ jobs:
           retention-days: 7
       - name: Upload Dialer Artifact
         if: matrix.os.id == 'nt'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dialer-ow${{matrix.ver}}-x86
           path: ${{github.workspace}}/dialer
@@ -1284,7 +1289,7 @@ jobs:
           retention-days: 7
       - name: Upload Artifact
         if: matrix.os.id == 'nt-legacy'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ow${{matrix.ver}}-x86-nt350
           path: ${{github.workspace}}/ckwin
@@ -1292,7 +1297,7 @@ jobs:
           retention-days: 7
       - name: Upload Zip Artifact
         if: matrix.os.id == 'os2'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-ow${{matrix.ver}}-x86
           path: ${{github.workspace}}/ckos2
@@ -1300,7 +1305,7 @@ jobs:
           retention-days: 7
       - name: Upload Full Installer Artifact
         if: matrix.os.id == 'os2'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-full-install
           path: ${{github.workspace}}/dist-full
@@ -1308,7 +1313,7 @@ jobs:
           retention-days: 7
       - name: Upload Minimal Installer Artifact
         if: matrix.os.id == 'os2'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-mini-install
           path: ${{github.workspace}}/dist-mini
@@ -1340,7 +1345,7 @@ jobs:
     name: Build-VS${{matrix.arch.vsversion}}-PSDK2003SP1 (${{matrix.arch.id}}, ${{matrix.legacy_dependencies}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
@@ -1508,6 +1513,9 @@ jobs:
           set srp_root_override=${{github.workspace}}\srp-2.1.2
           set k4w_root_override=${{github.workspace}}\kerberos\kfw-2.6.5\src
           
+          REM DirectSound head isnt in this SDK
+          set CKF_DSOUND=no
+          
           if "%TAG%" == "" goto :dev_build
           REM If the commit is tagged, assume its a release (or beta/rc) build,
           REM rather than a "Pre-Beta" or similar
@@ -1562,6 +1570,9 @@ jobs:
           REM dynamic linking from the .NET SDK 1.1)
           set CKB_STATIC_CRT_NT=yes
           
+          REM DirectSound header isnt available
+          set CKF_DSOUND=no
+          
           cd k95
           
           echo Cleaning...
@@ -1590,13 +1601,13 @@ jobs:
 
       - name: Fetch CA Certs bundle
         if: matrix.legacy_dependencies == 'yes'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ca_certs
           path: ${{github.workspace}}\kermit\k95\dist
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: markdown-docs
           path: ${{github.workspace}}\kermit\k95\dist
@@ -1613,7 +1624,7 @@ jobs:
           move dist-misc ${{github.workspace}}\ckwin-extra
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'no'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}
@@ -1621,7 +1632,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (extra)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'no'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-extra
@@ -1629,7 +1640,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (legacy)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'yes'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-insecure
@@ -1637,7 +1648,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (legacy-extra)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.legacy_dependencies == 'yes'
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-insecure-extra
@@ -1662,7 +1673,7 @@ jobs:
     name: Build-VS${{matrix.arch.vsversion}}-PSDK2003SP1 (${{matrix.arch.id}})
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
@@ -1716,7 +1727,7 @@ jobs:
         shell: cmd
 
       - name: Fetch x86 wart
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: wart-x86
           path: ${{github.workspace}}
@@ -1736,6 +1747,9 @@ jobs:
           if "${{ github.event.inputs.stable_release }}" NEQ "true" goto :unstable
           set CKF_BETATEST=no
           :unstable
+          
+          REM DirectSound header isnt available in this SDK
+          set CKF_DSOUND=no
           
           call ${{github.workspace}}\setenv.bat
           
@@ -1762,7 +1776,7 @@ jobs:
           list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: markdown-docs
           path: ${{github.workspace}}\kermit\k95\dist
@@ -1778,7 +1792,7 @@ jobs:
           move dist ${{github.workspace}}\ckwin
         shell: cmd
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}
           path: ${{github.workspace}}/ckwin
@@ -1796,7 +1810,7 @@ jobs:
     needs: [Get-CACerts-Bundle, Prepare-Docs]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Select configuration
         id: cfg
         run: echo "openssl=${{env.OPENSSL_MINGW_VERSION}}" >> "$GITHUB_OUTPUT"
@@ -1861,13 +1875,13 @@ jobs:
         shell: bash
 
       - name: Fetch CA Certs bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ca_certs
           path: ${{github.workspace}}/ckwin
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: markdown-docs
           path: ${{github.workspace}}/ckwin
@@ -1878,7 +1892,7 @@ jobs:
         shell: bash
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-mingw64-cross
           path: ${{github.workspace}}/ckwin
@@ -1900,7 +1914,7 @@ jobs:
   Test-C-Kermit-Linux-Build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -1963,9 +1977,9 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
@@ -1993,7 +2007,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ctlseqs-doc
           path: |
@@ -2015,9 +2029,9 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
@@ -2042,7 +2056,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-web
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2060,14 +2074,14 @@ jobs:
       - Build-Ctlseqs-Doc
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-ctlseqs-doc
           path: ${{ github.workspace }}\ctlseqs
@@ -2096,7 +2110,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-for-github-pages
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2127,7 +2141,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -2198,7 +2212,7 @@ jobs:
           fi          
 
       - name: Fetch Manual as Stable Manual
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
         with:
           name: k95-manual-web
@@ -2214,7 +2228,7 @@ jobs:
           7z a -tzip artifact\stable.zip current
 
       - name: Fetch Manual as Dev Manual
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-for-github-pages
           path: ${{ github.workspace }}\pages\dev\
@@ -2229,7 +2243,7 @@ jobs:
 # See:  https://github.com/actions/deploy-pages/issues/383
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # This is the normal version for distribution with the application. HTML
   # files end in .htm, index.htm is the front page of the K95 documentation,
@@ -2241,9 +2255,9 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
@@ -2267,7 +2281,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2284,9 +2298,9 @@ jobs:
       - Check-Build-Type
       - Build-VisualCxx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch K95
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
@@ -2310,7 +2324,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\dist\docs\manual
@@ -2345,17 +2359,17 @@ jobs:
       - Build-VisualCxx
     steps:
       - name: Fetch K95 x86
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2019-x86
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
       - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-ctlseqs-doc
           path: ${{ github.workspace }}\ctlseqs
@@ -2365,7 +2379,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-x86
           path: ${{ github.workspace }}\k95
@@ -2379,17 +2393,17 @@ jobs:
       - Build-VisualCxx
     steps:
       - name: Fetch K95 x86-64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2019-x64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
       - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-ctlseqs-doc
           path: ${{ github.workspace }}\ctlseqs
@@ -2399,7 +2413,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-x86-64
           path: ${{ github.workspace }}\k95
@@ -2413,17 +2427,17 @@ jobs:
       - Build-VisualCxx
     steps:
       - name: Fetch K95 arm32
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2022-x64_arm
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
       - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-ctlseqs-doc
           path: ${{ github.workspace }}\ctlseqs
@@ -2433,7 +2447,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-arm32
           path: ${{ github.workspace }}\k95
@@ -2447,18 +2461,18 @@ jobs:
       - Build-VisualCxx
     steps:
       - name: Fetch K95 arm32
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           #name: k95-vs2022-x64_arm64
           name: k95-vs2022-arm64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
       - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-ctlseqs-doc
           path: ${{ github.workspace }}\ctlseqs
@@ -2468,7 +2482,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-arm64
           path: ${{ github.workspace }}\k95
@@ -2479,17 +2493,17 @@ jobs:
     needs: [Build-Manual-Dist, Build-VS2010-PSDK71, Build-Ctlseqs-Doc]
     steps:
       - name: Fetch K95 ia64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2010-ia64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
       - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-ctlseqs-doc
           path: ${{ github.workspace }}\ctlseqs
@@ -2499,7 +2513,7 @@ jobs:
           del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k95-ia64
           path: ${{ github.workspace }}\k95
@@ -2509,23 +2523,23 @@ jobs:
     runs-on: windows-latest
     needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
         with:
           nocache: ${{vars.NOCACHE}}
       - name: Fetch K95 x86
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-vs2019-x86
           path: ${{ github.workspace }}\k95
       - name: Fetch K95 os2 full
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k2-full-install
           path: ${{ github.workspace }}\k2-full
       - name: Fetch K95 os2 mini
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k2-mini-install
           path: ${{ github.workspace }}\k2-mini
@@ -2539,12 +2553,12 @@ jobs:
           del k2pack.exe
         shell: cmd
       - name: Fetch Manual - Mini
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\k2-mini\docs\manual
       - name: Fetch Manual - Full
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\k2-full\docs\manual
@@ -2582,17 +2596,17 @@ jobs:
         shell: cmd
 
       - name: Delete old full artifact
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: k2-full-install
 
       - name: Delete old mini artifact
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: k2-mini-install
 
       - name: Upload Full Installer Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-full-install
           path: ${{github.workspace}}/dist-full
@@ -2600,7 +2614,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Minimal Installer Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k2-mini-install
           path: ${{github.workspace}}/dist-mini

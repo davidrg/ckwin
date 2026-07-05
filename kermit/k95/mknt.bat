@@ -1,6 +1,14 @@
 @echo off
 setlocal
 
+if "%CKB_ASAN%" == "yes" goto :asan
+goto :noasan
+:asan
+echo ASAN is enabled - doing debug build instead.
+call mkntd.bat
+goto :end
+:noasan
+
 set RUN=N
 set SUFFIX=
 if [%1] == [Y] set RUN=Y

@@ -62,9 +62,7 @@
 #include "ckowin.h"
 #include "ckocon.h"
 #include "ckodir.h"
-#ifdef OS2MOUSE
 #include "ckokey.h"
-#endif /* OS2MOUSE */
 #ifdef KUI
 #include "ikui.h"
 #endif /* KUI */
@@ -974,6 +972,7 @@ static struct keytab trmtab[] = {
     { "character-set", XYTCS,     0 },
 #endif /* NOCSETS */
 #ifdef OS2
+    { "clear-on-resize",   XYTCLRRS,  0 },
     { "clipboard-access",  XYTCLP,    0 },
     { "code-page",     XYTCPG,    0 },
     { "color",         XYTCOL,    0 },
@@ -1476,9 +1475,20 @@ extern int scrninitialized[];
 
 struct keytab audibletab[] = {          /* Terminal Bell Audible mode */
     { "beep",          XYB_BEEP, 0 },   /* Values ORd with bell mode */
-    { "system-sounds", XYB_SYS,  0 }
+#ifdef NT
+    { "sound-device",  XYB_MIDI, 0 },
+#endif /* NT */
+    { "system-sounds", XYB_SYS,  0 },
 };
 int naudibletab = sizeof(audibletab)/sizeof(struct keytab);
+
+#ifdef NT
+struct keytab audiblevolumetab[] = {    /* Terminal Bell Volume*/
+    { "high",   1, 0 },
+    { "low",    0, 0 }
+};
+int naudiblevolumetab = sizeof(audiblevolumetab)/sizeof(struct keytab);
+#endif /* NT */
 
 struct keytab akmtab[] = {              /* Arrow key mode */
     { "application", TTK_APPL, 0 },
@@ -5318,6 +5328,15 @@ settrm() {
                   "5",10,&x,xxstring);
         return(setnum(&tt_ctstmo,x,y,10000));
 
+      case XYTCLRRS:                    /* TERMINAL CLEAR-ON-RESIZE */
+        y = seton(&x);                  /* Go parse ON or OFF */
+        if (y > 0) {                    /* Command succeeded? */
+            extern bool decncsm, decncsm_usr;
+            decncsm = decncsm_usr = !x;
+        }
+        return(y);
+
+
       case XYTCLP: {    /* SET TERMINAL CLIPBOARD-ACCESS */
             int zz;
 
@@ -6945,13 +6964,35 @@ setbell() {
 
       case XYB_AUD:
 #ifdef OS2
-        if ((x = cmkey(audibletab, naudibletab,
-               "how audible console and terminal\nbells should be generated",
-                       "beep",xxstring))<0)
-          return(x);
-        if ((z = cmcfm()) < 0)
-          return(z);
-        tt_bell = y | x;
+      {
+          int vol = -1;
+#ifdef NT
+          extern int beepvolume;
+#endif /* NT */
+          extern int tt_bell_usr;
+          if ((x = cmkey(audibletab, naudibletab,
+                 "how audible console and terminal\nbells should be generated",
+                         "beep",xxstring))<0)
+              return(x);
+
+#ifdef NT
+          if (x == XYB_MIDI) {
+              if ((vol = cmkey(audiblevolumetab, naudiblevolumetab,
+                      "bell volume", "high",xxstring))<0)
+                  return(vol);
+          }
+#endif /* NT */
+
+          if ((z = cmcfm()) < 0)
+              return(z);
+          tt_bell = tt_bell_usr = y | x;
+
+#ifdef NT
+          if (vol >= 0 && x == XYB_MIDI) {
+              beepvolume = vol == 1 ? BEEP_VOLUME_HIGH : BEEP_VOLUME_LOW;
+          }
+#endif /* NT */
+      }
 #else
         /* This lets C-Kermit accept but ignore trailing K95 keywords */
         if ((x = cmtxt("Confirm with carriage return","",&s,xxstring)) < 0)
@@ -14640,12 +14681,18 @@ savkeys(name,disp) char * name; int disp;
 #define SV_SCRL 0
 #define SV_HIST 1
 #define SV_SCRN 2
+#define SV_SFNT 3
 
 #ifdef OS2
 #ifndef NOLOCAL
 static struct keytab trmtrmopt[] = {
     { "screen",     SV_SCRN, 0 },
-    { "scrollback", SV_SCRL, 0 }
+    { "scrollback", SV_SCRL, 0 },
+#ifdef KUI
+#ifdef CK_HAVE_GDIPLUS
+    { "soft-fonts", SV_SFNT, CM_INV },
+#endif /* CK_HAVE_GDIPLUS */
+#endif /* KUI */
 };
 #endif /* NOLOCAL */
 #endif /* OS2 */
@@ -14713,11 +14760,48 @@ dosave(xx) int xx;
             struct FDB of, sw;
 #endif /* KUI */
 
-            if ((y = cmkey(trmtrmopt,2,
+            if ((y = cmkey(trmtrmopt,3,
                            "What to save","scrollback",xxstring)) < 0)
               return(y);
 #ifdef KUI
             if (y == SV_SCRL) break;
+
+#ifdef CK_HAVE_GDIPLUS
+            if (y == SV_SFNT) {
+                int bufnum;
+                /* We're saving a soft-font buffer to a bitmap. This is really
+                 * just a debugging feature, so the command is hidden. */
+
+                /* We need to collect a font buffer number, and a filename */
+                if ((y = cmnum("Font buffer number", "1", 10, &bufnum, xxstring)) < 0)
+                    return(y);
+
+                y = cmofi("Filename",
+                          ((bufnum == 1) ? "font-1.png" :
+                           (bufnum == 2) ? "font-2.png" : "font.png"),
+                          &s,
+                          xxstring);
+                if (y < 0)
+                    return(y);
+                if (y == 2) {
+                    printf("?Sorry, %s is a directory name\n",s);
+                    return(-9);
+                }
+
+                if ((y = cmcfm()) < 0) return(y);
+
+                ckstrncpy(line,s,LINBUFSIZ);
+                if (zfnqfp(line,TMPBUFSIZ,tmpbuf)) {
+                    ckstrncpy(line,tmpbuf,LINBUFSIZ);
+                }
+
+                if (line[0]) {
+                    success = KuiRenderSoftFontToFile(bufnum, line);
+                }
+
+                return success ? success : -9;
+            }
+#endif /* CK_HAVE_GDIPLUS */
 
             /* From here on we're saving the terminal screen. For the terminal
              * screen we have the option of saving in multiple image formats

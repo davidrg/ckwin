@@ -1,4 +1,7 @@
 #include "ikterm.h"
+
+#include "../ckocon.h"
+
 extern "C" {
 #include "ikui.h"
 extern enum markmodes markmodeflag[] ;
@@ -28,8 +31,10 @@ extern int nt351;
 
 extern void
 win32KeyEvent( int mode, KEY_EVENT_RECORD key );
+#ifdef OS2MOUSE
 extern void 
 win32MouseEvent( int mode, MOUSE_EVENT_RECORD r );
+#endif /* OS2MOUSE */
 
 }
 
@@ -65,7 +70,7 @@ void getMaxSizes( int* column, int* row )
 ------------------------------------------------------------------------*/
 IKTerm::IKTerm( BYTE whichbuffer, K_CLIENT_PAINT* clipaint )
     : vnum( whichbuffer )
-    , kcp( clipaint ), mouseCaptured(0), vt_char_attrs(0)
+    , kcp( clipaint ), mouseCaptured(0), vt_char_attrs(0), cell_attrs(0)
 {
 }
 
@@ -130,6 +135,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
     textBuffer = kcp->textBuffer;
     attrBuffer = kcp->attrBuffer;
     effectBuffer = kcp->effectBuffer;
+    cellAttrBuffer = kcp->cellAttrBuffer;
     lineAttr = kcp->lineAttr;
     unsigned long maxWidth = 0;
 
@@ -139,6 +145,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
             for ( x= 0; x < xs ; x++ ) {
                 textBuffer[c++] =' ';
                 attrBuffer[c++] = defaultattribute;
+                cellAttrBuffer[c++] = '\0';
                 effectBuffer[c++] = '\0';
             }
     }
@@ -172,7 +179,10 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                     if ( RequestVscrnMutex( vnum, -1 ) )
                         return FALSE;
 #endif /* NEW_EXCLUSIVE */
-                    vt_char_attrs = line->vt_char_attrs[x+xho];
+                    /* Throw away the erased flag - the renderer doesn't care
+                     * about it, and it messes with its attribute batching */
+                    vt_char_attrs = line->vt_char_attrs[x+xho] & ~VT_CHAR_ATTR_ERASED;
+                    cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                     /* Give mutex back */
                     ReleaseVscrnMutex(vnum) ;
@@ -196,6 +206,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                                 cell.video_attr,
                                 vt_char_attrs);
                     effectBuffer[c+x] = vt_char_attrs;
+                    cellAttrBuffer[c+x] = cell_attrs;
                 }
             }
             else
@@ -203,6 +214,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                 /* In case we are in the middle of a scroll */
                 memset( &(textBuffer[c]), ' ', xs );
                 memset( &(effectBuffer[c]), '\0', xs );
+                memset( &(cellAttrBuffer[c]), '\0', xs );
 
                 // memset( &(attrBuffer[c]), defaultattribute, xs );
                 {
@@ -236,6 +248,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                         textBuffer[c+xo+i] = vscrn[vnum].popup->c[y-yo][i];
                     attrBuffer[c+xo+i] = vscrn[vnum].popup->video_attr;
                     effectBuffer[c+xo+i] = '\0';
+                    cellAttrBuffer[c+xo+i] = '\0';
                 }
             }
             c += xs;        /* advance the pointer in the buffer */
@@ -272,6 +285,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                             textBuffer[c+x] = line->cells[x+xho].c ;
                             attrBuffer[c+x] = colorselect ;
                             effectBuffer[c+x] = line->vt_char_attrs[x+xho];
+                            cellAttrBuffer[c+x] = CELL_ATTR_GET(line,x+xho);
                         }
                         else
                         {
@@ -281,6 +295,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
                             vt_char_attrs = line->vt_char_attrs[x+xho];
+                            cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                             /* Give mutex back */
                             ReleaseVscrnMutex(vnum) ;
@@ -299,6 +314,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                                     line->cells[x+xho].video_attr,
                                     vt_char_attrs );
                             effectBuffer[c+x] = vt_char_attrs;
+                            cellAttrBuffer[c+x] = cell_attrs;
                         }
                     }
                 }
@@ -312,6 +328,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                             return FALSE;
 #endif /* NEW_EXCLUSIVE */
                         vt_char_attrs = line->vt_char_attrs[x+xho];
+                        cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                         /* Give mutex back */
                         ReleaseVscrnMutex(vnum) ;
@@ -330,6 +347,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                             line->cells[x+xho].video_attr,
                             vt_char_attrs);
                         effectBuffer[c+x] = vt_char_attrs;
+                        cellAttrBuffer[c+x] = cell_attrs;
                     }
                 }
             }
@@ -342,6 +360,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                     attrBuffer[c+x] = ComputeColorFromAttr(vnum,
                         defaultattribute,0);
                     effectBuffer[c+x] = 0;
+                    cellAttrBuffer[c+x] = 0;
                 }
             }
             c += xs;
@@ -368,6 +387,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                                                         line->cells[x].video_attr,
                                                         line->vt_char_attrs[x]);
                 effectBuffer[c+x] = line->vt_char_attrs[x];
+                cellAttrBuffer[c+x] = CELL_ATTR_GET(line,x);
             }
             c += xs ;
         }
@@ -386,6 +406,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                     textBuffer[c] = status[x] ;
                 attrBuffer[c] = colorstatus ;
                 effectBuffer[c] = '\0';
+                cellAttrBuffer[c] = '\0';
                 c++ ;
             }
         }
@@ -897,5 +918,7 @@ void IKTerm::mouseEvent( HWND hwnd, UINT msg, WPARAM wParam, int x, int y )
     inpEvt.Event.MouseEvent.dwControlKeyState = getControlKeyState();
     //debug(F111,"IKTerm::MouseEvent","dwControlKeyState",inpEvt.Event.MouseEvent.dwControlKeyState);
 
+#ifdef OS2MOUSE
     win32MouseEvent( vnum, inpEvt.Event.MouseEvent );
+#endif /* OS2MOUSE */
 }

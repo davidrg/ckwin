@@ -1257,6 +1257,55 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 
 #define WY_LINE_ATTR_PROTECTED        ((USHORT) 0x08)
 
+#ifdef KUI
+
+/* At this time only four cell attribute bits are used, so pack two cells into
+ * each byte to save memory. If five or more attribute bits are ever needed,
+ * delete PACKED_CELL_ATTRS and any code that is #ifdef PACKED_CELL_ATTRS.
+ * If a long time has passed since the year 2026 and no additional uses for cell
+ * attributes have arisen, its probably save to delete all the non-packed code
+ * paths and rename these to ruled line attributes or something. */
+#define PACKED_CELL_ATTRS
+
+/* These currently only used by K95G for implementing DECterm Ruled Lines */
+#define CA_ATTR_NONE                  ((CHAR) 0x00)
+#define CA_ATTR_LEFT_BORDER           ((CHAR) 0x01)
+#define CA_ATTR_TOP_BORDER            ((CHAR) 0x02)
+#define CA_ATTR_RIGHT_BORDER          ((CHAR) 0x04)
+#define CA_ATTR_BOTTOM_BORDER         ((CHAR) 0x08)
+#define CA_ATTR_RULED_LINES (CA_ATTR_LEFT_BORDER | CA_ATTR_TOP_BORDER | CA_ATTR_RIGHT_BORDER | CA_ATTR_BOTTOM_BORDER)
+
+#ifndef PACKED_CELL_ATTRS
+/* Not used, and not available when PACKED_CELL_ATTRS is defined */
+#define CA_ATTR_RESERVED_4            ((CHAR) 0x10)
+#define CA_ATTR_RESERVED_3            ((CHAR) 0x20)
+#define CA_ATTR_RESERVED_2            ((CHAR) 0x40)
+#define CA_ATTR_RESERVED_1            ((CHAR) 0x80)
+
+/* One per cell */
+#define CELL_ATTR_LEN MAXTERMCOL
+#define CELL_ATTR_GET(line, id) ((line)->cell_attrs[(id)])
+#define CELL_ATTR_SET(line, id, val) ((line)->cell_attrs[(id)] = (val))
+
+#else /* PACKED_CELL_ATTRS */
+/* The upper four bits aren't used, so no point wasting memory on them. Pack
+ * ruled lines for two cells into each byte. Other packing arrangements would
+ * require changes elsewhere (at a minimum in copy_cell_attrs, probably other
+ * places too) */
+#define CELL_ATTR_LEN (MAXTERMCOL/2 + 1)
+
+#define CELL_ATTR_GET(line, id) ((id)%2==0 ? ((line)->cell_attrs[(id)/2] & 0xF0) >> 4 \
+                                           : ((line)->cell_attrs[(id)/2] & 0x0F) )
+#define CELL_ATTR_SET(line, id, val) (\
+    (line)->cell_attrs[(id)/2] = (id)%2==0 \
+        ?  ((line)->cell_attrs[(id)/2] & 0x0F) | (val) << 4 \
+        : ((line)->cell_attrs[(id)/2] & 0xF0) | (val) & 0x0F)
+
+#endif /* PACKED_CELL_ATTRS */
+
+
+#endif /* KUI */
+
 /* On OS/2, this struct must be a pair of unsigned chars - the first a
  * character, the second its attributes. */
 typedef struct cell_struct {          /* to be used with VioWrtNCell() */
@@ -1268,10 +1317,16 @@ typedef struct cell_struct {          /* to be used with VioWrtNCell() */
     cell_video_attr_t video_attr;      /* attribute */
 } viocell ;
 
+typedef unsigned short vt_char_attr_t;
+typedef unsigned char vt_cell_attr_t;
+
 typedef struct videoline_struct {
     unsigned short      width ;           /* number of valid chars */
     viocell *           cells ;           /* valid to length width */
-    unsigned short *    vt_char_attrs ;   /* bitwise & of VT_CHAR_ATTR Values */
+    vt_char_attr_t *    vt_char_attrs ;   /* bitwise & of VT_CHAR_ATTR Values */
+#ifdef KUI
+    vt_cell_attr_t *    cell_attrs;       /* bitwise & of CA_ATTR Values */
+#endif /* KUI */
     unsigned short *    hyperlinks;       /* hyperlink index values */
     unsigned short      vt_line_attr ;
     short               markbeg ;
@@ -1320,6 +1375,88 @@ typedef struct vscrn_struct {
 	int           dirty;
 #endif /* KUI */
 } vscrn_t;
+
+
+#ifdef KUI
+/* VT level 2 DRCS Support
+ * ------------------------
+ *
+ */
+#define DRCS_MAX_CELL_HEIGHT 20
+typedef struct _drcs_glyph_t {
+    /* Enough for cells 16 pixels wide, 20 high, the max for the VT340 */
+    unsigned short pixels[DRCS_MAX_CELL_HEIGHT];
+    char undefined;
+} drcs_glyph_t;
+
+#define DRCS_RENDITION_01_80x24     0
+#define DRCS_RENDITION_02_132_24    1
+#define DRCS_RENDITION_11_80x36     2
+#define DRCS_RENDITION_12_132x36    3
+#define DRCS_RENDITION_21_80x48     4
+#define DRCS_RENDITION_22_132x48    5
+#define DRCS_RENDITIONS_TOTAL       6
+
+typedef struct _drcs_rendition_t {
+    drcs_glyph_t glyphs[96];
+    char cell_height;  /* Terminal cell height */
+    char cell_width;   /* Terminal cell width  */
+    char height;       /* Font glyph height */
+    char width;        /* Font glyph width */
+    char full_cell;
+    char rendition_id;
+    char undefined;    /* If all glyphs are undefined */
+} drcs_rendition_t;
+
+#define DRCS_RENDER_HINT_NONE           0x00
+#define DRCS_RENDER_HINT_VT220          0x01
+#define DRCS_RENDER_HINT_RES_F          0x02
+#define DRCS_RENDER_HINT_VT220_TEXT     0x04
+#define DRCS_RENDER_HINT_RES_E          0x08
+#define DRCS_RENDER_HINT_RES_D          0x10
+#define DRCS_RENDER_HINT_RES_C          0x20
+#define DRCS_RENDER_HINT_RES_B          0x40
+#define DRCS_RENDER_HINT_RES_A          0x80
+
+typedef struct _drcs_t {
+    char name[5];      /* 0-3 intermediates then a final */
+    drcs_rendition_t* renditions[6];
+    char is_96_chars;
+    char render_hints;
+    char serial; /* So we can track changes - this is an incrementing number. */
+} drcs_t;
+
+/* To increase this number:
+ *   - Update the macros below
+ *   - The soft font painting code in kclient.cxx will need updating to
+ *     deal with the additional font buffers
+ *   - A new TX_DRCS_x define needed in ckcuni.h, along with new entries in
+ *     txrinfo, xl_u and xl_tx in ckcuni.c
+ *   - update the charset and rtolxlat functions in ckoco3.c (search for
+ *     TX_DRCS_1 for the places to update - should be obvious enough).   */
+#define DRCS_BUFFERS 2
+
+#define DRCS_1_START 0xEF20
+#define DRCS_2_START 0xEF80
+
+#define IN_DRCS_RANGE(x) ((x) >= DRCS_1_START && (x) <= 0xEFDF)
+#define IN_DRCS_1_RANGE(x) ((x) >= DRCS_1_START && (x) <= 0xEF7F)
+#define IN_DRCS_2_RANGE(x) ((x) >= DRCS_2_START && (x) <= 0xEFDF)
+
+/* Gets the font buffer number the supplied character (in the Unicode PUA range)
+ * should reside in. Returns 0 if not a soft font. */
+#define DRCS_BUFFER_ID(x) ( \
+    IN_DRCS_1_RANGE((x)) ? 1 : \
+    IN_DRCS_2_RANGE((x)) ? 2 : \
+    0 \
+)
+
+#define DRCS_START(buffer) ( \
+    (buffer) == 1 ? DRCS_1_START : \
+    (buffer) == 2 ? DRCS_2_START : \
+    0 \
+)
+#endif /* KUI */
 
 /* Multiple Page support
  * ---------------------
@@ -1549,7 +1686,7 @@ _PROTOTYP( int VscrnGetBookmark, ( BYTE, int ) ) ;
 _PROTOTYP( bool IsWARPed, ( void ) ) ;
 _PROTOTYP( APIRET VscrnIsDirty, ( int ) ) ;
 _PROTOTYP( void VscrnScroll, (BYTE, int, int, int, int,int, CHAR, BOOL) ) ;
-_PROTOTYP( void VscrnScrollPage, (BYTE, int, int, int, int, int, CHAR, int) ) ;
+_PROTOTYP( void VscrnScrollPage, (BYTE, int, int, int, int, int, int, int, CHAR, int) ) ;
 _PROTOTYP( BOOL IsOS2FullScreen, (void) ) ;
 _PROTOTYP( void SmoothScroll, (void) ) ;
 _PROTOTYP( void JumpScroll, (void ) ) ;
@@ -1787,6 +1924,10 @@ _PROTOTYP( hyperlink * hyperlink_get, (int));
 #else
 #define DEF_BEEP_TIME 100
 #endif
+
+#define DEF_BEEP_VOLUME 127
+#define BEEP_VOLUME_LOW 54
+#define BEEP_VOLUME_HIGH 127
 
 #define ATTR_MODE_REAL 1
 #define ATTR_MODE_INTENSITY 2

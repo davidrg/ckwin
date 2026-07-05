@@ -55,6 +55,7 @@ char *connv = "OS/2 CONNECT command 10.0.234, 7 Sep 2025";
 #include "ckcxla.h"             /* Character set translation */
 #include "ckcnet.h"             /* Network support */
 #include "ckuusr.h"             /* For terminal type definitions, etc. */
+#include "ckosnd.h"             /* For sound output */
 
 #include <ctype.h>              /* Character types */
 #include <io.h>                 /* File io function declarations */
@@ -576,6 +577,7 @@ os2push() {                             /* not just for CONNECT mode anymore */
 /*---------------------------------------------------------------------------*/
 int beepfreq = DEF_BEEP_FREQ ;                  /* Beep Frequency */
 int beeptime = DEF_BEEP_TIME ;                  /* Beep Duration  */
+int beepvolume = DEF_BEEP_VOLUME ;              /* Beep Volume */
 
 void
 bleep(short int type) {
@@ -598,6 +600,15 @@ bleep(short int type) {
 #endif /* KUI */
 
     switch(tt_bell) {                   /* Follows TERMINAL BELL setting. */
+    case XYB_AUD | XYB_MIDI:
+        switch (type) {
+        case BP_BEL:
+        default:
+            /* VT520 sound */
+            MakeSound(95, beepvolume, 125);
+            break;
+        }
+        break;
     case XYB_AUD | XYB_BEEP:            /* AUDIBLE - BEEP */
         switch (type) {
 #ifndef NT
@@ -795,6 +806,9 @@ cleartermpage( BYTE vmode, int page ) {
             line->cells[x].c = ' ' ;
             line->cells[x].video_attr = erasecolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+#ifdef KUI
+			CELL_ATTR_SET(line,x,CA_ATTR_NONE);
+#endif /* KUI */
             }
         }
     lgotoxy(vmode,1, 1);

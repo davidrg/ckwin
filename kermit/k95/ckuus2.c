@@ -8144,6 +8144,10 @@ static char *hxyterm[] = {
 #endif /* NOCSETS */
 
 #ifdef OS2
+"SET TERMINAL CLEAR-ON-RESIZE { ON, OFF }",
+"  When enabled, the terminal screen is cleared when ever it is resized. When",
+"  off, the contents of the terminal screen is preserved on resize.",
+" ",
 "SET TERMINAL CLIPBOARD-ACCESS { ALLOW-BOTH, ALLOW-READ, ALLOW-WRITE } ",
 #ifdef KUI
 #ifdef CK_SHELL_NOTIFY
@@ -10019,20 +10023,32 @@ static char *hxywin95[] = {
 
 static char *hmxybel[] = {
 #ifdef OS2
+#ifdef NT
 #ifdef KUI
-"Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, ",
-"    FLASH-WINDOW [ { ON, OFF } ], NONE }",
+"Syntax: SET BELL { AUDIBLE [ { BEEP, SOUND-DEVICE <volume>, SYSTEM-SOUNDS } ],",
+"    VISIBLE, FLASH-WINDOW [ { ON, OFF } ], NONE }",
+#else
+"Syntax: SET BELL { AUDIBLE [ { BEEP, SOUND-DEVICE <volume>, SYSTEM-SOUNDS } ],",
+"    VISIBLE, NONE }",
+#endif /* KUI */
 #else
 "Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, NONE }",
-#endif /* KUI */
+#endif /* NT */
 "  Specifies how incoming Ctrl-G (bell) characters are handled in CONNECT",
 "  mode and how command warnings are presented in command mode.  AUDIBLE",
 "  means either a beep or a system-sound is generated; VISIBLE means the",
 "  screen is flashed momentarily.",
+#ifdef NT
+" ",
+"  SOUND-DEVICE means Kermit will make a tone via Windows DirectSound or MIDI ",
+"  where available, falling back to BEEP otherwise. Some terminals such as the",
+"  VT520 support changing the volume of this tone via an escape sequence. The ",
+"  SOUND-DEVICE option can be followed by a volume setting: HIGH or LOW.",
+#endif /* NT */
 #ifdef KUI
 " ",
-" FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
-" enabled independently of other options.",
+"  FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
+"  enabled independently of other options.",
 #endif /* KUI */
 #else
 "Syntax: SET BELL { OFF, ON }",

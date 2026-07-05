@@ -651,6 +651,7 @@ set CKB_XP_COMPATIBLE=yes
 set CKB_OS2_COMPATIBLE=yes
 set CKB_STATIC_CRT_NT=no
 set CKB_STATIC_CRT_OS2=yes
+set CKB_ASAN=no
 
 REM For Open Watcom we have to use its nmake clone
 set MAKE=nmake
@@ -673,6 +674,7 @@ set CKF_LIBDES=unsupported
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :semisupported
 
 :vc1
@@ -686,6 +688,7 @@ set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc1axp
@@ -698,6 +701,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_NT_COMPATIBLE=yes
+set CKB_ASAN=no
 
 REM As this compiler doesn't include msvcrt...
 set CKB_STATIC_CRT_NT=yes
@@ -717,6 +721,7 @@ set CKF_K4W=unsupported
 set CKF_XYZ=unsupported
 set CKB_STATIC_CRT_NT=yes
 set CKB_NT_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 
@@ -734,6 +739,7 @@ set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
 if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
@@ -760,6 +766,7 @@ set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 
 if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
@@ -776,6 +783,7 @@ set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp500mt-alpha
 
@@ -788,6 +796,7 @@ set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp600mt-alpha
 
@@ -800,6 +809,7 @@ set ZINCBUILD=mvcpp700mt
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 
 REM libdes won't build for Alpha64
 if "%CKB_TARGET_ARCH%" == "ALPHA64" set CKF_LIBDES=unsupported
@@ -813,6 +823,7 @@ set CKB_MSC_VER=131
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc8
@@ -821,6 +832,7 @@ set CKB_MSC_VER=140
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc9
@@ -828,6 +840,7 @@ set CK_COMPILER_NAME=Visual C++ 2008 (9.0)
 set CKB_MSC_VER=150
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc10
@@ -836,6 +849,7 @@ set CKB_MSC_VER=160
 set ZINCBUILD=mvcpp10
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc11
@@ -843,6 +857,7 @@ set CK_COMPILER_NAME=Visual C++ 2012 (11.0)
 set CKB_MSC_VER=170
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc12
@@ -850,6 +865,7 @@ set CK_COMPILER_NAME=Visual C++ 2013 (12.0)
 set CKB_MSC_VER=180
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc140
@@ -857,6 +873,7 @@ set CK_COMPILER_NAME=Visual C++ 2015 (14.0)
 set CKB_MSC_VER=190
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc141
@@ -864,6 +881,7 @@ set CK_COMPILER_NAME=Visual C++ 2017 (14.1)
 set CKB_MSC_VER=191
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
+set CKB_ASAN=no
 goto :cvcdone
 
 :vc142
@@ -971,10 +989,23 @@ goto :cvcend
 
 if "%CK_K95CINIT%" == "yes" goto :build_k95cinit
 
+REM Try and pickup the ASAN DLLs if ASAN is enabled and they can be found.
+if "%VCToolsInstallDir%" == "" goto :noasan
+if "%CKB_ASAN%" == "yes" goto :asan
+goto :noasan
+:asan
+set VCBINDIR=%VCToolsInstallDir%bin\Host%VSCMD_ARG_HOST_ARCH%\%VSCMD_ARG_TGT_ARCH%
+echo Looking for ASAN Libraries in %VCBINDIR%...
+dir "%VCBINDIR%\*.dll"
+if exist "%VCBINDIR%\clang_rt.asan_dynamic-x86_64.dll" set CK_DIST_ASAN="%VCBINDIR%\clang_rt.asan_dynamic-x86_64.dll"
+if exist "%VCBINDIR%\clang_rt.asan_dynamic-i386.dll" set CK_DIST_ASAN="%VCBINDIR%\clang_rt.asan_dynamic-i386.dll"
+echo Found ASAN Libraries: %CK_DIST_ASAN%
+:noasan
+
 REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
 
-set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES% %CKB_REXX_DIST_DLLS%
+set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES% %CKB_REXX_DIST_DLLS% %CK_DIST_ASAN%
 
 REM If this build can run on Windows 9x, include ctrl2cap for swapping the
 REM CTRL and Caps Lock keys, and the accent grave and esc keys:
@@ -1012,6 +1043,9 @@ if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. Yo
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running
 if "%BUILD_ZINC%" == "yes" echo %root%\mkzinc.bat
 if "%BUILD_ZINC%" == "yes" echo.
+
+if "%CKB_ASAN%" == "yes" echo AddressSanitizer is enabled. Use mkgd or mkntd to do debug builds.
+if "%CKB_ASAN%" == "yes" echo.
 goto :end
 
 :build_k95cinit

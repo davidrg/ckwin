@@ -5,6 +5,7 @@
              Columbia University Academic Information Systems, New York City.
            Jeffrey E Altman (jaltman@secure-endpoints.com)
              Secure Endpoints Inc., New York City
+           David Goodwin (david@zx.net.nz)
 
   Copyright (C) 1985, 2004, Trustees of Columbia University in the City of
   New York.  All rights reserved.  This copyright notice must not be removed,
@@ -30,6 +31,7 @@
 #include "ckoqnx.h"
 #include "ckoadm.h"
 #include "ckoads.h"
+#include "ckosnd.h"
 #endif /* NOLOCAL */
 
 #include <ctype.h>              /* Character types */
@@ -104,6 +106,7 @@ extern int tcp_incoming;
 
 _PROTOTYP(void vtescape, (void));
 _PROTOTYP(void vt100, (unsigned short vtch));
+char* csetchar(enum charsetsize size, int cset);
 #endif /* NOLOCAL */
 
 #ifdef KUI
@@ -140,6 +143,13 @@ VOID setpcterm(int);                /* ckokey.c */
 #ifdef NT
 int prtcfg(HANDLE);                 /* ckotio.c */
 #endif /* NT */
+
+int cursor_right_margin(int);
+int cursor_left_margin(int);
+bool cursor_in_margins(int);
+
+/* These terminal types get DECLRMM */
+#define IS_DECLRMM_AVAILABLE(x) (ISVT420((x)) || ISXTERM((x)) || ISK95((x)))
 
 /*
  *
@@ -191,6 +201,7 @@ extern int tn_b_nlm ;           /* TELNET BINARY newline mode */
 extern int tt_crd;              /* Carriage-return display mode */
 extern int tt_lfd;              /* Line-feed display mode */
 extern int tt_bell;             /* How to handle incoming Ctrl-G characters */
+extern int tt_bell_usr;
 #ifdef KUI
 extern int tt_bell_flash;
 extern int user_bell_flash;
@@ -512,6 +523,7 @@ extern bool     cursorena[];       /* Cursor enabled / disabled */
 extern bool     cursoron[] ;       /* Cursor state on/off       */
 extern bool     bracketed_paste[]; /* Bracketed paste on/off    */
 bool     relcursor = FALSE;
+bool     declrmm   = FALSE;			/* VT420 Left/Right Margin Mode */
 bool     keylock   = FALSE;
 bool     vt52graphics = FALSE;
 
@@ -533,6 +545,9 @@ int      decssdt = SSDT_INDICATOR ;     /* Status Display Type */
 bool     decssdt_override = FALSE;      /* Render SSDT_INDICATOR regardless of decssdt */
 bool     deckbum = FALSE ;              /* Keyboard (Typewriter/DP) */
 bool     decsace = FALSE;               /* DECSACE */
+bool     decncsm = FALSE;               /* No clearing screen on column change */
+bool     decncsm_usr = FALSE;           /* User setting for DECNCSM */
+bool     decscpp_resize = FALSE;        /* Resize initiated by DECSCPP */
 int      savdecbkm = 0 ;                /* User default Backspace Mode */
 bool     erm = FALSE ;                  /* Erasure Mode  VT300 */
 bool     crm = FALSE ;                  /* Control Mode  VT300 */
@@ -547,7 +562,7 @@ int      dec_upss = TX_8859_1 ;
 int      dec_lang = VTL_NORTH_AM;       /* DEC VT Language = North American */
 int      dec_nrc  = TX_ASCII;           /* DEC NRC for use during NRC Mode  */
 int      dec_kbd  = TX_8859_1;          /* DEC Keyboard character set       */
-
+bool     sound_playing = FALSE;         /* If a sound is playing */
 /*
   Terminal parameters that can also be set externally by SET commands.
   Formerly they were declared and initialized here, and had different
@@ -568,27 +583,62 @@ int saved_cursor_page = -1;
 int decspma_max_page = -1;  /* How many pages does the host want (DECSPMA) */
 int user_pages = -1; /* How many pages does the user want (SET TERM PAGE COUNT) */
 
+/* DRCS and Ruled Lines extensions only available in KUI builds */
+#ifdef KUI
+#define DRCS_EXT "7;"
+#define EXT_RULED_LINES "43;"
+#else
+#define DRCS_EXT ""
+#define EXT_RULED_LINES ""
+#endif /* KUI */
+#ifdef LATIN2
+#define EXT_LATIN2 "42;"
+#else
+#define EXT_LATIN2 ""
+#endif /* LATIN2 */
+
 /*
   VT220 and higher Pn's for terminal ID string are (* = Not supported):
      1 - 132 columns
      2 - Printer port
   *  3 - ReGIS graphics
   *  4 - Sixel graphics
+  *  5 - Katakana
      6 - DECSED - Selective erase
-  *  7 - DRCS - Soft character sets
+     7 - DRCS - Soft character sets   (KUI builds only)
      8 - UDK - User-defined keys
      9 - National Replacement Character Sets can be designated by host
+  * 10 - Kanji
+    11 - Status Display
   * 12 - Serbo-Croation (SCS)
   * 13 - Local editing
+    14 - 8-bit Interface Architecture
     15 - Technical character set
   * 16 - Locator device port
+  * 17 - Terminal State Interrogation
   * 18 - Windowing Capability
   * 19 - Dual sessions
+  * 20 - APL
   * 21 - Horizontal Scrolling
     22 - Color
     23 - Greek
   * 24 - Turkish
+  * 25 - Arabic Bilingual Mode 1
+  * 26 - Arabic Milingual Mode 2
+  * 27 - Arabic Milingual Mode 3
+    28 - Rectangular Editing
+  * 29 - ANSI Text Locator
+  * 30 - Hanzi
+    32 - Text Macros
+  * 33 - Hangul and Hanja
+  * 34 - Icelandic
+  * 35 - Arabic Bilingual with Text Controls
+  * 36 - Arabic Bilingual with no Text Controls
+  * 37 - Thai
+  * 38 - Character Outlining
+  * 39 - Page Memory Extension
     42 - ISO Latin-2
+    43 - Ruled Lines   (KUI builds only)
     44 - PC Term
     45 - Soft-key mapping
     46 - ASCII Terminal emulation
@@ -631,24 +681,26 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "BETERM",  {NULL},                          "",                    /* BEOS ANSI */
     "VT100", {"DEC-VT100","VT100-AM",NULL},     "[?1;2c",              /* DEC VT100 */
     "VT102", {"DEC-VT102",NULL},                "[?6c",                /* DEC VT102 */
-    "VT220", {"DEC-VT220","DEC-VT200","VT200",NULL}, "[?62;1;2;6;8;9;15;44c",  /* DEC VT220 */
-    "VT220PC", {"DEC-VT220-PC","DEC-VT200-PC","VT200PC",NULL}, "[?62;1;2;6;8;9;15;44c",  /* DEC VT220 w/ PC keyboard */
-    "VT320", {"DEC-VT320","DEC-VT300","VT300",NULL}, "[?63;1;2;6;8;9;15;44c",  /* DEC VT320 */
-    "VT320PC", {"DEC-VT320-PC","DEC-VT300-PC","VT300PC",NULL}, "[?63;1;2;6;8;9;15;44c",  /* DEC VT320 w/ PC keyboard */
-    "WY370", {"WYSE-370","WYSE370","WY350",NULL},"[?63;1;2;6;8;9;15;44c",  /* WYSE 370 (same as VT320) */
+    "VT220", {"DEC-VT220","DEC-VT200","VT200",NULL}, "[?62;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT220 */
+    "VT220PC", {"DEC-VT220-PC","DEC-VT200-PC","VT200PC",NULL}, "[?62;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT220 w/ PC keyboard */
+    "VT320", {"DEC-VT320","DEC-VT300","VT300",NULL}, "[?63;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT320 */
+    "VT320PC", {"DEC-VT320-PC","DEC-VT300-PC","VT300PC",NULL}, "[?63;1;2;6;"DRCS_EXT"8;9;15;44c",  /* DEC VT320 w/ PC keyboard */
+    "WY370", {"WYSE-370","WYSE370","WY350",NULL},"[?63;1;2;6;"DRCS_EXT"8;9;15;44c",  /* WYSE 370 (same as VT320) */
     "97801", {"SNI-97801",NULL},                "[?62;1;2;6;8;9;15;44c",  /* Sinix 97801 */
     "AAA", { "ANNARBOR", "AMBASSADOR",NULL}, "11;00;00", /* Ann Arbor Ambassador */
 #ifdef COMMENT
-    "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;23;42;44;45;46c",       /* DEC VT420 */
-    "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
+    "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;"DRCS_EXT"8;9;15;23;42;44;45;46c",       /* DEC VT420 */
+    "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;"DRCS_EXT"8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;22;28;32;44c",     /* Kermit 95 self-personality */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;"DRCS_EXT"8;9;15;22;28;32;"EXT_LATIN2""EXT_RULED_LINES"44c",     /* Kermit 95 self-personality */
             /* K95 Device Attributes:
-				VT320;132-columns;printer;selective-erase;user-defined-keys;
+				VT320;132-columns;printer;selective-erase;DRCS;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
-				ansi-color;rectangular-editing;text-macros;PCTerm
-                TODO: do we *really* not have extension 42? ISO Latin-2 seems to be supported...
+				horizontal-scrolling;ansi-color;rectangular-editing;text-macros;
+				latin-2;ruled-lines;PCTerm
             */
+#undef EXT_RULED_LINES
+#undef EXT_LATIN2
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
@@ -729,6 +781,1028 @@ int sni_chcode_8 = TRUE;                /* 97801 CH.CODE key enabled 8-bit mode 
 int sni_bitmode = 8;                    /* 97801 CH.CODE 8-bit mode */
 CHAR sni_kbd_firmware[7]="920031";      /* 97801 Keyboard Firmware Version */
 CHAR sni_term_firmware[7]="830851";     /* 97801 Terminal Firmware Version */
+
+
+#ifdef KUI
+/* VT level 2 DRCS Support
+ * ------------------------
+ */
+drcs_t *drcsbuf[DRCS_BUFFERS] = {NULL, NULL};
+char decdlda = 2;
+
+/* Replacement character glyphs */
+#define DRCS_REPLACEMENT_VT220          0
+#define DRCS_REPLACEMENT_VT320          1
+#define DRCS_REPLACEMENT_VT525_80x27    2
+#define DRCS_REPLACEMENT_VT525_80x43    3
+#define DRCS_REPLACEMENT_VT525_80x54    4
+#define DRCS_REPLACEMENT_VT525_132x27   5
+#define DRCS_REPLACEMENT_VT525_132x43   6
+#define DRCS_REPLACEMENT_VT525_132x54   7
+
+static drcs_glyph_t replacement_characters[8] = {
+    {   /* VT220 */
+        {
+            0x0000,	/* 0b0000000000000000 */
+            0x7c00,	/* 0b0111110000000000 */
+            0x8200,	/* 0b1000001000000000 */
+            0x6000,	/* 0b0110000000000000 */
+            0x1000,	/* 0b0001000000000000 */
+            0x1000,	/* 0b0001000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x1000,	/* 0b0001000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    },
+    {   /* VT320 */
+        {
+            0x0000,	/* 0b0000000000000000 */
+            0x07e0,	/* 0b0000011111100000 */
+            0x1ff8,	/* 0b0001111111111000 */
+            0x3c3c,	/* 0b0011110000111100 */
+            0x3c00,	/* 0b0011110000000000 */
+            0x3c00,	/* 0b0011110000000000 */
+            0x1fc0,	/* 0b0001111111000000 */
+            0x07f0,	/* 0b0000011111110000 */
+            0x00f0,	/* 0b0000000011110000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x00f0,	/* 0b0000000011110000 */
+            0x00f0,	/* 0b0000000011110000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    },
+    {   /* VT525, 80x27 (10x16) */
+        {
+            0x3f00,	/* 0b0011111100000000 */
+            0x7f80,	/* 0b0111111110000000 */
+            0xffc0,	/* 0b1111111111000000 */
+            0xe1c0,	/* 0b1110000111000000 */
+            0xe1c0,	/* 0b1110000111000000 */
+            0xe1c0,	/* 0b1110000111000000 */
+            0xf000,	/* 0b1111000000000000 */
+            0x7800,	/* 0b0111100000000000 */
+            0x3c00,	/* 0b0011110000000000 */
+            0x1c00,	/* 0b0001110000000000 */
+            0x1c00,	/* 0b0001110000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x1c00,	/* 0b0001110000000000 */
+            0x1c00,	/* 0b0001110000000000 */
+            0x1c00,	/* 0b0001110000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    },
+    {   /* VT525, 80x43 (10x10) */
+        {
+            0x3f00,	/* 0b0011111100000000 */
+            0x7f80,	/* 0b0111111110000000 */
+            0x6180,	/* 0b0110000110000000 */
+            0x7180,	/* 0b0111000110000000 */
+            0x3800,	/* 0b0011100000000000 */
+            0x1c00,	/* 0b0001110000000000 */
+            0x0c00,	/* 0b0000110000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0c00,	/* 0b0000110000000000 */
+            0x0c00,	/* 0b0000110000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    },
+    {   /* VT525, 80x54 (10x8) */
+        {
+            0x1f00,	/* 0b0001111100000000 */
+            0x3180,	/* 0b0011000110000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x1c00,	/* 0b0001110000000000 */
+            0x0600,	/* 0b0000011000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0600,	/* 0b0000011000000000 */
+            0x0600,	/* 0b0000011000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    },
+    {   /* VT525, 132x27 (6x16) */
+        {
+            0x0000,	/* 0b0000000000000000 */
+            0x7800,	/* 0b0111100000000000 */
+            0xfc00,	/* 0b1111110000000000 */
+            0xcc00,	/* 0b1100110000000000 */
+            0xcc00,	/* 0b1100110000000000 */
+            0xc000,	/* 0b1100000000000000 */
+            0xe000,	/* 0b1110000000000000 */
+            0x7000,	/* 0b0111000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    },
+    {   /* VT525, 132x43 (6x10) */
+        {
+            0x7800,	/* 0b0111100000000000 */
+            0xfc00,	/* 0b1111110000000000 */
+            0xcc00,	/* 0b1100110000000000 */
+            0xc000,	/* 0b1100000000000000 */
+            0x6000,	/* 0b0110000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    },
+    {   /* VT525, 132x54 (6x8) */
+        {
+            0x7800,	/* 0b0111100000000000 */
+            0xcc00,	/* 0b1100110000000000 */
+            0x6000,	/* 0b0110000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x3000,	/* 0b0011000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000,	/* 0b0000000000000000 */
+            0x0000 	/* 0b0000000000000000 */
+        }, 1
+    }
+};
+
+/* Erases a single rendition of a particular font buffer */
+void
+erase_font_buffer_rendition(drcs_rendition_t *drcs_rendition,
+                            int rendition) {
+    int i, glyph_id;
+
+    if (drcs_rendition == NULL) return;
+
+    debug(F101, "Erasing DRCS font rendition", 0, rendition);
+
+    /* Figure out which replacement character to use */
+    switch (tt_type) {
+        case TT_VT220:
+        case TT_VT220PC:
+            glyph_id = DRCS_REPLACEMENT_VT220;
+            break;
+        case TT_VT320:
+        case TT_VT320PC:
+        case TT_WY370:
+            /* TODO: 132 column glyph */
+            glyph_id = DRCS_REPLACEMENT_VT320;
+            break;
+        case TT_VT420:
+        case TT_VT520:
+        case TT_VT525:
+        case TT_K95:
+        default: {
+            drcs_rendition->width = 10;
+            switch (rendition) {
+                default:
+                case DRCS_RENDITION_01_80x24:
+                    glyph_id = DRCS_REPLACEMENT_VT525_80x27;
+                    drcs_rendition->height = 16;
+                    break;
+                case DRCS_RENDITION_02_132_24:
+                    glyph_id = DRCS_REPLACEMENT_VT525_132x27;
+                    drcs_rendition->height = 16;
+                    drcs_rendition->width = 6;
+                    break;
+                case DRCS_RENDITION_11_80x36:
+                    glyph_id = DRCS_REPLACEMENT_VT525_80x43;
+                    drcs_rendition->height = 10;
+                    break;
+                case DRCS_RENDITION_12_132x36:
+                    glyph_id = DRCS_REPLACEMENT_VT525_132x43;
+                    drcs_rendition->height = 10;
+                    drcs_rendition->width = 6;
+                    break;
+                case DRCS_RENDITION_21_80x48:
+                    glyph_id = DRCS_REPLACEMENT_VT525_80x54;
+                    drcs_rendition->height = 8;
+                    break;
+                case DRCS_RENDITION_22_132x48:
+                    glyph_id = DRCS_REPLACEMENT_VT525_132x54;
+                    drcs_rendition->height = 8;
+                    drcs_rendition->width = 6;
+                    break;
+            }
+            break;
+        }
+    }
+
+    /* The renderer needs to know how big the replacement glyphs are... */
+    drcs_rendition->cell_width = drcs_rendition->width;
+    drcs_rendition->cell_height = drcs_rendition->height;
+    drcs_rendition->undefined = TRUE;
+
+    for (i = 0; i < 96; i++) {
+        drcs_rendition->glyphs[i] = replacement_characters[glyph_id];
+    }
+}
+
+/* Erases all renditions for a particular font buffer */
+void
+erase_font_buffer(drcs_t *drcs) {
+    int i;
+
+    if (drcs == NULL) return;
+
+    debug(F100, "Erasing DRCS font buffer", 0, 0);
+
+    for (i = 0; i < DRCS_RENDITIONS_TOTAL; i++) {
+        erase_font_buffer_rendition(
+            drcs->renditions[i],
+            i);
+    }
+}
+
+void
+decdld(int font_number, int starting_character, int erase_control,
+       int width, int font_set_size, int usage, int height,
+       int character_set_size, const char* definition, int length) {
+    drcs_t *drcs;
+    int i=0, j=0, start=0;
+    int max_font_buffers;
+    int cell_height, cell_width, max_width, used_height = 0;
+    int h_offset = 0, v_offset = 0;
+    int lines = 24, columns = 80;
+    BOOL is_132cols = FALSE, is_full_cell = FALSE, is_vt220_font = FALSE;
+    BOOL is_36_line = FALSE, is_48_line = FALSE;
+    BOOL default_height = FALSE, default_width = FALSE, erased = FALSE;
+    int glyph = 0, row = 0, column = 0;
+    char name[4] = {0, 0, 0, 0};
+    int rendition = DRCS_RENDITION_01_80x24;
+    int erase_rendition = rendition;
+    int name_max_len = 0;
+
+    /* TODO:  VTStars behaviour has not been fully characterised and full
+     *        testing will be required if that is ever offered as a terminal
+     *        type. But here are some notes based on observations:
+     *          - /Seems/ to treat all fonts as full-cell
+     *          - Doesn't leave a gap on the left for text fonts
+     *          - Undefined behaviour hasn't been tested at all.
+     *          - It generally seems quite buggy. Glyphs seem to start out with
+     *              random garbage in them (memory not erased?), you have to
+     *              spam it with something like SGR after sending a DECDLD or it
+     *              gets stuck, result of switching to DECCOLM is odd
+     *          - Only supports 80 column and 132 column fonts
+     */
+
+    debug(F100, "DECDLD", "", 0);
+
+    /* Note that we use tt_type rather than tt_type_mode here as DRCS behaviour
+     * depends on the terminal K95 is emulating, not the terminal the emulated
+     * terminal is emulating (DECTME, DECSCL, etc). Not that any VT seems to let
+     * you emulate a VT220...VT420.
+     */
+
+    /* VT220, 420 and 520 only allow two intermediates and a final. STD-070
+     * allows three intermediates and a final */
+    name_max_len = tt_type == TT_K95 ? 4 : 3;
+
+    is_132cols = font_set_size == 2 || font_set_size == 12 ||
+        font_set_size == 22;
+    is_36_line = font_set_size == 11 || font_set_size == 12;
+    is_48_line = font_set_size == 21 || font_set_size == 22;
+    is_full_cell = usage == 2;
+
+    /* Figure out how many font buffers we should allow access to based on
+     * current terminal emulation. No DEC terminals support more than two, but
+     * their printers all support at least 3 if they support any at all.
+     * */
+    switch (tt_type) {
+        case TT_VT220:
+        case TT_VT220PC:
+        case TT_VT320:     /* The VT300 and VT420 actually have two - one for */
+        case TT_VT320PC:   /* each session. So from the hosts POV, only one  */
+        case TT_VT420:
+        case TT_WY370:
+            max_font_buffers = 1;
+            break;
+            /*case TT_VT510:*/
+        case TT_VT520:
+            max_font_buffers = decdlda;
+            break;
+        case TT_VT525:
+        case TT_K95:
+            max_font_buffers = 2;
+            break;
+        default:
+            debug(F111, "DECDLD", "End - Not supported by terminal type", tt_type);
+            return; /* DECDLD not supported by this terminal type */
+    }
+
+    /* And max cell dimensions */
+    switch (tt_type) {
+        case TT_VT220:
+        case TT_VT220PC:
+            cell_height = 10;
+            cell_width = 10;
+            max_width = 8;  /* Columns 9 and 10 are copies of 8 */
+            /* DECCOLM doesn't affect the cell width (at least not the
+             * addressable portion) - it primarily seems to result in narrower
+             * pixels. */
+            break;
+        case TT_VT320:
+        case TT_VT320PC:
+            /* Specs on page 90 of EK-VT320-UU */
+            cell_height = 12;
+            cell_width = is_132cols ? 9 : 15;
+            max_width = cell_width;  /* full cell */
+            if (!is_full_cell) { /* text cell */
+                max_width = is_132cols ? 7 : 12;
+            }
+
+            break;
+        case TT_VT340:
+            cell_width = is_132cols ? 6 : 10;
+            max_width = cell_width;  /* full cell */
+            if (!is_full_cell) { /* text cell */
+                max_width = is_132cols ? 5 : 9;
+            }
+            cell_height = 20;  /* The docs say so, but it feels wrong */
+            break;
+        case TT_WY370:
+            /* The WY-370 apparently supports a 161 column and 52 line modes,
+             * but it doesn't have different font set size parameters for them.
+             * Like the VT520 it just has a wide and a narrow font, and you
+             * have to handle switching fonts for different heights yourself.
+             * And for 132 vs 161 columns I guess its the same - you have to
+             * track which mode you're in and send the right font.
+             */
+
+            cell_width = is_132cols ? 10 : 16;
+            max_width = cell_width;  /* full cell */
+            if (!is_full_cell) { /* text cell */
+                /* 161 column display also uses a width of 7 */
+                max_width = is_132cols ? 7 : 12;
+            }
+            cell_height = 16;
+            break;
+        case TT_VT420:  /* VT420 and up all have the same cell dimensions */
+        /*case TT_VT510:*/
+        case TT_VT520:
+        case TT_VT525:
+        case TT_VTSTAR:
+        case TT_K95:
+        default:
+            cell_width = is_132cols ? 6 : 10;
+            max_width = cell_width; /* full cell */
+            if (!is_full_cell) { /* text cell */
+                /* While the manual says the maximum widths are 6 and 9, the
+                 * terminal rejects these - the actual implemented maximum is
+                 * 5 and 8. */
+                max_width = is_132cols ? 5 : 8;
+            }
+            cell_height = 16;
+            if (is_36_line) cell_height = 10;
+            if (is_48_line) cell_height = 8;
+            break;
+    }
+
+    /******* Validate Parameters *******/
+    /* Which are:
+     *  Pfn ; Pcn ; Pe ; Pcmw ; Pss ; Pu ; Pcmh ; Pcss
+     * Printers use:
+     *  Pfn ; Pcn ; Pe ; Pcmw ; Pss ; Pu ; Pcmh ; Pcss ; Psgr
+     */
+
+    /* Pfn - font number */
+    if (font_number > max_font_buffers) {
+        debug(F111, "DECDLD", "End - invalid font number", font_number);
+        return;
+    }
+
+
+    /* Pcn - Starting Character
+     * This defines the first glyph we're expecting to receive */
+    if (starting_character > (character_set_size == 1 ? 95 : 93)) {
+        debug(F111, "DECDLD", "End - invalid starting character", starting_character);
+        return;
+    }
+    glyph = starting_character;
+
+    /* Pe - Erase Control
+     * One of three values:
+     *     0 - erase everything
+     *     1 - erase only characters being reloaded
+     *     2 - erase all renditions (normal, bold, 80-column, 132-column)
+     * The VT220 docs say this erases all font buffers, but it only has one so
+     * that's probably meaningless
+     */
+    if (erase_control > 2) {
+        debug(F111, "DECDLD", "End - invalid erase control", erase_control);
+        return;
+    }
+
+    /* Pcmw - Character Matrix Width
+     * One of these values:
+     *     0 - Default
+     *          VT220: 7x10
+     *          VT420: 10 wide for 80 columns, 6 wide for 132 columns
+     *     1 -  VT220: Not used/Illegal
+     *     2 -  VT220 compatible: 5 wide, 10 high
+     *     3 -  VT220 compatible: 6 wide, 10 high
+     *     4 -  VT220 compatible: 7 wide, 10 high
+     *     5...16: Character matrix width.
+     *       EK-VT320-UU says values up to 15.
+     *       EK-VT3XX-TP says values up to 10
+     *       EK-VT420-RM says "must be less than 10. Any Pcmw value over 10 is illegal"
+     *       EK-VT510-RM says values up to 10
+     *       EK-VT520-RM says values up to 10
+     *       WY-370 supports up to 16 wide
+     * For the VT510, if Pu != 2, then the limits are:
+     *    9 wide for 80 columns
+     *    6 wide for 132 columns
+     * VT52x seems to be the same.
+     *
+     * The VT220 doesn't constrain glyphs to this size - even if a width of 5
+     * specified (Pcmw=2), you can still define glyphs up to 8 wide, though the
+     * 8th column is doubled.
+     * */
+    switch (width) {
+        case 0:
+            default_width = TRUE;
+            if (ISVT320(tt_type))
+                width = max_width;
+            else
+                width = 7;
+            break;
+        case 1:
+            return; /* Illegal */
+        case 2:
+            is_vt220_font = TRUE;
+            width = 5; height = 10; break;
+        case 3:
+            is_vt220_font = TRUE;
+            width = 6; height = 10; break;
+        case 4:
+            is_vt220_font = TRUE;
+            width = 7; height = 10; break;
+        default:
+            if (width > max_width) {
+                debug(F111, "DECDLD", "End - invalid width", width);
+                debug(F111, "DECDLD", "Note - max width", max_width);
+                return;
+            }
+            /* Arbitrary widths are only supported by the VT320 and up */
+            if (!ISVT320(tt_type)) {
+                debug(F111, "DECDLD", "End - invalid width for VT220", width);
+                return;
+            }
+            break;
+    }
+
+    /* Pss - Font Set Size. VT220 calls this Pw.
+     *     0 - default (80 columns, 24 lines)
+     *     1 - 80 columns, 24 lines
+     *     2 - 132 columns, 24 lines
+     *    11 - 80 columns, 36 lines   (VT420 & VT510 only)
+     *    12 - 132 columns, 36 lines  (VT420 & VT510 only)
+     *    21 - 80 columns, 48 lines   (VT420 & VT510 only)
+     *    22 - 132 columns, 48 lines  (VT420 & VT510 only)
+     *
+     * VT420 supports six renditions per font:
+     *   80 columns, 24/36/48 lines
+     *   132 columns, 24/36/48 lines
+     * The VT5xx only supports two: 80columns or 132columns
+     */
+    switch (font_set_size) {
+        case 0:
+        case 1: {
+            rendition = DRCS_RENDITION_01_80x24;
+            break;
+        }
+        case 2:  if ISVT320(tt_type) {
+            rendition = DRCS_RENDITION_02_132_24;
+            break;
+        } else {
+            /* VT220 doesn't switch fonts for DECCOLM */
+            rendition = DRCS_RENDITION_01_80x24;
+            break;
+        }
+        case 11: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_11_80x36;
+            break;
+        }
+        case 12: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_12_132x36;
+            break;
+        }
+        case 21: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_21_80x48;
+            break;
+        }
+        case 22: if ISVT420(tt_type) {
+            rendition = DRCS_RENDITION_22_132x48;
+            break;
+        }
+        default: {
+            debug(F111, "DECDLD", "End - invalid font set size", font_set_size);
+            return; /* Invalid */
+        }
+    }
+    erase_rendition = rendition;
+    if (tt_type_mode == TT_VT520 || tt_type_mode == TT_VT525) {
+        /* The VT520 (v2.1) doesn't switch fonts for different screen heights.
+         * It only has slots for a single 80 column rendition and a single
+         * 132 column rendition, and it uses those two renditions for all screen
+         * heights. Loading an 80x24 font then switching to an 80x48 screen
+         * won't result in reverse question-marks - it seems to just truncate
+         * glyphs to fit.
+         *
+         * TODO: Does the VT525 behave the same? It has more memory, so it
+         *       *could* behave as the VT420 does.
+         *
+         * TODO: This still isn't *quite* right for VT520:
+         *      - Loading an 80x24 font, then a 132x24 font. Now if you load a
+         *          80x36 font it seems to wipe the 132x24 rendition for some
+         *          reason. Loading an 80x24 font after a 132x24 font doesn't
+         *          seem to produce the same behaviour.
+         *      Further tests will need to be done to properly determine exact
+         *      behaviour. It would be interesting to test other firmware
+         *      versions as the observed behaviour seems kind of odd.
+         */
+        switch (rendition) {
+            case DRCS_RENDITION_01_80x24:
+            case DRCS_RENDITION_11_80x36:
+            case DRCS_RENDITION_21_80x48:
+            default:
+                rendition = DRCS_RENDITION_01_80x24;
+                break;
+            case DRCS_RENDITION_02_132_24:
+            case DRCS_RENDITION_12_132x36:
+            case DRCS_RENDITION_22_132x48:
+                rendition = DRCS_RENDITION_02_132_24;
+                break;
+        }
+    }
+
+    /* Pu - Font Usage. VT220 and VT510 calls this Pt.
+     *     0 - default (text)
+     *     1 - text
+     *     2 - full-cell (Not supported on VT220)
+     * */
+    if (usage > 2) {
+        debug(F111, "DECDLD", "End - invalid font usage", usage);
+        return;
+    }
+    if (!ISVT320(tt_type) && is_full_cell) {
+        debug(F110, "DECDLD", "End - full cell not supported for VT220 ", 0);
+        return;
+    }
+
+    if (ISVT320(tt_type) && !is_vt220_font) {
+        /* Pcmh - Character Cell Matrix height - VT320+
+         * This is ignored (set to 10) if Pcmw is 2, 3 or 4.
+         * VT320: 1-12, 0=12
+         * VT340: 1-20, 0=20, >20 is illegal
+         * VT420: 1-16, 0=16, >16 is illegal
+         * VT5xx: 1-16, 0=16, >16 is illegal
+         * */
+
+        if (height > cell_height) {
+            debug(F111, "DECDLD", "End - invalid height", height);
+            debug(F111, "DECDLD", "Note - max height", cell_height);
+            return;
+        }
+        if (height == 0) {
+            default_height = TRUE;
+            height = cell_height;
+        }
+
+        /* Pcss - Character Set Size - VT320+
+         *     0 - 94-character set
+         *     1 - 96-character set
+         * */
+        if (character_set_size > 1) {
+            debug(F111, "DECDLD", "End - invalid character set size",
+                character_set_size);
+            return;
+        }
+    } else {
+        /* VT220 */
+        height = 10;
+        character_set_size = 0;
+        is_vt220_font = TRUE;
+    }
+
+    /* Dscs - the name for the soft character set
+     * 0-3 intermediate characters, followed by a final character.
+     */
+    if (length < 1) {
+        debug(F110, "DECDLD", "End - no character set name", 0);
+        return;
+    }
+    for (start = 0; start <= name_max_len && start <= length; start++) {
+        name[start] = definition[start];
+        if (start == 4) {
+            debug(F110, "DECDLD",
+                "End - didn't get a final character for character set name", 0);
+            return; /* Didn't get a final character in 0...2 */
+        }
+        if (definition[start] >= ' ' && definition[start] <= '/' &&
+            start <= name_max_len-1) {
+            continue;  /* Intermediate character */
+        }
+        if (definition[start] >= '0' && definition[start] <= '~') {
+            break; /* Final character */
+        }
+        debug(F111, "DECDLD", "End - invalid character in character set name",
+            definition[start]);
+        return; /* Something invalid */
+    }
+
+    /* if we got this far, then the parameters are all valid and we can proceed
+     * with loading the font. */
+
+    /* Now figure out what the real dimensions should be. */
+
+    EnterDRCSBufferCriticalSection();
+
+    /* Decide which font buffer we're going to use */
+    if (font_number == 0) {
+        /* For the VT510 and up, 0 is supposed to mean the first empty
+         * buffer, or buffer 1 if they're all populated. But the VT520 v2.1
+         * actually behaves the same as all terminals: 0 means 1.
+         */
+        font_number = 1;
+    }
+    font_number -= 1;
+
+    if (drcsbuf[font_number] == NULL) {
+        int i;
+        debug(F101, "DECDLD allocating and pre-erasing font buffer", 0, font_number);
+        drcs = (drcs_t*)malloc(sizeof(drcs_t));
+        memset((void*)drcs, 0, sizeof(drcs_t));
+
+        for (i = 0; i < DRCS_RENDITIONS_TOTAL; i++) {
+            drcs->renditions[i] = (drcs_rendition_t*)malloc(
+                sizeof(drcs_rendition_t));
+            memset((void*)drcs->renditions[i], 0, sizeof(drcs_rendition_t));
+            drcs->renditions[i]->rendition_id = i;
+        }
+        drcsbuf[font_number] = drcs;
+        erase_font_buffer(drcs);
+    } else {
+        drcs = drcsbuf[font_number];
+        if (drcs->renditions[rendition]->full_cell != is_full_cell ||
+            drcs->renditions[rendition]->width != width ||
+            drcs->renditions[rendition]->height != height ) {
+            /* STD 070: "Changes to this {the full cell, character cell matrix
+             * width or height} parameter since the last DECDLD sequence to this
+             * buffer will result in the erasure of the entire set, and cause a
+             * new load to start" */
+
+            debug(F100, "DECDLD forcing erase control to 0 because one of these changed...", 0 , 0);
+            debug(F111, "   old", "full-cell", drcs->renditions[rendition]->full_cell);
+            debug(F111, "   new", "full-cell", is_full_cell);
+            debug(F111, "   old", "width", drcs->renditions[rendition]->width);
+            debug(F111, "   new", "width", width);
+            debug(F111, "   old", "height", drcs->renditions[rendition]->height);
+            debug(F111, "   new", "height", height);
+
+            erase_control = 0;
+        }
+        if (drcs->is_96_chars != (character_set_size == 1)) {
+            /* On the VT420, changing the size of the character set erases all
+             * renditions of it */
+            debug(F100, "DECDLD erasing entire font buffer because character set size changed", 0 , 0);
+            erase_font_buffer(drcs);
+        }
+    }
+
+    if (erase_control == 0) {
+        /* Erase target font buffer only. STD-070 says it should erase *all*
+         * charcters in the specified font buffer, but the VT420 and VT520 only
+         * erase all characters in the *specified rendition* of the specified
+         * font buffer. */
+        debug(F101, "DECDLD Erase Rendition", 0, rendition);
+        debug(F101, "DECDLD For Buffer", 0, font_number);
+        erase_font_buffer_rendition(drcs->renditions[rendition], erase_rendition);
+    } else if (erase_control == 2) {
+        int i;
+        debug(F101, "DECDLD Erase All Renditions for all buffers", 0, font_number);
+        for (i = 0; i < DRCS_BUFFERS; i++) {
+            if (drcsbuf[i] != NULL) {
+                erase_font_buffer(drcsbuf[i]);
+            }
+        }
+    } /* Else we'll erase glyphs as they're defined */
+
+    drcs->name[0] = name[0];
+    drcs->name[1] = name[1];
+    drcs->name[2] = name[2];
+    drcs->name[3] = name[3];
+    drcs->name[4] = 0;
+    drcs->renditions[rendition]->cell_width = cell_width;
+    drcs->renditions[rendition]->cell_height = cell_height;
+    drcs->renditions[rendition]->width = width;
+    drcs->renditions[rendition]->height = height;
+    drcs->renditions[rendition]->full_cell = is_full_cell;
+    drcs->renditions[rendition]->undefined = FALSE;
+    drcs->is_96_chars = character_set_size == 1;
+    drcs->render_hints = DRCS_RENDER_HINT_NONE;
+
+    if (is_vt220_font && !ISVT320(tt_type)) drcs->render_hints =
+        DRCS_RENDER_HINT_VT220 | DRCS_RENDER_HINT_VT220_TEXT;
+
+    /* Center text glyphs within the cell. The VT220 does not do this - at least
+     * not in a normal way; its behaviour really has to be dealt with at render
+     * time. */
+    if (!is_full_cell) {
+        switch (tt_type) {
+            case TT_VT220:
+            case TT_VT220PC:
+                /* VT220 behaviour handled at render time */
+                h_offset = 0;
+                v_offset = 0;
+                break;
+            case TT_VT320:
+            case TT_VT320PC:
+            case TT_WY370:
+                /* EK-VT320-UU says two pixels before the glyph and one after
+                 * for 80 columns and one pixel before for 132 columns. */
+                /* WY-370 Programmers Manual, 881133-02 Rev. A, June 1990,
+                 * Page 4-9 (53) */
+                h_offset = is_132cols ? 1 : 2;
+                v_offset = 0;
+                break;
+            case TT_VT420:
+                h_offset = 1;
+                v_offset = 0;
+                break;
+            case TT_VTSTAR:
+            /*case TT_VT510:*/
+            case TT_VT520:
+            case TT_VT525:
+                /* The VT520 (v2.1) doesn't do any font centering at all.
+                 * And VTStar doesn't seem to either */
+                h_offset = 0;
+                v_offset = 0;
+                break;
+            default:
+            case TT_K95: {
+                /* As all the DEC terminals seem to do something different, for
+                 * K95 we'll center properly. */
+                int hspace = cell_width - width;
+                int vspace = cell_height - height;
+                h_offset = hspace/2;
+                v_offset = vspace/2;
+            }
+
+        }
+    }
+
+    debug(F100, "DECDLD Loading with these settings...", "", 0);
+    debug(F101, "DECDLD Font Buffer", 0, font_number);
+    debug(F110, "DECDLD Name", drcs->name, 0);
+    debug(F101, "DECDLD Rendition", 0, rendition);
+    debug(F101, "DECDLD Cell Width", 0, cell_width);
+    debug(F101, "DECDLD Cell Height", 0, cell_height);
+    debug(F101, "DECDLD Width", 0, width);
+    debug(F101, "DECDLD Height", 0, height);
+    debug(F101, "DECDLD Is Full Cell", 0, is_full_cell);
+    debug(F101, "DECDLD Is 96 chars", 0, drcs->is_96_chars);
+    debug(F101, "DECDLD Render Hits", 0, drcs->render_hints);
+    debug(F101, "DECDLD H-Offset", 0, h_offset);
+    debug(F101, "DECDLD V-Offset", 0, v_offset);
+
+    for (i=start+1; i <= length; i++) {
+        char sixel = definition[i];
+        char bits;
+        int bit;
+
+        if (!erased) {
+            for (j = 0; j < DRCS_MAX_CELL_HEIGHT; j++) {
+                drcs->renditions[rendition]->glyphs[glyph].pixels[j] = 0;
+            }
+            drcs->renditions[rendition]->glyphs[glyph].undefined = FALSE;
+            erased = TRUE;
+
+            /* To ensure that the next character after the end of the sixel
+             * string gets erased (this is what the VT420 and VT520 do) */
+            if (i == length)
+                break;
+        }
+
+        if (sixel >= BS && sixel <= CK_CR) {
+            /* STD070: Bit combinations 0/8 (BS) to 0/13 (CR) may be included in
+             * the command string and have no effect on the interpretation of
+             * the data */
+            continue;
+        }
+
+        /***********************************
+         * The following are undefined behaviour per STD-070. The actions are
+         * STD-070s recommended behaviour. */
+        if (sixel >= 0xA1 && sixel <= 0xFE) {
+            /* STD-070: 10/1 to 15/14 undefined behaviour, recommended
+             * interpret as 2/1 to 7/14 */
+            sixel &= 0x7F; /* Clear 7th bit */
+        }
+        if (((sixel >= NUL && sixel <= BEL) || (sixel >= SO && sixel <= US)) &&
+            sixel != ESC) {
+            /* STD070: Bit combinations 0/0 through 0/7 and 0/14 through 1/15
+             * except for 1/11 (ESC) are undefined behaviour. Recommended to
+             * ignore */
+
+            /* VT220, VT420, VT520: 0x13 seems to get the terminal stuck,
+             * requiring clear comms to get it working again.*/
+
+            /* The VT220, VT420 and VT520 cancel the DECDLD if they receive a
+             * CAN or a SUB leaving the font partially downloaded. For SUB, the
+             * VT220 and 420 additionally output a reverse question mark while
+             * the VT520 seems to glitch. The area above the titlebar where the
+             * session icons live is briefly replaced with garbage from
+             * somewhere in memory and NUL is written to the terminal screen
+             * while the rest of the DECDLD sequence disappears. We don't
+             * implement /that/ behaviour here.
+             *
+             * Partial processing of the DECDLD as per the hardware terminals is
+             * special cased over in cwrite() which will hand a canceled DCS
+             * string off for processing if it looks like a DECDLD>
+             */
+            continue;
+        }
+        if (sixel == SP || sixel == DEL) {
+            /* STD-070: 2/0 and 7/15 undefined behaviour, recommended ignore */
+            continue;
+        }
+        if ((sixel >= '!' && sixel <= '>') && sixel != '/' && sixel != ';') {
+            /* STD-070: 2/1 to 3/14 (excluding 2/15 and 3/11) undefined
+             * behaviour, recommended ignore */
+            continue;
+        }
+        if ((sixel >= 0x80 && sixel <= 0x9F) && sixel != 0x9C) {
+            /* STD-070: C1 controls 8/10 to 9/15 (excl 9/12 ST) undefined
+             * behaviour, recommended abort
+             *
+             * For most of these we won't get here - thet escape-sequence state
+             * table will catch and handle them, dispatching the DCS sequence
+             * specially if it looks like the DCString contains a DECDLD.
+             */
+
+            /* The VT220 ignores 0x80, VT420/520 don't */
+            if (sixel > 0x80 || (tt_type != TT_VT220 && tt_type != TT_VT220PC)) {
+                debug(F111, "DECDLD",
+                    "End - character 0x80-0x9F (excl 0x9C) in sixel string",
+                    sixel);
+                break;
+            }
+        }
+        if (sixel == 0xA0 || sixel == 0xFF) {
+            /* STD-070: 10/0 and 15/15 undefined behaviour, recommended
+             * ignore */
+            continue;
+        }
+        /* End of undefined behaviour handling
+         ************************************/
+
+        if (sixel == ';') {
+            /* ';' means next glyph */
+
+            if ((drcs->render_hints & DRCS_RENDER_HINT_VT220_TEXT) &&
+                    (tt_type == TT_VT220 || tt_type == TT_VT220PC)) {
+                if (column >= 8) {
+                    /* The 8th column is stretched to three pixels to join up
+                     * with the next cell, so text fonts will never put anything
+                     * in that column. If one or more glyphs leave that column
+                     * out, we'll treat it as a text font and handle centering
+                     * at render time. */
+                    drcs->render_hints = drcs->render_hints & ~DRCS_RENDER_HINT_VT220_TEXT;
+                }
+            }
+
+            glyph++;
+            erased = FALSE;
+            row = 0;
+            column = 0;
+            continue;
+        }
+        if (sixel == '/') {
+            /* '/' means next row of sixels */
+            row +=6; /* Each sixel spans six rows */
+            column = 0;
+            continue;
+        }
+
+        /* Ignore sixel if it is outside the specified size
+         * The VT220 is a bit odd; its cells are 10 wide, only 8 columns are
+         * addressable and it allows all 8 columns to be filled even if the font
+         * specifies a smaller width.
+         *
+         * Note, column here is zero-based, while width is not.*/
+        if (ISVT320(tt_type) && column >= width) continue;
+        if (!ISVT320(tt_type) && column >= 8) continue;
+        if (column >= max_width || column >= cell_width) continue;
+
+        /* Ignore entire glyph if we're trying to load a 94-character set
+         * starting at position 0, or a position past the range for the
+         * character set size */
+        if (character_set_size == 0) {
+            if (glyph == 0 || glyph > 94 ) continue;
+        }
+        else if (glyph > 95) continue;
+
+        bits = sixel - '?';
+
+        for (bit = 0; bit < 6; bit++) {
+            /* Only the VT520 crops glyphs to the specified height - the rest
+             * will draw as much as you give them regardless of the height
+             * specified. */
+            if (row+bit > height && ISVT520(tt_type)) continue;
+
+            if (bits & (1 << bit)) {
+                int r = row + bit + v_offset;
+                drcs->renditions[rendition]->glyphs[glyph].pixels[r] =
+                    drcs->renditions[rendition]->glyphs[glyph].pixels[r]
+                        | 0x8000 >> (column+h_offset);
+                if (row+bit > used_height) used_height = row+bit;
+            }
+        }
+        column++;
+    }
+
+    /* mark the font buffer as changed */
+    drcs->serial++;
+    debug(F101, "DECDLD Serial", 0, drcs->serial);
+    debug(F101, "DECDLD Glyphs Loaded", 0, glyph);
+
+    LeaveDRCSBufferCriticalSection();
+
+    /* mark the vscreen as dirty */
+    VscrnIsDirty(VTERM);
+    debug(F110, "DECDLD", "Finished", 0);
+}
+#endif /* KUI */
 
 /* VT level 4 Macro Support
  * ------------------------
@@ -5630,33 +6704,63 @@ isdoublewidth( unsigned short y )     /* based from 1 */
     return VscrnGetLineVtAttr(VTERM,y-1) & VT_LINE_ATTR_DOUBLE_WIDE ;
 }
 
-/* ------------------------------------------------------------------ */
-/* CursorNextLine -                                                   */
-/* ------------------------------------------------------------------ */
+/*---------------------------------------------------------------------------*/
+/* CursorNextLine -                                         | Page: Cursor   */
+/*---------------------------------------------------------------------------*/
+/* Moves the cursor to the first position some number of lines down. This will
+ * be screen left if the cursor is currently outside the margins, or the left
+ * margin if the cursor is currently inside the margins.
+ *
+ * As the cursors relationship to the margins is evaluated before moving it,
+ * calling five times with a count of 1 may produce a different result from
+ * calling it once with a count of 5.
+ *
+ * Parameters:
+ *     scroll       If the scrollable area should scroll at the bottom margin.
+ *     count        Number of lines down to move
+ */
 void
-cursornextline() {
+cursornextline(BOOL scroll, int count) {
     if ( decsasd == SASD_TERMINAL ) {
         /* Due to a log from dcombeer I am no longer sure that */
         /* cursornextline() or cursorprevline() is affected by */
         /* Origin mode                                         */
 
         if (vscrn_c_page_margin_bot(VTERM) > wherey[VTERM]) {
+            int margin_left = 1;
+            int y = wherey[VTERM] + count;
+            if (relcursor && wherey[VTERM] < vscrn_c_page_margin_top(VTERM))
+            {
+                y = vscrn_c_page_margin_top(VTERM) + count;
+            }
+
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
-            lgotoxy(VTERM,1, wherey[VTERM] + 1);
+
+            if (y >= vscrn_c_page_margin_top(VTERM) &&
+                y <= vscrn_c_page_margin_bot(VTERM) &&
+                wherex[VTERM] >= vscrn_c_page_margin_left(VTERM)) {
+                margin_left = vscrn_c_page_margin_left(VTERM);
+            }
+
+            lgotoxy(VTERM, margin_left, y);
         } else if ( wy_autopage ) {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
             lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
         } else if (ISVT100(tt_type_mode) || ISANSI(tt_type_mode)) {
-            wrtch(CK_CR);
-            wrtch(LF);
+            if (!(relcursor && wherey[VTERM] == vscrn_c_page_margin_bot(VTERM)
+                    && scroll))
+            {
+                wrtch(CK_CR);
+                wrtch(LF);
+            }
         }
     }
     else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) && autoscroll
-              && !protect ){
+              && !protect && scroll){
         wrtch(CK_CR);
         wrtch(LF);
     }
@@ -5665,11 +6769,41 @@ cursornextline() {
         wrapit = FALSE;
 }
 
+/*---------------------------------------------------------------------------*/
+/* CursorHPA                                                | Page: Cursor   */
+/*---------------------------------------------------------------------------*/
+/* Horizontal Position Absolute (HPA). Also, Cursor Horizontal Absolute (CHA).
+ * Move cursor to specified horizontal position
+ *
+ * Parameters:
+ *     x        Column to move cursor to
+ */
+void
+cursorhpa(int x)
+{
+    int rmargin = VscrnGetWidth(VTERM);
+    if ( x < 1 ) x = 1;
+    if ( x > rmargin ) x = rmargin;
+
+    if ( decsasd == SASD_STATUS )
+        lgotoxy( VSTATUS, x, 1 );
+    else
+    {
+        if (relcursor) {
+            x += vscrn_c_page_margin_left(VTERM) - 1;
+            rmargin = cursor_right_margin(VTERM);
+        }
+
+        if ( x > rmargin ) x = rmargin;
+        lgotoxy( VTERM, x, wherey[VTERM] ) ;
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /* CursorPrevLine -                                                   */
 /* ------------------------------------------------------------------ */
 void
-cursorprevline() {
+cursorprevline(int count) {
     if ( printon && is_aprint() ) {
         prtline( wherey[VTERM], LF ) ;
     }
@@ -5678,10 +6812,30 @@ cursorprevline() {
         /* cursornextline() or cursorprevline() is affected by */
         /* Origin mode                                         */
 
-        if (vscrn_c_page_margin_top(VTERM) != wherey[VTERM])
-            lgotoxy(VTERM, 1, wherey[VTERM] - 1);
+        int y = wherey[VTERM];
+        int margin_left = 1;
+        int margin_top = 1;
+
+        if (wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) &&
+            y >= vscrn_c_page_margin_top(VTERM))
+        {
+            margin_top = vscrn_c_page_margin_top(VTERM);
+        }
+
+        if (y >= vscrn_c_page_margin_top(VTERM) &&
+            y <= vscrn_c_page_margin_bot(VTERM) &&
+            wherex[VTERM] >= vscrn_c_page_margin_left(VTERM)) {
+            margin_left = vscrn_c_page_margin_left(VTERM);
+        }
+
+        if (margin_top <= wherey[VTERM] - count)
+            y -= count;
         else if ( wy_autopage )
-            lgotoxy(VTERM, 1, vscrn_c_page_margin_bot(VTERM));
+            y = vscrn_c_page_margin_bot(VTERM);
+        else
+            y = margin_top;
+
+        lgotoxy(VTERM, margin_left, y);
     }
     if ( wrapit )
         wrapit = FALSE;
@@ -5696,9 +6850,22 @@ cursorup(int wrap) {
         prtline( wherey[VTERM], LF ) ;
     }
     if ( decsasd == SASD_TERMINAL ) {
-        if ((relcursor ? vscrn_c_page_margin_top(VTERM) : 1) != wherey[VTERM])
+        int margin_top = 1;
+		/* ISVT100: Prior to K95 3.0 beta 8 the logic here was wrong. On
+		 * a VT100 or newer (confirmed on a VT520 and via vttest), the cursor
+		 * can not pass from inside to outside the margins via CUU. This
+		 * function is also called by a bunch of other emulations for which I
+		 * have no physical example or test suite. For those other emulations
+		 * the prior behaviour is retained in case it happens to be correct for
+		 * them.  -- DG, 2026-03-08  */
+		if ((ISVT100(tt_type_mode) && cursor_in_margins(VTERM)) ||
+			(!ISVT100(tt_type_mode) && relcursor)) {
+		    margin_top = vscrn_c_page_margin_top(VTERM);
+		}
+
+        if (margin_top != wherey[VTERM]) {
             lgotoxy(VTERM, wherex[VTERM], wherey[VTERM] - 1);
-        else if ( wrap ||
+        } else if ( wrap ||
                   ISWYSE(tt_type_mode) ||
                   ISTVI(tt_type_mode) ||
                   ISHZL(tt_type_mode) ||
@@ -5714,11 +6881,24 @@ cursorup(int wrap) {
 /* ------------------------------------------------------------------ */
 /* CursorDown -                                                       */
 /* ------------------------------------------------------------------ */
+/* wrap: If the cursor should wrap to the top of the screen
+ * obey_margins: If margins should be obeyed or not (VT100-compatible emulations
+ * 				 only.
+ */
 void
-cursordown(int wrap) {
+cursordownex(int wrap, int obey_margins) {
     if ( decsasd == SASD_TERMINAL ) {
-        if ((relcursor ? vscrn_c_page_margin_bot(VTERM) :
-              VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM])
+        bool in_lr_margins = wherex[vmode] >= vscrn_c_page_margin_left(vmode) &&
+            wherex[vmode] <= vscrn_c_page_margin_right(vmode);
+		/* As with cursorup (above), the logic here was wrong for DEC VT
+		 * terminals prior to K95 3.0 beta 8. I'm not sure if the previous logic
+		 * was correct for some other emulation I can't test that also uses this
+		 * function, so prior behaviour is retained for non-VT emulations */
+        if ( (ISVT100(tt_type_mode) &&
+                (vscrn_c_page_margin_bot(VTERM) != wherey[VTERM] || !in_lr_margins
+                    || !obey_margins)) ||
+             (!ISVT100(tt_type_mode) && (relcursor ? vscrn_c_page_margin_bot(VTERM) :
+                  VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM]))
         {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
@@ -5745,18 +6925,42 @@ cursordown(int wrap) {
         wrapit = FALSE;
 }
 
+void
+cursordown(int wrap) {
+	cursordownex(wrap, 1);
+}
+
 /* ------------------------------------------------------------------ */
 /* CursorRight -                                                      */
 /* ------------------------------------------------------------------ */
+/* wrap: If the cursor should wrap to the top of the screen
+ * obey_margins: If margins should be obeyed or not.
+ */
 void
-cursorright(int wrap) {
+cursorrightex(int wrap, int obey_margins) {
     if ( decsasd == SASD_STATUS ) {
         if (wherex[VSTATUS] < VscrnGetWidth(VTERM))
            lgotoxy(VSTATUS, wherex[VSTATUS]+1,1);
     }
     else {
-        char dwl = isdoublewidth(wherey[VTERM]) ;
-        if (wherex[VTERM] < ( dwl ? VscrnGetWidth(VTERM) / 2 : VscrnGetWidth(VTERM)))
+        int margin_right = VscrnGetWidth(VTERM);
+
+        /* Only obey the right margin if we're told to, and if the cursor is
+         * within the vertical scroll region */
+        if (obey_margins &&
+            (wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+             wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) &&
+             wherex[VTERM] <= vscrn_c_page_margin_right(VTERM)) )
+        {
+            margin_right = vscrn_c_page_margin_right(VTERM);
+        }
+
+        if (isdoublewidth(wherey[VTERM]))
+        {
+            margin_right /= 2;
+        }
+
+        if (wherex[VTERM] < margin_right )
             lgotoxy( VTERM, wherex[VTERM] + 1, wherey[VTERM]);
         else if ( wrap ||
                   ISUNIXCON(tt_type_mode) ||
@@ -5766,7 +6970,7 @@ cursorright(int wrap) {
                   ISHFT(tt_type_mode) ||
 #endif /* COMMENT */
                   ISDG200(tt_type_mode)) {
-            cursornextline();
+            cursornextline(TRUE, 1);
             if ( wrapit ) {
                 cursorright(0);
                 wrapit = FALSE ;
@@ -5775,6 +6979,38 @@ cursorright(int wrap) {
     }
     if ( wrapit )
         wrapit = FALSE;
+}
+
+
+void
+cursorright(int wrap)
+{
+    cursorrightex(wrap, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* CursorTab  -                                                       */
+/* ------------------------------------------------------------------ */
+/* Moves the cursor one or more tab stops to the right. Used for both
+ * HT (one tab stop) or, on the VT520, CHT (one or more tab stops).   */
+void
+cursortab(int count)
+{
+    int i = wherex[VTERM];
+    while ( count ) {
+        if (i < cursor_right_margin(VTERM))
+        {
+            do {
+                i++;
+                cursorright(0);
+            } while ((htab[i] != 'T') &&
+                      (i <= cursor_right_margin(VTERM)-1));
+        }
+        count--;
+    }
+    if (cursor_on_visible_page(VTERM)) {
+        VscrnIsDirty(VTERM);
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -5789,7 +7025,19 @@ cursorleft(int wrap) {
             lgotoxy( VSTATUS, wherex[VSTATUS] - 1, 1);
     }
     else {
-        if (wherex[VTERM] > 1)
+        int margin_left = 1;
+        if (wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+             wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) &&
+             wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) )
+        {
+            margin_left = vscrn_c_page_margin_left(VTERM);
+            if (dwl)
+            {
+                margin_left /= 2;
+            }
+        }
+
+        if (wherex[VTERM] > margin_left)
             lgotoxy( VTERM,
                      wherex[VTERM] - 1,
                      wherey[VTERM]);
@@ -6232,6 +7480,7 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
     if ( IS97801(tt_type_mode) ) {
         VscrnScrollPage(vmode,UPWARD,vscrn_page_margin_top(VTERM,page)-1,
                      	vscrn_c_page_margin_bot(VTERM)-1,
+                     	-1, -1,
                      	vscrn_c_page_margin_bot(VTERM)-vscrn_page_margin_top(VTERM,page)+1,
                      	vscrn_c_page_margin_top(VTERM)==1 &&
                      	vscrn_c_page_margin_bot(VTERM)==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
@@ -6241,8 +7490,36 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
     else {
         VscrnScrollPage(vmode,UPWARD,
                      	0,VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
+                     	-1, -1,
                      	VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
                      	TRUE,fillchar, page);
+
+#ifdef KUI
+        if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+            videoline *line = NULL, *newline = NULL ;
+            int y = 0, y2 = 0, linecount = VscrnGetBufferSize(vmode,TRUE,FALSE);
+#ifndef PACKED_CELL_ATTRS
+            int x = 0;
+#endif /* PACKED_CELL_ATTRS */
+
+            /* Now we must restore any ruled lines */
+            for ( y = linecount - VscrnGetHeight(vmode) + (tt_status[vmode]?1:0)
+                    ; y < linecount ; y++,y2++ )
+            {
+                line = VscrnGetLineFromTop( vmode, y, FALSE ) ;
+                newline = VscrnGetLineFromTop( vmode, y2, FALSE ) ;
+#ifdef PACKED_CELL_ATTRS
+                memcpy(newline->cell_attrs, line->cell_attrs,
+                    sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+#else /* PACKED_CELL_ATTRS */
+                for ( x = 0 ; x < CELL_ATTR_LEN ; x++ ) {
+                    /* Only preserve ruled line attributes */
+                    newline->cell_attrs[x] = line->cell_attrs[x] & CA_ATTR_RULED_LINES;
+                }
+#endif /* PACKED_CELL_ATTRS */
+            }
+        }
+#endif /* KUI */
     }
 }
 
@@ -6701,8 +7978,9 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar 
 {
     int startx, starty, endx, endy, l, x ;
     videoline * line = NULL ;
-    bool erase = FALSE;
-    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
+    bool fill = TRUE;
+    cell_video_attr_t cellcolor = attribute ;
+    int cell_attrib = vtattrib_to_int(attrib);
 
     if ( left < right ) {
         startx = left - 1 ;
@@ -6723,8 +8001,11 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar 
     }
 
     if ( fillchar == NUL ) {
-        fillchar = SP ;
-        erase = TRUE;
+        fillchar = SP ;  /* VT420+ DECERA erases with Space characer */
+        cell_attrib = VT_CHAR_ATTR_NORMAL;
+        cellcolor = geterasecolor(vmode);
+
+        fill = FALSE;
     }
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
@@ -6742,13 +8023,14 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar 
         line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
-            /* If we're erasing, then ignore already erased cells. If we're just
-             * filling, then fill everything. */
-            if (line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED || !erase) {
+            /* If we're erasing, then leave erased cells as erased. If we're
+             * just filling, then fill everything. */
+            if (line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED || fill) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                line->vt_char_attrs[x] = cell_attrib ;
             }
+            /* Erased cells still get their colour updated */
+            line->cells[x].video_attr = cellcolor;
         }
 
     }
@@ -6777,17 +8059,54 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
     /* Okay, so now we have scrolled the screen.  But the protected */
     /* fields need to be copied back to the new current screen      */
 
+    /* According to DEC STD 070, for VT terminals *all* attributes have to be
+     * copied back: for DECSED, "The character rendition and attributes
+     * associated with each position do not change"   - DG, 2026-03-31
+     */
+
     for ( y = linecount - VscrnGetHeight(vmode) + (tt_status[vmode]?1:0) ;
           y < linecount ; y++,y2++ ) {
         line = VscrnGetLineFromTop( vmode, y, FALSE ) ;
         newline = VscrnGetLineFromTop( vmode, y2, FALSE ) ;
-        for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
-            if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
-                newline->cells[x] = line->cells[x] ;
+        for ( x = 0 ; x < MAXTERMCOL ; x++ )
+        {
+            /* I don't know if other emulations using this function behave as
+             * DEC terminals do, so for now they get they prior behaviour */
+            if (ISVT220(tt_type_mode)) {
+                if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
+                    newline->cells[x] = line->cells[x] ;
+                }
                 newline->vt_char_attrs[x] = line->vt_char_attrs[x] ;
+                newline->vt_line_attr = line->vt_line_attr;
+#ifdef KUI
+#ifndef PACKED_CELL_ATTRS
+                if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+                    /* Only preserve ruled line attributes */
+                    newline->cell_attrs[x] = line->cell_attrs[x] & CA_ATTR_RULED_LINES;
+                }
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
+            }
+            else {
+                if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
+                    newline->cells[x] = line->cells[x] ;
+                    newline->vt_char_attrs[x] = line->vt_char_attrs[x] ;
                 }
             }
         }
+#ifdef KUI
+#ifdef PACKED_CELL_ATTRS
+        if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+            /* Preserve ruled lines too. The DECterm documentation for ruled
+             * lines doesn't say anything about DECSED, but it does seem to at
+             * least *try* to preserve them. It seems to be buggy though - some
+             * ruled lines survive, but not all. */
+            memcpy(newline->cell_attrs, line->cell_attrs,
+                    sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+        }
+#endif /* PACKED_CELL_ATTRS */
+#endif /* KUI */
+    }
 }
 
 
@@ -6804,14 +8123,20 @@ selclrtoeoln( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
 
     /* take care of current line */
     line = VscrnGetLineFromTop( vmode, wherey[vmode]-1, FALSE ) ;
-    for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
-        {
+    for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ ) {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
+            {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
+    }
 }
 
 void
@@ -6836,24 +8161,34 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
-            }
-        }
 
-    /* now take care of additional lines */
-    for ( y=wherey[vmode] ; y<VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ; y++ )
-        {
-        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
-        for ( x=0 ; x <MAXTERMCOL ; x++ )
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
             {
-            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
-                line->cells[x].c = fillchar ;
                 line->cells[x].video_attr = cellcolor;
                 line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            }
+        }
+    }
+
+    /* now take care of additional lines */
+    for ( y=wherey[vmode] ; y<VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ; y++ ) {
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
+        for ( x=0 ; x <MAXTERMCOL ; x++ ) {
+            if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
+                line->cells[x].c = fillchar ;
+                /* See DEC STD 070 comment above */
+                if (!ISVT220(tt_type_mode))
+                {
+                    line->cells[x].video_attr = cellcolor;
+                    line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                 }
             }
         }
+    }
 }
 
 void
@@ -6868,29 +8203,35 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
         vmode = VSTATUS ;
 
     /* now take care of first wherey[vmode]-1 lines */
-    for ( y=0 ; y<wherey[vmode]-1 ; y++ )
-        {
+    for ( y=0 ; y<wherey[vmode]-1 ; y++ ) {
         line = VscrnGetLineFromTop(vmode, y, FALSE) ;
-        for ( x=0 ; x <MAXTERMCOL ; x++ )
-            {
+        for ( x=0 ; x <MAXTERMCOL ; x++ ) {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+                /* DEC STD 070 says: "The character rendition and attributes
+                 * associated with each position do not change". I don't know if
+                 * other emulations using this function behave the same way or not,
+                 * so for now they get the prior behaviour of erasing everything */
+                if (!ISVT220(tt_type_mode)) {
+                    line->cells[x].video_attr = cellcolor;
+                    line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
                 }
             }
         }
+    }
 
     /* take care of current line */
     line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
-    for ( x=0 ; x < wherex[vmode] ; x++ )
-        {
+    for ( x=0 ; x < wherex[vmode] ; x++ ) {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* See DEC STD 070 comment above */
+            if (!ISVT220(tt_type_mode)) {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
+    }
 }
 
 void
@@ -6910,10 +8251,17 @@ selclrbol_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
+            {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
             }
         }
+    }
 }
 
 void
@@ -6929,12 +8277,18 @@ selclrline_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
 
     /* take care of current line */
     line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
-    for ( x=0 ; x < MAXTERMCOL ; x++ )
-    {
+    for ( x=0 ; x < MAXTERMCOL ; x++ ) {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].video_attr = cellcolor;
-            line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            /* DEC STD 070 says: "The character rendition and attributes
+             * associated with each position do not change". I don't know if
+             * other emulations using this function behave the same way or not,
+             * so for now they get the prior behaviour of erasing everything */
+            if (!ISVT220(tt_type_mode))
+            {
+                line->cells[x].video_attr = cellcolor;
+                line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+            }
         }
     }
 }
@@ -7014,8 +8368,22 @@ selclrrect_escape( BYTE vmode, int top, int left, int bot, int right,
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED) &&
                  line->vt_char_attrs[x] != VT_CHAR_ATTR_ERASED ) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].video_attr = cellcolor;
-                line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+
+                /* From the VT525 manual:
+                 *   DECSERA does not change:
+                 *      - Visual attributes set by the select graphic rendition
+                 *        (SGR) function
+                 *      - Protection attributes set by DECSCA
+                 *      - Line attributes
+                 * I'm unsure if the wyse emulation that also uses this function
+                 * also behaves the same way, so for now it gets the prior
+                 * behaviour
+                 */
+                if (!ISVT420(tt_type_mode))
+                {
+                    line->cells[x].video_attr = cellcolor;
+                    line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+                }
             }
         }
     }
@@ -7072,6 +8440,112 @@ boxrect_escape( BYTE vmode, int row, int col )
         VscrnWrtCell( vmode, cell, vta, erow, x ) ;
     }
 }
+
+#ifdef KUI
+#define DECDRLBR_BOTTOM  0x01
+#define DECDRLBR_RIGHT   0x02
+#define DECDRLBR_TOP     0x04
+#define DECDRLBR_LEFT    0x08
+void
+ruledlines_escape(int pattern, int left, int top, int width, int height, BOOL set) {
+	int right, bot, x, y;
+
+    if (pattern & 0x0F == 0) return; /* Nothing to do */
+
+	/* Columns and lines are numbered from 0 */
+    left -= 1;
+    right = left + width-1;
+    bot = top + height-1;
+
+    /* Top or Bottom boundary */
+    if (pattern & DECDRLBR_BOTTOM || pattern & DECDRLBR_TOP) {
+        videoline *topLine = NULL;
+        videoline *botLine = NULL;
+
+        /* Top line */
+        if (pattern & DECDRLBR_TOP) {
+            debug(F111, "Ruled Lines top at", "y", top - 1);
+            topLine = VscrnGetLineFromTop(vmode, top - 1, FALSE);
+        }
+
+        if (pattern & DECDRLBR_BOTTOM) {
+            debug(F111, "Ruled Lines bot at", "y", bot - 1);
+            botLine = VscrnGetLineFromTop(vmode, bot - 1, FALSE);
+        }
+
+        /* Cells are numbered from 0 */
+        for (x = left; x <= right; x++) {
+            if (topLine) {
+                debug(F111, "Ruled Lines top at", "x", x);
+                CELL_ATTR_SET(topLine,x,
+					set ? CELL_ATTR_GET(topLine,x) | CA_ATTR_TOP_BORDER
+                    	: CELL_ATTR_GET(topLine,x) & ~CA_ATTR_TOP_BORDER);
+            }
+
+            if (botLine) {
+                debug(F111, "Ruled Lines bot at", "x", x);
+                 CELL_ATTR_SET(botLine,x,
+                    set ? CELL_ATTR_GET(botLine,x) | CA_ATTR_BOTTOM_BORDER
+						: CELL_ATTR_GET(botLine,x) & ~CA_ATTR_BOTTOM_BORDER);
+            }
+        }
+    }
+
+    /* Left or Right boundary */
+    if (pattern & DECDRLBR_RIGHT || pattern & DECDRLBR_LEFT) {
+        debug(F111, "Ruled Lines left at", "x", left);
+        debug(F111, "Ruled Lines left at", "x", right);
+        for (y = top-1; y < bot; y++) {
+            videoline *line = VscrnGetLineFromTop(vmode, y, FALSE);
+
+            if (pattern & DECDRLBR_LEFT) {
+                debug(F111, "Ruled Lines left at", "y", y);
+                CELL_ATTR_SET(line,left,
+					set ? CELL_ATTR_GET(line,left) | CA_ATTR_LEFT_BORDER
+                    	: CELL_ATTR_GET(line,left) & ~CA_ATTR_LEFT_BORDER);
+            }
+
+            if (pattern & DECDRLBR_RIGHT) {
+                debug(F111, "Ruled Lines right at", "y", y);
+                CELL_ATTR_SET(line,right,
+					set ? CELL_ATTR_GET(line,right) | CA_ATTR_RIGHT_BORDER
+                    	: CELL_ATTR_GET(line,right) & ~CA_ATTR_RIGHT_BORDER);
+            }
+        }
+    }
+
+    if (cursor_on_visible_page(VTERM)) {
+    	VscrnIsDirty(vmode);
+	}
+}
+
+/* Erase all ruled lines in an area */
+void
+decerlbra_escape(int left, int top, int width, int height) {
+	int right, bot, x, y, mask;
+
+	/* Columns and lines are numbered from 0 */
+    left -= 1;
+    right = left + width-1;
+    bot = top + height-1;
+
+	mask = ~(CA_ATTR_TOP_BORDER | CA_ATTR_BOTTOM_BORDER |
+				CA_ATTR_LEFT_BORDER | CA_ATTR_RIGHT_BORDER);
+
+	for (y = top-1; y < bot; y++) {
+		videoline *line = VscrnGetLineFromTop(vmode, y, FALSE);
+
+        for (x = left; x <= right; x++) {
+            CELL_ATTR_SET(line,x, CELL_ATTR_GET(line,x) & mask);
+        }
+	}
+
+	if (cursor_on_visible_page(VTERM)) {
+    	VscrnIsDirty(vmode);
+	}
+}
+
+#endif /* KUI */
 
 void
 decdwl_escape(bool dwlflag) {
@@ -7254,6 +8728,418 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
     return checksum;
 }
 
+
+/*----------------------------------------------------------+----------------*/
+/* sgr_38_48                                                | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+/* Implements SGR-38 and SGR-48 returning the result. If no parameter elements
+ * are encountered, it will fall back to assuming the old non-compliant
+ * semicolon format advancing j (the pointer to the current pn) as necessary.
+ * If allow_malformed_sequence is false, it will return the original attribute
+ * without modification for the non-compliant semicolon format but j will still
+ * be advanced.
+ *
+ * Parameters:
+ *  pn[]    - CSI parameters
+ *  pe[]    - Parameter elements for pn[*j]
+ *  k       - Number of parameters supplied in pn[]
+ *  *pn_pos - Position of this invocation of SGR-38 or SGR-48 in pn[]
+ *  pn_pe_start[] - Position of first value in pe[], or -1 if pe[] is empty
+ *  pn_pe_count[] - Number of values in pe[]
+ *  allow_malformed_sequence - If false, return original attribute for
+ *              non-compliant semicolon format while still advancing *j
+ *  attribute - initial value of cell video attribute to possibly modify
+ *
+ *  Returns:
+ *      attribute, potentially modified as a result of processing an SGR-38 or
+ *      SGR-48 control sequence.
+ */
+static cell_video_attr_t
+sgr_38_48(int pn[], int pe[], int k, unsigned short *pn_pos, int pn_pe_start[],
+    int pn_pe_count[], bool allow_manformed_sequence,
+    cell_video_attr_t attribute) {
+
+    int mode=0, index=0, r=0, g=0, b=0;
+    unsigned short j = *pn_pos;
+	int fg = (pn[j] == 38);
+
+	debug(F111, "SGR 38/48", "SGR", pn[j]);
+
+    if ( !sgrcolors )
+        return attribute;
+
+	if (pn_pe_start[j] == -1) {
+		int i, pn_rem = 0;
+		debug(F111, "SGR 38/48: Using semicolons", "pn_pe_start[j]", pn_pe_start[j]);
+
+		mode = pn[j+1];
+		pn_rem = k - j;   /* for (j = 1; j <= k; ++j) */
+
+		if (mode == 2 && pn_rem >= 3) {
+			j+=2; /* SGR 38/48 + mode */
+			r = pn[j]; j++;
+			g = pn[j]; j++;
+			b = pn[j];
+		} else if (mode == 5 && pn_rem >= 1) {
+			j+=2; /* mode */
+			index = pn[j];
+		}
+
+	    if (!allow_manformed_sequence) {
+	        debug(F100, "Rejecting malformed SGR-38/-48 sequence using semicolons instead of parameter elements", 0, 0);
+	        *pn_pos = j;
+	        return attribute;
+	    }
+
+		debug(F111, "SGR 38/48: Using semicolons", "j", j);
+		debug(F111, "SGR 38/48: Using semicolons", "k", k);
+	} else {
+		int st = pn_pe_start[j];
+		int c = pn_pe_count[j];
+		debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_start[j]", st);
+		debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_count[j]", c);
+
+		if (c == 4 && pe[st] == 2) {
+			mode = pe[st];
+			r = pe[st+1];
+			g = pe[st+2];
+			b = pe[st+3];
+		} else if (c == 5 && pe[st] == 2) {
+			mode = pe[st];
+			/* colorspace = pe[st+1];  Not used */
+			r = pe[st+2];
+			g = pe[st+3];
+			b = pe[st+4];
+		} else if (c == 2 && pe[st] == 5) {
+			mode = pe[st];
+			index = pe[st+1];
+		} else {
+			debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-count", c);
+			debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-start", st);
+			debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "mode", pe[st]);
+		}
+	}
+
+    debug(F111, "SGR 38/48:", "mode", mode);
+
+	if (mode == 5) {
+		int max_colors = current_palette_max_index();
+        /* K95s color IDs for colors 1-15 are different
+		 * from those used by xterm due to its OS/2
+		 * origins.
+		 */
+        index = color_index_to_vio(index);
+
+		debug(F111, "SGR 38/48:", "index", index);
+
+        if (index <= max_colors) {
+			debug(F111, "SGR 38/48: set indexed color", "index", index);
+#ifdef CK_COLORS_16
+            /* For 16-color builds, map from the currently
+			 * set palette on to the aixterm-16 palette.
+             */
+            index = nearest_palette_color_palette(colorpalette, index);
+#endif /* CK_COLORS_16 */
+			if (fg) attribute = cell_video_attr_set_fg_color(attribute,index);
+			else	attribute = cell_video_attr_set_bg_color(attribute,index);
+        }
+	}
+	/* Direct (24-bit) color value? */
+	else if (mode == 2) {
+		debug(F111, "SGR 38/48: set RGB color", "r", r);
+		debug(F111, "SGR 38/48: set RGB color", "g", g);
+		debug(F111, "SGR 38/48: set RGB color", "b", b);
+#ifdef CK_COLORS_24BIT
+		if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+			if (fg) attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
+			else    attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
+        } else
+#endif /* CK_COLORS_24BIT */
+		{
+			int idx;
+			/* Can't store 24-bit color, so look for the nearest
+			 * color in the current palette and use that.*/
+			idx = nearest_palette_color_rgb(colorpalette, r, g, b);
+			if (fg) attribute = cell_video_attr_set_fg_color(attribute,idx);
+			else    attribute = cell_video_attr_set_bg_color(attribute,idx);
+		}
+	} else {
+		debug(F111, "SGR 38/48 - ERROR - invalid mode", "mode", mode);
+	}
+
+    *pn_pos = j;
+    return attribute;
+}
+
+/*----------------------------------------------------------+----------------*/
+/* change_attributes_in_rectangle (DECCARA)                 | Page: cursor   */
+/*----------------------------------------------------------+----------------*/
+static vt_char_attr_t
+deccara_attribute(vt_char_attr_t a, int pn) {
+    switch ( pn ) {
+        case 0:
+            a = VT_CHAR_ATTR_NORMAL;
+            break;
+        case 1:
+            a |= VT_CHAR_ATTR_BOLD;
+            break;
+        case 4:
+            a |= VT_CHAR_ATTR_UNDERLINE;
+            break;
+        case 5:
+            a |= VT_CHAR_ATTR_BLINK;
+            break;
+        case 7:
+            a |= VT_CHAR_ATTR_REVERSE;
+            break;
+        case 22:
+            a &= ~VT_CHAR_ATTR_BOLD;
+            break;
+        case 24:
+            a &= ~VT_CHAR_ATTR_UNDERLINE;
+            break;
+        case 25:
+            a &= ~VT_CHAR_ATTR_BLINK;
+            break;
+        case 27:
+            a &= ~VT_CHAR_ATTR_REVERSE;
+            break;
+    }
+    return a;
+}
+
+static cell_video_attr_t
+deccara_video_attribute(cell_video_attr_t a, int pn) {
+    int fg = -1, bg = -1;
+    switch ( pn ) {
+    case 30: /* Colors */
+    case 31:
+    case 32:
+    case 33:
+    case 34:
+    case 35:
+    case 36:
+    case 37:
+        /* Select foreground color */
+        if ( !sgrcolors )
+            break;
+        fg = sgrcols[pn - 30];
+        break;
+    case 40:
+    case 41:
+    case 42:
+    case 43:
+    case 44:
+    case 45:
+    case 46:
+    case 47:
+        /* Select background color */
+        if ( !sgrcolors )
+            break;
+        bg = sgrcols[pn - 40];
+        break;
+    case 90: /* Colors */
+    case 91:
+    case 92:
+    case 93:
+    case 94:
+    case 95:
+    case 96:
+    case 97:
+        /* Select foreground color (8-bit high) */
+        if ( !sgrcolors || !ISK95(tt_type_mode) )
+            break;
+        fg = sgrcols[pn - 90] + 8;
+        break;
+    case 100:
+    case 101:
+    case 102:
+    case 103:
+    case 104:
+    case 105:
+    case 106:
+    case 107:
+        /* Select background color (8-bit high) */
+        if ( !sgrcolors || !ISK95(tt_type_mode) )
+            break;
+        bg = sgrcols[pn - 100] + 8;
+        break;
+    default:
+        return a;
+    }
+
+    if ((fg >= 0 || bg >= 0)) {
+        if (fg >= 0)
+            a = cell_video_attr_set_fg_color(a, fg);
+        if (bg >= 0)
+            a = cell_video_attr_set_bg_color(a, bg);
+    }
+    return a;
+}
+
+/* Parameters:
+ *  vmode   - should be VTERM
+ *  pn[]    - Array of CSI parameters
+ *  k       - Count of CSI parameters
+ *  *j      - Current position in the CSI parameters. May be advanced if
+ *            SGR-38 or SGR-48 is encountered
+ *  pe[]    - CSI parameter elements
+ *  pn_pe_start[] - first Pe for each Pn
+ *  pn_pe_count[] - Number of Pe for each Pn
+ */
+static void
+change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
+    int pe[], int pn_pe_start[], int pn_pe_count[]) {
+    int w, h, x, y;
+    unsigned short z;
+    /*
+     * pn[1] - top-line border      default=1
+     * pn[2] - left-col border      default=1
+     * pn[3] - bottom-line border   default=last line
+     * pn[4] - right col border     default=last column
+     * pn[5] -> pn[k] attributes to change - default=0
+     *
+     *  0 - attributes off
+     *  1 - bold
+     *  4 - underline
+     *  5 - blink
+     *  7 - negative image
+     * 22 - no bold
+     * 24 - no underline
+     * 25 - no blink
+     * 27 - positive image
+     * 30..38 - foreground color
+     * 40..48 - background color
+     * 90..97 - bright foreground color
+     * 100..107 - bright background color
+     *
+     * decsace == FALSE, stream else rectangle
+     */
+    if ( k < 1 ) pn[1] = 1;
+    if ( k < 2 ) pn[2] = 1;
+    if ( k < 3 ) pn[3] = VscrnGetHeight(vmode)
+         -(tt_status[vmode]?1:0);
+    if ( k < 4 ) pn[4] = VscrnGetWidth(vmode);
+    if ( k < 5 ) {
+        pn[5] = 0;
+        k = 5;
+    }
+
+    if (relcursor) {
+        /* Add top and left margins to the vertical and
+         * horizontal coordinates */
+        pn[1] += vscrn_c_page_margin_top(vmode)-1; /* top */
+        pn[2] += vscrn_c_page_margin_left(vmode)-1;/* lft */
+        pn[3] += vscrn_c_page_margin_top(vmode)-1; /* bot */
+        pn[4] += vscrn_c_page_margin_left(vmode)-1;/* rt */
+
+        if (pn[3] > vscrn_c_page_margin_bot(vmode))
+            pn[3] = vscrn_c_page_margin_bot(vmode);
+        if (pn[4] > vscrn_c_page_margin_right(vmode))
+            pn[4] = vscrn_c_page_margin_right(vmode);
+    }
+
+    if ( pn[3] < pn[1] || pn[4] < pn[2] )
+        return;
+
+    w = pn[4] - pn[2] + 1;
+    h = pn[3] - pn[1] + 1;
+
+    if ( decsace ) {        /* rectangle */
+        for ( y=0; y<h; y++ ) {
+            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
+            for ( x=0; x<w; x++ ) {
+                for ( z=5; z<=k; z++ ) {
+                    vt_char_attr_t a = line->vt_char_attrs[pn[2]+x-1];
+                    if (a == VT_CHAR_ATTR_ERASED) {
+                        /* In rectangle mode, unoccuped (erased)
+                         * character positions are changed to
+                         * blanks (become unerased) */
+                        a = VT_CHAR_ATTR_NORMAL;
+                    }
+                    line->vt_char_attrs[pn[2]+x-1] = deccara_attribute(a, pn[z]);
+
+                    /* Changing colours with DECCARA is an extension which
+                     * STD-070 implies should be supported by the VT525:
+                     * https://j4james.github.io/vtdocs/EL-00070-05.html#5-174
+                     * So for now the VT525 is assumed to support it.
+                     */
+                    if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
+                        cell_video_attr_t attr = line->cells[pn[2]+x-1].video_attr;
+                        if (pn[z] == 0 && colorreset) {
+                            attr = defaultattribute;
+                        }
+                        else if ((pn[z] == 38 || pn[z] == 48) && ISK95(tt_type_mode)) {
+                            /* Handle indexed or RGB colour. We explicitly do
+                             * not support the semi-colon based syntax because:
+                             *  - It breaks the standard
+                             *  - The user has no reason to expect it to work here
+                             * We *only* support that broken semicolon syntax in
+                             * SGR because its already so widespread there. So
+                             * if a user tries to use it here we'll detect it
+                             * and skip over the next few Pn anyway. */
+                            attr = sgr_38_48(pn, pe, k, &z, pn_pe_start,
+                                pn_pe_count, FALSE, attr);
+                        }
+                        else {
+                            /* Handle 30..37, 40..47, 90..97 and 100..107 */
+                            attr = deccara_video_attribute(attr, pn[z]);
+                        }
+                        line->cells[pn[2]+x-1].video_attr = attr;
+                    }
+                }
+            }
+        }
+    } else {                /* stream */
+        for ( y=0; y<h; y++ ) {
+            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
+            int rlimit = relcursor ? vscrn_c_page_margin_right(vmode) : VscrnGetWidth(vmode);
+            int llimit = relcursor ? vscrn_c_page_margin_left(vmode)-1 : 0;
+            for ( x = (y==0 ? pn[2] - 1 : llimit);
+                  x < ((y==h-1) ? pn[4] : rlimit);
+                  x++ ) {
+                if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
+                    /* In stream mode, DECCARA doesn't affect
+                     * unoccupied (erased) character positions */
+                    continue;
+                }
+                for ( z=5; z<=k; z++ ) {
+                    vt_char_attr_t a = line->vt_char_attrs[x];
+                    line->vt_char_attrs[x] = deccara_attribute(a, pn[z]);
+
+                    if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
+                        cell_video_attr_t attr = line->cells[x].video_attr;
+                        if (pn[z] == 0 && colorreset) {
+                            attr = defaultattribute;
+                        }
+                        else if ((pn[z] == 38 || pn[z] == 48) && ISK95(tt_type_mode)) {
+                            /* Handle indexed or RGB colour. We explicitly do
+                             * not support the semi-colon based syntax because:
+                             *  - It breaks the standard
+                             *  - The user has no reason to expect it to work here
+                             * We *only* support that broken semicolon syntax in
+                             * SGR because its already so widespread there. So
+                             * if a user tries to use it here we'll detect it
+                             * and skip over the next few Pn anyway. */
+                            attr = sgr_38_48(pn, pe, k, &z, pn_pe_start,
+                                pn_pe_count, FALSE, attr);
+                        }
+                        else {
+                            /* Handle 30..37, 40..47, 90..97 and 100..107 */
+                            attr = deccara_video_attribute(attr, pn[z]);
+                        }
+                        line->cells[x].video_attr = attr;
+                    }
+                }
+            }
+        }
+    }
+    if (cursor_on_visible_page(vmode)) {
+        VscrnIsDirty(vmode);
+    }
+}
+
+
 /*----------------------------------------------------------+----------------*/
 /* TODO: terminal_state_report                              | Page: n/a      */
 /*----------------------------------------------------------+----------------*/
@@ -7267,6 +9153,141 @@ terminal_state_report() {
      * As there is no defined format for the response, K95 is free to define
      * something with no need for it to be portable to other terminals or
      * terminal emulators. The only question is... what to include? */
+}
+
+/*----------------------------------------------------------+----------------*/
+/* presentation_state_report                                | Page: n/a      */
+/*----------------------------------------------------------+----------------*/
+/* Produces one of two Presentation State Reports:
+ *      1       Cursor Information Report
+ *      2       Tabstop Report
+ */
+void
+presentation_state_report(int report) {  /* DECRQPSR */
+    char response[100];
+    char* decrqpsr = NULL;
+
+    response[0] = '\0';
+
+    switch (report) {
+    case 1: {   /* DECCIR - Cursor Information Report */
+        char srend, satt, sflag, scss, pgl, pgr;
+
+        /* Response is:
+         *   Pr ; Pc ; Pp ; Srend ; Satt ; Sflag ; Pg1 ; Pgr ; Scss ; Sdesig
+         * Where:
+         *   Pr,Pc  Cursor position (eg, 5;20)
+         *   Pp     Current page number (eg, 3)
+         *   Srend  Bit field of graphic renditions
+         *
+         * My VT520 in power on state gives:
+         * 1;1;1;@;@;@;0;2;@;BB<<
+         */
+
+        srend = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        if (attrib.invisible) srend += 16;      /* bit 5 */
+        if (attrib.reversed) srend += 8;        /* bit 4 */
+        if (attrib.blinking) srend += 4;        /* bit 3 */
+        if (attrib.underlined) srend += 2;      /* bit 2 */
+        if (attrib.bold) srend += 1;            /* bit 1 */
+
+        satt = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        /* bits 5, 4, 3, 2 - reserved for future use */
+        /* bit 1 - selectively erasable attribute */
+        if (attrib.unerasable) satt += 1;  /* bit 1 */
+
+        sflag = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        /* bit 5 - reserved */
+        if (wrapit) sflag += 8; /* bit 4 - autowrap pending */
+        /* bit 3 - SS3 pending */
+        if (SSGL != NULL && SSGL == &G[3]) sflag += 4;
+        /* bit 2 - SS2 pending */
+        if (SSGL != NULL && SSGL == &G[2]) sflag += 2;
+        if (relcursor) sflag += 1; /* bit 1 - origin mode */
+
+        if (GL == &G[0]) pgl = '0';
+        else if (GL == &G[1]) pgl = '1';
+        else if (GL == &G[2]) pgl = '2';
+        else if (GL == &G[3]) pgl = '3';
+
+        if (GR == &G[0]) pgr = '0';
+        else if (GR == &G[1]) pgr = '1';
+        else if (GR == &G[2]) pgr = '2';
+        else if (GR == &G[3]) pgr = '3';
+
+        scss = '@';  /* @ is 01000000 */
+        /* bit 8 - always reset */
+        /* bit 7 - always set */
+        /* bit 6 - extension indicator, signals another byte */
+        /* bit 5 - reserved */
+        if (G[3].size != cs94) scss += 8;
+        if (G[2].size != cs94) scss += 4;
+        if (G[1].size != cs94) scss += 2;
+        if (G[0].size != cs94) scss += 1;
+
+        _snprintf(response, 100,
+            "%d;%d;%d;%c;%c;%c;%c;%c;%c;%s%s%s%s",
+            wherey[VTERM] - (relcursor ? vscrn_c_page_margin_top(VTERM) - 1: 0),
+            wherex[VTERM] - (relcursor ? vscrn_c_page_margin_left(VTERM) - 1: 0),
+            vscrn_current_page_number(VTERM, FALSE) + 1,
+            srend,
+            satt,
+            sflag,
+            pgl,
+            pgr,
+            scss,
+            csetchar(G[0].size, G[0].designation),
+            csetchar(G[1].size, G[1].designation),
+            csetchar(G[2].size, G[2].designation),
+            csetchar(G[3].size, G[3].designation)
+            );
+        break;
+    }
+    case 2: { /* DECTABSR - Tabulation Stop Report */
+        int tabpos = 2, i;
+        /* There is usually a tabstop at column 1, but we
+         * don't report that here as the VT520 doesn't let
+         * you place a tabstop a column 1, and K95 won't tab
+         * to a tabstop in column 1 (unless its backtab,
+         * which is probably what its there for) */
+        for (i = 2; i < VscrnGetWidth(VTERM); i++) {
+            if (htab[i] == 'T') {
+                if (response[0] != '\0') strcat(response, "/");
+                strcat(response, ckitoa(tabpos));
+            }
+            tabpos++;
+        }
+        break;
+    }
+    case 0: /* Ignored, nothing sent */
+    default:
+        break;
+    }
+
+    if (response[0] != '\0') {
+        int buflen = strlen(response) + 10;
+        decrqpsr = malloc(buflen);
+
+        /* Send DCS pn[1] $ u response ST */
+        if ( send_c1 )
+            _snprintf(decrqpsr, buflen, "%c%d$u%s%c",
+                _DCS, report, response, _ST8);
+        else
+            _snprintf(decrqpsr, buflen, "%cP%d$u%s%c\\",
+                ESC, report, response, ESC);
+        sendchars(decrqpsr,strlen(decrqpsr));
+
+        free(decrqpsr);
+    }
 }
 
 
@@ -7466,6 +9487,59 @@ restore_color_table(int dcsnext)
     }
     VscrnIsDirty(VTERM);
 }
+
+
+void
+set_declrmm(bool enabled) {
+	if (IS_DECLRMM_AVAILABLE(tt_type_mode)) {
+		declrmm = enabled;
+
+		if (declrmm) {
+			/* Clear DECDHL/DECDWL line attributes on all pages */
+			int p, l;
+			videoline * line;
+			for (l = 0; l < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); l++) {
+				for (p = 0; p < vscrn[VTERM].page_count; p++) {
+					line = VscrnGetPageLineFromTop(VTERM, l, p) ;
+					if (line) {
+						line->vt_line_attr = VT_LINE_ATTR_NORMAL;
+					}
+				}
+			}
+		} else {
+		    int p;
+			/* Reset margins on all pages to the far left/right */
+			for (p = 0; p < vscrn[VTERM].page_count; p++) {
+				vscrn_set_page_margin_left(VTERM, p, 1);
+				vscrn_set_page_margin_right(VTERM, p, VscrnGetWidth(VTERM));
+			}
+		}
+	}
+}
+
+
+/*---------------------------------------------------------------------------*/
+/* naws                                                                      */
+/*---------------------------------------------------------------------------*/
+/* Negotiate About Window Size - let the remote host (if there is one) know the
+ * window size has changed. How this is done depends on the protocol in use. */
+void
+naws() {
+#ifdef TCPSOCKET
+#ifdef CK_NAWS
+    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
+        tn_snaws();
+#ifdef RLOGCODE
+        rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+        ssh_snaws();
+#endif /* SSHBUILTIN */
+    }
+#endif /* CK_NAWS */
+#endif /* TCPSOCKET */
+}
+
 
 void
 udkreset( void )
@@ -8692,6 +10766,109 @@ SNI_chcode( int state ) {
     }
 }
 
+
+/* Home the cursor taking DECSASD and DECOM into account. This is really for
+ * VT-like emulations - for others that don't have margins, just use
+ * lgotoxy(vmode,1,1) instead.
+ */
+void
+home_cursor(int vmode)
+{
+    if ( decsasd == SASD_STATUS || !relcursor)
+    {
+        /* The VT520 doesn't seem to implement DECLRMM (left/right margins) on
+         * its status line, and it only has the one status line so no DECSTBM
+         * too, meaning that on the status line home is always 1,1.
+         */
+        lgotoxy( decsasd == SASD_STATUS ? VSTATUS : VTERM, 1, 1 );
+    }
+    else  /* relcursor */
+    {
+        /* If DECOM is set, send the cursor to the top
+         * left corner within the page margins */
+        lgotoxy(VTERM,
+            vscrn_c_page_margin_left(VTERM),
+            vscrn_c_page_margin_top(VTERM));
+    }
+}
+
+/* Returns the right margin that is currently in effect given the cursors
+ * current location.
+ *
+ * For DEC terminals this depends on if the cursor is within the scroll region
+ * or not and, for models supporting left and right margins, if it is already
+ * past the right margin or not.
+ *
+ * Double-width lines are also taken into account.
+ */
+int
+cursor_right_margin(int vmode)
+{
+    /* Normally the right margin is the right edge of the screen */
+    int rmargin = VscrnGetWidth(vmode);
+
+    /* Double-width lines halve the length of the line. As double-width lines
+     * are cleared and disabled on entering DECLRMM, if we encounter one then
+     * we know that DECLRMM is disabled so no need to go any further. */
+    if (isdoublewidth(wherey[vmode])) return rmargin / 2;
+
+    /* But if we're within the scroll region on a terminal that supports setting
+     * the right margin, then its the set right margin. For all terminals that
+     * *don't* support setting the right margin, the right margin will always be
+     * set to the right edge of the screen so no need to check term type.
+     */
+    if (wherey[vmode] >= vscrn_c_page_margin_top(vmode) &&
+        wherey[vmode] <= vscrn_c_page_margin_bot(vmode) &&
+        wherex[vmode] <= vscrn_c_page_margin_right(vmode)) {
+        rmargin = vscrn_c_page_margin_right(vmode);
+    }
+
+    return rmargin;
+}
+
+/* Returns true if the cursor is currently within the margins.  */
+bool
+cursor_in_margins(int vmode) {
+    if (wherey[vmode] >= vscrn_c_page_margin_top(vmode) &&
+        wherey[vmode] <= vscrn_c_page_margin_bot(vmode) &&
+        wherex[vmode] >= vscrn_c_page_margin_left(vmode) &&
+        wherex[vmode] <= vscrn_c_page_margin_right(vmode)) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/* Returns the left margin that is currently in effect at the specfied
+ * coordinates.
+ *
+ * For DEC terminals this depends on if the cursor is within
+ * the scroll region or not.
+ */
+int
+cursor_pos_left_margin(int vmode, int y, int x)
+{
+    /* If relcursor is on, then the cursor is constrained to the margins. So the
+     * position of the cursor is irrelevant. Otherwise, the position of the left
+     * margin only matters if the cursor is within the margins. */
+    if (relcursor || cursor_in_margins(vmode)) {
+        return vscrn_c_page_margin_left(vmode);
+    }
+
+    return 1;
+}
+
+/* Returns the left margin that is currently in effect given the cursors
+ * current location.
+ *
+ * For DEC terminals this depends on if the cursor is within
+ * the scroll region or not.
+ */
+int
+cursor_left_margin(int vmode)
+{
+    return cursor_pos_left_margin(vmode, wherey[vmode], wherex[vmode]);
+}
+
 void
 savecurpos(int vmode, int x) {          /* x: 0 = cursor X/Y only, 1 = all */
     int i ;
@@ -8750,7 +10927,7 @@ restorecurpos(int vmode, int x) {
     }
 
     if (saved[slot] == FALSE) {                /* Nothing saved, home the cursor */
-        lgotoxy(vmode, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
+        home_cursor(vmode);
     }
     else {
         lgotoxy(vmode, savedcol[slot], savedrow[slot]);/* Goto saved position */
@@ -8868,6 +11045,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 		}
 	}
 
+    /* And any playing sounds */
+    sound_playing = FALSE;
+
     tt_type_mode = tt_type ;
 
     decstglt = DECSTGLT_COLOR;
@@ -8944,6 +11124,32 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     erasemode = user_erasemode;
 
+    decncsm = decncsm_usr;
+    decscpp_resize = FALSE;
+
+#ifdef KUI
+    /* Erase DRCS font buffers, but only on hard reset*/
+    if (x) {
+        int i, j;
+        EnterDRCSBufferCriticalSection();
+        for (i = 0; i < DRCS_BUFFERS; i++) {
+            if (drcsbuf[i] != NULL) {
+                drcs_t *buf = drcsbuf[i];
+                drcsbuf[i] = NULL;
+                for (j = 0; j < DRCS_RENDITIONS_TOTAL; j++) {
+                    free(buf->renditions[j]);
+                }
+                free(buf);
+            }
+        }
+        LeaveDRCSBufferCriticalSection();
+
+        /* Restore number of available font buffers for VT520 only on hard reset
+         * only */
+        decdlda = 2;
+    }
+#endif /* KUI */
+
     /* Restore DEC VT Graphic Set translation functions */
     for ( i = 0 ; i < 4 ; i++ )
     {
@@ -9006,6 +11212,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     tt_autorepeat = TRUE;               /* Keyboard autorepeat ON */
 #endif /* NT */
     tt_wrap = TRUE;                     /* (FALSE for real VT terminal!) */
+    tt_bell = tt_bell_usr;
     send_c1 = send_c1_usr;              /* Don't send C1 controls */
     keylock = FALSE;                    /* Keyboard is not locked */
 
@@ -9027,20 +11234,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
         SmoothScroll();
     if (vmode==VTERM)
         SetCols(VTERM) ;
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0)
-    {
-        tn_snaws();
-#ifdef RLOGCODE
-        rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-        ssh_snaws();
-#endif /* SSHBUILTIN */
-    }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+    naws();
     ipadl25();
 
     decsace = FALSE;
@@ -9176,7 +11370,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     vtnt_read  = VTNT_MIN_READ;
 
     /* Disable y active mouse reporting modes */
+#ifdef OS2MOUSE
     mouse_reporting_mode &= ~(MOUSEREPORTING_ACTIVE | MOUSEREPORTING_UNSUPPORTED);
+#endif /* OS2MOUSE */
 
     dokverb(VTERM,K_ENDSCN);
     dokverb(VTERM,K_MARK_CANCEL);
@@ -9723,8 +11919,16 @@ rtolxlat( int c )
             {
                 if ( win95hsl && c >= 0x23BA && c <= 0x23BD )
                     c = tx_hslsub(c);
-                else if ( c >= 0xE000 && c <= 0xF8FF )
+                else if ( c >= 0xE000 && c <= 0xF8FF
+#ifdef KUI
+                          && !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
+                               drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c))
+#endif /* KUI */
+                        ) {
+                    /* DRCS soft character sets map into the unicode PUA range,
+                     * so don't apply tx_usub to them. */
                     c = tx_usub(c);
+                }
                 if (win95lucida && c > 0x017f)
                     c = tx_lucidasub(c);
             }
@@ -9901,8 +12105,16 @@ pushed:
                 if ( ck_isunicode() ) {
                     if ( win95hsl && c >= 0x23BA && c <= 0x23BD )
                         c = tx_hslsub(c);
-                    else if ( c >= 0xE000 && c <= 0xF8FF )
+                    else if ( c >= 0xE000 && c <= 0xF8FF
+#ifdef KUI
+                              && !(drcsbuf[0] != NULL && IN_DRCS_1_RANGE(c) ||
+                                   drcsbuf[1] != NULL && IN_DRCS_2_RANGE(c))
+#endif /* KUI */
+                            ){
+                        /* DRCS soft character sets map into the unicode PUA range,
+                         * so don't apply tx_usub to them. */
                         c = tx_usub(c);
+                    }
                     if (win95lucida && c > 0x017f)
                         c = tx_lucidasub(c);
                 } else {        
@@ -10048,319 +12260,365 @@ unsigned char
 charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
 {
     unsigned char cs = TX_UNDEF ;
-    unsigned char bchar ;
+    unsigned char bchar = 0;
+    unsigned char cchar = 0;
+    unsigned char dchar = 0;
+    BOOL bchar_is_intermediate = FALSE;
+    int i;
 
-    switch ( size ) {
-    case cs94:
-        switch ( achar ) {
-#ifdef SN97801_5XX
-        case '@':       /* International (new) */
-            break;
-        case 'B':       /* International A (US-ASCII) */
-            break;
-        case 'K':       /* German character set (GR-ASCII) */
-            break;
-        case 'w':       /* Brackets character set (new) */
-            break;
-        case 'c':       /* FACET character set (new) */
-            break;
-        case 'v':       /* IBM character set (new) */
-            break;
-        case 'u':       /* EURO symbols (new) */
-            break;
-        case 't':       /* Mathematics symbols (new) */
-            break;
-        case 'y':       /* Blanks (new) */
-            break;
-        case 'x':       /* Load Area G2 (7-bit) or DRCS area (8-bit) if G0/G1 */
-                        /* DRCS area always if G2/G3 */
-            break;
-#endif /* SN97801_5XX */
-        case '@':  /* 97801 - Not quite US ASCII but close */
-        case 'A':
-            cs = TX_BRITISH ;
-            break;
-        case 'B':       /* Use the default value for G[0] */
-            if (ISLINUX(tt_type_mode)) {
-                if ( pG == &G[0] )
-                    cs = TX_ASCII;
-                else
-                    cs = TX_8859_1 ;
-            } else if ( !(ISVT100(tt_type_mode) && decnrcm) ) {
-                /*
-                From VT330/340 install guide page 81.:
-                "When you select an NRC set in multinational mode,
-                the NRC set replaces the ASCII set."
-                */
-#ifdef COMMENT
-                cs = G[0].def_designation;
-#else /* COMMENT */
-                cs = dec_nrc;
-#endif /* COMMENT */
-            }
-            else {
-                cs = TX_ASCII ;
-            }
-            break;
-        case '1':       /* DEC Alternate ROM */
-            cs = TX_ASCII ;
-            break;
-        case 'C':
-        case '5':
-            cs = TX_FINNISH ;
-            break;
-        case 'E':
-        case '6':
-        case '`':
-            cs = TX_NORWEGIAN ;
-            break;
-        case 'G':
-        case 'H':
-        case '7':
-            cs = TX_SWEDISH ;
-            break;
-        case 'K':
-            if ( ISLINUX(tt_type_mode) ) {       /* user defined */
-                if (pG == &G[0]) {
-                    cs = TX_ASCII ;
-                } else {
-                    cs = TX_CP850;               /* we will choose one */
-                }
-            } else
-                cs = TX_GERMAN ;
-            break;
-        case 'Q':
-        case '9':
-            cs = TX_CN_FRENCH ;
-            break;
-        case 'R':
-        case 'f':
-            cs = TX_FRENCH ;
-            break;
-        case 'Y':
-            cs = TX_ITALIAN ;
-            break;
-        case 'Z':
-            cs = TX_SPANISH ;
-            break;
-        case '0':
-            cs = TX_DECSPEC ;
-            break;
-        case '>':
-        case '2':       /* DEC Alternate ROM - Special Graphics */
-            cs = TX_DECTECH ;
-            break;
-        case '4':
-            cs = TX_DUTCH ;
-            break;
-        case '<':
-            if ( ISVT320(tt_type_mode) ) {
-                /* DEC User Preferred Supplemental VT320 and higher */
-                cs = dec_upss ;
-            }
-            else {
-                cs = TX_DECMCS ;
-            }
-            break;
-        case '=':
-            cs = TX_SWISS ;
-            break;
-        case '%':
-            bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
-            if (bchar == '5') {
-                cs = TX_DECMCS ;
-            }
-            else if (bchar == '6') {
-                cs = TX_PORTUGUESE ;
-            }
-#ifdef COMMENT
-            else if (bchar == '0') {
-                cs = DEC TURKISH ;
-            }
-            else if (bchar == '=') {
-                cs = HEBREW NRCS ;
-            }
-            else if ( bchar == '2' )
-                cs = TURKISH NRCS;
-            else if ( bchar == '3' )
-                cs = SCS NRCS;
-#endif /* COMMENT */
-            break;
-        case 'L':
-            cs = TX_PORTUGUESE ;
-            break;
-        case 'i':
-            cs = TX_HUNGARIAN ;
-            break;
-        case 'J':
-            cs = TX_J201R ;
-            break;
-        case 'I':
-            cs = TX_J201K ;
-            break;
-        case '*':
-            cs = TX_IBMC0GRPH;  /* QANSI/Linux */
-            break;
-        case 'U':               /* QANSI/Linux */
-        case '?':               /* This is a MSK hack for Word Perfect */
-            if (pG == &G[0]) {
-                cs = TX_ASCII ;
-            } else {
-                cs = TX_CP437 ;
-            }
-            break;
-        case 'c':       /* FACET character set (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIFACET;
-            }
-            break;
-        case 'e':       /* APL-ISO */
-            cs = TX_APL1;
-            break;
-        case 'u':       /* EURO symbols (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIEURO;
-            }
-            break;
-        case 'v':       /* IBM character set (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIIBM;
-            }
-            break;
-        case 'w':       /* Brackets character set (new) */
-            if ( IS97801(tt_type_mode) ) {
-                cs = TX_SNIBRACK;
-            }
-            break;
-        case ' ':  /* space */
-            bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
-            switch (bchar) {
-            case '@':   /* soft character set */
-                /* not supported - do nothing */
-                debug(F100,"charset - host tried to activate soft-character-set","",0);
-                break;
-            }
-            break;
-#ifdef COMMENT
-        case '"':
-            if ( bchar == '?' )
-                cs = DEC GREEK;
-            else if ( bchar == '4' )
-                cs = DEC HEBREW;
-            else if ( bchar == '>' )
-                cs = GREEK NRCS;
-            break;
-        case '&':
-            if ( bchar == '4' )
-                cs = DEC CYRILLIC;
-            else if ( bchar == '5' )
-                cs = RUSSIAN NRC;
-            break;
-#endif /* COMMENT */
+    /* Read the character set name.
+     * Soft-character sets allow 0-3 intermediate charaters followed by a final
+     * while all of K95s built-in character sets have 0-1 intermediates followd
+     * by a final.
+     */
+    if (achar >= ' ' && achar <= '/') {
+        /* achar is an intermediate. */
+        bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
+        if (bchar >= ' ' && bchar <= '/') {
+            /* bchar is an intermediate */
+            bchar_is_intermediate = TRUE;
 
+            cchar = (escnext<=esclast)?escbuffer[escnext++]:0;
+            if (cchar >= ' ' && cchar <= '/') {
+                /* bchar is an intermediate */
+                dchar = (escnext<=esclast)?escbuffer[escnext++]:0;
+                /* dchar should be between '0' and '~' though I'm not sure there
+                 * is much we can usefully do if that isn't the case */
+            }
         }
-        break;
+    }
 
-    case cs96:
-        switch ( achar ) {
+#ifdef KUI
+    /* First, check DRCS buffers. The VT520 manual says if two fonts have the
+     * same name the most recently loaded is used and specifically says that
+     * the terminal searches for fonts in reverse order. My VT520 (v2.1) does
+     * not do that - given the choice of two fonts with the same name, it always
+     * picks the one in the first font buffer. */
+    for (i = 0; i < DRCS_BUFFERS; i++) {
+        if (drcsbuf[i] != NULL && drcsbuf[i]->is_96_chars == (size == cs96)) {
+            if (drcsbuf[i]->name[0] == achar &&
+                drcsbuf[i]->name[1] == bchar &&
+                drcsbuf[i]->name[2] == cchar &&
+                drcsbuf[i]->name[3] == dchar) {
+                debug(F111, "Designate soft-font", drcsbuf[i]->name, i);
+                switch (i) {
+                    case 0: cs = TX_DRCS_1; break;
+                    case 1: cs = TX_DRCS_2; break;
+                    default: break;
+                }
+                if (cs != TX_UNDEF) break;
+            }
+        }
+    }
+#endif /* KUI */
+
+    /* For all built-in character sets:
+     * achar - intermediate or final
+     * bchar - final or empty
+     */
+
+    if (cs == TX_UNDEF && !bchar_is_intermediate) {
+        switch ( size ) {
+            case cs94:
+                switch ( achar ) {
 #ifdef SN97801_5XX
-        case 'A':       /* 8859-1 */
-        case 'B':       /* 8859-2 */
-        case 'C':       /* 8859-3 */
-        case 'D':       /* 8859-4 */
-        case 'F':       /* 8859-5 (different) */
-        case '@':       /* 8859-7 (different) */
-        case 'T':       /* 8859-9 (different) */
-        case 'x':       /* DRCS area */
+                case '@':       /* International (new) */
+                        break;
+                case 'B':       /* International A (US-ASCII) */
+                        break;
+                case 'K':       /* German character set (GR-ASCII) */
+                        break;
+                case 'w':       /* Brackets character set (new) */
+                        break;
+                case 'c':       /* FACET character set (new) */
+                        break;
+                case 'v':       /* IBM character set (new) */
+                        break;
+                case 'u':       /* EURO symbols (new) */
+                        break;
+                case 't':       /* Mathematics symbols (new) */
+                        break;
+                case 'y':       /* Blanks (new) */
+                        break;
+                case 'x':       /* Load Area G2 (7-bit) or DRCS area (8-bit) if G0/G1 */
+                        /* DRCS area always if G2/G3 */
+                        break;
 #endif /* SN97801_5XX */
-        case '<':       /* DEC User-preferred Supplemental */
-            cs = dec_upss ;
-            break;
+                case '@':  /* 97801 - Not quite US ASCII but close */
+                case 'A':
+                        cs = TX_BRITISH ;
+                        break;
+                case 'B':       /* Use the default value for G[0] */
+                        if (ISLINUX(tt_type_mode)) {
+                            if ( pG == &G[0] )
+                                cs = TX_ASCII;
+                            else
+                                cs = TX_8859_1 ;
+                        } else if ( !(ISVT100(tt_type_mode) && decnrcm) ) {
+                            /*
+                            From VT330/340 install guide page 81.:
+                            "When you select an NRC set in multinational mode,
+                            the NRC set replaces the ASCII set."
+                            */
+#ifdef COMMENT
+                            cs = G[0].def_designation;
+#else /* COMMENT */
+                            cs = dec_nrc;
+#endif /* COMMENT */
+                        }
+                        else {
+                            cs = TX_ASCII ;
+                        }
+                        break;
+                case '1':       /* DEC Alternate ROM */
+                        cs = TX_ASCII ;
+                        break;
+                case 'C':
+                case '5':
+                        cs = TX_FINNISH ;
+                        break;
+                case 'E':
+                case '6':
+                case '`':
+                        cs = TX_NORWEGIAN ;
+                        break;
+                case 'G':
+                case 'H':
+                case '7':
+                        cs = TX_SWEDISH ;
+                        break;
+                case 'K':
+                        if ( ISLINUX(tt_type_mode) ) {       /* user defined */
+                            if (pG == &G[0]) {
+                                cs = TX_ASCII ;
+                            } else {
+                                cs = TX_CP850;               /* we will choose one */
+                            }
+                        } else
+                            cs = TX_GERMAN ;
+                        break;
+                case 'Q':
+                case '9':
+                        cs = TX_CN_FRENCH ;
+                        break;
+                case 'R':
+                case 'f':
+                        cs = TX_FRENCH ;
+                        break;
+                case 'Y':
+                        cs = TX_ITALIAN ;
+                        break;
+                case 'Z':
+                        cs = TX_SPANISH ;
+                        break;
+                case '0':
+                        cs = TX_DECSPEC ;
+                        break;
+                case '>':
+                case '2':       /* DEC Alternate ROM - Special Graphics */
+                        cs = TX_DECTECH ;
+                        break;
+                case '4':
+                        cs = TX_DUTCH ;
+                        break;
+                case '<':
+                        if ( ISVT320(tt_type_mode) ) {
+                            /* DEC User Preferred Supplemental VT320 and higher */
+                            cs = dec_upss ;
+                        }
+                        else {
+                            cs = TX_DECMCS ;
+                        }
+                        break;
+                case '=':
+                        cs = TX_SWISS ;
+                        break;
+                case '%':
+                        if (bchar == '5') {
+                            cs = TX_DECMCS ;
+                        }
+                        else if (bchar == '6') {
+                            cs = TX_PORTUGUESE ;
+                        }
+#ifdef COMMENT
+                        else if (bchar == '0') {
+                            cs = DEC TURKISH ;
+                        }
+                        else if (bchar == '=') {
+                            cs = HEBREW NRCS ;
+                        }
+                        else if ( bchar == '2' )
+                            cs = TURKISH NRCS;
+                        else if ( bchar == '3' )
+                            cs = SCS NRCS;
+#endif /* COMMENT */
+                        break;
+                case 'L':
+                        cs = TX_PORTUGUESE ;
+                        break;
+                case 'i':
+                        cs = TX_HUNGARIAN ;
+                        break;
+                case 'J':
+                        cs = TX_J201R ;
+                        break;
+                case 'I':
+                        cs = TX_J201K ;
+                        break;
+                case '*':
+                        cs = TX_IBMC0GRPH;  /* QANSI/Linux */
+                        break;
+                case 'U':               /* QANSI/Linux */
+                case '?':               /* This is a MSK hack for Word Perfect */
+                        if (pG == &G[0]) {
+                            cs = TX_ASCII ;
+                        } else {
+                            cs = TX_CP437 ;
+                        }
+                        break;
+                case 'c':       /* FACET character set (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIFACET;
+                        }
+                        break;
+                case 'e':       /* APL-ISO */
+                        cs = TX_APL1;
+                        break;
+                case 'u':       /* EURO symbols (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIEURO;
+                        }
+                        break;
+                case 'v':       /* IBM character set (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIIBM;
+                        }
+                        break;
+                case 'w':       /* Brackets character set (new) */
+                        if ( IS97801(tt_type_mode) ) {
+                            cs = TX_SNIBRACK;
+                        }
+                        break;
+#ifdef COMMENT
+                case '"':
+                        if ( bchar == '?' )
+                            cs = DEC GREEK;
+                        else if ( bchar == '4' )
+                            cs = DEC HEBREW;
+                        else if ( bchar == '>' )
+                            cs = GREEK NRCS;
+                        break;
+                case '&':
+                        if ( bchar == '4' )
+                            cs = DEC CYRILLIC;
+                        else if ( bchar == '5' )
+                            cs = RUSSIAN NRC;
+                        break;
+#endif /* COMMENT */
 
-        case 'A':
-            cs = TX_8859_1 ;
-            break;
-        case 'B':
-            cs = TX_8859_2 ;
-            break;
-        case 'C':
-            cs = TX_8859_3 ;
-            break;
-        case 'D':
-            cs = TX_8859_4 ;
-            break;
-        case 'F':
-            cs = IS97801(tt_type_mode) ? TX_8859_5 : TX_8859_7 ;
-            break;
-        case '@':
-            cs = TX_8859_7 ;
-            break;
-        case 'G':
-            cs = TX_8859_6 ;
-            break;
-        case 'H':
-            cs = TX_8859_8 ;
-            break;
-        case 'L':
-            cs = TX_8859_5 ;
-            break;
-        case 'T': /* SNI-97801 */
-            if ( !IS97801(tt_type_mode) )
+                }
                 break;
 
-        case 'M': /* DEC VT3xx */
-            cs = TX_8859_9 ;
-            break;
+            case cs96:
+                switch ( achar ) {
+#ifdef SN97801_5XX
+                case 'A':       /* 8859-1 */
+                case 'B':       /* 8859-2 */
+                case 'C':       /* 8859-3 */
+                case 'D':       /* 8859-4 */
+                case 'F':       /* 8859-5 (different) */
+                case '@':       /* 8859-7 (different) */
+                case 'T':       /* 8859-9 (different) */
+                case 'x':       /* DRCS area */
+#endif /* SN97801_5XX */
+                case '<':       /* DEC User-preferred Supplemental */
+                        cs = dec_upss ;
+                        break;
 
-        case 'V':
-            cs = TX_8859_6 ;
-            break;
+                case 'A':
+                        cs = TX_8859_1 ;
+                        break;
+                case 'B':
+                        cs = TX_8859_2 ;
+                        break;
+                case 'C':
+                        cs = TX_8859_3 ;
+                        break;
+                case 'D':
+                        cs = TX_8859_4 ;
+                        break;
+                case 'F':
+                        cs = IS97801(tt_type_mode) ? TX_8859_5 : TX_8859_7 ;
+                        break;
+                case '@':
+                        cs = TX_8859_7 ;
+                        break;
+                case 'G':
+                        cs = TX_8859_6 ;
+                        break;
+                case 'H':
+                        cs = TX_8859_8 ;
+                        break;
+                case 'L':
+                        cs = TX_8859_5 ;
+                        break;
+                case 'T': /* SNI-97801 */
+                        if ( !IS97801(tt_type_mode) )
+                            break;
 
-        case '%':
-            bchar = (escnext<=esclast)?escbuffer[escnext++]:0;
-            if (bchar == '5') {
-                cs = TX_DECMCS ;
-            }
-			break;
-        case '*':
-            cs = TX_IBMC0GRPH;  /* QANSI/Linux */
-            break;
-        case 'U':               /* QANSI/Linux */
-            /* fall through */
-        case '?':               /* This is a MSK hack for Word Perfect */
-            if (pG == &G[0]) {
-                cs = TX_ASCII ;
-            } else {
-                cs = TX_CP437 ;
-            }
-            break;
-        case 'b':
-            cs = TX_8859_15;    /* Latin 9 */
-            break;
+                case 'M': /* DEC VT3xx */
+                        cs = TX_8859_9 ;
+                        break;
 
-            /* Warning the following have been allocated officially */
-            /* the values below are not official.                   */
-        case 'd':               /* Hack alert: DGI */
-            cs = TX_DGI ;
-            break;
-        case 'e':               /* Hack alert: DG PC Graphics */
-            cs = TX_DGPCGRPH;
-            break;
-        case 'f':               /* Hack alert: DG Line Drawing */
-            cs = TX_DGLDGRPH;
-            break;
-        case 'g':               /* Hack alert: DG Word Processing Graphics */
-            cs = TX_DGWPGRPH;
-            break;
-        case 'h':               /* Hack alert: HP Roman-8 */
-            cs = TX_HPR8;
-            break;
-        case 'i':               /* Hack alert: HP Math-8 */
-            cs = TX_HPMATH;
-            break;
-        case 'j':               /* Hack alert: HP Line-8 */
-            cs = TX_HPLINE;
-            break;
+                case 'V':
+                        cs = TX_8859_6 ;
+                        break;
+
+                case '%':
+                        if (bchar == '5') {
+                            cs = TX_DECMCS ;
+                        }
+                        break;
+                case '*':
+                        cs = TX_IBMC0GRPH;  /* QANSI/Linux */
+                        break;
+                case 'U':               /* QANSI/Linux */
+                        /* fall through */
+                case '?':               /* This is a MSK hack for Word Perfect */
+                        if (pG == &G[0]) {
+                            cs = TX_ASCII ;
+                        } else {
+                            cs = TX_CP437 ;
+                        }
+                        break;
+                case 'b':
+                        cs = TX_8859_15;    /* Latin 9 */
+                        break;
+
+                        /* Warning the following have been allocated officially */
+                        /* the values below are not official.                   */
+                case 'd':               /* Hack alert: DGI */
+                        cs = TX_DGI ;
+                        break;
+                case 'e':               /* Hack alert: DG PC Graphics */
+                        cs = TX_DGPCGRPH;
+                        break;
+                case 'f':               /* Hack alert: DG Line Drawing */
+                        cs = TX_DGLDGRPH;
+                        break;
+                case 'g':               /* Hack alert: DG Word Processing Graphics */
+                        cs = TX_DGWPGRPH;
+                        break;
+                case 'h':               /* Hack alert: HP Roman-8 */
+                        cs = TX_HPR8;
+                        break;
+                case 'i':               /* Hack alert: HP Math-8 */
+                        cs = TX_HPMATH;
+                        break;
+                case 'j':               /* Hack alert: HP Line-8 */
+                        cs = TX_HPLINE;
+                        break;
+                }
         }
     }
 
@@ -10385,6 +12643,107 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
         pG->ltoi = NULL ;
     }
     return cs ;
+}
+
+/* This function tries to turn a TX_ character set identifier back into the
+ * character(s) used to designate it. Its implemented for the benefit of the
+ * VT320 Cursor Information Report, so charactersets specific to non-VT
+ * emulations aren't fully represented here and may just produce a "?".
+ * Result will always be one or two characters.
+ *
+ * TODO: DECUPSS
+ */
+char*
+csetchar(enum charsetsize size, int cset) {
+    char result[2] = {'\0', '\0'};
+    switch (size) {
+    case cs94: {
+        switch (cset) {
+        case TX_BRITISH:
+            return "A";     /* Or @ */
+        case TX_ASCII:
+            return "B";
+        case TX_FINNISH:
+            return "5";
+        case TX_NORWEGIAN:
+            return "`";
+        case TX_SWEDISH:
+            return "7";
+        case TX_GERMAN:
+            return "K";
+        case TX_CN_FRENCH:
+            return "9";
+        case TX_FRENCH:
+            return "R";
+        case TX_ITALIAN:
+            return "Y";
+        case TX_SPANISH:
+            return "Z";
+        case TX_DECSPEC:
+            return "0";
+        case TX_DECTECH:
+            return ">";
+        case TX_DUTCH:
+            return "4";
+        case TX_DECMCS:
+            if (!ISVT320(tt_type_mode)) {
+                return "<";
+            }
+            return "%5";
+        case TX_SWISS:
+            return "=";
+        case TX_PORTUGUESE:
+            return "%6";  /* or L */
+        case TX_HUNGARIAN:
+            return "i";
+        case TX_J201R:
+            return "J";
+        case TX_J201K:
+            return "I";
+        case TX_IBMC0GRPH:
+            return "*";
+        case TX_APL1:
+            return "e";
+        default:
+            break;
+        }
+
+        break;
+    }
+    case cs96: {
+        switch (cset) {
+        case TX_8859_1:
+            return "A";
+        case TX_8859_2:
+            return "B";
+        case TX_8859_3:
+            return "C";
+        case TX_8859_4:
+            return "D";
+        case TX_8859_7:
+            return "@";
+        case TX_8859_6:
+            return "G";
+        case TX_8859_8:
+            return "H";
+        case TX_8859_5:
+            return "L";
+        case TX_8859_9:
+            return "M";
+        case TX_DECMCS:
+            return "%5";
+        case TX_IBMC0GRPH:
+            return "*";
+        case TX_8859_15:
+            return "b";
+        default:
+            break;
+        }
+
+        break;
+        }
+    }
+    return "?";
 }
 
 void
@@ -11756,9 +14115,11 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             }
             return;
 
+#ifdef OS2MOUSE
         case K_CURSOR_URL:
             mouseurl(mode,vscrn[mode].cursor.y,vscrn[mode].cursor.x);
             break;
+#endif /* OS2MOUSE */
 
         case K_FOCUS_IN:
 #ifdef KUI
@@ -14858,10 +17219,14 @@ dodcs( void )
                         break;
                         }
                     case 's':           /* DECSLRM - Set Left and Right Margins */
-                        if ( send_c1 )
-                            sprintf(decrpss,"%c1$rs%c",_DCS,_ST8);
-                        else
-                            sprintf(decrpss,"%cP1$rs%c\\",ESC,ESC);
+						if (IS_DECLRMM_AVAILABLE(tt_type_mode)) {
+							char buf[200];
+                            _snprintf(buf, sizeof(buf), "%d;%ds",
+								vscrn_c_page_margin_left(VTERM),
+								vscrn_c_page_margin_right(VTERM));
+                            _snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+						}
                         break;
                     case '*':
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
@@ -14936,7 +17301,26 @@ dodcs( void )
                                 );
                             break;
                         } /* 'q' */
+                        case 't': {     /* DECSWBV */
+                            if (ISVT520(tt_type_mode) || ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                extern int beepvolume;
+                                int val = 8; /* high */
+                                char buf[10];
 
+                                if (tt_bell == XYB_NONE) {
+                                    val = 1;
+                                }
+#ifdef NT
+                                else if (tt_bell == XYB_AUD | XYB_MIDI) {
+                                    val = beepvolume == BEEP_VOLUME_LOW ? 4 : 8;
+                                }
+#endif
+                                _snprintf(buf, sizeof(buf), "%d t", val);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+                                /* off is 1, low is 4, high is 8 */
+                            }
+                        } /* 't' */
                         } /* achar */
                         break;
                     } /* SP */
@@ -14952,6 +17336,23 @@ dodcs( void )
                                          fmt, 1, buf);
                             }
                             break;
+#ifdef KUI
+                        case 'z':     /*  DECDLDA */
+                            if (ISVT520(tt_type_mode)) {
+                                char buf[20];
+                                /* TODO: I am *assuming* the VT525 still
+                                 * supports querying DECDLDA via DECRQSS even if
+                                 * it doesn't implement DECDLDA itself. So for
+                                 * VT525 we report 2 buffers as that terminal
+                                 * always supports two (which is why it doesn't
+                                 * implement DECDLDA). */
+                                _snprintf(buf, sizeof(buf), "%d,z",
+                                    ISVT525(tt_type_mode) ? 2 : decdlda);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 1, buf);
+                            }
+                            break;
+#endif /* KUI */
                         case '}': {    /*  DECATC  */
                             char buf[20];
 
@@ -15010,6 +17411,20 @@ dodcs( void )
                 } /* switch on character afer '$' */
 				break;
             } /* $ */
+            case '{':      /* DECDLD - Soft character set */
+#ifdef KUI
+                if (k < 8) pn[8] = 0;
+                if (k < 7) pn[7] = 0;
+                if (k < 6) pn[6] = 0;
+                if (k < 5) pn[5] = 0;
+                if (k < 4) pn[4] = 0;
+                if (k < 3) pn[3] = 0;
+                if (k < 2) pn[2] = 0;
+                if (k < 1) pn[1] = 0;
+                decdld(pn[1], pn[2], pn[3], pn[4], pn[5], pn[6], pn[7], pn[8],
+                   apcbuf+dcsnext, apclength - dcsnext);
+#endif /* KUI */
+                break;
             case '|': {    /* DECUDK */
                 int key = 0 ;
                 /* pn[1] - Clear keys: 0 All, 1 One */
@@ -15465,6 +17880,37 @@ dodcs( void )
         }
     }
 }
+
+void
+process_canceled_decdld() {
+    /* The VT220 and up will process a DECDLD right up to the CAN or SUB. To
+     * the user, it is as though the CAN/SUB is treated as an ST (though all
+     * but the VT220-420 will also display a reverse question mark for SUB).
+     * This likely isn't *intentional* behaviour, but rather just a case of
+     * these terminals not being able to spend memory on guarding against a
+     * partial font download (would require downloading to a temporary space so
+     * as to not overwrite the existing font until the new one is received
+     * fully). But the why doesn't matter now - it only matters how these
+     * things actually behave. So figure out if we're dealing with a DECDLD and
+     * if we are, process what we've got as the real terminals do. */
+    if (ISVT220(tt_type) && !debses) {
+        int i;
+        for (i = 0; i < apclength; i++) {
+            /* Scan through the buffer looking for zero or more
+             * parameters followed by a '{'. Any other characters would
+             * not be a valid DECDLD */
+            char c = apcbuf[i];
+            if (isdigit(c)) continue; /* parameter */
+            if (c == ';') continue;   /* parameter separator */
+            if (c == '{') {           /* DECDLD */
+                dodcs();
+            }
+            break;
+        }
+
+    }
+}
+
 #endif /* CK_APC */
 
 /* ------------------------------------------------------------------ */
@@ -15897,6 +18343,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             /* the escape sequence. However, the only noticeable difference on   */
             /* the VT320 is that a backwards question mark is printed whenever a */
             /* SUB is received.                                                  */
+
+            if (dcsrecv) {
+                process_canceled_decdld();
+            }
             escstate = ES_NORMAL;            /* Go back to normal. */
 #ifdef CK_APC
             apclength = 0;
@@ -16034,7 +18484,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                 vtescape();                               /* Go act on it. */
             }
         case 'P':                       /* Device Control String (DCS) Introducer */
-            if ( !xprint ) {
+            if ( !xprint) {
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
 #ifdef CK_APC
                 dcsrecv = TRUE ;        /* Set DCS-Active flag */
@@ -16049,10 +18499,16 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             break;
         case 'Q':                       /* Private Use One (PU1) Introducer 97801-5xx */
-            if ( !xprint && !ISANSI(tt_type_mode) ) {
+            if ( !xprint && !ISANSI(tt_type_mode) &&
+                    (!ISVT220(tt_type_mode) || ISK95(tt_type_mode)) ) {
                 /* 
                  * SCOANSI used ESC Q to prefix keyboard assignments
-                 * so do not enter the string state
+                 * so do not enter the string state.
+                 *
+                 * And VT220/420/520 don't do anything with PU1 either - they
+                 * just write the string to the screen. Probably this applies
+                 * to the VT10x too, but I don't have one of those to test
+                 * against to know for sure.
                  */
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
 #ifdef CK_APC
@@ -16069,7 +18525,11 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             break;
         case 'R':                       /* Private Use Two (PU2) Introducer 97801-5xx */
-            if ( !xprint ) {
+            if ( !xprint && (!ISVT220(tt_type_mode) || ISK95(tt_type_mode))) {
+                /* VT220/420/520 don't do anything with PU2 - they just write
+                 * the string to the screen. Probably this applies
+                 * to the VT10x too, but I don't have one of those to test
+                 * against to know for sure. */
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
 #ifdef CK_APC
                 pu2recv = TRUE ;        /* Set PU2-Active flag */
@@ -16350,9 +18810,16 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                 oscterm = 0;
             }
 #endif /* CK_APC */
+        } else if (ch == '@' && dcsrecv &&
+            (tt_type == TT_VT220 || tt_type == TT_VT220PC) ) {
+            /* VT220 ignores a PAD character in the DCS string - at least for
+             * DECDLD */
+            escstate = ES_STRING;
         } else {
 #ifdef CK_APC
             if ( dcsrecv ) {
+                process_canceled_decdld();
+
                 dcsrecv = FALSE ;
                 apcbuf[0] = NUL ;
                 apclength = 0 ;
@@ -16392,20 +18859,7 @@ scrninit() {
     else
       SetCols(VTERM) ;
 
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0)
-   {
-       tn_snaws();
-#ifdef RLOGCODE
-       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-       ssh_snaws();
-#endif /* SSHBUILTIN */
-   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+    naws();
 
     setborder();
     VscrnIsDirty(VTERM);
@@ -16540,6 +18994,7 @@ wrtch(unsigned short ch) {
         }
         else    /* We are in character attribute mode */
         {
+            int rmargin = cursor_right_margin(vmode);
             cell.c = ch;
             cell.video_attr = attribute;
 
@@ -16560,7 +19015,7 @@ wrtch(unsigned short ch) {
                     if ( !vta.unerasable )  /* MSVC 5.0 bug */
                         break;
                     if ( ++wherex[vmode] > width ) {
-                        if ( ++wherey[vmode] >= vscrn_c_page_margin_bot(VTERM) ) {
+                        if ( ++wherey[vmode] >= vscrn_c_page_margin_bot(vmode) ) {
                             wherex[vmode]-- ;
                             wherey[vmode]-- ;
                             return ;    /* Can't write this character */
@@ -16574,7 +19029,7 @@ wrtch(unsigned short ch) {
 
             if (insertmode) {
                 VscrnScrollRt(vmode, wherey[vmode] - 1,
-                               wherex[vmode] - 1, wherey[VTERM] - 1,
+                               wherex[vmode] - 1, wherey[vmode] - 1,
                                VscrnGetWidth(vmode) - 1, 1, cell);
                 /* VscrnScrollRt() doesn't apply the current attribute */
                 VscrnWrtCell(vmode, cell, attrib,
@@ -16588,20 +19043,20 @@ wrtch(unsigned short ch) {
 
             literal_ch = FALSE;
             /* don't wrap if autowrap is off */
-            if ( tt_wrap || wherex[vmode] < VscrnGetWidth(vmode) ) {
-                if (++wherex[vmode] > VscrnGetWidth(vmode) && decsasd == SASD_TERMINAL) {
+            if (tt_wrap || wherex[vmode] < rmargin ) {
+                if (++wherex[vmode] > rmargin && decsasd == SASD_TERMINAL) {
                     if ( IS97801(tt_type_mode) ) {
                         if ( !sni_pagemode ) {
                             wherex[vmode] = 1;
                             wrtch((char) LF);
                         }
                         else {  /* Page Mode */
-                            lgotoxy(VTERM,1,vscrn_c_page_margin_top(VTERM));
+                            lgotoxy(VTERM,1,vscrn_c_page_margin_top(vmode));
                         }
 
                     }
                     else if ( autoscroll && !protect || wherey[vmode] < vscrn_c_page_margin_bot(VTERM) ) {
-                        wherex[vmode] = 1;
+                        wherex[vmode] = cursor_left_margin(vmode);
                         wrtch((char) LF);
                     }
                 }
@@ -16627,8 +19082,22 @@ wrtch(unsigned short ch) {
                         else /* Page Mode */
                             wherex[VTERM] = 1;
                     } else if ( autoscroll && !protect ) {
-                        VscrnScroll(vmode,UPWARD, vscrn_c_page_margin_top(VTERM) - 1, vscrn_c_page_margin_bot(VTERM) - 1, 1,
-                                     (vscrn_c_page_margin_top(VTERM) == 1), SP, FALSE ) ;
+                        int x = wherex[VTERM];
+                        int lmargin = vscrn_c_page_margin_left(VTERM);
+                        int rmargin = vscrn_c_page_margin_right(VTERM);
+                        if (lmargin <= x && x <= rmargin) {
+                            VscrnScrollPage(
+                                vmode,
+                                UPWARD,
+                                vscrn_c_page_margin_top(VTERM) - 1,
+                                vscrn_c_page_margin_bot(VTERM) - 1,
+                                vscrn_c_page_margin_left(VTERM) - 1,
+                                vscrn_c_page_margin_right(VTERM) - 1,
+                                1,
+                                vscrn_c_page_margin_top(VTERM) == 1,
+                                SP,
+                                vscrn_current_page_number(vmode, FALSE) ) ;
+                        }
                     } else if ( wherex[vmode] > VscrnGetWidth(vmode) )
                         wherex[vmode] = VscrnGetWidth(vmode);
                 } else {
@@ -16648,9 +19117,9 @@ wrtch(unsigned short ch) {
         case CK_CR:
             if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) &&
                  vmode == VTERM )
-                wherex[vmode] = vscrn_c_page_margin_left(vmode);
+                wherex[vmode] = cursor_left_margin(vmode);
             else
-                wherex[vmode] = 1;
+                wherex[vmode] = cursor_left_margin(vmode);
             if ( !(ISANSI(tt_type_mode) || ISHFT(tt_type_mode)) )
                 wrapit = FALSE;
             break;
@@ -16675,7 +19144,7 @@ wrtch(unsigned short ch) {
                 }
             }
             else {
-                if (wherex[vmode] > 1)
+                if (wherex[vmode] > cursor_pos_left_margin(vmode, wherey[vmode], wherex[vmode]))
                     wherex[vmode]--;
             }
             if ( !(ISANSI(tt_type_mode) || ISHFT(tt_type_mode)) )
@@ -16821,6 +19290,15 @@ void
 setmargins(int topmargin, int bottommargin) {
  	vscrn_setc_page_margin_top(VTERM,topmargin);
  	vscrn_setc_page_margin_bot(VTERM,bottommargin);
+}
+
+/*---------------------------------------------------------------------------*/
+/* setmargins                                                                */
+/*---------------------------------------------------------------------------*/
+void
+setlrmargins(int leftmargin, int rightmargin) {
+ 	vscrn_setc_page_margin_left(VTERM,leftmargin);
+ 	vscrn_setc_page_margin_right(VTERM,rightmargin);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -17206,37 +19684,13 @@ settermstatus( int y )
             tt_szchng[VTERM] = 2 ;
             tt_rows[VTERM]--;
             VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                tn_snaws();
-#ifdef RLOGCODE
-                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                ssh_snaws();
-#endif /* SSHBUILTIN */
-            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+            naws();
         }
         else {
             tt_szchng[VTERM] = 1 ;
             tt_rows[VTERM]++;
             VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                tn_snaws();
-#ifdef RLOGCODE
-                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                ssh_snaws();
-#endif /* SSHBUILTIN */
-            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+            naws();
         }
     }
 }
@@ -17788,21 +20242,75 @@ set_term_height(int rows) {
         tt_szchng[VTERM] = 1 ;
         tt_rows[VTERM] = rows ;
         VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-        if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-            tn_snaws();
-#ifdef RLOGCODE
-            rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-            ssh_snaws();
-#endif /* SSHBUILTIN */
-        }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+        naws();
     }
 }
+
+
+/*---------------------------------------------------------------------------*/
+/* decscpp                                                                   */
+/*---------------------------------------------------------------------------*/
+/* Sets the terminal width in columns without clearing the screen  */
+void
+decscpp(int columns) {
+    /* - VTStar, DECterm and K95 emulations allow any number of columns to be
+     *   set.
+     * - The VT520 and up treat any value greater than 80 as 132, and any value
+     *   less than 80 as 80.
+     * - Xterm ignores any value that isn't 80 or 132.
+     */
+    if (columns > 80) {
+        switch(tt_type_mode) {
+        case TT_XTERM:
+            if (columns != 132) return;
+            break;
+        case TT_VTSTAR:
+        case TT_DECTERM:
+        case TT_K95:
+            break; /* Any width is OK */
+        default:
+            columns = 132;
+            break;
+        }
+    } else if (columns < 80) {
+        switch(tt_type_mode) {
+        case TT_XTERM:
+            return;
+        case TT_VTSTAR:
+        case TT_DECTERM:
+        case TT_K95:
+            break; /* Any width is OK */
+        default:
+            columns = 80;
+            break;
+        }
+    }
+
+    /* DECSCPP should not clear the screen, regardless of the DECNCSM setting.
+     * VscrnInit is the thing that actually does the resizing and clearing, but
+     * its called by someone else possibly asynchronously (KClient in GUI
+     * builds), and calling it here directly doesn't prevent it from being
+     * called again later. So we need a way to signal to VscrnInit that we want
+     * the screen contents preserved. This flag is ugly, but it does the job.
+     * VscrnInit will reset the flag back to False once its done its job. */
+    decscpp_resize = TRUE;
+
+    if (columns < tt_cols[VTERM]) {
+        /* DECSCPP should also erase the part of the screen that is being
+         * hidden */
+        clrrect_escape(VTERM, 1, columns+1,
+            VscrnGetHeight(VTERM), VscrnGetWidth(VTERM), SP);
+    }
+
+    if (wherex[VTERM] > columns) {
+        lgotoxy(VTERM, columns, wherey[VTERM]);
+    }
+
+    tt_cols[VTERM] = columns;
+    VscrnSetWidth( VTERM, columns);
+    naws();
+}
+
 
 /* Gets the VT525 Alternate Colour index to use when the terminal is in
  * Alternate Color mode. */
@@ -18138,6 +20646,12 @@ vtcsi(void)
     int             i;
     char            tempstr[20];
     unsigned short  pecount = 0;  /* Number of pe */
+    int             vmode = VTERM;
+    /* Currently everything here assumes terminal emulation only ever happens on
+     * VTERM and, selectively, VSTATUS. Ideally that restriction would be lifted
+     * someday in which case a vmode parameter will have to be introduced. Until
+     * then, the hardcoded VTERMs can be progressively replaced with the above
+     * vmode variable. */
 
     if ( ISH19(tt_type_mode) ) {
         /* Hold Screen Mode On */
@@ -18149,7 +20663,7 @@ vtcsi(void)
         achar = (escnext<=esclast)?escbuffer[escnext++]:0;
      LB2000:
         switch (achar) {        /* Second level */
-        case 'A':               /* Cursor up one line */
+        case 'A':               /* CUU - Cursor up one line */
             if ( IS97801(tt_type_mode) ) {
                 /* ignored if outside scroll region */
                 if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
@@ -18160,7 +20674,7 @@ vtcsi(void)
             if ( !ISANSI(tt_type_mode) || ISLINUX(tt_type_mode))
                 wrapit = FALSE;
             break;
-        case 'B':               /* Cursor down one line */
+        case 'B':               /* CUD - Cursor down one line */
             if ( IS97801(tt_type_mode) ) {
                 /* ignored if outside scroll region */
                 if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
@@ -18171,10 +20685,10 @@ vtcsi(void)
             if ( !ISANSI(tt_type_mode) || ISLINUX(tt_type_mode) )
                 wrapit = FALSE;
             break;
-        case 'C':               /* Cursor forward, stay on same line */
+        case 'C':               /* CUF - Cursor forward, stay on same line */
             cursorright(0);
             break;
-        case 'D':               /* Cursor back, stay on same line */
+        case 'D':               /* CUB - Cursor back, stay on same line */
             cursorleft(0);
             break;
         case 'E':
@@ -18193,8 +20707,8 @@ vtcsi(void)
                 break;
             }
             else {
-                /* Cursor Next Line */
-                cursornextline();
+                /* CNL - Cursor Next Line */
+                cursornextline(FALSE, 1);
             }
             break;
         case 'F':
@@ -18205,7 +20719,7 @@ vtcsi(void)
             }
             else {
                 /* Cursor Previous Line */
-                cursorprevline();
+                cursorprevline(1);
             }
             break;
         case 'J': /* Erase from cursor to end of scrn */
@@ -18265,10 +20779,10 @@ vtcsi(void)
                 break;
             }
             /* (no break) Cursor Home */
-        case 'f':
+        case 'f':  /* HVP */
             if ( IS97801(tt_type_mode) && decsasd == SASD_STATUS )
                 setdecsasd(SASD_TERMINAL);
-            lgotoxy(VTERM, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
+            home_cursor(vmode);
             break;
         case 'g':
             if ( !ISSCO(tt_type_mode) ) {
@@ -18334,11 +20848,24 @@ vtcsi(void)
         case 's': 
             if ( ISSUN(tt_type_mode) ) {
                 doreset(1);
-            } else 
+            } else if (declrmm &&
+                        (decsasd == SASD_TERMINAL || ISXTERM(tt_type_mode)) &&
+                        IS_DECLRMM_AVAILABLE(tt_type_mode)) {
+                /* DECSLRM - Set Left/Right Margins (reset) -------------------
+                 * Sets Left/Right margins only if Left/Right Margin Mode is
+                 * enabled. The VT520 and VT420 ignore DECSLRM if the cursor is
+                 * currently on the status line. This behaviour is not described
+                 * by DEC STD-070, and XTERM does not implement it.
+                 */
+				setlrmargins(1, VscrnGetWidth(VTERM));
+                home_cursor(vmode);
+			} else
             /* ANSI.SYS save cursor position */
             if ( ISANSI(tt_type_mode) ||
-                IS97801(tt_type_mode))
-                savecurpos(VTERM,0);
+                 ISLINUX(tt_type_mode) ||
+                 ISXTERM(tt_type_mode) ||
+                 (ISK95(tt_type_mode) && !declrmm))
+                savecurpos(VTERM,0); /* SCOSC */
             break;
         case 'u': /* ANSI.SYS restore cursor position */
             if ( ISANSI(tt_type_mode) ||
@@ -18376,19 +20903,7 @@ vtcsi(void)
                 setdecssdt( SSDT_BLANK );
                 break;
             case '|':   /* DECSCPP */
-                tt_cols[VTERM] = 80;
-                VscrnSetWidth( VTERM, 80);
-#ifdef TCPSOCKET
-                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                    tn_snaws();
-#ifdef RLOGCODE
-                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                }
-#endif /* TCPSOCKET */
+                decscpp(80);
                 break;
             case 'u':    /* DECRQTSR - default is ignored */
                 break;
@@ -18567,20 +21082,7 @@ vtcsi(void)
                     break;
                 case '|':
                     /* DECSCPP - Set Columns Per Page */
-                    if (pn[1] < 80) pn[1] = 80;
-                    tt_cols[VTERM] = pn[1];
-                    VscrnSetWidth( VTERM, pn[1]);
-#ifdef TCPSOCKET
-                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                        tn_snaws();
-#ifdef RLOGCODE
-                        rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                        ssh_snaws();
-#endif /* SSHBUILTIN */
-                    }
-#endif /* TCPSOCKET */
+                    decscpp(k < 1 ? 80 : pn[1]);
                     break;
                 case 'p': {     /* DECRQM (from host) */
                     char buf[16] ;
@@ -18624,7 +21126,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_X10) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 10:        /* DECEDM - Block mode off */
@@ -18633,16 +21135,16 @@ vtcsi(void)
                                 /* Default to permanently reset in case not KUI
                                  * or NOTOOLBAR */
                                 pn[2] = 4;
- #ifdef KUI
- #ifndef NOTOOLBAR
+#ifdef KUI
+#ifndef NOTOOLBAR
                                 pn[2] = KuiGetProperty(KUI_GUI_TOOLBAR_VIS, 0L) ? 1 : 2;
- #endif
- #endif
+#endif
+#endif
                             }
                             break;
-						case 12: /* AT&T 610/xterm - cursor blinking */
-							pn[2] = tt_cursor_blink == 1 ? 1 : 2;
-							break;
+                        case 12: /* AT&T 610/xterm - cursor blinking */
+                            pn[2] = tt_cursor_blink == 1 ? 1 : 2;
+                            break;
                         case 18: /* DECPFF */
                             pn[2] = xprintff ? 1 : 2 ;
                             break;
@@ -18655,10 +21157,10 @@ vtcsi(void)
                         case 42: /* DECNRCM */
                             pn[2] = decnrcm ? 1 : 2 ;
                             break;
-						case 64: /* DECPCCM */
+                        case 64: /* DECPCCM */
                             /* Page cursor coupling */
                             if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
-							    pn[2] = vscrn[VTERM].page_cursor_coupling ? 1 : 2;
+                                pn[2] = vscrn[VTERM].page_cursor_coupling ? 1 : 2;
                             } else {
                                 pn[2] = 3; /* permanently set */
                             }
@@ -18671,6 +21173,16 @@ vtcsi(void)
                             break;
                         case 68: /* DECKBUM */
                             pn[2] = 3 ; /* permanently set */
+                            break;
+                        case 69: /* DECLRMM aka DECVSSM */
+                            if (IS_DECLRMM_AVAILABLE(tt_type_mode)) {
+                                pn[2] = declrmm ? 1 : 2;
+                            }
+                            break;
+                        case 95:
+                            if (ISVT520(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                pn[2] = decncsm ? 1 : 2;
+                            }
                             break;
                         case 114: /* DECATCUM */
                             pn[2] = decatcum ? 1 : 2;
@@ -18694,7 +21206,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_X11) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1002:
@@ -18706,7 +21218,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_BTNEVENT) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1003:
@@ -18718,7 +21230,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_ANYEVENT) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1004:
@@ -18737,7 +21249,7 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_SGR) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
                         case 1011:
@@ -18752,15 +21264,15 @@ vtcsi(void)
                                 pn[2] = MOUSE_REPORTING_TEST_FLAG(
                                     mouse_reporting_mode,
                                     MOUSEREPORTING_URXVT) ? 1 : 2;
-                            }
+                                }
 #endif
                             break;
-						case 1034:  /* xterm - Interpret "meta" key */
-							pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
-							break;
-						case 1036:  /* xterm - Send esc when Meta modifies a key */
-							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
-							break;
+                        case 1034:  /* xterm - Interpret "meta" key */
+                            pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
+                            break;
+                        case 1036:  /* xterm - Send esc when Meta modifies a key */
+                            pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
+                            break;
                         case 1042:  /* xterm - urgency window hint on bell */
 #ifdef KUI
                             pn[2] = tt_bell_flash ? 1 : 2;
@@ -18870,137 +21382,11 @@ vtcsi(void)
                 case 'r':       /* DECCARA - Change Attr in Rect Area */
                     if ( ISVT420(tt_type_mode) )
                     {
-                        int w, h, x, y, z;
-                        /*
-                         * pn[1] - top-line border      default=1
-                         * pn[2] - left-col border      default=1
-                         * pn[3] - bottom-line border   default=last line
-                         * pn[4] - right col border     default=last column
-                         * pn[5] -> pn[k] attributes to change - default=0
-                         *
-                         *  0 - attributes off
-                         *  1 - bold
-                         *  4 - underline
-                         *  5 - blink
-                         *  7 - negative image
-                         * 22 - no bold
-                         * 24 - no underline
-                         * 25 - no blink
-                         * 27 - positive image
-                         *
-                         * decsace == FALSE, stream else rectangle
-                         */
-                        if ( k < 1 ) pn[1] = 1;
-                        if ( k < 2 ) pn[2] = 1;
-                        if ( k < 3 ) pn[3] = VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0);
-                        if ( k < 4 ) pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 5 ) {
-                            pn[5] = 0;
-                            k = 5;
-                        }
-
-                        if ( pn[3] < pn[1] || pn[4] < pn[2] )
-                            break;
-
-                        w = pn[4] - pn[2] + 1;
-                        h = pn[3] - pn[1] + 1;
-
-                        if ( decsace ) {        /* rectangle */
-                            for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
-                                for ( x=0; x<w; x++ ) {
-                                    for ( z=5; z<=k; z++ ) {
-                                        USHORT a = line->vt_char_attrs[pn[2]+x-1];
-                                        if (a == VT_CHAR_ATTR_ERASED) {
-                                            /* In rectangle mode, unoccuped (erased)
-                                             * character positions are changed to
-                                             * blanks (become unerased) */
-                                            a = VT_CHAR_ATTR_NORMAL;
-                                        }
-                                        switch ( pn[z] ) {
-                                        case 0:
-                                            a = VT_CHAR_ATTR_NORMAL;
-                                            break;
-                                        case 1:
-                                            a |= VT_CHAR_ATTR_BOLD;
-                                            break;
-                                        case 4:
-                                            a |= VT_CHAR_ATTR_UNDERLINE;
-                                            break;
-                                        case 5:
-                                            a |= VT_CHAR_ATTR_BLINK;
-                                            break;
-                                        case 7:
-                                            a |= VT_CHAR_ATTR_REVERSE;
-                                            break;
-                                        case 22:
-                                            a &= ~VT_CHAR_ATTR_BOLD;
-                                            break;
-                                        case 24:
-                                            a &= ~VT_CHAR_ATTR_UNDERLINE;
-                                            break;
-                                        case 25:
-                                            a &= ~VT_CHAR_ATTR_BLINK;
-                                            break;
-                                        case 27:
-                                            a &= ~VT_CHAR_ATTR_REVERSE;
-                                            break;
-                                        }
-                                        line->vt_char_attrs[pn[2]+x-1] = a;
-                                    }
-                                }
-                            }
-                        } else {                /* stream */
-                            for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
-                                for ( x = (y==0 ? pn[2] - 1 : 0);
-                                      x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
-                                      x++ ) {
-                                    if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
-                                        /* In stream mode, DECCARA doesn't affect
-                                         * unoccupied (erased) character positions */
-                                        continue;
-                                    }
-                                    for ( z=5; z<=k; z++ ) {
-                                        USHORT a = line->vt_char_attrs[x];
-                                        switch ( pn[z] ) {
-                                        case 0:
-                                            a = VT_CHAR_ATTR_NORMAL;
-                                            break;
-                                        case 1:
-                                            a |= VT_CHAR_ATTR_BOLD;
-                                            break;
-                                        case 4:
-                                            a |= VT_CHAR_ATTR_UNDERLINE;
-                                            break;
-                                        case 5:
-                                            a |= VT_CHAR_ATTR_BLINK;
-                                            break;
-                                        case 7:
-                                            a |= VT_CHAR_ATTR_REVERSE;
-                                            break;
-                                        case 22:
-                                            a &= ~VT_CHAR_ATTR_BOLD;
-                                            break;
-                                        case 24:
-                                            a &= ~VT_CHAR_ATTR_UNDERLINE;
-                                            break;
-                                        case 25:
-                                            a &= ~VT_CHAR_ATTR_BLINK;
-                                            break;
-                                        case 27:
-                                            a &= ~VT_CHAR_ATTR_REVERSE;
-                                            break;
-                                        }
-                                        line->vt_char_attrs[x] = a;
-                                    }
-                                }
-                            }
-                        }
-                        if (cursor_on_visible_page(VTERM)) {
-                            VscrnIsDirty(VTERM);
-                        }
+                        /* Because of malformed SGR-38/48 sequences, this needs
+                         * to be able to advance j as well as access to any
+                         * parameter elements for this CSI sequence */
+                        change_attributes_in_rectangle(vmode, pn, k, &j, pe,
+                            pn_pe_start, pn_pe_count);
                     }
                     break;
                 case 't':       /* DECRARA - Reverse Attr in Rect Area */
@@ -19031,6 +21417,20 @@ vtcsi(void)
                         if ( k < 5 ) {
                             pn[5] = 0;
                             k = 5;
+                        }
+
+                        if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
+                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
+                                pn[3] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
+                                pn[4] = vscrn_c_page_margin_right(VTERM);
                         }
 
                         if ( pn[3] < pn[1] || pn[4] < pn[2] )
@@ -19082,8 +21482,10 @@ vtcsi(void)
                         } else {                /* stream */
                             for ( y=0; y<h; y++ ) {
                                 videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
-                                for ( x = (y==0 ? pn[2] - 1 : 0);
-                                      x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
+                                int rlimit = relcursor ? vscrn_c_page_margin_right(VTERM) : VscrnGetWidth(VTERM);
+                                int llimit = relcursor ? vscrn_c_page_margin_left(VTERM)-1 : 0;
+                                for ( x = (y==0 ? pn[2] - 1 : llimit);
+                                      x < ((y==h-1) ? pn[4] : rlimit);
                                       x++ ) {
                                     if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
                                         /* In stream mode, DECRARA doesn't affect
@@ -19118,7 +21520,7 @@ vtcsi(void)
                                         }
                                         line->vt_char_attrs[x] = a;
                                     }
-                                }
+                                      }
                             }
                         }
                         if (cursor_on_visible_page(VTERM)) {
@@ -19141,7 +21543,7 @@ vtcsi(void)
                                     (ISVT525(tt_type_mode)
                                      || ISK95(tt_type_mode)) ) {
                                 color_table_report(pn[2]);
-                            }
+                                     }
                             break;
                         }
                     }
@@ -19150,10 +21552,10 @@ vtcsi(void)
                     if ( ISVT420( tt_type_mode) )
                     {
                         USHORT * data = NULL;
-						cell_video_attr_t *color_data = NULL;
-						USHORT * attr_data = NULL;
+                        cell_video_attr_t *color_data = NULL;
+                        USHORT * attr_data = NULL;
                         int w, h, x, y;
-						int src_page, dest_page, max_page;
+                        int src_page, dest_page, max_page;
 
                         /* Area to be copied:
                          * pn[1] - top-line border      default=1
@@ -19187,34 +21589,34 @@ vtcsi(void)
                         if ( pn[3] < pn[1] || pn[4] < pn[2] )
                             break;
 
-						src_page = pn[5] - 1;
-						dest_page = pn[8] - 1;
-						max_page = term_max_page(VTERM);
-						if (src_page < 0) src_page = 0;
-						if (src_page > max_page) src_page = max_page;
-						if (dest_page < 0) dest_page = 0;
-						if (dest_page > max_page) dest_page = max_page;
+                        src_page = pn[5] - 1;
+                        dest_page = pn[8] - 1;
+                        max_page = term_max_page(VTERM);
+                        if (src_page < 0) src_page = 0;
+                        if (src_page > max_page) src_page = max_page;
+                        if (dest_page < 0) dest_page = 0;
+                        if (dest_page > max_page) dest_page = max_page;
 
                         if (on_alternate_buffer(VTERM)) {
                             src_page = dest_page = ALTERNATE_BUFFER_PAGE(VTERM);
                         }
 
-						if (relcursor) { /* DECOM enabled? */
+                        if (relcursor) { /* DECOM enabled? */
                             int src_margintop, src_marginleft, dest_margintop, dest_marginleft;
                             src_margintop = vscrn_page_margin_top(VTERM, src_page);
                             src_marginleft = vscrn_page_margin_left(VTERM, src_page);
                             dest_margintop = vscrn_page_margin_top(VTERM, dest_page);
                             dest_marginleft = vscrn_page_margin_left(VTERM, dest_page);
 
-							pn[1] += src_margintop - 1;  /* Top border */
-							pn[2] += src_marginleft - 1; /* Left border */
-							pn[3] += src_margintop - 1;  /* Bottom border */
-							pn[4] += src_marginleft - 1; /* Right border */
-							/* pn[5] - source page */
-							pn[6] += dest_margintop - 1;  /* Top border */
-							pn[7] += dest_marginleft - 1; /* left border */
+                            pn[1] += src_margintop - 1;  /* Top border */
+                            pn[2] += src_marginleft - 1; /* Left border */
+                            pn[3] += src_margintop - 1;  /* Bottom border */
+                            pn[4] += src_marginleft - 1; /* Right border */
+                            /* pn[5] - source page */
+                            pn[6] += dest_margintop - 1;  /* Top border */
+                            pn[7] += dest_marginleft - 1; /* left border */
                             /* pn[7] - dest page */
-						}
+                        }
 
                         w = pn[4] - pn[2] + 1;
                         h = pn[3] - pn[1] + 1;
@@ -19223,36 +21625,36 @@ vtcsi(void)
                         if ( !data )	/* sizeof(viocell.c) */
                             break;
 
-						color_data = malloc(sizeof(cell_video_attr_t) * w * h);
+                        color_data = malloc(sizeof(cell_video_attr_t) * w * h);
                         if ( !color_data ) { /* sizeof(viocell.video_attr) */
                             if ( data ) free(data);
                             break;
                         }
 
-						attr_data = malloc(sizeof(USHORT) * w * h);
+                        attr_data = malloc(sizeof(USHORT) * w * h);
                         if ( !attr_data ) {/* sizeof(videoline.vt_char_attrs) */
                             if ( data ) free(data);
                             if (color_data) free(color_data);
                             break;
                         }
 
-						/* Read data from source page */
+                        /* Read data from source page */
                         for ( y=0; y<h; y++ ) {
                             videoline * line = VscrnGetPageLineFromTop(VTERM, pn[1]+y-1, src_page);
                             for ( x=0; x<w; x++ ) {
                                 data[y*w + x] = line->cells[pn[2]+x-1].c;
-								color_data[y*w + x] = line->cells[pn[2]+x-1].video_attr;
-								attr_data[y*w + x] = line->vt_char_attrs[pn[2]+x-1];
+                                color_data[y*w + x] = line->cells[pn[2]+x-1].video_attr;
+                                attr_data[y*w + x] = line->vt_char_attrs[pn[2]+x-1];
                             }
                         }
 
-						/* Write out to destination page */
+                        /* Write out to destination page */
                         for ( y=0; y<h; y++ ) {
                             videoline * line = VscrnGetPageLineFromTop(VTERM, pn[6]+y-1, dest_page);
                             for ( x=0; x<w && (pn[7]+x <= VscrnGetWidth(VTERM)); x++ ) {
                                 line->cells[pn[7]+x-1].c = data[y*w + x];
-								line->cells[pn[7]+x-1].video_attr = color_data[y*w + x];
-								line->vt_char_attrs[pn[7]+x-1] = attr_data[y*w + x];
+                                line->cells[pn[7]+x-1].video_attr = color_data[y*w + x];
+                                line->vt_char_attrs[pn[7]+x-1] = attr_data[y*w + x];
                             }
                         }
                         free(data);
@@ -19261,6 +21663,15 @@ vtcsi(void)
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }
+                    }
+                    break;
+
+                case 'w':
+                    if (ISVT320(tt_type_mode)) {  /* DECRQPSR - Request Presentation State Report */
+                        if (k < 1 || pn[1] < 1 || pn[1] > 2)
+                            pn[1] = 0;
+
+                        presentation_state_report(pn[1]);
                     }
                     break;
                 case 'x':       /* DECFRA - Fill Rect Area */
@@ -19283,6 +21694,23 @@ vtcsi(void)
                             pn[2] = 1 ;
                         if ( k < 1 )
                             pn[1] = SP ;
+
+                        if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
+                            pn[2] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[3] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[4] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[5] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[4] > vscrn_c_page_margin_bot(VTERM))
+                                pn[4] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[5] > vscrn_c_page_margin_right(VTERM))
+                                pn[5] = vscrn_c_page_margin_right(VTERM);
+                        }
+
+                        if (pn[2] > pn[4]) break;
+                        if (pn[3] > pn[5]) break;
 
                         /*  GL---------------------------   GR & BMP -------- */
                         if (pn[1] >= 32 && (pn[1] <= 126 || pn[1] >= 160)
@@ -19329,6 +21757,24 @@ vtcsi(void)
                             pn[2] = 1 ;
                         if ( k < 1 || pn[1] < 1 )
                             pn[1] = 1 ;
+
+                        if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
+                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
+                                pn[3] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
+                                pn[4] = vscrn_c_page_margin_right(VTERM);
+                        }
+
+                        if (pn[1] > pn[3]) break;
+                        if (pn[2] > pn[4]) break;
+
                         clrrect_escape( VTERM, pn[1], pn[2],
                                         pn[3], pn[4], NUL ) ;
                         if (cursor_on_visible_page(VTERM)) {
@@ -19353,6 +21799,24 @@ vtcsi(void)
                             pn[2] = 1 ;
                         if ( k < 1 || pn[1] < 1 )
                             pn[1] = 1 ;
+
+                        if (relcursor) {
+                            /* Add top and left margins to the vertical and
+                             * horizontal coordinates */
+                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
+                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
+                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
+                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+
+                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
+                                pn[3] = vscrn_c_page_margin_bot(VTERM);
+                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
+                                pn[4] = vscrn_c_page_margin_right(VTERM);
+                        }
+
+                        if (pn[1] > pn[3]) break;
+                        if (pn[2] > pn[4]) break;
+
                         selclrrect_escape( VTERM, pn[1], pn[2],
                                         pn[3], pn[4], SP ) ;
                         if (cursor_on_visible_page(VTERM)) {
@@ -19512,13 +21976,12 @@ vtcsi(void)
                 } /* '*' */
                 break;
             case '`':
-                /* Horizontal Position Absolute (HPA) */
-                /* moves active position to column pn[1] */
-                if ( decsasd == SASD_STATUS )
-                    lgotoxy( VSTATUS, pn[1], 1 );
-                else
-                    lgotoxy( VTERM, pn[1], wherey[VTERM] ) ;
-                break;
+                {
+                    /* Horizontal Position Absolute (HPA) */
+                    /* moves active position to column pn[1] */
+                    cursorhpa(pn[1]);
+                    break;
+                }
             case 'A':
                 /* ANSI - Set Border Color */
                 if ( ansiext ) {
@@ -19564,11 +22027,11 @@ vtcsi(void)
                 }
                 break;
             case 'a':
-                /* Horizontal Position Relative */
+                /* HPR - Horizontal Position Relative */
                 /* moves active position pn[1] characters */
-                /* to the right */
+                /* to the right. Only obeys margins if DECOM is set. */
                 do {
-                    cursorright(0);
+                    cursorrightex(0, relcursor);
                     pn[1] = pn[1] - 1;
                 } while (pn[1] > 0);
                 break;
@@ -19670,7 +22133,68 @@ vtcsi(void)
                 if ( zdsext && ISVT220(tt_type) ) {
                     /* Secondary Device Attributes Report Request */
                     if (pn[1] == 0) {
-                        sendescseq("[>24;0;0c");
+                        /* Switch on tt_type (users selected terminal type)
+                         * rather than tt_type_mode (host selected emulation via
+                         * DECTME, DECSCL, etc) as setting a VT to emulate
+                         * something else doesn't seem to change its secondary
+                         * DA response. */
+                        switch (tt_type) {
+                            case TT_VT220:
+                            case TT_VT220PC:
+                                sendescseq("[>1;0;0c");     /* VT220 */
+                                break;
+                            case TT_K95:
+                                /* The K95 terminal type isn't fully
+                                 * VT420-compatible yet, but it isn't far off
+                                 * and importantly it uses the same character
+                                 * cell size for soft-fonts. DEC didn't provide
+                                 * any way to identify character cell size
+                                 * directly so this is about the only thing the
+                                 * host can rely on. */
+                                sendescseq("[>41;0;0c");    /* VT420 */
+                                break;
+                            case TT_VT320:
+                            case TT_VT320PC:
+                            case TT_WY370:    /* Responds as a VT320 */
+                            default:
+                                sendescseq("[>24;0;0c");    /* VT320 */
+                                break;
+#ifdef COMMENT
+                            /* None of these emulations are implemented yet */
+                            case TT_VT22Z:
+                            case TT_VT22ZPC:
+                                /* This is what my VT220Z reports. The meaning
+                                 * of option 2 is currently unknown, but regular
+                                 * VT220s apparently don't report it so it is
+                                 * possibly significant for the VT220Z. */
+                                sendescseq("[>1;31;2c");
+                                break;
+                            case TT_DECTERM:
+                                sendescseq("[>28;0;0c");    /* DECterm */
+                                break;
+                            case TT_VTSTAR:
+                                sendescseq("[>66;0;0c");    /* Multia VTStar */
+                                break;
+                            case TT_VT420:
+                            case TT_VT420PC:
+                                /* TODO: Maybe TT_VT420PC should report option 1
+                                 *       (PC Keyboard)? */
+                                sendescseq("[>41;0;0c");    /* VT420 */
+                                break;
+                            case TT_VT510:
+                            case TT_VT510PC:
+                                sendescseq("[>61;0;0c");    /* VT510 */
+                                break;
+                            case TT_VT520:
+                            case TT_VT520PC:
+                                sendescseq("[>64;0;0c");    /* VT520 */
+                                break;
+                            case TT_VT525:
+                            case TT_VT525PC:
+                                sendescseq("[>65;0;0c");    /* VT520 */
+                                break;
+#endif
+                        }
                     }
                 }
                 else if ( ansiext && ISVT220(tt_type) ) {
@@ -19825,6 +22349,7 @@ vtcsi(void)
             case 'd':
                 /* VPA - Vertical Position Absolute */
                 /* moves active position to row pn[1] */
+                if (relcursor) pn[1] += vscrn_c_page_margin_top(VTERM) - 1;
                 if ( decsasd == SASD_TERMINAL )
                     lgotoxy( VTERM, wherex[VTERM], pn[1] ) ;
                 break;
@@ -19854,17 +22379,20 @@ vtcsi(void)
                 else {
                     /* CNL - Cursor next line */
                     /* moves active position pn[1] rows down */
-                    do {
-                        cursornextline();
-                        pn[1] = pn[1] - 1;
-                    } while (pn[1] > 0);
+                    if (pn[1] < 1) pn[1] = 1;
+
+                    if (pn[1] + wherey[VTERM] >= vscrn_c_page_margin_bot(VTERM))
+                        pn[1] = vscrn_c_page_margin_bot(VTERM) - wherey[VTERM];
+
+                    cursornextline(FALSE, pn[1]);
                 }
                 break;
             case 'e':
                 /* VPR - Vertical Position Relative */
-                /* moves active position pn[1] rows down */
+                /* moves active position pn[1] rows down.
+				 * Only obeys margins if DECOM is set */
                 do {
-                    cursordown(0);
+                    cursordownex(0,relcursor);
                     pn[1] = pn[1] - 1;
                 } while (pn[1] > 0);
                 break;
@@ -19912,10 +22440,13 @@ vtcsi(void)
                     /* CPL - Cursor Previous Line */
                     /* moves active position pn[1] rows up */
                     /* in the first column */
+                    if (pn[1] == 0) pn[1] = 1;
+                    cursorprevline(pn[1]);
+                    /*
                     do {
-                        cursorprevline();
+                        cursorprevline(pn[1]);
                         pn[1] = pn[1] - 1;
-                    } while (pn[1] > 0);
+                    } while (pn[1] > 0);*/
                 }
                 break;
             case 'G':
@@ -19953,9 +22484,7 @@ vtcsi(void)
                          ISANSI(tt_type_mode) ||
                          ISVT520(tt_type_mode) ||
                          ISXTERM(tt_type_mode)) {
-                        if ( pn[1] < 1 || pn[1] > VscrnGetWidth(VTERM) )
-                            break;
-                        lgotoxy(VTERM,pn[1],wherey[VTERM]);
+                        cursorhpa(pn[1]);
                     }
                 }
                 break;
@@ -19977,18 +22506,35 @@ vtcsi(void)
                 if (pn[1] == 0)
                     pn[1] = 1;
                 if (relcursor)
+                {
                     pn[1] += vscrn_c_page_margin_top(VTERM) - 1;
+                    if (pn[1] > vscrn_c_page_margin_bot(VTERM))
+                    {
+                        pn[1] = vscrn_c_page_margin_bot(VTERM);
+                    }
+                }
                 if (pn[1] > VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0))
                     pn[1] = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                 if (pn[2] == 0)
                     pn[2] = 1;
-                if (isdoublewidth(pn[1])) {
-                    if (pn[2] > VscrnGetWidth(VTERM)/2)
-                        pn[2] = VscrnGetWidth(VTERM)/2;
-                    }
-                    else if (pn[2] > VscrnGetWidth(VTERM))
-                        pn[2] = VscrnGetWidth(VTERM);
-                    wrapit = FALSE;
+				if (relcursor)
+					pn[2] += vscrn_c_page_margin_left(VTERM) - 1;
+
+				{
+					/* Ensure coordinates are to the left of screen right, or
+					 * if DECOM is set, the right margin */
+					int r = (relcursor ? vscrn_c_page_margin_right(VTERM)
+									   : VscrnGetWidth(VTERM));
+
+					/* if this line is double width, then its half length */
+                	if (isdoublewidth(pn[1])) {
+						r = r / 2;
+					}
+
+					if (pn[2] > r) pn[2] = r;
+				}
+
+                wrapit = FALSE;
 
                 /* SNI 97801 - If the cursor is addressed to the */
                 /* status line when SSDT_HOST_WRITABLE, we must  */
@@ -20027,23 +22573,9 @@ vtcsi(void)
                 }
                 else {
                     /* CHT - Cursor Horizontal Tab */
-                    if ( k < 1 )
+                    if ( k < 1 || pn[1] < 1)
                         pn[1] = 1;
-                    i = wherex[VTERM];
-                    while ( pn[1] ) {
-                        if (i < VscrnGetWidth(VTERM))
-                        {
-                            do {
-                                i++;
-                                cursorright(0);
-                            } while ((htab[i] != 'T') &&
-                                      (i <= VscrnGetWidth(VTERM)-1));
-                        }
-                        pn[1]--;
-                    }
-                    if (cursor_on_visible_page(VTERM)) {
-                        VscrnIsDirty(VTERM);
-                    }
+                    cursortab(pn[1]);
                 }
                 break;
             case 'g':
@@ -20120,19 +22652,8 @@ vtcsi(void)
                             killcursor(VTERM);
                             deccolm = TRUE;
                             Set132Cols(VTERM);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                tn_snaws();
-#ifdef RLOGCODE
-                                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                ssh_snaws();
-#endif /* SSHBUILTIN */
-                            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                            set_declrmm(FALSE);
+                            naws();
                             setborder();
                             newcursor(VTERM);
                             clrscreen(VTERM,SP);
@@ -20153,10 +22674,7 @@ vtcsi(void)
                             break;
                         case 6: /* DECOM - Relative origin */
                             relcursor = TRUE;
-                            if ( decsasd == SASD_STATUS )
-                                lgotoxy( VSTATUS, 1, 1 );
-                            else
-                                lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
+                            home_cursor(vmode);
                             break;
                         case 7: /* DECAWM - Auto Wrap mode */
                             tt_wrap = TRUE;
@@ -20166,10 +22684,11 @@ vtcsi(void)
                             tt_autorepeat = TRUE;
 #endif /* NT */
                             break;
-                        case 9: /* DECINLM - Interlace */
+                        case 9: /* DECINLM - Interlace. VT1xx only. */
                             /* XTERM - Send Mouse X & Y on button press */
 #ifdef OS2MOUSE
-                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
                                 /* The linux console terminal, as well as many
                                  * other terminal emulators, implement XTERM
                                  * mouse tracking */
@@ -20331,6 +22850,13 @@ vtcsi(void)
                             /* Keyboard Usage - Data Processing */
                             deckbum = 1;
                             break;
+						case 69: /* DECLRMM aka DECVSSM */
+                            if (ISVT420(tt_type_mode) || ISK95(tt_type_mode) ||
+                                ISXTERM(tt_type_mode))
+                            {
+                                set_declrmm(TRUE);
+                            }
+							break;
                         case 73: /* DECXRLM */
                             /* Transmit rate limiting */
                             break;
@@ -20340,19 +22866,7 @@ vtcsi(void)
                                 tt_szchng[VTERM] = 1 ;
                                 tt_cols[VTERM] = 161 ;
                                 VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                    tn_snaws();
-#ifdef RLOGCODE
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                                }
-#endif /* TCPSOCKET */
-#endif /* CK_NAWS */
+                                naws();
                             }
                             break;
                             case 83:    /* WY52 - 52 line mode */
@@ -20373,6 +22887,11 @@ vtcsi(void)
                                 /* current character background */
                                 /* color */
                                 ;
+                            break;
+                        case 95:       /* DECNCSM */
+                            if (ISVT520(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                decncsm = TRUE;
+                            }
                             break;
                         case 114:      /* DECATCUM */
                             decatcum = TRUE;
@@ -20622,19 +23141,8 @@ vtcsi(void)
                                 killcursor(VTERM);
                                 deccolm = TRUE;
                                 Set132Cols(VTERM);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                    tn_snaws();
-#ifdef RLOGCODE
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                                }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                set_declrmm(FALSE);
+                                naws();
                                 setborder();
                                 newcursor(VTERM);
                                 clrscreen(VTERM,SP);
@@ -20648,10 +23156,7 @@ vtcsi(void)
 
                             case 6: /* Relative origin */
                                 relcursor = TRUE;
-                                if ( decsasd == SASD_STATUS )
-                                    lgotoxy( VSTATUS, 1, 1 );
-                                else
-                                    lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
+                                home_cursor(vmode);
                                 break;
                             case 7: /* Auto Wrap mode */
                                 tt_wrap = TRUE;
@@ -20746,19 +23251,8 @@ vtcsi(void)
                                     killcursor(VTERM);
                                     deccolm = TRUE;
                                     Set132Cols(VTERM);
-#ifdef TCPSOCKET            
-#ifdef CK_NAWS              
-                                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                        tn_snaws();
-#ifdef RLOGCODE             
-                                        rlog_naws();
-#endif /* RLOGCODE */       
-#ifdef SSHBUILTIN           
-                                        ssh_snaws();
-#endif /* SSHBUILTIN */     
-                                    }
-#endif /* CK_NAWS */        
-#endif /* TCPSOCKET */      
+                                    set_declrmm(FALSE);
+                                    naws();
                                     setborder();
                                     newcursor(VTERM);
                                     clrscreen(VTERM,SP);
@@ -20788,8 +23282,11 @@ vtcsi(void)
                     break;
                 }
                 else if (ansiext && ISSCO(tt_type_mode)) {
-                    /* SCO - Clear and Home Cursor */
+                    /* CHC - SCO - Clear and Home Cursor */
                     clrscreen(VTERM,SP);
+					/* TODO: Apparently this should home the cursor obeying
+							 the scrolling region. See:
+						http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html */
                     lgotoxy(VTERM,1,1);
                     VscrnIsDirty(VTERM);
                 }
@@ -20813,26 +23310,15 @@ vtcsi(void)
                                 killcursor(VTERM);
                                 deccolm = FALSE;
                                 Set80Cols(VTERM);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                    tn_snaws();
-#ifdef RLOGCODE
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                   ssh_snaws();
-#endif /* SSHBUILTIN */
-                               }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
-                               setborder();
-                               newcursor(VTERM);
-                               clrscreen(VTERM,SP);
-                               lgotoxy(VTERM,1,1);       /* and home the cursor */
-                               ipadl25();
-                               ReleaseScreenMutex();
-                               break;
+                                set_declrmm(FALSE);
+                                naws();
+                                setborder();
+                                newcursor(VTERM);
+                                clrscreen(VTERM,SP);
+                                lgotoxy(VTERM,1,1);       /* and home the cursor */
+                                ipadl25();
+                                ReleaseScreenMutex();
+                                break;
                            case 4: /* DECSCLM - Jump scrolling */
                                JumpScroll() ;
                                break;
@@ -20859,10 +23345,11 @@ vtcsi(void)
                                tt_autorepeat = FALSE;
 #endif /* NT */
                                break;
-                           case 9: /* DECINLM - Interlace */
+                           case 9: /* DECINLM - Interlace. VT1xx only. */
                                /* XTERM - Don't Send Mouse X&Y on button press */
 #ifdef OS2MOUSE
-                               if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                               if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                 ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
                                    /* The linux console terminal, as well as many
                                     * other terminal emulators, implement XTERM
                                     * mouse tracking */
@@ -20993,6 +23480,13 @@ vtcsi(void)
                                /* Keyboard Usage - Typewriter mode */
                                deckbum = 0 ;
                                break;
+						   case 69: /* DECLRMM aka DECVSSM */
+                               if (ISVT420(tt_type_mode) || ISK95(tt_type_mode) ||
+                                   ISXTERM(tt_type_mode))
+                               {
+                                   set_declrmm(FALSE);
+                               }
+							   break;
                            case 73: /* DECXRLM */
                                /* Transmit rate limiting */
                                break;
@@ -21002,19 +23496,7 @@ vtcsi(void)
                                    tt_szchng[VTERM] = 1 ;
                                    tt_cols[VTERM] = 80 ;
                                    VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                       tn_snaws();
-#ifdef RLOGCODE
-                                       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                       ssh_snaws();
-#endif /* SSHBUILTIN */
-                                   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                   naws();
                                }
                                break;
                            case 83:        /* WY52 - 24 line mode */
@@ -21035,6 +23517,11 @@ vtcsi(void)
                                    /* color map background color   */
                                    ;
                                break;
+                           case 95:
+                                if (ISVT520(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                    decncsm = FALSE;
+                                }
+                                break;
                            case 114:      /* DECATCUM */
                                decatcum = FALSE;
                                break;
@@ -21284,19 +23771,8 @@ vtcsi(void)
                                    killcursor(VTERM);
                                    deccolm = FALSE;
                                    Set80Cols(VTERM);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                       tn_snaws();
-#ifdef RLOGCODE
-                                       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                       ssh_snaws();
-#endif /* SSHBUILTIN */
-                                   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                   set_declrmm(FALSE);
+                                   naws();
                                    setborder();
                                    newcursor(VTERM);
                                    clrscreen(VTERM,SP);
@@ -21408,19 +23884,8 @@ vtcsi(void)
                                    killcursor(VTERM);
                                    deccolm = FALSE;
                                    Set80Cols(VTERM);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
-                                       tn_snaws();
-#ifdef RLOGCODE
-                                       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                       ssh_snaws();
-#endif /* SSHBUILTIN */
-                                   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                                   set_declrmm(FALSE);
+                                   naws();
                                    setborder();
                                    newcursor(VTERM);
                                    clrscreen(VTERM,SP);
@@ -21822,19 +24287,7 @@ vtcsi(void)
                         tt_cols[VTERM] = pn[5];
                     VscrnInit( VTERM ) ;  /* Height set here */
                     VscrnSetDisplayHeight(VTERM, pn[1] != pn[4] ? pn[4] : 0);
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                    if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                        tn_snaws();
-#ifdef RLOGCODE
-                        rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                        ssh_snaws();
-#endif /* SSHBUILTIN */
-                    }
-#endif /* TCPSOCKET */
-#endif /* CK_NAWS */
+                    naws();
                     break;
                 } else if ( ISSUN(tt_type_mode) ) {
                     /* 
@@ -22680,109 +25133,15 @@ vtcsi(void)
                             }
                             break;
 						case 48:    /* 48 - Extended color - background */
-                        case 38: {  /* 38 - Extended Color */
+                        case 38:    /* 38 - Extended Color */
 									/* 38 - Enable underline option (for what terminal? linux console before 3.16 probably) */
-							int mode=0, index=0, r=0, g=0, b=0;
-							int fg = (pn[j] == 38);
-
-							debug(F111, "SGR 38/48", "SGR", pn[j]);
-
-                            if ( !sgrcolors )
-                                break;
-
-							if (pn_pe_start[j] == -1) {
-								int i, pn_rem = 0;
-								debug(F111, "SGR 38/48: Using semicolons", "pn_pe_start[j]", pn_pe_start[j]);
-
-								mode = pn[j+1];
-								pn_rem = k - j;   /* for (j = 1; j <= k; ++j) */
-
-								if (mode == 2 && pn_rem >= 3) {
-									j+=2; /* SGR 38/48 + mode */
-									r = pn[j]; j++;
-									g = pn[j]; j++;
-									b = pn[j];
-								} else if (mode == 5 && pn_rem >= 1) {
-									j+=2; /* mode */
-									index = pn[j];
-								}
-								debug(F111, "SGR 38/48: Using semicolons", "j", j);
-								debug(F111, "SGR 38/48: Using semicolons", "k", k);
-							} else {
-								int st = pn_pe_start[j];
-								int c = pn_pe_count[j];
-								debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_start[j]", st);
-								debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_count[j]", c);
-
-								if (c == 4 && pe[st] == 2) {
-									mode = pe[st];
-									r = pe[st+1];
-									g = pe[st+2];
-									b = pe[st+3];
-								} else if (c == 5 && pe[st] == 2) {
-									mode = pe[st];
-									/* colorspace = pe[st+1];  Not used */
-									r = pe[st+2];
-									g = pe[st+3];
-									b = pe[st+4];
-								} else if (c == 2 && pe[st] == 5) {
-									mode = pe[st];
-									index = pe[st+1];
-								} else {
-									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-count", c);
-									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-start", st);
-									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "mode", pe[st]);
-								}
-							}
-
-						debug(F111, "SGR 38/48:", "mode", mode);
-
-							if (mode == 5) {
-								int max_colors = current_palette_max_index();
-                                /* K95s color IDs for colors 1-15 are different
-								 * from those used by xterm due to its OS/2
-								 * origins.
-								 */
-                                index = color_index_to_vio(index);
-
-								debug(F111, "SGR 38/48:", "index", index);
-
-                                if (index <= max_colors) {
-									debug(F111, "SGR 38/48: set indexed color", "index", index);
-#ifdef CK_COLORS_16
-                                    /* For 16-color builds, map from the currently
-									 * set palette on to the aixterm-16 palette.
-                                     */
-                                    index = nearest_palette_color_palette(colorpalette, index);
-#endif /* CK_COLORS_16 */
-									if (fg) attribute = cell_video_attr_set_fg_color(attribute,index);
-									else	attribute = cell_video_attr_set_bg_color(attribute,index);
-                                }
-							}
-							/* Direct (24-bit) color value? */
-							else if (mode == 2) {
-								debug(F111, "SGR 38/48: set RGB color", "r", r);
-								debug(F111, "SGR 38/48: set RGB color", "g", g);
-								debug(F111, "SGR 38/48: set RGB color", "b", b);
-#ifdef CK_COLORS_24BIT
-								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									if (fg) attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
-									else    attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
-                            	} else
-#endif /* CK_COLORS_24BIT */
-								{
-									int idx;
-									/* Can't store 24-bit color, so look for the nearest
-									 * color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
-									if (fg) attribute = cell_video_attr_set_fg_color(attribute,idx);
-									else    attribute = cell_video_attr_set_bg_color(attribute,idx);
-								}
-							} else {
-								debug(F111, "SGR 38/48 - ERROR - invalid mode", "mode", mode);
-							}
+						    if (ISXTERM(tt_type_mode) || ISK95(tt_type_mode) ||
+						        ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+						        attribute = sgr_38_48(pn, pe, k, &j, pn_pe_start,
+						            pn_pe_count, TRUE, attribute);
+						    }
                             break;
-							}
+
                         case 39:  /* disable underline option */
                             /* Supported by SCO ANSI */
                             /* QANSI - restore fg color saved with */
@@ -23237,10 +25596,7 @@ vtcsi(void)
                             lgotoxy(VTERM, relcursor ? vscrn_c_page_margin_left(VTERM) : 1,
                                      relcursor ? vscrn_c_page_margin_bot(VTERM) : 1);
                         } else if ( !IS97801(tt_type_mode) ) {
-                            if ( decsasd == SASD_STATUS )
-                                lgotoxy( VSTATUS, 1, 1 );
-                            else
-                                lgotoxy(VTERM, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
+                            home_cursor(vmode);
                         }
                     }
                     else if (!ISSCO(tt_type_mode)) {
@@ -23249,11 +25605,7 @@ vtcsi(void)
                             pn[2] = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ;
                         setmargins(pn[1], pn[2]);
                         if ( !IS97801(tt_type_mode) ) {
-                            if ( decsasd == SASD_STATUS )
-                                lgotoxy( VSTATUS, 1, 1 );
-                            else
-                                lgotoxy(VTERM, 1, relcursor ?
-                                        vscrn_c_page_margin_top(VTERM) : 1);
+                            home_cursor(vmode);
                         }
                     }
                     break;
@@ -23902,22 +26254,32 @@ vtcsi(void)
                     if ( ISVT102(tt_type_mode) ||
                          ISANSI(tt_type_mode)) {
                         /* IL - Insert lines */
-                        if ( IS97801(tt_type_mode) ) {
+                        /* DEC STD 070 says: "IL is ignored if the active
+                         * position is outside the scroll area". So I'm not sure
+                         * why this was previously restricted to SNI-97801 - did
+                         * some earlier VT model not follow this rule?
+                         *      - DG, 2026-03-30                            */
+                         /*if ( IS97801(tt_type_mode) ) {*/
                             /* ignored if outside scroll region */
                             if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
-                                 wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
+                                 wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) ||
+                                 wherex[VTERM] < vscrn_c_page_margin_left(VTERM) ||
+                                 wherex[VTERM] > vscrn_c_page_margin_right(VTERM))
                                 break;
-                        }
+                        /*}*/
                         for (i = 1; i <= pn[1]; ++i) {
-                            VscrnScroll(VTERM,
+                            VscrnScrollPage(VTERM,
                                          DOWNWARD,
-                                         wherey[VTERM] - 1,
-                                         vscrn_c_page_margin_bot(VTERM) - 1,
+                                         wherey[VTERM]-1,
+                                         vscrn_c_page_margin_bot(VTERM)-1,
+                                         vscrn_c_page_margin_left(VTERM)-1,
+                                         vscrn_c_page_margin_right(VTERM)-1,
                                          1,
                                          FALSE,
                                          SP,
-                                         FALSE);
+                                         vscrn_current_page_number(vmode, FALSE) );
                         }
+                        wherex[VTERM] = vscrn_c_page_margin_left(VTERM);
                     }
                 }
                 break;
@@ -24024,16 +26386,26 @@ vtcsi(void)
                     if ( ISVT102(tt_type_mode) ||
                          ISANSI(tt_type_mode)) {
                         /* DL - Delete lines */
+                        if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                             wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) ||
+                             wherex[VTERM] < vscrn_c_page_margin_left(VTERM) ||
+                             wherex[VTERM] > vscrn_c_page_margin_right(VTERM))
+                            break;
                         for (i = 1; i <= pn[1]; ++i) {
-                            VscrnScroll(VTERM,
+                            VscrnScrollPage(VTERM,
                                          UPWARD,
                                          wherey[VTERM] - 1,
                                          vscrn_c_page_margin_bot(VTERM) - 1,
+                                         vscrn_c_page_margin_left(VTERM) - 1,
+                                         vscrn_c_page_margin_right(VTERM) - 1,
                                          1,
                                          FALSE,
                                          SP,
-                                         FALSE);
+                                         vscrn_current_page_number(vmode, FALSE));
                         }
+                        lgotoxy(VTERM,
+                            vscrn_c_page_margin_left(VTERM),
+                            wherey[VTERM]);
                     }
                 }
                 break;
@@ -24042,16 +26414,23 @@ vtcsi(void)
                      ISANSI(tt_type_mode) &&
                      private == FALSE &&
                      ansiext == FALSE ) {
+
+                    /* DEC STD 070 says this is ignored if outside the
+                     * left/right margins */
+                    if ( wherex[VTERM] < cursor_left_margin(VTERM) ||
+                         wherex[VTERM] > cursor_right_margin(VTERM))
+                        break;
+
                     blankvcell.c = SP;
-                    blankvcell.video_attr = attribute;
-                    if (pn[1] > VscrnGetWidth(VTERM) + 1 -
+                    blankvcell.video_attr = geterasecolor(VTERM);
+                    if (pn[1] > cursor_right_margin(VTERM) + 1 -
                          wherex[VTERM])
-                        pn[1] = VscrnGetWidth(VTERM) + 1 -
+                        pn[1] = cursor_right_margin(VTERM) + 1 -
                             wherex[VTERM];
                     VscrnScrollRt(VTERM, wherey[VTERM] - 1,
                                    wherex[VTERM] - 1,
                                    wherey[VTERM] - 1,
-                                   VscrnGetWidth(VTERM) - 1,
+                                   cursor_right_margin(VTERM) - 1,
                                    pn[1],
                                    blankvcell
                                    );
@@ -24142,16 +26521,23 @@ vtcsi(void)
                        ISANSI(tt_type_mode)) &&
                      private == FALSE &&
                      ansiext == FALSE ) {
+
+                    /* DEC STD 070 says this is ignored if outside the
+                     * left/right margins */
+                    if ( wherex[VTERM] < cursor_left_margin(VTERM) ||
+                         wherex[VTERM] > cursor_right_margin(VTERM))
+                        break;
+
                     blankvcell.c = SP;
                     blankvcell.video_attr = geterasecolor(VTERM);
-                    if (pn[1] > VscrnGetWidth(VTERM) + 1 -
+                    if (pn[1] > cursor_right_margin(VTERM) + 1 -
                          wherex[VTERM])
-                        pn[1] = VscrnGetWidth(VTERM) + 1 -
+                        pn[1] = cursor_right_margin(VTERM) + 1 -
                             wherex[VTERM];
                     VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                    wherex[VTERM] - 1,
                                    wherey[VTERM] - 1,
-                                   VscrnGetWidth(VTERM) - 1,
+                                   cursor_right_margin(VTERM) - 1,
                                    pn[1],
                                    blankvcell
                                    ) ;
@@ -24205,12 +26591,32 @@ vtcsi(void)
                                          SP,
                                          FALSE);
                         } else { /* Roll Mode */
-                            VscrnScroll(VTERM, UPWARD,
-                                         vscrn_c_page_margin_top(VTERM)-1, vscrn_c_page_margin_bot(VTERM)-1,
-                                         pn[1],
-                                         vscrn_c_page_margin_top(VTERM) == 1,
-                                         SP,
-                                         FALSE);
+                            /* TODO:
+                             * This is wrong - STD 070 says "This control
+                             * affects what is visible on the physical display
+                             * only. No movement of data within the Logical
+                             * Display occurs. The Active Position does not
+                             * change". So the correct behaviour of this would
+                             * be more like clicking the up button on the scroll
+                             * bar if K95 supported a smaller physical window
+                             * than the page (as the console version does for
+                             * the horizontal dimension). Though when DECLRMM
+                             * is on and the cursor is in the margins, the
+                             * behaviour below seems to be correct for the
+                             * VT520.
+                             */
+                            VscrnScrollPage(
+                                VTERM,  /* Vscrn */
+                                UPWARD, /* Direction */
+                                vscrn_c_page_margin_top(VTERM)-1, /* Top */
+                                vscrn_c_page_margin_bot(VTERM)-1, /* Bottom */
+                                vscrn_c_page_margin_left(VTERM)-1,  /* Left */
+                                vscrn_c_page_margin_right(VTERM)-1, /* Right */
+                                pn[1], /* Lines */
+                                vscrn_c_page_margin_top(VTERM) == 1, /* Save */
+                                SP, /* Fill char */
+                                vscrn_current_page_number(VTERM, FALSE) /* page */
+                                );
                         }
                     }
                     /* No paged memory, so do nothing */
@@ -24258,11 +26664,38 @@ vtcsi(void)
                             break;
                         }
                 }
+				else if (declrmm &&
+				        (decsasd == SASD_TERMINAL || ISXTERM(tt_type_mode)) &&
+				        IS_DECLRMM_AVAILABLE(tt_type_mode) ) {
+				    /* DECSLRM - Set Left/Right Margins -----------------------
+                     * Sets Left/Right margins only if Left/Right Margin Mode is
+                     * enabled. The VT520 and VT420 ignore DECSLRM if the cursor
+                     * is currently on the status line. This behaviour is not
+                     * described by DEC STD-070, and XTERM does not implement
+                     * it.
+				     */
+					int left, right;
+					if (k < 1) left = 1;
+					else left = pn[1];
+
+					if (left < 1) left = 1;
+
+					if (k < 2) right = VscrnGetWidth(VTERM);
+					else right = pn[2];
+
+				    if (left < right && right <= VscrnGetWidth(VTERM))
+				    {
+				        setlrmargins(left, right);
+				        home_cursor(vmode);
+				    }
+				}
                 else if ( ISANSI(tt_type_mode) ||
                             IS97801(tt_type_mode) ||
                             ISSCO(tt_type_mode) ||
-							ISLINUX(tt_type_mode)) {
-                    /* Save Cursor Position */
+                            ISLINUX(tt_type_mode) ||
+                            ISXTERM(tt_type_mode) ||
+                            ISK95(tt_type_mode)) {
+                    /* SCOSC - Save Cursor Position */
                     savecurpos(VTERM,0);
                 }
                 break;
@@ -24328,14 +26761,18 @@ vtcsi(void)
                                      SP,
                                      FALSE);
                     } else { /* Roll Mode */
-                        VscrnScroll(VTERM,
-                                     DOWNWARD,
-                                     vscrn_c_page_margin_top(VTERM)-1,
-                                     vscrn_c_page_margin_bot(VTERM)-1,
-                                     pn[1],
-                                     FALSE,
-                                     SP,
-                                     FALSE);
+                        VscrnScrollPage(
+                            VTERM,      /* Vscrn */
+                            DOWNWARD,   /* Direction */
+                            vscrn_c_page_margin_top(VTERM)-1,   /* Top */
+                            vscrn_c_page_margin_bot(VTERM)-1,   /* Bottom */
+                            vscrn_c_page_margin_left(VTERM)-1,  /* Left */
+                            vscrn_c_page_margin_right(VTERM)-1, /* Right */
+                            pn[1],      /* Lines */
+                            FALSE,      /* Save */
+                            SP,         /* Fill Char */
+                            vscrn_current_page_number(VTERM, FALSE) /* page */
+                            );
                     }
                 }
                 /* We don't support paged memory so it does nothing */
@@ -24477,19 +26914,7 @@ vtcsi(void)
                             tt_cols[VTERM] = pn[3]%2 ? pn[3]+1 : pn[3] ;
                             VscrnInit( VTERM ) ; /* Size is set here */
                             msleep(50);
-#ifdef TCPSOCKET    
-#ifdef CK_NAWS      
-                            if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                tn_snaws();
-#ifdef RLOGCODE     
-                                rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                ssh_snaws();
-#endif /* SSHBUILTIN */
-                            }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                            naws();
                         }
                         break;
                     case 9: {
@@ -24835,14 +27260,14 @@ vtcsi(void)
                 else {
                     /* Cursor Backward Tabulation (CBT) */
                     /* moves active position back n tabstops */
-                    if (k < 1) pn[1] = 1;
+                    if (k < 1 || pn[1] < 1) pn[1] = 1;
                     i = wherex[VTERM];
                     while (pn[1]) {
-                        if (i > 1) {
+                        if (i > cursor_left_margin(VTERM)) {
                             do {
                                 i--;
                                 cursorleft(0);
-                            } while ((htab[i] != 'T') && (i >= 2));
+                            } while ((htab[i] != 'T') && (i >= cursor_left_margin(VTERM) + 1));
                         }
                         pn[1]--;
                     }
@@ -24903,6 +27328,99 @@ vtcsi(void)
                         pn[1] = 8 ;
                     loadtod( pn[1], pn[2] ) ;
                     break;
+#ifdef KUI
+				case 'r':
+				case 's':
+					/* r - DECDRLBR - Draw Ruled Lines in a pattern
+					 * s - DECERLBRP - Erase Ruled Lines in a pattern */
+                    if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+						int pattern, left, top, width, height;
+
+						if (k < 1) break; /* First parameter (pattern) required */
+                        pattern = pn[1];
+
+						/* Starting column */
+                        if (k < 2) left = 0;
+						else left = pn[2];
+
+                        /* width in columns */
+                        if (k < 3) width = 1;
+                        else width = pn[3];
+
+                        /* Starting line */
+                        if (k < 4) top = 0;
+						else top = pn[4];
+
+                        /* height in lines */
+                        if (k < 5) height = 1;
+                        else height = pn[5];
+
+                        /* DECterm in Tru64 UNIX v5.1B defaults to starting at
+                         * the cursor even though the documentation says it
+                         * should default to 1,1. Ruled Lines in DECterm have
+                         * lots of bugs, so this *could* be another, or perhaps
+                         * the documentation is wrong. If the earliest versions
+                         * of DECterm supporting Ruled Lines match the behaviour
+                         * seen in v5.1B then what the documentation says is
+                         * irrelevant. If the behaviour changed at some point
+                         * (or is different on OpenVMS), then we might need to
+                         * revisit these defaults. */
+                        if (left == 0) left = wherex[VTERM];
+                        if (top == 0) top = wherey[VTERM];
+
+                        /* with a width and height of 1 */
+                        if (width == 0) width = 1;
+                        if (height == 0) height = 1;
+
+						ruledlines_escape(pattern, left, top, width, height,
+							achar == 'r'); /* 'r' is set, 's' is clear */
+					}
+					break;
+				case 't':
+					/* DECERLBRA  - Erase All Ruled Lines in an Area */
+					if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+						int scope;
+
+						if (k < 1) scope = 1;
+						else scope = pn[1];
+
+						if (scope == 0 || scope == 1) {
+							/* Erase all ruled lines on screen */
+
+							/* For scope 0/1 DECterm would still require an area
+						   	   to be specified, otherwise it would ignore the
+						       whole thing. We won't enforce that though.
+							if (k < 5) break; */
+
+							decerlbra_escape(1, 1,
+								tt_cols[VTERM], tt_rows[VTERM]);
+
+						} else if (scope == 2) {
+							/* Erase all ruled lines in an area */
+
+							int left, top, width, height;
+
+							/* Starting column */
+                        	if (k < 2) left = 1;
+							else left = pn[2];
+
+                        	/* width in columns */
+                        	if (k < 3) width = 1;
+                    	    else width = pn[3];
+
+            	            /* Starting line */
+                	        if (k < 4) top = 1;
+							else top = pn[4];
+
+    	                    /* height in lines */
+	                        if (k < 5) height = 1;
+	                        else height = pn[5];
+
+							decerlbra_escape(left, top, width, height);
+						}
+					}
+					break;
+#endif /* KUI */
                 case 'x':     /* DECSPMA - Session Page Memory Allocation */
                     if (ISVT520(tt_type_mode)) {
                         /* We don't support multiple sessions, so this just
@@ -24914,6 +27432,26 @@ vtcsi(void)
                             decspma_max_page = pn[1] - 1; /* Session 1 */
                         }
                     }
+                    break;
+                case 'z':     /*  DECDLDA */
+                    /* Only available for VT520:
+                     * "The color terminal does not use this command
+                     *  because it has enough memory to give all four
+                     *  sessions *Two each.*"
+                     *
+                     *  Switches between one drcs font buffer per
+                     *  session, or two font buffers each for sessions
+                     *  one and two. The only valid parameter values
+                     *  are 1 and 2 - all other values are ignored. This
+                     *  setting is reset to two on hard reset.
+                     */
+#ifdef KUI
+                    if (ISVT520(tt_type_mode) && !ISVT525(tt_type_mode)) {
+                        if (k >= 1 && (pn[1] == 1 || pn[1] == 2)) {
+                            decdlda = pn[1];
+                        }
+                    }
+#endif /* KUI */
                     break;
                 case '}': {    /* DECATC - Alternate Text Color */
                     if (ISVT525(tt_type_mode)) {
@@ -24930,6 +27468,50 @@ vtcsi(void)
 
                     break;
                 } /* '}' */
+                case '~':      /* DECPS - Play Sound */
+                    /* Pvolume ; Pduration ; Pnote */
+                    if (ISVT520(tt_type_mode) || ISK95(tt_type_mode)) {
+                        UCHAR velocity;
+                        int duration, note;
+                        int maxnote;
+                        if (k < 1) pn[1] = 0;
+                        if (pn[1] > 7) return;
+                        if (k < 2) pn[2] = 0;
+                        if (pn[2] > 255) return;
+                        if (k < 3) {
+                            k = 3;
+                            pn[k] = 0;
+                        }
+
+                        /* volume (0-7) to MIDI velocity (0-127) */
+                        velocity = pn[1] * 127 / 7;
+
+                        /* duration (0-255) in 1/32nds of a second to
+                         * milliseconds. This won't be perfect, but we don't
+                         * currently have a microsecond sleep function. So it's
+                         * the best we can reasonably do for now.*/
+                        duration = pn[2] * 1000 / 32;
+
+                        /* The VT520 only plays the first note. For K95, we'll
+                         * play more. */
+                        maxnote = ISK95(tt_type_mode) ? k : 3;
+
+                        sound_playing = TRUE;
+                        for (note = 3; note <= maxnote; note++) {
+                            if (!sound_playing) break;
+
+                            /* A bunch of sites give 72 as the number for C5 in
+                             * MIDI, and they progress up from there in the same
+                             * order the VT520 manual gives, so... */
+                            pn[note] += 71;
+                            MakeSound(
+                                pn[note] > 96 ? 0 : pn[note],  /* Note out of range? silent */
+                                pn[note] == 71 ? 0 : velocity, /* note 0 is silent */
+                                duration);
+                        }
+                        sound_playing = FALSE;
+                    };
+                    break;
 				case '|': {    /*  DECAC - Assign Color */
 					if (ISVT525(tt_type_mode)) {
 						cell_video_attr_t att = cell_video_attr_init_vio_attribute(0x00);
@@ -24964,45 +27546,76 @@ vtcsi(void)
                 case '~':
                     if ( ISVT420(tt_type_mode) ) {
                         /* DECDC - Delete Column */
-                        viocell cell ;
-                        cell.c = SP ;
-                        cell.video_attr = geterasecolor(VTERM) ;
-                        if ( k < 1 || pn[0] == 0 )
-                            pn[1] = 1;
-                        else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
-                            pn[1] = VscrnGetWidth(VTERM)-1 ;
 
-                        VscrnScrollLf( VTERM,
-                                       relcursor ? vscrn_c_page_margin_top(VTERM) - 1 : 0, /* top row */
-                                       wherex[VTERM], /* left col */
-                                       relcursor ? vscrn_c_page_margin_bot(VTERM) - 1 :
-                                       VscrnGetHeight(VTERM)
-                                       -(tt_status[VTERM]?2:1), /* bot row */
-                                       VscrnGetWidth(VTERM)-1,  /* right col */
-                                       pn[1],
-                                       cell);
+
+                        /* "DECDC is ignored if the active position is outside
+                         * the Scroll Area" - STD 070 */
+                        if (wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) &&
+                            wherex[VTERM] <= vscrn_c_page_margin_right(VTERM) &&
+                            wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+                            wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM))
+                        {
+                            viocell cell ;
+                            int top_row, bot_row, left_col, right_col;
+                            cell.c = SP ;
+                            cell.video_attr = geterasecolor(VTERM) ;
+                            if ( k < 1 || pn[1] == 0 )
+                                pn[1] = 1;
+                            else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
+                                pn[1] = VscrnGetWidth(VTERM)-1 ;
+
+
+                            top_row = vscrn_c_page_margin_top(VTERM) - 1;
+                            bot_row = vscrn_c_page_margin_bot(VTERM) - 1;
+                            left_col = wherex[VTERM] - 1;
+                            right_col = vscrn_c_page_margin_right(VTERM) - 1;
+
+                            VscrnScrollLf( VTERM,
+                                           top_row, /* top row */
+                                           left_col, /* left col */
+                                           bot_row, /* bot row */
+                                           right_col,  /* right col */
+                                           pn[1],
+                                           cell);
+                        }
                     }
                     break;
                 case '}':
                     if ( ISVT420(tt_type_mode) ) {
                         /* DECIC - Insert Column */
-                        viocell cell ;
-                        cell.c = SP ;
-                        cell.video_attr = geterasecolor(VTERM) ;
-                        if ( k < 1 || pn[0] == 0 )
-                            pn[1] = 1;
-                        else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
-                            pn[1] = VscrnGetWidth(VTERM)-1 ;
 
-                        VscrnScrollRt( VTERM,
-                                       relcursor ? vscrn_c_page_margin_top(VTERM) - 1 : 0, /* top row */
-                                       wherex[VTERM], /* left col */
-                                       relcursor ? vscrn_c_page_margin_bot(VTERM) - 1 :
-                                       VscrnGetHeight(VTERM)
-                                       -(tt_status[VTERM]?2:1), /* bot row */
-                                       VscrnGetWidth(VTERM)-1,  /* right col */
-                                       pn[1],
-                                       cell);
+                        /* "DECIC is ignored if the active position is outside
+                         * the Scroll Area" - STD 070 */
+                        if (wherex[VTERM] >= vscrn_c_page_margin_left(VTERM) &&
+                            wherex[VTERM] <= vscrn_c_page_margin_right(VTERM) &&
+                            wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+                            wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM))
+                        {
+                            viocell cell ;
+                            int top_row, bot_row, left_col, right_col;
+                            cell.c = SP ;
+                            cell.video_attr = geterasecolor(VTERM) ;
+
+                            if ( k < 1 || pn[1] == 0 )
+                                pn[1] = 1;
+                            else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
+                                pn[1] = VscrnGetWidth(VTERM)-1 ;
+
+                            top_row = vscrn_c_page_margin_top(VTERM) - 1;
+                            bot_row = vscrn_c_page_margin_bot(VTERM) - 1;
+                            left_col = wherex[VTERM] - 1;
+                            right_col = vscrn_c_page_margin_right(VTERM) - 1;
+
+                            /* This checks LeftCol>rightCol && rightcol < width
+                             *              && botrow < height */
+                            VscrnScrollRt( VTERM,  /* vmode */
+                                           top_row,     /* top row */
+                                           left_col,    /* left col */
+                                           bot_row,     /* bot row */
+                                           right_col,   /* right col */
+                                           pn[1],       /* columns */
+                                           cell);       /* cell to insert */
+                        }
                     }
                     break;
                 }
@@ -25115,6 +27728,35 @@ vtcsi(void)
                     }
                     setcursormode() ;
                     cursorena[VTERM] = TRUE;
+                    break;
+                case 't':   /* DECSWBV - Set Warning Bell Volume */
+#ifdef NT
+                    if (ISVT520(tt_type_mode) || ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                        extern int beepvolume;
+                        if (k < 1) pn[1] = 5;
+                        switch ( pn[1] ) {
+                            case 1:
+                                /* off */
+                                tt_bell = XYB_NONE;
+                                break;
+                            case 2:
+                            case 3:
+                            case 4:
+                                /* low */
+                                tt_bell = XYB_AUD | XYB_MIDI;
+                                beepvolume = BEEP_VOLUME_LOW;
+                                break;
+                            case 5:
+                            case 6:
+                            case 7:
+                            case 8:
+                                /* high */
+                                tt_bell = XYB_AUD | XYB_MIDI;
+                                beepvolume = BEEP_VOLUME_HIGH;
+                                break;
+                        }
+                    }
+#endif /* NT */
                     break;
                 }
                 break;
@@ -25676,20 +28318,24 @@ vtescape( void )
         case '6':  
             if ( ISAAA(tt_type_mode) ) {
                 /* AnnArbor: zTI - Toggle IRM */
-            } else if (ISVT100(tt_type_mode)) {
+            } else if (ISVT100(tt_type_mode)) { /* TODO: Should be ISVT420 */
                 /* DECBI - Back Index */
-                if ( wherex[VTERM] > 1 )
-                    cursorleft(0);
-                else {
+				if ( wherex[VTERM] == vscrn_c_page_margin_left(VTERM) &&
+						wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+						wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) ) {
+					int leftcol = vscrn_c_page_margin_left(VTERM) - 1;
+					int rightcol = vscrn_c_page_margin_right(VTERM) - 1;
                     blankvcell.c = SP;
                     blankvcell.video_attr = geterasecolor(VTERM);
-                    VscrnScrollRt(VTERM,
-                               wherey[VTERM] - 1,
-                               0,
-                               wherey[VTERM] - 1,
-                               VscrnGetWidth(VTERM) - 1,
-                               1, blankvcell);
-                }
+                    VscrnScrollRt(VTERM,				 /* VMODE */
+                               vscrn_c_page_margin_top(VTERM) - 1,  /* TopRow */
+                               leftcol,			    	 /* LeftCol */
+                               vscrn_c_page_margin_bot(VTERM) - 1,  /* BotRow */
+                               rightcol,                 /* RightCol */
+                               1, blankvcell);			 /* Columns, Cell */
+                } else if (wherex[VTERM] > 1) {
+					cursorleft(0);
+				}
             }
             break;
         case '7':
@@ -25709,63 +28355,63 @@ vtescape( void )
                 restorecurpos(VTERM, 1);
             break;
         case '9':  
-              if ( ISAAA(tt_type_mode) ) {
-                  /* zCGR - Change Graphic Rendition to Qualified Area */
-		  /* Default area goes from Current Cursor position to End of Screen */
-		  /* Lawrence A Deck - Raytheon 1 Nov 2002 */
+            if ( ISAAA(tt_type_mode) ) {
+                /* zCGR - Change Graphic Rendition to Qualified Area */
+		  		/* Default area goes from Current Cursor position to End of Screen */
+		  		/* Lawrence A Deck - Raytheon 1 Nov 2002 */
 
-		  int start_x, start_y, end_x, end_y, x, y;
-		  int h = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
-		  int w = VscrnGetWidth(VTERM);
+		  		int start_x, start_y, end_x, end_y, x, y;
+		  		int h = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
+		  		int w = VscrnGetWidth(VTERM);
 		      
-		  start_x = wherex[VTERM];
-		  start_y = wherey[VTERM];
-		  end_x = w;
-		  end_y = h;
+		  		start_x = wherex[VTERM];
+		  		start_y = wherey[VTERM];
+		  		end_x = w;
+		  		end_y = h;
 
-		  for ( x=start_x; 
-			x < (start_y == end_y ? end_x : MAXTERMCOL); 
-			x++ ) {
-		      viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1, FALSE);
-		      pcell->video_attr = attribute;
-		      VscrnWrtCell( VTERM, *pcell, attrib,
-				    start_y - 1,
-				    x - 1);
-		  }
-		  if ( start_y != end_y ) {
-		      for ( y=start_y+1; y<end_y; y++) {
-			  for ( x=0; x<MAXTERMCOL; x++ ) {
-			      viocell * pcell = VscrnGetCell(VTERM,x-1,y-1, FALSE);
-			      pcell->video_attr = attribute;
-			      VscrnWrtCell( VTERM, *pcell, attrib,
-					    y - 1,
-					    x - 1);
-			  }
-		      }
-		      for ( x=0; 
-			    x <= end_x; 
-			    x++ ) {
-			  viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1, FALSE);
-			  pcell->video_attr = attribute;
-			  VscrnWrtCell( VTERM, *pcell, attrib,
-					end_y - 1,
-					x - 1);
-		      }
-		  }
-              } else if (ISVT100(tt_type_mode)) { 
-                  /* DECFI - Forward Index */
-                  if ( wherex[VTERM] < VscrnGetWidth(VTERM) )
-                      cursorright(0);
-                  else {
-                      blankvcell.c = SP;
-                      blankvcell.video_attr = geterasecolor(VTERM);
-                      VscrnScrollLf(VTERM,
-                                 wherey[VTERM] - 1,
-                                 0,
-                                 wherey[VTERM] - 1,
-                                 VscrnGetWidth(VTERM) - 1,
-                                 1, blankvcell);
-                  }
+		  		for ( x=start_x;
+					x < (start_y == end_y ? end_x : MAXTERMCOL);
+					x++ ) {
+		      		viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1, FALSE);
+		      		pcell->video_attr = attribute;
+		      		VscrnWrtCell( VTERM, *pcell, attrib, start_y - 1, x - 1);
+		  		}
+		  		if ( start_y != end_y ) {
+		      		for ( y=start_y+1; y<end_y; y++) {
+			  			for ( x=0; x<MAXTERMCOL; x++ ) {
+			    	  		viocell * pcell = VscrnGetCell(VTERM,x-1,y-1, FALSE);
+				      		pcell->video_attr = attribute;
+				      		VscrnWrtCell( VTERM, *pcell, attrib, y - 1, x - 1);
+			  			}
+		      		}
+		      		for ( x=0;
+			    		x <= end_x;
+			    		x++ ) {
+			  		viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1, FALSE);
+			  		pcell->video_attr = attribute;
+			  		VscrnWrtCell( VTERM, *pcell, attrib,
+						end_y - 1,
+						x - 1);
+		      		}
+				}
+            } else if (ISVT100(tt_type_mode)) {  /* TODO: Should be ISVT420 */
+                /* DECFI - Forward Index */
+				if (wherex[VTERM] == vscrn_c_page_margin_right(VTERM) &&
+				       wherey[VTERM] >= vscrn_c_page_margin_top(VTERM) &&
+				       wherey[VTERM] <= vscrn_c_page_margin_bot(VTERM) ) {
+					int leftcol = vscrn_c_page_margin_left(VTERM) - 1;
+					int rightcol = vscrn_c_page_margin_right(VTERM) - 1;
+					blankvcell.c = SP;
+					blankvcell.video_attr = geterasecolor(VTERM);
+					VscrnScrollLf(VTERM,						   /* VMODE */
+                               vscrn_c_page_margin_top(VTERM) - 1, /* TopRow */
+                               leftcol,							   /* LeftCol */
+                               vscrn_c_page_margin_bot(VTERM) - 1, /* BotRow */
+                               rightcol,		                  /* RightCol */
+                               1, blankvcell);				/* Columns, Cell */
+				} else if (wherex[VTERM] < VscrnGetWidth(VTERM)) {
+					cursorright(0);
+				}
               }
 	          if (cursor_on_visible_page(VTERM)) {
                   VscrnIsDirty(VTERM);
@@ -25828,14 +28474,16 @@ vtescape( void )
                 cursorleft(0);
             else if ( ISVT100(tt_type_mode) ) {/* IND - Index */
                 if (wherey[VTERM] == vscrn_c_page_margin_bot(VTERM)) {
-                    VscrnScroll(VTERM,
+                    VscrnScrollPage(VTERM,
                                  UPWARD,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
+                                 vscrn_c_page_margin_left(VTERM) - 1,
+                                 vscrn_c_page_margin_right(VTERM) - 1,
                                  1,
                                  (vscrn_c_page_margin_top(VTERM)==1),
                                  SP,
-                                 FALSE);
+                                 vscrn_current_page_number(vmode, FALSE));
                 } else
                     cursordown(0);
             }
@@ -25847,7 +28495,7 @@ vtescape( void )
                 lgotoxy(VTERM,1,1);       /* and home the cursor */
             }
             else {                      /* NEL - Next Line */
-                cursornextline();
+                cursornextline(TRUE, 1);
             }
             break;
         case 'F':
@@ -25935,7 +28583,7 @@ vtescape( void )
                   clrline_escape(VTERM,SP);
               } else if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
 							|| ISXTERM(tt_type_mode) ) {
-                  /* Lock Memory Area */
+                  /* LMA - Lock Memory Area */
                   setmargins(wherey[VTERM],VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, relcursor ? vscrn_c_page_margin_left(VTERM) : 1,
                            relcursor ? vscrn_c_page_margin_bot(VTERM) : 1);
@@ -25945,14 +28593,16 @@ vtescape( void )
             /* RI - Reverse Index, VT102 */
             if (ISVT100(tt_type_mode)) {
                 if (vscrn_c_page_margin_top(VTERM) == wherey[VTERM])
-                    VscrnScroll(VTERM,
+                    VscrnScrollPage(VTERM,
                                  DOWNWARD,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
+                                 vscrn_c_page_margin_left(VTERM) - 1,
+                                 vscrn_c_page_margin_right(VTERM) - 1,
                                  1,
-                                  FALSE,
-                                  SP,
-                                 FALSE );
+                                 FALSE,
+                                 SP,
+                                 vscrn_current_page_number(vmode, FALSE) );
                 else
                     cursorup(0);
             }
@@ -25971,7 +28621,7 @@ vtescape( void )
         case 'm':
               if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
 					|| ISXTERM(tt_type_mode)  ) {
-                  /* Unlock Memory Area */
+                  /* USR - Unlock Memory Area */
                   setmargins(1,VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, 1, 1);
               }
@@ -26241,28 +28891,55 @@ vtescape( void )
             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
             switch (achar) {
             case '3': /* DECDHL */
-                decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
-                               VT_LINE_ATTR_DOUBLE_HIGH |
+				if (!declrmm) {
+                	decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
+                                  VT_LINE_ATTR_DOUBLE_HIGH |
                                   VT_LINE_ATTR_UPPER_HALF );
+				}
                 break;
             case '4': /* DECDHL */
-                decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
+				if (!declrmm) {
+                    decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE |
                                   VT_LINE_ATTR_DOUBLE_HIGH |
                                   VT_LINE_ATTR_LOWER_HALF);
+				}
                 break;
             case '5': /* DECSWL */
-                decdwl_escape(VT_LINE_ATTR_NORMAL);
+				if (!declrmm) {
+                    decdwl_escape(VT_LINE_ATTR_NORMAL);
+				}
                 break;
             case '6': /* DECDWL */
-                decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE);
+				if (!declrmm) {
+                	decdwl_escape(VT_LINE_ATTR_DOUBLE_WIDE);
+				}
                 break;
             case '7': /* Hardcopy (vt100) */
                 break;
-            case '8': /* Screen Alignment Display */
+            case '8': /* DECALN - Screen Alignment Display */
                 {
                     videoline * line ;
                     viocell cell;
                     short x,y ;
+
+                    /* STD 070 says we reset SGR attributes, though no hardware
+                     * terminals tested do this. DECterm does though. */
+                    if (ISK95(tt_type_mode) || ISDECTERM(tt_type_mode)) {
+                        attrib.blinking = FALSE;
+                        attrib.italic = FALSE;              /* No italic */
+                        attrib.bold = FALSE;
+                        attrib.invisible = FALSE;
+                        attrib.underlined = FALSE;
+                        attrib.reversed = FALSE;
+                        attrib.dim = FALSE ;
+                        attrib.graphic = FALSE ;
+                        attrib.wyseattr = FALSE ;
+                        attrib.crossedout = FALSE ;
+                        attrib.erased = FALSE;
+                        attrib.hyperlink = FALSE;
+                        attrib.linkid = 0;
+                        resetcolors(0);
+                    }
 
                     cell.c = 'E';
                     cell.video_attr = defaultattribute; /* was 0x07 */
@@ -26277,6 +28954,14 @@ vtescape( void )
                         line->vt_line_attr = VT_LINE_ATTR_NORMAL;
                     }
                     setmargins(1, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+
+                    relcursor=FALSE;
+
+                    /* Note: Only the VT5xx does this: the VT420 probably
+                     * *should*, but it doesn't */
+                    set_declrmm(FALSE);  /* TODO: Not if TT_VT420? */
+
+
                     if ( decsasd == SASD_STATUS )
                         lgotoxy( VSTATUS, 1, 1 );
                     else
@@ -26726,18 +29411,7 @@ vt100(unsigned short vtch) {
                  sendchars(answerback,strlen(answerback)) ;
              break;
          case HT:               /* Horizontal tab */
-             i = wherex[vmode];
-             if (i < VscrnGetWidth(vmode))
-             {
-                 do {
-                     i++;
-                     cursorright(0);
-                  } while ((htab[i] != 'T') &&
-                            (i <= VscrnGetWidth(vmode)-1));
-                 if (cursor_on_visible_page(VTERM)) {
-                     VscrnIsDirty(VTERM);
-                 }
-             }
+             cursortab(1);
              break;
          case SYN:      /* Ctrl-V - AVATAR AVTCODE */
              if ( ISAVATAR(tt_type_mode) )
@@ -26764,6 +29438,8 @@ vt100(unsigned short vtch) {
             /* End of Control Character */
       } else {
          if (vtch != DEL) {             /* Normal character. */
+            int rmargin = cursor_right_margin(vmode);
+
             if (ISVT100(tt_type_mode)) {
                 if ( vtch == 35 &&
                      GNOW->designation == TX_BRITISH &&
@@ -26786,9 +29462,7 @@ vt100(unsigned short vtch) {
             }
 
             /* On the right margin? */
-            if (wherex[vmode] != (isdoublewidth(wherey[vmode]) ?
-                                   VscrnGetWidth(vmode)/2 :
-                                   VscrnGetWidth(vmode)))
+            if (wherex[vmode] != rmargin)
             {
                 wrtch(vtch);    /* Not on right margin */
                 wrapit = FALSE;
@@ -26808,12 +29482,7 @@ vt100(unsigned short vtch) {
                 } else {                /* Not time to wrap */
                     cell.c = vtch;
                     cell.video_attr = attribute ;
-                    if (isdoublewidth(wherey[vmode]))
-                        VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1,
-                                      VscrnGetWidth(vmode)/2-1);
-                    else
-                        VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1,
-                                      VscrnGetWidth(vmode)-1) ;
+                    VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1, rmargin-1);
                     if (cursor_on_visible_page(VTERM)) {
                         VscrnIsDirty(VTERM);
                     }

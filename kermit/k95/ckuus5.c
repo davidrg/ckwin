@@ -6189,8 +6189,10 @@ shotrm() {
       }
       if (strlen(tt_info[tt_type].x_id) <= 23)
         printf("  %13s: <ESC>%s","ID", idbuf);
-      else
-        printf("\n %19s: <ESC>%s","ID", idbuf);
+      else {
+          printf("\n %19s: <ESC>%s","ID", idbuf);
+          if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+      }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6247,6 +6249,9 @@ shotrm() {
         break;
       case XYB_AUD | XYB_BEEP:
         ckstrncat(bell,"beep",64);
+        break;
+      case XYB_AUD | XYB_MIDI:
+        ckstrncat(bell, "sound device",64);
         break;
       case XYB_AUD | XYB_SYS:
         ckstrncat(bell,"system sounds",64);
@@ -9641,7 +9646,7 @@ arraynam(ss,c,n) char *ss; int *c; int *n;
         return(-9);
     }
     p--;                                /* Trim whitespace from end */
-    while (*p == SP || *p == HT)
+    while (p >= ssbuf && (*p == SP || *p == HT))
       p--;
     p++;
     *p = NUL;                           /* Terminate subscript with null */
@@ -12916,6 +12921,11 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* SUPERLAT */
+#ifdef CK_HAVE_DSOUND
+    printf(" DirectSound support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif
 #endif /* NT */
 
 #ifdef OS2
@@ -13315,6 +13325,11 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* SUPERLAT */
+#ifdef CK_HAVE_DSOUND
+    printf(" No DirectSound support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif
 #endif /* NT */
 
 #ifdef OS2

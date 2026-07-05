@@ -212,7 +212,7 @@ static char *ckxrev = "32-bit";
 #include "ckcsig.h"
 #include "ckokey.h"
 #include "ckoslp.h"
-
+#include "ckosnd.h"
 
 extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[],
              SavedVT525RGBTable[], SavedVT525MonoRGBTable[],
@@ -1902,6 +1902,9 @@ sysinit() {
     CreateDebugMutex( FALSE ) ;
     CreateTelnetMutex( FALSE ) ;
     CreateCommMutex( FALSE );
+#ifdef KUI
+    CreateDRCSBufferCriticalSection();
+#endif /* KUI */
 #ifdef CK_SSL
     CreateSSLMutex( FALSE );
 #endif /* CK_SSL */
@@ -2513,6 +2516,9 @@ syscleanup() {
     CloseTelnetMutex() ;
     CloseTCPIPMutex() ;
     CloseAlarmSem() ;
+#ifdef KUI
+    CloseDRCSBufferCriticalSection();
+#endif /* KUI */
 #ifdef CK_SSL
     CloseSSLMutex() ;
 #endif /* CK_SSL */
@@ -2535,6 +2541,7 @@ syscleanup() {
     VioHandle = 0 ;
 #endif /* ! KUI */
 #endif /* NT */
+    CloseSoundDevice();
     CloseThreadMgmtMutex() ;
     CloseZoutDumpMutex();
     debug(F100,"Close Mutexes and Semaphores done","",0);

@@ -6,7 +6,8 @@
 typedef struct _K_CLIENT_PAINT {
     unsigned short*  textBuffer;
     cell_video_attr_t* attrBuffer;
-    unsigned short* effectBuffer;
+    vt_char_attr_t* effectBuffer;
+    vt_cell_attr_t* cellAttrBuffer;
     unsigned short* lineAttr;
     int             len;
     BOOL            cursorVisible;
@@ -52,9 +53,12 @@ private:
     int cursor_offset;
     unsigned short *textBuffer;
     cell_video_attr_t *attrBuffer;
-    unsigned short *effectBuffer, *lineAttr;
+    vt_char_attr_t *effectBuffer;
+    unsigned short *lineAttr;
+    vt_cell_attr_t *cellAttrBuffer;
     int incnt;
-    unsigned short vt_char_attrs;
+    vt_char_attr_t vt_char_attrs;
+    vt_cell_attr_t cell_attrs;
     int mouseCaptured;
 };
 

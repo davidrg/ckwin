@@ -6158,7 +6158,7 @@ domydir(cx) int cx;
 
 #ifdef OS2
     if (!wild) {
-        if (zchki(s) == -2) {           /* Found a directory */
+        if (strlen(s) > 0 && zchki(s) == -2) {           /* Found a directory */
             p = s + (int)strlen(s) - 1; /* Yes */
             if (*p == '\\' || *p == '/')
               strcat(s, "*");

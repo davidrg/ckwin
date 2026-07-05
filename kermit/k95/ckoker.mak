@@ -82,11 +82,12 @@ COMMON_CFLAGS = /MD
 #!endif
 
 # These options are used for all Windows .exe targets
-!if "$(CKF_DEV_CHECKS)" == "yes"
+!if "$(CKB_DEV_CHECKS)" == "yes"
 # Enable extra runtime checks. These only work with a debug build and
 # Visual C++ 2002 and newer
 COMMON_CFLAGS = $(COMMON_CFLAGS) /RTCsu
 !else
+# Enable most speed optimizations
 COMMON_OPTS = /Ox
 !endif
 
@@ -170,6 +171,11 @@ OS2TCPDLLS=$(OS2TCPDLLS) cko32i20.dll
 # This turns features on and off based on set feature flags (CKF_*), the
 # platform being targeted, and the compiler currently in use.
 !include feature_flags.mak
+
+!if "$(CKB_OPT_SIZE)" == "yes"
+# Optimize for minimal size
+COMMON_OPTS = /O1
+!endif
 
 !message
 !message
@@ -299,6 +305,10 @@ LDDEBUG = $(LDDEBUG) /OPT:ICF
 !endif  # EndIf CKB_MAKE_PDB != no
 
 # End PDB Generation Stuff
+
+!if "$(CKB_ASAN)" == "yes"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /fsanitize=address
+!endif # If CKB_ASAN
 
 !else   # Else CMP == VCXX
 
@@ -888,10 +898,8 @@ DEFINES = -DNT -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRERROR \
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
 DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
-          -DDYNAMIC -DKANJI \
-          -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
-          -DNETFILE -DONETERMUPD  \
-          -DNEWFTP -DNO_DNS_SRV \
+          -DDYNAMIC -DHADDRLIST -DNPIPE -DTCPSOCKET  \
+          -DNETFILE -DONETERMUPD -DNO_DNS_SRV \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 !endif
 !if "$(CMP)" != "OWCL" && "$(CMP)" != "OWWCL"
@@ -1061,7 +1069,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
-        ckonet$(O) \
+        ckonet$(O) ckosnd$(O) \
         ckoslp$(O) ckosyn$(O) ckothr$(O) ckotek$(O) ckotio$(O) ckowys$(O) \
         ckodg$(O)  ckoava$(O) ckoi31$(O) ckotvi$(O) ckovc$(O) \
         ckoadm$(O) ckohzl$(O) ckohp$(O) ckoqnx$(O) ckoads$(O)
@@ -1095,7 +1103,7 @@ KUIOBJS = \
     $(OUTDIR)\kszpopup.obj $(OUTDIR)\kflstat.obj  $(OUTDIR)\kcustdlg.obj \
     $(OUTDIR)\kmenu.obj    $(OUTDIR)\kstatus.obj  $(OUTDIR)\ktoolbar.obj \
     $(OUTDIR)\kscroll.obj  \
-    $(OUTDIR)\kfont.obj    \
+    $(OUTDIR)\kfont.obj    $(OUTDIR)\ksoftfont.obj \
     $(OUTDIR)\kfontdlg.obj $(OUTDIR)\kabout.obj   \
     $(OUTDIR)\kdwnload.obj \
     $(OUTDIR)\kuikey.obj   $(OUTDIR)\kclient.obj  \
@@ -1570,13 +1578,13 @@ ckofio$(O):	    ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h c
 ckoava$(O):     ckoava.c ckoava.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
 ckocon$(O):	    ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h \
                 ckctel.h ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h ckossh.h \
-                kui\ikui.h
+                kui\ikui.h ckosnd.h
 ckoco2$(O):     ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckonbi.h ckopcf.h ckuusr.h ckokey.h ckokvb.h ckcuni.h kui\ikui.h
 ckoco3$(O):     ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckokey.h ckokvb.h ckuusr.h ckowys.h ckodg.h  ckoava.h ckoi31.h \
                 ckohp.h  ckoadm.h ckohzl.h ckoqnx.h ckotvi.h ckovc.h  ckcuni.h \
-                ckcnet.h ckctel.h kui\ikui.h ckossh.h ckoads.h
+                ckcnet.h ckctel.h kui\ikui.h ckossh.h ckoads.h ckosnd.h
 ckoco4$(O):     ckoco4.c ckcdeb.h ckoker.h ckclib.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckcasc.h \
                 ckokey.h ckokvb.h
 ckoco5$(O):     ckoco5.c ckcdeb.h ckoker.h ckclib.h ckocon.h 
@@ -1595,11 +1603,12 @@ ckoi31$(O):     ckoi31.c ckoi31.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h c
 ckokey$(O):     ckokey.c ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcker.h ckuusr.h ckctel.h \
                 ckocon.h ckokey.h ckokvb.h ckcxla.h ckuxla.h ckcuni.h kui\ikui.h
 ckoqnx$(O):     ckoqnx.c ckoqnx.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h ckcuni.h
+ckosnd$(O):     ckosnd.c ckosnd.h
 ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckokey.h ckokvb.h ckuusr.h ckcnet.h ckctel.h
 ckotio$(O):	ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
                 ckocon.h ckokey.h ckokvb.h ckuusr.h ckoslp.h ckcsig.h ckop.h \
-                ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h \
+                ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h ckosnd.h \
 !if "$(PLATFORM)" == "NT"
                 ckntap.h cknwin.h  kui\ikui.h
 !else

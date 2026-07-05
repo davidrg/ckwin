@@ -236,6 +236,9 @@ getVar(unsigned int idx) {
         case XYB_AUD | XYB_BEEP:
             s="beep";
             break;
+        case XYB_AUD | XYB_MIDI:
+            s="sound device";
+            break;
         case XYB_AUD | XYB_SYS:
             s="system sounds";
             break;

@@ -215,7 +215,7 @@ int KAppWin::sizeFont( LPRECT lpr, int force )
         // width of 5, we're given a font width of 6 causing the window to grow.
         // Next time around, we ask for a font size of 6, and we're given 7
         // causing the window to grow again. This only happens with
-        // reisze-changes-font, and only with certain fonts (Cascadia Light
+        // resize-changes-font, and only with certain fonts (Cascadia Light
         // being one of them). For now this ugly workaround solves the immediate
         // problem, but the font still appears stretched horizontally. At least
         // K95 window doesn't keep growing wider which was really the main
@@ -227,6 +227,7 @@ int KAppWin::sizeFont( LPRECT lpr, int force )
     }
 
     client->setInterSpacing( kfont );
+    client->fontChanged();
     setFont( kfont->getFaceName(), kfont->getFontPointsH() );
 
     return 1;
@@ -861,12 +862,14 @@ Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
                 }
             case ID_HELP_HELPONKERMIT:
                 {
+#ifndef NOHELP
                     //debug(F111,"KAppWin::message WM_COMMAND","ID_HELP_HELPONKERMIT",LOWORD(wParam));
                     char tmp[256];
                     char* c = ::getVar( LOG_HOME_DIR );
                     strcpy( tmp, c );
                     strcat( tmp, "kermit95.hlp" );
                     WinHelp( hWnd, tmp, HELP_INDEX, 0 );
+#endif /* NOHELP */
                     break;
                 }
 

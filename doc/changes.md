@@ -10,7 +10,7 @@ log living in the [Whats New in 3.0](whats-new.md) document. When the final
 release of v3.0 eventually happens, the details about the various v3.0 
 eventually be moved elsewhere, with the full v3.0 change log taking their place.
 
-## Kermit 95 v3.0 beta 8 - Date TBD, likely early 2026
+## Kermit 95 v3.0 beta 8 - Date TBD, likely mid-2026
 
 This release comes with *significant* changes to the way Kermit 95 handles
 color. While every effort has been made to ensure there are no unexpected
@@ -155,6 +155,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    work across pages, while [DECRQDE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqde)
    and [DECXCPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-decxcpr)
    now include page information
+ - DECterm Ruled Lines
  - K95G can now save the terminal screen as an image rather than plain text.
    For example, `SAVE TERMINAL SCREEN /FORMAT:PNG screenshot.png`. The following
    output formats are available:
@@ -162,6 +163,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Windows Enhanced Metafile (.emf)
    - PNG (Windows XP+ only)
    - GIF (Windows XP+ only)
+ - New option to not clear the terminal screen when it is resized: 
+   `SET TERM CLEAR-ON-RESIZE { ON, OFF }` 
+ - Soft-fonts (DRCS) for VT220 and higher emulations are now supported
+ - The VT520 Play Sound control sequence is now supported.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -196,7 +201,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    the `SHOW VERSIONS` output going forward
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
- - Upgrade OpenSSL to 3.5.5
+ - Upgrade OpenSSL to 3.5.7
  - Improved terminal throughput for SSH connections by around seven times, which
    helps when you accidentally cat a large log file.
  - Doubled maximum terminal lines to 256 in K95G on modern systems
@@ -233,6 +238,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Terminal
    - System
  - Improved throughput for pipe connections on Windows 
+ - Upgraded to zlib 1.3.2
+ - The Secondary DA response when the terminal type is set to VT220 or VT220PC
+   now reports the VT220 identification code, rather than the code for VT320.
+ - DECCARA supports changing color attributes the K95 terminal type
 
 ### New terminal control sequences
 > [!NOTE]
@@ -319,7 +328,6 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      Table Request - provides the current color palette in RGB or HLS format.
    - [DECRSTS - Color Table](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrsts-2):
      Update/restore the current color palette
-   - [DECECM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm) - Erase Color Mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
  - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
@@ -336,8 +344,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - DECSM/DECRM/DECRQM modes
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
-   - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
-   - [117](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm): Erase Color Mode
+   - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): DECPCCM - Page Cursor Coupling
+   - [95](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decncsm): No Clearing Screen On Column Change (VT520)
+   - [117](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm): DECECM - Erase Color Mode
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
@@ -365,7 +374,19 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
    - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages
    - [DECSNLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsnls) - Set number of lines per screen
+ - Left/Right Margins (VT420)
+   - [DECLRMM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decvssm) - Set/reset left/right margin mode
+   - [DECSLRM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decslrm) - Set left/right margins
  - [XTVERSION](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtversion) (k95 terminal type only)
+ - [DECRQPSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqpsr) (VT320 and up)
+ - DECterm Ruled Lines (K95 terminal type only)
+   - [DECDRLBR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdrlbr)
+   - [DECERLBRP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbrp)
+   - [DECERLBRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decerlbra)
+ - [DECDLD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdld) - Download soft-font
+ - [DECDLDA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdlda) - Set how many font buffers are available (VT520 only), queryable with DECRQSS
+ - [DECSWBV](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decswbv) - Set Warning Bell Volume
+ - [DECPS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decps) - Play Sound (VT520)
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
@@ -423,8 +444,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    searching or using bookmarks if it is currently off. 
  - Fixed turning the status line on after making a connection (or resetting the
    terminal) giving a black empty status line rather than the indicator status
-   line you were likely. This issue was particularly noticeable with the linux
-   terminal type which has the status line off by default.
+   line you were likely after. This issue was particularly noticeable with the 
+   linux terminal type which has the status line off by default.
  - Fixed an issue in the dialer which could cause it to crash if the path was
    too long
  - The x86-64 version of Kermit 95 now works on Windows XP x64 Edition
@@ -432,19 +453,55 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed DECXCPR response - it was leaving the '?' character out
  - Fixed DECSCPP parameter not being optional, and setting the terminal to maximum
    width if the parameters value is 0. Any value less than 80 will now produce an
-   80 column terminal.
+   80 column terminal, and any value greater than 80 will produce a 132 column
+   terminal except for the K95 terminal type which behaves as DECterm and VTstar
+   do allowing any width. Also fixed it clearing the screen when it shouldn't, 
+   and not erasing the area past the new last column when it should. 
  - Fixed crash writing to unopened file
  - Mostly fixed incorrect DECRQCRA calculation. The result will now match what
    is produced by a real VT420/520 using the ISO Latin 1 character set, and
    should be correct for the VT525 too. The calculation doesn't currently handle
    other character sets, so for those the result will be incorrect.
- - Fixed DECFRA accepting invalid fill character specifications
- - Fixed DECFRA not using the selected remote character set for the fill character
  - Fixed K95G attempting to save a null font face name to the registry when the
    registry key isn't present and the user has never selected a font. This
    could result in garbage being saved as the font face name in the registry
    resulting in an odd font selection next time K95G is run.
  - Fixed crash opening serial ports on Windows NT 3.1
+ - VT-compatible emulations: 
+   - Fixed CUU not obeying the top margin while mode DECOM is reset
+   - Fixed CUD not obeying the bottom margin while mode DECOM is reset
+ - Fixed DECBI and DECFI only scrolling the line the cursor is on instead of the
+   entire area within the margins as it should. And also fixed DECBI and DECFI 
+   scrolling the screen when the cursor is outside the margins.
+ - Fixed CHT being ignored if a zero was passed as the parameter
+ - Fixed NEL and CNL not obeying DECOM
+ - Fixed VPA not obeying DECOM
+ - Fixed CNL causing a scroll at the bottom margin
+ - Fixed HVP/CUP not obeying DECOM properly
+ - Fixed DECIC and DECIC, which was:
+   - only ever inserting/deleting a single column regardless of parameter
+   - operating outside margins
+   - not operating at the left of the screen (DECIC)
+ - Fixed IL and DL operating outside the page margins, and not sending the 
+   cursor to the left margin.
+ - Fixed DECSERA, DECSEL and DECSED erasing visual and line attributes when they
+   shouldn't.
+ - Fixed ICH inserting characters with the current attribute, rather than
+   current erase colour
+ - Fixed DECFRA not filling with current SGR or protection attributes, and not
+   obeying DECOM
+ - Fixed DECERA, DECSERA, DECCARA and DECRARA not obeying DECOM
+ - Fixed potential crash when exiting the console version of K95
+ - Fixed possible read past end of string in `TAKE` command
+ - Fixed possible read past end of string in `DIR` command
+ - Fixed possible read past end of string in array name parser (function arraynam)
+ - Fixed the japanese-roman (JIS Roman) character set which has been broken since
+   K95 1.1.21. This character set was specifically excluded from being 
+   considered a national replacement character set since at least 1996 though
+   that didn't seem to cause problems until 2002. Unfortunately without source 
+   history for K95 I've no way of knowing what change broke it, so I've removed 
+   the code that was preventing it from being considered a national replacement 
+   character set which seems to have fixed it. (K95 bug 842)
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
