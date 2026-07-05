@@ -562,7 +562,7 @@ int      dec_upss = TX_8859_1 ;
 int      dec_lang = VTL_NORTH_AM;       /* DEC VT Language = North American */
 int      dec_nrc  = TX_ASCII;           /* DEC NRC for use during NRC Mode  */
 int      dec_kbd  = TX_8859_1;          /* DEC Keyboard character set       */
-
+bool     sound_playing = FALSE;         /* If a sound is playing */
 /*
   Terminal parameters that can also be set externally by SET commands.
   Formerly they were declared and initialized here, and had different
@@ -11044,6 +11044,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 			vt_macro_clear();
 		}
 	}
+
+    /* And any playing sounds */
+    sound_playing = FALSE;
 
     tt_type_mode = tt_type ;
 
@@ -27493,7 +27496,10 @@ vtcsi(void)
                          * play more. */
                         maxnote = ISK95(tt_type_mode) ? k : 3;
 
+                        sound_playing = TRUE;
                         for (note = 3; note <= maxnote; note++) {
+                            if (!sound_playing) break;
+
                             /* A bunch of sites give 72 as the number for C5 in
                              * MIDI, and they progress up from there in the same
                              * order the VT520 manual gives, so... */
@@ -27503,6 +27509,7 @@ vtcsi(void)
                                 pn[note] == 71 ? 0 : velocity, /* note 0 is silent */
                                 duration);
                         }
+                        sound_playing = FALSE;
                     };
                     break;
 				case '|': {    /*  DECAC - Assign Color */
