@@ -46,7 +46,9 @@ HANDLE hmtxNetCmd = (HANDLE) 0 ;
 HANDLE hmtxKeyboard  = (HANDLE) 0 ;
 HANDLE hmtxAlarm = (HANDLE) 0 ;
 HANDLE hmtxScreen = (HANDLE) 0 ;
+#ifndef CK_CRITICAL_SECTIONS
 HANDLE hmtxVscrn[VNUM] = { (HANDLE) 0,(HANDLE) 0, (HANDLE) 0} ;
+#endif /* CK_CRITICAL_SECTIONS */
 #ifdef OLDDIRTY
 HANDLE hmtxVscrnDirty[VNUM] = { (HANDLE) 0, (HANDLE) 0, (HANDLE) 0 } ;
 #endif /* OLDDIRTY */
@@ -201,6 +203,7 @@ int AlarmSigCount = -1 ;
 #define MAXALARMSIG 3
 
 #ifdef CK_CRITICAL_SECTIONS
+CRITICAL_SECTION csVscrn[VNUM] ;
 CRITICAL_SECTION csTCPIP ;
 CRITICAL_SECTION csLocalEcho ;
 #endif /* CK_CRITICAL_SECTIONS */
@@ -450,7 +453,13 @@ CloseScreenMutex( void )
 APIRET
 CreateVscrnMutex()
 {
-   int i;
+    int i;
+#ifdef CK_CRITICAL_SECTIONS
+    for ( i = 0 ; i < VNUM ; i++ ) {
+        InitializeCriticalSection(&csVscrn[i]);
+    }
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 
 #ifndef NT
     int rc;
@@ -472,11 +481,33 @@ CreateVscrnMutex()
 #endif /* NT */
    }
    return 0;
+#endif /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 RequestVscrnMutex( int vmode, ULONG timo )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    if (timo == SEM_INDEFINITE_WAIT) {
+        EnterCriticalSection(&csVscrn[vmode]);
+        return 0;
+    } else if (TRUE) {
+        if (TryEnterCriticalSection(&csVscrn[vmode])) return 0;
+        return TRUE;
+    } else {
+        /* This is a bit gross, but the only place using a timeout is
+         * IKTerm::getDrawInfo which just waits up to 200ms before giving up */
+        ULONG waited = 0;
+        while (!TryEnterCriticalSection(&csVscrn[vmode])) {
+            msleep(10);
+            waited += 10;
+            if (waited >= timo) {
+                return TRUE; /* Timeout */
+            }
+        }
+        return 0;
+    }
+#else /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     DWORD rc = 0 ;
     rc = WaitForSingleObjectEx( hmtxVscrn[vmode], timo, TRUE ) ;
@@ -484,11 +515,16 @@ RequestVscrnMutex( int vmode, ULONG timo )
 #else /* not NT */
     return DosRequestMutexSem( hmtxVscrn[vmode], timo ) ;
 #endif /* NT */
+#endif /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 ReleaseVscrnMutex( int vmode )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    LeaveCriticalSection(&csVscrn[vmode]);
+    return 0;
+#else /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     BOOL rc = 0 ;
 
@@ -497,12 +533,19 @@ ReleaseVscrnMutex( int vmode )
 #else /* not NT */
     return DosReleaseMutexSem( hmtxVscrn[vmode] ) ;
 #endif /* NT */
+#endif /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 CloseVscrnMutex( void )
 {
-   int i ;
+    int i ;
+#ifdef CK_CRITICAL_SECTIONS
+    for ( i=0 ; i<VNUM ; i++ ) {
+        DeleteCriticalSection(&csVscrn[i]);
+    }
+    return 0;
+#else /* CK_CRITICAL_SECTIONS */
    int rc  = 0 ;
    for ( i=0 ; i<VNUM ; i++ )
    {
@@ -519,6 +562,7 @@ CloseVscrnMutex( void )
 #endif /* NT */
    }
    return 0;
+#endif /* CK_CRITICAL_SECTIONS */
 }
 
 #ifdef OLDDIRTY
