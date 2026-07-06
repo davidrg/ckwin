@@ -33,7 +33,7 @@
 #include "ckcdeb.h"
 #include "ckorbf.h"
 
-#ifdef SSH_DLL
+#ifdef CK_SSH_DLL
 int debug_logging();  /* defined in ckossh.c */
 #undef debug
 #define debug(a,b,c,d) \
@@ -79,7 +79,7 @@ msleep(int m) {
     return (0);
 }
 #endif /* CK_CRITICAL_SECTIONS */
-#endif /* SSH_DLL */
+#endif /* CK_SSH_DLL */
 
 struct ring_buffer_t {
     char* buffer;
@@ -108,8 +108,8 @@ struct ring_buffer_t {
 
 
 ring_buffer_handle_t ring_buffer_new(size_t max_length) {
-    debug(F111, "ringbuf - new", "length", max_length);
     ring_buffer_handle_t buf = malloc(sizeof(ring_buffer_t));
+    debug(F111, "ringbuf - new", "length", max_length);
     buf->buffer = malloc(max_length * sizeof(char));
     if (buf->buffer == NULL) {
         debug(F111, "ringbuf - allocate buffer failed", "length", max_length);
