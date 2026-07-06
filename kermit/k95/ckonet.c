@@ -1,4 +1,3 @@
-#include "ckorbf.h"
 #ifdef NT
 char *ckonetv = "Win32 Network support, 10.0, 4 May 2023";
 #else /* NT */

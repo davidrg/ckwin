@@ -1052,6 +1052,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckuusy$(O) ckuxla$(O) ckclib$(O) ckctel$(O) ckcuni$(O) ckcftp$(O) \
 !if "$(PLATFORM)" == "NT"
         cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O) cknpty$(O) \
+        ckorbf$(O) \
 !else
         ckusig$(O) \
 !endif
@@ -1063,7 +1064,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !if ("$(CKF_SSH)" == "yes")
         ckossh$(O) \
 !if ("$(CKF_DYNAMIC_SSH)" != "yes")
-        ckolssh$(O) ckorbf$(O) ckolsshs$(O) \
+        ckolssh$(O) ckolsshs$(O) \
 !endif
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
@@ -1626,7 +1627,7 @@ ckctel$(O):	ckctel.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckctel.h ckcnet.h ckoco
                 ckossl.h ckosslc.h
 ckonet$(O):	    ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \
                 ckotcp.h ckonbi.h ckuusr.h ckcsig.h cknwin.h ckowin.h ckuath.h ckossh.h \
-                ck_ssl.h ckossl.h ckosslc.h
+                ck_ssl.h ckossl.h ckosslc.h ckorbf.h
 !if "$(PLATFORM)" == "NT"
 cknnbi$(O):     cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
 !else
