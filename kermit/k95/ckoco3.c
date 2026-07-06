@@ -11369,7 +11369,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     vtnt_index = 0;
     vtnt_read  = VTNT_MIN_READ;
 
+#ifdef KUI
     transmit_focus_change = FALSE;      /* Disable focus events */
+#endif /* KUI */
 
     /* Disable y active mouse reporting modes */
 #ifdef OS2MOUSE
