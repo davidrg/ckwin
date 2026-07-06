@@ -19264,7 +19264,7 @@ lgotoxy(BYTE vmode, int x, int y) {
     wrapit = FALSE;
 
     if ( markmodeflag[vmode] == notmarking )
-      VscrnSetCurPos( vmode, x - 1, y - 1 ) ;
+      VscrnSetCurPosEx( vmode, x - 1, y - 1, TRUE ) ;
 #ifdef COMMENT
     debug(F111,"lgotoxy","vmode",vmode);
     debug(F111,"lgotoxy","x",x);
