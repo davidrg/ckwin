@@ -202,8 +202,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
  - Upgrade OpenSSL to 3.5.7
- - Improved terminal throughput for SSH connections by around seven times, which
-   helps when you accidentally cat a large log file.
+ - Improved terminal throughput for SSH connections by around 33 times, and
+   telnet and other IP connections by around 8 times. This helps a lot when you
+   accidentally cat a large log file.
  - Doubled maximum terminal lines to 256 in K95G on modern systems
  - Added a new function, `\fterminalchecksum`, which produces a checksum of the
    terminal screen using the same algorithm as DECRQCRA. Parameters allow you
@@ -244,6 +245,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - DECCARA supports changing color attributes the K95 terminal type
  - Added a new \v(ntime_ms) variable which provides the current time since
    midnight in milliseconds.
+ - The default screen update interval is now 20 milliseconds giving a frame rate
+   of 50 frames per second. The old default was 100 milliseconds (10fps), but
+   overridden by the default k95custom.ini.
 
 ### New terminal control sequences
 > [!NOTE]
