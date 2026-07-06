@@ -16923,7 +16923,6 @@ DCS $ q 3 , } ST</pre>
                 affected area, while those that move character cells like
                 <a href="#il">IL</a> or scrolling will move ruled lines.
             </p>
-
             <p>
                 DECDRLBR acts in a similar way to other Rectangular Area
                 Operations, though the way the rectangle is specified differs a
@@ -16939,18 +16938,19 @@ DCS $ q 3 , } ST</pre>
             <p>
                 If values for <param-single symbol="Px"/> or
                 <param-single symbol="Py"/> not given, or set to zero, the
-                current position of the cursor is used. This
-                matches the behaviour observed in DECterm under Tru64 UNIX
-                v5.1B, but conflicts with the <em>documented</em> behaviour so
-                should not be relied upon as it may change in future releases of
-                Kermit 95.
+                current position of the cursor is used. This matches the
+                behaviour observed in DECterm under Tru64 UNIX v5.1B as well as
+                WRQ Reflection 8.0.2, but conflicts with the <em>documented</em>
+                behaviour so should not be relied upon as it may change in
+                future releases of Kermit 95 should other versions of DECterm
+                act differently.
             </p>
             <p>
                 Double Height/Double Width lines are treated as single
                 height/single width when drawing ruled lines. Ruled lines are
                 currently drawn on top of double high/wide lines which is the
                 behaviour of DECterm if anything forces it to repaint the
-                window.
+                window, as well as WRQ Reflection 8.0.2.
             </p>
             <p>
                 The <param-single symbol="Pl"/> parameter specifies which
@@ -16990,7 +16990,17 @@ DCS $ q 3 , } ST</pre>
                 all boundaries to make a box, you would use
                 <param-single symbol="Pl"/>=15 (1+2+4+8).
             </p>
-
+            <p>
+                When ruled lines cross left/right margins, the line segements
+                within the margins will scroll with text in the margins. DECterm
+                does not do this as DECterm does not support setting left/right
+                margins. WRQ Reflection 8.0.2 also chooses not to do this even
+                though it <em>does</em> support left/right margins. Should a
+                good reason for Reflections behaviour surface (DEC has not
+                <em>publicly</em> defined what should happen in this case)
+                Kermit 95 may change to match it so this behaviour should not be
+                relied upon.
+            </p>
             <p>
                 Ruled Lines are only supported on Windows under K95G. The console
                 verson for Windows (K95.EXE) and OS/2 version (K2.EXE) do not
@@ -17019,7 +17029,7 @@ DCS $ q 3 , } ST</pre>
                         behaviour here, so Kermit 95 chooses to behave as
                         DECterm does when it repaints its window.
                     </li>
-                    <li>
+                    <li> <!-- TODO: Does Reflection do the same? -->
                         The DECterm documentation does not say if
                         <a href="#decsed">DECSED</a>. DECterm seems to make an
                         attempt to preserve them, though usually some end up
@@ -17078,11 +17088,9 @@ DCS $ q 3 , } ST</pre>
                 This moves ruled lines on row 15 left: printf '\x1b[15;1fHello!'
                 This does not: printf '\x1b[15;1f\x1b[1;1fHello!'
 
-            It smells like a bug, but if we're to implement this feature it's
-            probably a bug we should replicate. Or at least have the option of
-            replicating.
-
-            Th
+            WRQ Reflection, the only other terminal emulator I've found that
+            implements this feature, doesn't replicate this behaviour which
+            would suggest its a bug.
             -->
         </section>
 
