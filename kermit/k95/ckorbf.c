@@ -38,6 +38,47 @@ int debug_logging();  /* defined in ckossh.c */
 #undef debug
 #define debug(a,b,c,d) \
 ((void)(debug_logging()?dodebug(a,b,(char *)(c),(CK_OFF_T)(d)):0))
+
+#ifdef CK_CRITICAL_SECTIONS
+#define ck_sleepint 250
+/* This is copied from ckotio.c with the OS/2 code stripped out as none of the
+ * SSH backends using the ringbuffer support OS/2 */
+int
+msleep(int m) {
+    ULONG start_t, now_t, ms;
+    int tt, tr, ti, i;
+    start_t = GetTickCount();        /* msecs since Windows was started */
+
+    if ( m <= 500 ) {
+        Sleep((long) m);
+        return(0);
+    }
+
+    tt = m / ck_sleepint;
+    tr = m % ck_sleepint;
+    ti = ck_sleepint;
+
+    for (i = 0; i < tt; i++) {
+        Sleep((long) ti);
+
+        now_t = GetTickCount();
+
+        if ( now_t < start_t ) {
+            /* we wrapped */
+            ms = (MAXDWORD - start_t + now_t);
+        }
+        else {
+            ms = (now_t - start_t);
+        }
+        if ( ms >= m )
+            return(0);
+    }
+    if ( tr ) {
+        Sleep((long) tr);
+    }
+    return (0);
+}
+#endif /* CK_CRITICAL_SECTIONS */
 #endif /* SSH_DLL */
 
 struct ring_buffer_t {
