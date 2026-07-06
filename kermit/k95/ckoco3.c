@@ -11369,6 +11369,8 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     vtnt_index = 0;
     vtnt_read  = VTNT_MIN_READ;
 
+    transmit_focus_change = FALSE;      /* Disable focus events */
+
     /* Disable y active mouse reporting modes */
 #ifdef OS2MOUSE
     mouse_reporting_mode &= ~(MOUSEREPORTING_ACTIVE | MOUSEREPORTING_UNSUPPORTED);
@@ -14123,14 +14125,14 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
 
         case K_FOCUS_IN:
 #ifdef KUI
-            if (transmit_focus_change) {
+            if (transmit_focus_change && mode == VTERM) {
                 sendescseq("[I");
             }
 #endif /* KUI */
             break;
         case K_FOCUS_OUT:
 #ifdef KUI
-            if (transmit_focus_change) {
+            if (transmit_focus_change && mode == VTERM) {
                 sendescseq("[O");
             }
 #endif /* KUI */
