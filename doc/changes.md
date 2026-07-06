@@ -202,8 +202,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
  - Upgrade OpenSSL to 3.5.7
- - Improved terminal throughput for SSH connections by around seven times, which
-   helps when you accidentally cat a large log file.
+ - Drastic improvements in terminal throughput which helps when you accidentally
+   cat a large file:
+   - SSH connections are around 33x faster
+   - Telnet and other IP connections are around 8x faster
+   - Pipe and PTY connections are around 87x faster
  - Doubled maximum terminal lines to 256 in K95G on modern systems
  - Added a new function, `\fterminalchecksum`, which produces a checksum of the
    terminal screen using the same algorithm as DECRQCRA. Parameters allow you
@@ -236,12 +239,16 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Lucida Console
    - Courier
    - Terminal
-   - System
- - Improved throughput for pipe connections on Windows 
+   - System 
  - Upgraded to zlib 1.3.2
  - The Secondary DA response when the terminal type is set to VT220 or VT220PC
    now reports the VT220 identification code, rather than the code for VT320.
  - DECCARA supports changing color attributes the K95 terminal type
+ - Added a new \v(ntime_ms) variable which provides the current time since
+   midnight in milliseconds.
+ - The default screen update interval is now 20 milliseconds giving a frame rate
+   of 50 frames per second. The old default was 100 milliseconds (10fps), but
+   overridden by the default k95custom.ini.
 
 ### New terminal control sequences
 > [!NOTE]

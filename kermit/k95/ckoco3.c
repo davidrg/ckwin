@@ -17982,10 +17982,12 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
    New code supporting auto-download for Zmodem and Kermit protocols.
 */
 
-    debugses( ch ) ;                    /* Session debugging */
+	if (debses)
+    	debugses( ch ) ;                    /* Session debugging */
 
 #ifdef CKLEARN
-    learnnet(ch);
+    if (learning)
+    	learnnet(ch);
 #endif /* CKLEARN */
 
 #ifndef NOXFER
@@ -19262,7 +19264,7 @@ lgotoxy(BYTE vmode, int x, int y) {
     wrapit = FALSE;
 
     if ( markmodeflag[vmode] == notmarking )
-      VscrnSetCurPos( vmode, x - 1, y - 1 ) ;
+      VscrnSetCurPosEx( vmode, x - 1, y - 1, TRUE ) ;
 #ifdef COMMENT
     debug(F111,"lgotoxy","vmode",vmode);
     debug(F111,"lgotoxy","x",x);

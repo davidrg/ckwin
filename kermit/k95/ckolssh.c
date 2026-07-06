@@ -1956,6 +1956,7 @@ int ssh_tchk(void) {
         ring_buffer_unlock(ssh_client->outputBuffer);
     } else {
         debug(F100, "ssh_tchk - failed to get lock on output buffer", "", 0);
+		rc = 0;
     }
 
     if (rc == 0) {
@@ -2063,8 +2064,8 @@ int ssh_inc(int timeout) {
                           "", 0);
                 }
             }
+			ring_buffer_unlock(ssh_client->outputBuffer);
         }
-        ring_buffer_unlock(ssh_client->outputBuffer);
     }
 
     /* Return a character from the local buffer if its not empty */
@@ -2150,6 +2151,7 @@ int ssh_xin(int count, char * buffer) {
     if(ring_buffer_lock(ssh_client->outputBuffer, 0)) {
         if (ssh_client == NULL) {
             debug(F100, "ssh_xin - no instance", "", 0);
+			ring_buffer_unlock(ssh_client->outputBuffer);
             return SSH_ERR_NO_INSTANCE;
         }
 

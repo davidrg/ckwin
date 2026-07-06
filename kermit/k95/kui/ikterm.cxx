@@ -436,26 +436,32 @@ BOOL IKTerm::getCursorPos()
 
     vbuf = &(vscrn[vnum]);
     vscrn_page_t *page = &vscrn_view_page(vmode);
+	int cursor_page = vbuf->cursor.p;
+	int cursor_x = vbuf->cursor.x;
+	int cursor_y = vbuf->cursor.y;
+	int page_top = page->top;
+	int page_linecount = page->linecount;
+	int page_scrolltop = page->scrolltop;
+	ReleaseVscrnMutex(vnum) ;
 
     char buf[30];
-    if (vscrn[vnum].cursor.p == 0) {
-        ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
-                  ckitoa(vbuf->cursor.y+1),NULL);
+    if (cursor_page == 0) {
+        ckmakmsg(buf,30,ckitoa(cursor_x+1),", ", ckitoa(cursor_y+1),NULL);
     } else if (!on_alternate_buffer(vnum)) {
-        ckmakxmsg(buf,30,ckitoa(vscrn[vnum].cursor.p+1),"(",
-                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+        ckmakxmsg(buf,30,ckitoa(cursor_page+1),"(",
+                  ckitoa(cursor_x+1),", ", ckitoa(cursor_y+1), ")",
                   NULL,NULL,NULL,NULL,NULL,NULL);
     } else { /* cursor is on the alternate screen */
         ckmakxmsg(buf,30,"A(",
-                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+                  ckitoa(cursor_x+1),", ", ckitoa(cursor_y+1), ")",
                   NULL,NULL,NULL,NULL,NULL,NULL,NULL);
     }
     KuiSetTerminalStatusText(STATUS_CURPOS, buf);
 
     /* only calculated an offset if Roll mode is INSERT */
     if( scrollstatus[vnum] && tt_roll[vnum] && markmodeflag[vnum] == notmarking ) {
-        cursor_offset = (page->top + page->linecount - page->scrolltop)
-                        % page->linecount;
+        cursor_offset = (page_top + page_linecount - page_scrolltop)
+                        % page_linecount;
     }
     else {
         cursor_offset = 0;
@@ -463,16 +469,16 @@ BOOL IKTerm::getCursorPos()
 
     ys = VscrnGetHeightEx( vnum, FALSE );
     if( (!cursorena[vnum] || !cursor_on_visible_page(vnum)
-            || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0))
+            || cursor_y + cursor_offset >= ys -(tt_status[vnum]?1:0))
             && markmodeflag[vnum] == notmarking ) {
         kcp->cursorVisible = FALSE;
     }
     else {
-        kcp->cursorPt.x = vbuf->cursor.x;
-        kcp->cursorPt.y = vbuf->cursor.y + cursor_offset;
+        kcp->cursorPt.x = cursor_x;
+        kcp->cursorPt.y = cursor_y + cursor_offset;
         kcp->cursorVisible = TRUE;
     }
-    ReleaseVscrnMutex(vnum) ;
+
     return kcp->cursorVisible;
 }
 

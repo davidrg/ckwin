@@ -1891,8 +1891,10 @@ sysinit() {
     CreateAlarmMutex( FALSE ) ;
 #ifndef NOLOCAL
     CreateScreenMutex( FALSE ) ;
-    CreateVscrnMutex( FALSE ) ;
+    CreateVscrnMutex(  ) ;
+#ifdef OLDDIRTY
     CreateVscrnDirtyMutex( FALSE );
+#endif /* OLDDIRTY */
     CreateConnectModeMutex( FALSE ) ;
 #endif /* NOLOCAL */
     CreateThreadMgmtMutex( FALSE );
@@ -1918,7 +1920,9 @@ sysinit() {
     CreateTermScrnUpdThreadDownSem( FALSE ) ;
     CreateConKbdHandlerThreadDownSem( FALSE ) ;
     CreateKeyMapInitSem( FALSE ) ;
+#ifndef KUIDIRTY
     CreateVscrnDirtySem( TRUE );
+#endif /* KUIDIRTY */
 #endif /* NOLOCAL */
     CreateZoutDumpMutex( FALSE );
 
@@ -2495,11 +2499,14 @@ syscleanup() {
 
     le_clean();
 
+	/* TODO: A lot of this should probably done for KUI too! */
     CloseAlarmMutex() ;
 #ifndef NOLOCAL
     CloseScreenMutex() ;
     CloseVscrnMutex() ;
+#ifdef OLDDIRTY
     CloseVscrnDirtyMutex() ;
+#endif /* OLDDIRTY */
     CloseConnectModeMutex() ;
     CloseCommandModeSem() ;
     CloseTerminalModeSem() ;
@@ -4399,6 +4406,10 @@ le_inbuf( void ) {
     }
     ReleaseLocalEchoMutex() ;
     return rc ;
+}
+
+int le_hasdata() {
+	return LocalEchoData;
 }
 
 int

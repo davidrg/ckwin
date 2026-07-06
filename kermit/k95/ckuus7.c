@@ -1433,7 +1433,7 @@ int tt_rkeys_saved[VNUM] = {1,1,1,1};   /* Terminal roll keys (send, saved) */
 int tt_pacing = 0;                      /* Terminal output-pacing (none) */
 int tt_ctstmo = 15;                     /* Terminal transmit-timeout */
 int tt_codepage = -1;                   /* Terminal code-page */
-int tt_update = 100;                    /* Terminal screen-update interval */
+int tt_update = 20;                     /* Terminal screen-update interval */
 int tt_updmode = TTU_FAST;              /* Terminal screen-update mode FAST */
 extern int decssdt;
 extern int updmode;
@@ -5520,7 +5520,7 @@ settrm() {
         } else {
             y = cmnum(
             "Pause between FAST screen updates in CONNECT mode, milliseconds",
-                      "100",10,&x,xxstring
+                      "100",20,&x,xxstring
                       );
             if (x < 0 || x > 1000 ) {
                 printf(

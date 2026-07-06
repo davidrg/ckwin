@@ -143,7 +143,7 @@ OBJS =  $(OUTDIR)/ckcmai$(O)  $(OUTDIR)/ckcfns$(O)  $(OUTDIR)/ckcfn2$(O) \
 		$(OUTDIR)/cknnbi$(O)  $(OUTDIR)/ckop$(O)    $(OUTDIR)/p_callbk$(O) \
 		$(OUTDIR)/p_global$(O) $(OUTDIR)/p_omalloc$(O) $(OUTDIR)/p_error$(O) \
 		$(OUTDIR)/p_common$(O) $(OUTDIR)/p_tl$(O)   $(OUTDIR)/p_dir$(O) \
-		$(OUTDIR)/ckoads$(O)  $(OUTDIR)/ckosnd$(O)
+		$(OUTDIR)/ckoads$(O)  $(OUTDIR)/ckosnd$(O)  $(OUTDIR)/ckorbf$(O)
 
 # For SSH-enabled builds
 #OBJS = $(OBJS)  ckossh$(O) ckolssh$(O) ckorbf$(O) ckolsshs$(O)
@@ -393,7 +393,7 @@ $(OUTDIR)/ckomou$(O): ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h \
 $(OUTDIR)/ckoreg$(O): ckoreg.c ckcdeb.h ckoker.h ckclib.h ckcker.h
 $(OUTDIR)/ckonet$(O): ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h \
 	ckcnet.h ckctel.h ckonet.h ckotcp.h ckonbi.h ckuusr.h ckcsig.h cknwin.h \
-	ckowin.h ckuath.h ck_ssl.h ckossh.h ckossl.h ckosslc.h
+	ckowin.h ckuath.h ck_ssl.h ckossh.h ckossl.h ckosslc.h ckorbf.h
 $(OUTDIR)/ckoslp$(O): ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h
 $(OUTDIR)/ckosyn$(O): ckosyn.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckocon.h \
 	ckuusr.h ckntap.h

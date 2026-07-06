@@ -130,16 +130,19 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 OPT = /O1
 !else
 # Enable most speed optimizations
-OPT = /Ox
+OPT = /O2
 !endif
 
 CFLAGS    = /c /W3 $(RTFLAG) $(OPT) /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR) \
 			$(COMMON_CFLAGS)
 CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 \
                 -DNT -DOS2 -DDYNAMIC -DNETCONN -DTCPSOCKET \
-                -DHADDRLIST -DSCRIPTTERM -DOS2TEST -DKUI \
+                -DHADDRLIST -DSCRIPTTERM -DOS2TEST -DKUI -DKUIDIRTY \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
+!if "$(KUI_BUILD)" == "k95g"
+CDEFINES = $(CDEFINES)  -DKUIDIRTY
+!endif
 !if "$(CMP)" == "VCXX"
 LFLAGS    = /NOLOGO /SUBSYSTEM:windows /NOD
 !else
@@ -193,6 +196,9 @@ CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 #  /D_X86_
+!if "$(KUI_BUILD)" == "k95g"
+CDEFINES = $(CDEFINES)  -DKUIDIRTY
+!endif
 
 !if "$(CMP)" == "VCXX"
 LFLAGS    = /NOLOGO /DEBUG:full /SUBSYSTEM:windows /DEBUGTYPE:cv /NOD
