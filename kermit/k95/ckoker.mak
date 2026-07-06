@@ -87,8 +87,7 @@ COMMON_CFLAGS = /MD
 # Visual C++ 2002 and newer
 COMMON_CFLAGS = $(COMMON_CFLAGS) /RTCsu
 !else
-# Enable most speed optimizations
-COMMON_OPTS = /Ox
+COMMON_OPTS = /O2
 !endif
 
 # These are:
@@ -494,7 +493,7 @@ msvc-sshdll:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536 /DCK_SSH_DLL" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -507,7 +506,7 @@ msvc-sshdlld:
     OPT="$(COMMON_OPTS)" \
     DEBUG="$(DEBUG_COPT)" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536 /DCK_SSH_DLL" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -633,7 +632,7 @@ k95gd:
 	OPT="" \
     DEBUG="$(DEBUG_COPT) /Odi" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DKUIDIRTY /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -648,7 +647,7 @@ k95g:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DKUIDIRTY /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -1053,6 +1052,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckuusy$(O) ckuxla$(O) ckclib$(O) ckctel$(O) ckcuni$(O) ckcftp$(O) \
 !if "$(PLATFORM)" == "NT"
         cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O) cknpty$(O) \
+        ckorbf$(O) \
 !else
         ckusig$(O) \
 !endif
@@ -1064,7 +1064,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 !if ("$(CKF_SSH)" == "yes")
         ckossh$(O) \
 !if ("$(CKF_DYNAMIC_SSH)" != "yes")
-        ckolssh$(O) ckorbf$(O) ckolsshs$(O) \
+        ckolssh$(O) ckolsshs$(O) \
 !endif
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
@@ -1427,9 +1427,9 @@ nullssh.dll: ckonssh.obj ckoker.mak
 !endif
 !endif
 
-k95ssh.dll: ckolssh.obj ckolsshs.obj ckorbf.obj k95ssh.res ckoker.mak
+k95ssh.dll: ckolssh.obj ckolsshs.obj ckorbfd.obj k95ssh.res ckoker.mak
 	link /dll /debug /def:k95ssh.def /out:$@ ckolssh.obj ckolsshs.obj \
-	    ckorbf.obj k95ssh.res $(SSH_LIB) ws2_32.lib
+	    ckorbfd.obj k95ssh.res $(SSH_LIB) ws2_32.lib
 
 k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
 	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
@@ -1627,7 +1627,7 @@ ckctel$(O):	ckctel.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckctel.h ckcnet.h ckoco
                 ckossl.h ckosslc.h
 ckonet$(O):	    ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \
                 ckotcp.h ckonbi.h ckuusr.h ckcsig.h cknwin.h ckowin.h ckuath.h ckossh.h \
-                ck_ssl.h ckossl.h ckosslc.h
+                ck_ssl.h ckossl.h ckosslc.h ckorbf.h
 !if "$(PLATFORM)" == "NT"
 cknnbi$(O):     cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
 !else
@@ -1672,6 +1672,11 @@ ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 ckolssh$(O):    ckolsshs.h ckolsshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckolssh.c ckolssh.h ckossh.h
 ckolsshs$(O):   ckolsshs.c ckolsshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
 ckorbf$(O):     ckorbf.c ckorbf.h ckcdeb.h
+
+# A variant of the ring buffer for use in DLLs. This comes with its own msleep
+# implementatino and a few other things.
+ckorbfd$(O):    ckorbf.c ckorbf.h ckcdeb.h
+    $(CC) $(CC2) $(CFLAGS) /DCK_SSH_DLL $(DEBUG) $(OPT) $(DEFINES) $(NOLINK) /Fockorbfd$(O) -c ckorbf.c
 
 ckossh$(O):     ckossh.c ckossh.h ckcdeb.h ckuusr.h ckcker.h ckocon.h ckoreg.h
 

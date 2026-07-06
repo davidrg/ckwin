@@ -146,12 +146,14 @@ _PROTOTYP( APIRET WaitAndResetKeyMapInitSem, (unsigned long) ) ;
 _PROTOTYP( APIRET ResetKeyMapInitSem, (void) ) ;
 _PROTOTYP( APIRET CloseKeyMapInitSem, ( void ) ) ;
 
+#ifndef KUIDIRTY
 _PROTOTYP( APIRET CreateVscrnDirtySem, (BOOL) ) ;
 _PROTOTYP( APIRET PostVscrnDirtySem, (int) ) ;
 _PROTOTYP( APIRET WaitVscrnDirtySem, (int, unsigned long) ) ;
 _PROTOTYP( APIRET WaitAndResetVscrnDirtySem, (int, unsigned long) ) ;
 _PROTOTYP( APIRET ResetVscrnDirtySem, (int) ) ;
 _PROTOTYP( APIRET CloseVscrnDirtySem, ( void ) ) ;
+#endif /* KUIDIRTY */
 
 #ifndef KUI
 _PROTOTYP( APIRET CreateVscrnTimerSem, (BOOL) ) ;
@@ -184,15 +186,17 @@ _PROTOTYP( APIRET RequestScreenMutex, (unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseScreenMutex, (void) ) ;
 _PROTOTYP( APIRET CloseScreenMutex, (void) ) ;
 
-_PROTOTYP( APIRET CreateVscrnMutex, (BOOL) ) ;
+_PROTOTYP( APIRET CreateVscrnMutex, () ) ;
 _PROTOTYP( APIRET RequestVscrnMutex, (int, unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseVscrnMutex, (int) ) ;
 _PROTOTYP( APIRET CloseVscrnMutex, (void) ) ;
 
+#ifdef OLDDIRTY
 _PROTOTYP( APIRET CreateVscrnDirtyMutex, (BOOL) ) ;
 _PROTOTYP( APIRET RequestVscrnDirtyMutex, (int, unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseVscrnDirtyMutex, (int) ) ;
 _PROTOTYP( APIRET CloseVscrnDirtyMutex, (void) ) ;
+#endif /* OLDDIRTY */
 
 _PROTOTYP( APIRET CreateConnectModeMutex, (BOOL) ) ;
 _PROTOTYP( APIRET RequestConnectModeMutex, (unsigned long) ) ;

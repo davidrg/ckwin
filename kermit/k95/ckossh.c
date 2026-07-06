@@ -1348,6 +1348,7 @@ int ssh_set_environment_variable(const char *name, const char *value) {
 int ssh_clear_environment_variables() {
     if (dllfuncp_ssh_clear_environment_variables)
         return dllfuncp_ssh_clear_environment_variables();
+    return -1;
 }
 
 /** Gets the specified keyword table.

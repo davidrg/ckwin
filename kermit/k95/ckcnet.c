@@ -406,6 +406,7 @@ extern char ttname[];
 #ifdef CK_AUTHENTICATION
 #include "ckuusr.h"
 #endif /* CK_AUTHENTICATION */
+int le_hasdata();
 #endif /* OS2 */
 
 #ifdef NT
@@ -6449,7 +6450,11 @@ netinc(timo) int timo;
     }
 
 #ifdef LEBUF
-    if (le_inbuf() > 0) {               /* If data was inserted into the */
+    if (
+    #ifdef OS2
+            le_hasdata() &&
+    #endif /* OS2 */
+            le_inbuf() > 0) {               /* If data was inserted into the */
         if (le_getchar((CHAR *)&c) > 0) {/* Local Echo buffer while the   */
 #ifdef OS2                               /* was taking place do not mix   */
           ReleaseTCPIPMutex();           /* the le data with the net data */
