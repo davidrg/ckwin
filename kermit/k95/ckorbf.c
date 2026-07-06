@@ -46,7 +46,11 @@ struct ring_buffer_t {
     size_t tail;
     size_t size;
     BOOL full;
+#ifdef CK_CRITICAL_SECTIONS
+    CRITICAL_SECTION section;
+#else
     HANDLE mutex;
+#endif
 
     /* Error is set by ring_buffer_signal_error. If it is non-zero then all
      * waiting calls to ring_buffer_put_bocking and ring_buffer_get_blocking
@@ -76,6 +80,10 @@ ring_buffer_handle_t ring_buffer_new(size_t max_length) {
     buf->tail = 0;
     buf->full = FALSE;
     buf->error = 0;
+#ifdef CK_CRITICAL_SECTIONS
+    InitializeCriticalSection(&buf->section);
+
+#else /* CK_CRITICAL_SECTIONS */
     buf->mutex = CreateMutex(
             NULL,   /* default security attributes */
             FALSE,  /* initially not owned */
@@ -86,6 +94,7 @@ ring_buffer_handle_t ring_buffer_new(size_t max_length) {
         free(buf);
         return NULL;
     }
+#endif /* CK_CRITICAL_SECTIONS */
     buf->readReady = CreateEvent(NULL, /* Security Attributes */
                                  TRUE, /* Manual Reset */
                                  FALSE, /* Initial state (non-signaled) */
@@ -98,7 +107,11 @@ ring_buffer_handle_t ring_buffer_new(size_t max_length) {
         debug(F100, "Failed to create read/write ready events", "", 0);
         CloseHandle(buf->readReady);
         CloseHandle(buf->writeReady);
+#ifdef CK_CRITICAL_SECTIONS
+        DeleteCriticalSection(&buf->section);
+#else /* CK_CRITICAL_SECTIONS */
         CloseHandle(buf->mutex);
+#endif /* CK_CRITICAL_SECTIONS */
         free(buf->buffer);
         free(buf);
         return NULL;
@@ -134,11 +147,15 @@ void ring_buffer_free(ring_buffer_handle_t buf) {
         }
     }
 
+#ifdef CK_CRITICAL_SECTIONS
+    DeleteCriticalSection(&buf->section);
+#else /* CK_CRITICAL_SECTIONS */
     if (buf->mutex != NULL) {
         HANDLE h = buf->mutex;
         buf->mutex = NULL;
         CloseHandle(h);
     }
+#endif /* CK_CRITICAL_SECTIONS */
     free(buf);
 }
 
@@ -486,6 +503,27 @@ BOOL ring_buffer_consume(ring_buffer_handle_t buf, size_t length) {
 
 
 BOOL ring_buffer_lock(ring_buffer_handle_t buf, DWORD msTimeout) {
+#ifdef CK_CRITICAL_SECTIONS
+    debug(F111, "ring_buffer_lock", "timeout", msTimeout);
+    if (msTimeout == INFINITE) {
+        EnterCriticalSection(&buf->section);
+        return TRUE;
+    } else if (msTimeout == 0) {
+        return TryEnterCriticalSection(&buf->section);
+    } else {
+        /* This is a bit gross, but the platform doesn't provide a timeout
+         * option. */
+        ULONG waited = 0;
+        while (TryEnterCriticalSection(&buf->section) == 0) {
+            msleep(10);
+            waited += 10;
+            if (waited >= msTimeout) {
+                return FALSE; /* Timeout */
+            }
+        }
+        return TRUE;
+    }
+#else /* CK_CRITICAL_SECTIONS */
     DWORD dwWaitResult;
 
     if (buf->mutex == NULL) {
@@ -509,15 +547,21 @@ BOOL ring_buffer_lock(ring_buffer_handle_t buf, DWORD msTimeout) {
             return FALSE;
     }
     return FALSE; /* Should never happen */
+#endif /* CK_CRITICAL_SECTIONS */
 }
 
 
 void ring_buffer_unlock(ring_buffer_handle_t buf) {
+    debug(F100, "ring_buffer_unlock", "", 0);
+#ifdef CK_CRITICAL_SECTIONS
+    LeaveCriticalSection(&buf->section);
+#else /* CK_CRITICAL_SECTIONS */
     if (buf->mutex == NULL) {
         debug(F100, "ringbuf mutex does not exist in ring_buffer_unlock.", "", 0);
         return;
     };
     ReleaseMutex(buf->mutex);
+#endif /* CK_CRITICAL_SECTIONS */
 }
 
 void ring_buffer_signal_error(ring_buffer_handle_t buf, int error) {
