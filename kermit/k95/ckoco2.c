@@ -2083,7 +2083,8 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    line = VscrnGetLineFromTop( vmode, Row, FALSE ) ;
+    line = VscrnGetPageLineFromTop( vmode, Row,
+				vscrn_current_page_number(vmode, FALSE) ) ;
 
     if (line->width == 0) {
         line->width = VscrnGetWidth(vmode)  ;
@@ -2581,7 +2582,8 @@ VscrnGetLineVtAttr( BYTE vmode, SHORT y ) /* zero based */
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    return VscrnGetLineFromTop(vmode,y,FALSE)->vt_line_attr ;
+	return VscrnGetPageLineFromTop(
+		vmode, y, vscrn_current_page_number(vmode, FALSE))->vt_line_attr;
 }
 
 /*---------------------------------------------------------------------------*/
