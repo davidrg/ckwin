@@ -1,3 +1,4 @@
+#include "ckorbf.h"
 #ifdef NT
 char *ckonetv = "Win32 Network support, 10.0, 4 May 2023";
 #else /* NT */
@@ -32,6 +33,23 @@ char *ckonetv = "OS/2 Network support, 8.0.071, 21 Apr 2004";
 
 #define EXTERN
 #include "ckcnet.h"  /* include ckonet.h and this includes ckotcp.h */
+
+#ifdef NETCMD
+
+/* The new faster double buffered implementation is Windows only as the backing
+ * ring buffer relies on Windows thread synchronization APIs. */
+#ifdef NT
+#define NETCMD_RINGBUF
+#else
+#ifdef NETCMD_RINGBUF
+#undef NETCMD_RINGBUF
+#endif /* NETCMD_RINGBUF */
+#endif /* NT */
+
+#ifdef NETCMD_RINGBUF
+#include "ckorbf.h"
+#endif /* NETCMD_RINGBUF */
+#endif /* NETCMD */
 
 #ifndef NETCONN
 /*
@@ -348,8 +366,199 @@ static PID  pid=0;
 #endif /* NT */
 
 
-/* The following functions will provide the interface for the local echo */
-/* buffer to be used when 'duplex' is TRUE                               */
+#ifdef NETCMD_RINGBUF
+/* NetCmd currently comes in two implementations:
+ *   - The old code from Kermit 95 2.1.3 and earlier
+ *   - A new implementation for Windows which is around 87x faster
+ *      (NETCMD_RINGBUF)
+ *
+ * The new faster implementation uses the same strategy as the new SSH subsystem
+ * to try and reduce overhead from locking. The design is based on the
+ * assumption that there will only ever be one reader and one writer active at
+ * any given time. The writer is the NetCmdReadThread while the reader will
+ * either be the doicp thread (for commands like input, etc) or the rdcomwrtscr
+ * thread (for terminal emulation and file transfer).
+ *
+ * The writer writes to a new ring buffer protected by Critical Sections (the
+ * same ring buffer implementation built for the new SSH subsystem), while the
+ * reader threads read from this ring buffer.
+ *
+ * To reduce lock contention, there is a secondary linear buffer shared by
+ * readers. When a single character is requested, it is read from this linear
+ * buffer. If the linear buffer is empty it is refilled from the ring buffer in
+ * a single operation. This saves having to take out a lock for every character
+ * read by the terminal emulator. Bulk reads are primarily served directly from
+ * the ring buffer, but if the linear buffer is non-empty that will be drained
+ * first.
+ *
+ * The NetCmdAvailSem is repurposed to let the writer know that there is space
+ * available in the ring buffer. Whenever the ring buffer is full the writer
+ * wait on the NetCmdAvailSem, and whenever a reader pulls data from the ring
+ * buffer it posts the NetCmdAvailSem to unblock the writer.
+ *
+ * The new implementation is currently Windows only because:
+ *    - The effort required to test it on OS/2 is likely not worthwhile given
+ *      the limited demand on that platform
+ *    - The backing ring buffer currently relies on Windows thread
+ *      synchronization APIs.
+ */
+#define NET_CMD_BUFSIZE 1024*1024
+ring_buffer_handle_t NetCmdRingbuf = 0;
+
+#define NETCMD_INPUT_BUFFER_SIZE 1024
+static char netcmd_input_buffer[NETCMD_INPUT_BUFFER_SIZE];
+static int netcmd_input_buffer_idx = NETCMD_INPUT_BUFFER_SIZE;
+static int netcmd_input_buffer_len = 0;
+
+void
+NetCmdInit( void ) {
+    NetCmdRingbuf = ring_buffer_new(NET_CMD_BUFSIZE);
+    PostNetCmdAvailSem();
+}
+
+void
+NetCmdCleanup( void ) {
+    ring_buffer_free(NetCmdRingbuf);
+}
+
+int
+NetCmdInBuf( void ) {
+    int rc = 0;
+
+    /* If there is data waiting in the local buffer, report that. Because this
+     * may be called from multiple different threads, its possible we may end
+     * up returning out-of-date information, but that mostly shouldn't matter.
+     * This function is mostly called by the doicp thread after making a
+     * connection to check it succeeded, and periodically by the isconnect
+     * thread to see if we're still connected. Neither care about how much data
+     * is waiting. */
+    rc = netcmd_input_buffer_len - netcmd_input_buffer_idx;
+    if (rc > 0) {
+        return rc;
+    }
+
+    /* Return number of characters waiting to be received */
+    if (ring_buffer_lock(NetCmdRingbuf, SEM_INDEFINITE_WAIT)) {
+        rc = ring_buffer_length(NetCmdRingbuf);
+        ring_buffer_unlock(NetCmdRingbuf);
+    } /* Else failed to get lock on the ringbuffer -
+            let the caller try again later */
+    return rc;
+}
+
+int
+NetCmdGetCharTimout( char * pch , int timeout)
+{
+    int timeout_ms, rc;
+
+    /* We *really* should be using locks around this. But the whole point of
+     * this code is to improve throughput, and we do that by *not* using
+     * locking. This code *should*, I hope, be safe enough without locks though
+     * because this function should never be called from two threads at the
+     * same time. The doicp thread will call it for handling commands like
+     * input, while the rdcomwrtscr thread will call it for terminal emulation
+     * but only one of those threads will be active at any given time. */
+    if (netcmd_input_buffer_idx >= netcmd_input_buffer_len) {
+        if (ring_buffer_lock(NetCmdRingbuf, 0)) {
+            if (ring_buffer_length(NetCmdRingbuf) > 1) {
+                rc = ring_buffer_read(NetCmdRingbuf,
+                                      &netcmd_input_buffer,
+                                      NETCMD_INPUT_BUFFER_SIZE);
+                netcmd_input_buffer_idx = 0;
+                netcmd_input_buffer_len = rc;
+            }
+            ring_buffer_unlock(NetCmdRingbuf);
+            PostNetCmdAvailSem();
+        }
+    }
+
+    /* Return a character from the local buffer if its not empty */
+    if (netcmd_input_buffer_idx < netcmd_input_buffer_len) {
+        *pch = netcmd_input_buffer[netcmd_input_buffer_idx++];
+        return 1;
+    }
+
+    /* If the local buffer is empty, then do a blocking read from the ring
+     * buffer with a timeout to wait for data to arrive. */
+
+    if (timeout == 0) {
+        timeout_ms = INFINITE; /* Infinite timeout */
+    } else if (timeout < 0) {
+        timeout_ms = timeout * -1; /* timeout is in milliseconds already */
+    } else {
+        timeout_ms = timeout * 1000; /* timeout is in seconds - convert */
+    }
+
+    /* If an infinite timeout was requested then repeat the call until we get
+     * a value other than try again */
+    do {
+        rc = ring_buffer_get_blocking(NetCmdRingbuf, pch, timeout_ms);
+    } while (timeout == 0 && rc == RING_BUFFER_TRY_AGAIN);
+
+    if (rc == RING_BUFFER_SUCCESS) {
+        return 1;
+    }
+    return 0;
+}
+
+int
+NetCmdGetChars(int count, char* buffer) {
+    int rc;
+
+    /* If we have some data buffered locally, just return it from there */
+    if (netcmd_input_buffer_idx < netcmd_input_buffer_len) {
+        int len = netcmd_input_buffer_len - netcmd_input_buffer_idx;
+        if (count < len) len = count;
+
+        memset(buffer, 0, count);
+        memcpy(buffer, &netcmd_input_buffer[netcmd_input_buffer_idx], len);
+        netcmd_input_buffer_idx = netcmd_input_buffer_idx + len;
+
+        return len;
+    }
+
+    if (ring_buffer_lock(NetCmdRingbuf, INFINITE)) {
+        rc = ring_buffer_read(NetCmdRingbuf, buffer, count);
+        ring_buffer_unlock(NetCmdRingbuf);
+        PostNetCmdAvailSem();
+    }
+    return rc;
+}
+
+void
+NetCmdReadThread( void *pipe ) {
+    int success = 1;
+    size_t avail = 0;
+    DWORD io;
+    char* buf = malloc(sizeof(char) * NET_CMD_BUFSIZE);
+
+    while ( success && ttyfd != -1 ) {
+        if (ring_buffer_lock(NetCmdRingbuf, INFINITE)) {
+            avail = ring_buffer_free_space(NetCmdRingbuf);
+            ring_buffer_unlock(NetCmdRingbuf);
+
+            if (!avail) {
+                /* Wait until there is some free space in the ring buffer, then
+                 * try again */
+                WaitNetCmdAvailSem(1000);
+                continue;
+            }
+
+            if (ReadFile((HANDLE)pipe, buf, avail, &io, NULL )) {
+                if (ring_buffer_lock(NetCmdRingbuf, INFINITE)) {
+                    ring_buffer_write(NetCmdRingbuf, buf, io);
+                    ring_buffer_unlock(NetCmdRingbuf);
+                }
+            }
+        }
+    }
+    free(buf);
+}
+
+#else
+/* The following functions provide a simple ring buffer used by NetCmd.  */
+/* These use quite heavy locking so can be a bit slow (about 80x slower  */
+/* than the newer implementation above some very unscientific benchmarks)*/
 
 #define NET_CMD_BUFSIZE 512
 static USHORT NetCmdBuf[NET_CMD_BUFSIZE] ;
@@ -493,6 +702,7 @@ NetCmdReadThread( void *pipe )
     }
 }
 #endif  /* NT */
+#endif /* NETCMD_RINGBUF */
 #endif /* NETCMD */
 
 #ifdef NETDLL
@@ -2396,6 +2606,9 @@ os2_netxin(int n, char * buf) {
         if (n > len) {
             copysize = len;
         }
+#ifdef NETCMD_RINGBUF
+        return NetCmdGetChars(copysize, buf);
+#else
         RequestNetCmdMutex( SEM_INDEFINITE_WAIT ) ;
         for (i = 0; i < copysize; i++) {
             char c = 0;
@@ -2408,6 +2621,7 @@ os2_netxin(int n, char * buf) {
             }
         }
         ReleaseNetCmdMutex() ;
+#endif /* NETCMD_RINGBUF */
         return rc;
     }
 #endif
@@ -2967,7 +3181,14 @@ os2_netinc(timo) int timo; {
     if ( nettype == NET_CMD || nettype == NET_PTY ) {
         CHAR  c ;
 
+#ifdef NETCMD_RINGBUF
+        if (NetCmdGetCharTimout(&c,timo<0?-timo:timo*1000))
+            return c;
+        else
+            return -1;
+#else
         if ( !WaitNetCmdAvailSem(timo<0?-timo:timo*1000) ) {
+
             if (NetCmdGetChar(&c))
                 return(c);
             else
@@ -2975,6 +3196,7 @@ os2_netinc(timo) int timo; {
         }
         else
             return(-1);
+#endif /* NETCMD_RINGBUF */
     }
 #endif /* NETCMD */
 #ifdef NETDLL
