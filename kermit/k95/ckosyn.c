@@ -41,7 +41,9 @@ HANDLE hmtxTCPIP = (HANDLE) 0 ;
 #endif /* CK_CRITICAL_SECTIONS */
 HANDLE hmtxComm = (HANDLE) 0;
 #ifdef NETCMD
+#ifndef CK_CRITICAL_SECTIONS
 HANDLE hmtxNetCmd = (HANDLE) 0 ;
+#endif /* CK_CRITICAL_SECTIONS */
 #endif /* NETCMD */
 HANDLE hmtxKeyboard  = (HANDLE) 0 ;
 HANDLE hmtxAlarm = (HANDLE) 0 ;
@@ -206,6 +208,9 @@ int AlarmSigCount = -1 ;
 CRITICAL_SECTION csVscrn[VNUM] ;
 CRITICAL_SECTION csTCPIP ;
 CRITICAL_SECTION csLocalEcho ;
+#ifdef NETCMD
+CRITICAL_SECTION csNetCmd ;
+#endif /* NETCMD */
 #endif /* CK_CRITICAL_SECTIONS */
 
 /* Semaphore functions */
@@ -3646,6 +3651,10 @@ CloseLocalEchoAvailSem( void )
 APIRET
 CreateNetCmdMutex( BOOL owned )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    InitializeCriticalSection(&csNetCmd);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
     if ( hmtxNetCmd )
 #ifdef NT
         CloseHandle( hmtxNetCmd ) ;
@@ -3657,11 +3666,16 @@ CreateNetCmdMutex( BOOL owned )
     DosCreateMutexSem( NULL, &hmtxNetCmd, 0, owned ) ;
 #endif /* NT */
     return 0;
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 RequestNetCmdMutex( ULONG timo )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    EnterCriticalSection(&csNetCmd);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     DWORD rc = 0 ;
 
@@ -3670,11 +3684,16 @@ RequestNetCmdMutex( ULONG timo )
 #else /* not NT */
     return DosRequestMutexSem( hmtxNetCmd, timo ) ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 ReleaseNetCmdMutex( void )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    LeaveCriticalSection(&csNetCmd);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     BOOL rc = 0 ;
 
@@ -3683,11 +3702,16 @@ ReleaseNetCmdMutex( void )
 #else /* not NT */
     return DosReleaseMutexSem( hmtxNetCmd ) ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 APIRET
 CloseNetCmdMutex( void )
 {
+#ifdef CK_CRITICAL_SECTIONS
+    DeleteCriticalSection(&csNetCmd);
+    return 0;
+#else  /* CK_CRITICAL_SECTIONS */
 #ifdef NT
     BOOL rc = 0 ;
     rc = CloseHandle( hmtxNetCmd ) ;
@@ -3699,6 +3723,7 @@ CloseNetCmdMutex( void )
     hmtxNetCmd = 0 ;
     return rc ;
 #endif /* NT */
+#endif   /* CK_CRITICAL_SECTIONS */
 }
 
 
