@@ -8,6 +8,7 @@ extern enum markmodes markmodeflag[] ;
 extern vscrn_t vscrn[VNUM]; /* = {0,0,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0}; */
 extern int inecho;          /* do we echo script INPUT output? */
 extern int updmode ;
+extern bool in_smooth_scroll;
 extern int priority ;
 extern cell_video_attr_t defaultattribute ;
 extern int cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[];
@@ -132,6 +133,17 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
         yo = (ys - vbuf->popup->height) / 2 ;
     }
 
+    unsigned long page_top = page->top;
+    unsigned long page_scrolltop = page->scrolltop;
+
+    bool smooth_scrolling = updmode == TTU_SMOOTH && in_smooth_scroll && !scrollflag[vnum];
+    if (smooth_scrolling) {
+        /* Increase the height so we have both the old top and new bottom in the
+         * buffer */
+        ys += 1;
+        page_top -= 1;
+    }
+
     textBuffer = kcp->textBuffer;
     attrBuffer = kcp->attrBuffer;
     effectBuffer = kcp->effectBuffer;
@@ -160,9 +172,9 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
 #endif /* NEW_EXCLUSIVE */
             /* Get the next line */
             if (!scrollflag[vnum])
-                line = &page->lines[(page->top+y)%page->linecount] ;
+                line = &page->lines[(page_top+y)%page->linecount] ;
             else
-                line = &page->lines[(page->scrolltop+y)%page->linecount] ;
+                line = &page->lines[(page_scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -225,8 +237,8 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                 }
 
 #ifdef VSCRN_DEBUG
-                debug(F101,"OUCH!","",(scrollflag?(page->scrolltop+y)
-                                    :(page->top+y))%page->linecount);
+                debug(F101,"OUCH!","",(scrollflag?(page_scrolltop+y)
+                                    :(page_top+y))%page->linecount);
 #endif /* VSCRN_DEBUG */
             }
 
@@ -265,7 +277,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
             if ( RequestVscrnMutex( vnum, -1 ) )
                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
-            line = &page->lines[(page->scrolltop+y)%page->linecount] ;
+            line = &page->lines[(page_scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -274,7 +286,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
 
             if (line->cells)
             {
-                if ( VscrnIsLineMarked(vnum,page->scrolltop+y) )
+                if ( VscrnIsLineMarked(vnum,page_scrolltop+y) )
                 {
                     for ( x = 0 ; x < xs ; x++ )
                     {

@@ -212,6 +212,9 @@ extern bool scrollstatus[] ;
 bool    viewonly = FALSE ;              /* View only terminal mode */
 int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
 int     priority        = XYP_REG ;
+#ifdef KUI
+bool    in_smooth_scroll = FALSE;
+#endif /* KUI */
 
 int tn_bold = 0;                        /* TELNET negotiation bold */
 int esc_exit = 0;                       /* Escape back = exit */

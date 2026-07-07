@@ -44,6 +44,8 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int tt_update;
+extern int updmode ;
+extern bool in_smooth_scroll;
 extern vscrn_t vscrn[];
 extern int scrollflag[];
 extern enum markmodes markmodeflag[] ;
@@ -188,6 +190,8 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , ws_blinking( 0 )
     , cursor_displayed( 0 )
     , screenNormal(FALSE)
+    , smoothScrollProgress( 0.0 )
+    , smoothScrollTime( 0 )
 {
     InitializeCriticalSection(&csDraw);
 
@@ -765,6 +769,8 @@ void KClient::checkBlink()
      * besides the cursor.*/
     if (ws_blinking && ((blinkOn && cursorCount == blinkInterval) || (cursorCount == 0)) )
         writeMe();
+    else if (smoothScrolling())
+        writeMe();
 
     else if (cursorCount%300 == 0) {
         if (ikterm->getCursorPos() && (_inFocus || (!_inFocus && cursor_displayed)))
@@ -824,6 +830,12 @@ void KClient::syncSize()
 }
 
 /*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+bool KClient::smoothScrolling() {
+    return updmode == TTU_SMOOTH && vmode == VTERM && in_smooth_scroll;
+}
+
+/*------------------------------------------------------------------------
     update the memory DC with all the drawing and then copy it 
     into the screen DC.  Also update the cursor position.
 ------------------------------------------------------------------------*/
@@ -831,6 +843,25 @@ void KClient::writeMe()
 {
     int twid, thi, hisv;
     //debug(F100,"KClient::writeMe()","",0);
+
+    if (smoothScrolling()) {
+        smoothScrollTime += tt_update;
+
+        // Update progress. The speeds are:
+        //  VT520, Slow - 9 lines per second, or 111.111ms per line
+        //  VT520, Fast - 18 lines per second, or 55.555ms per line
+        //  VT420, Slow - ?
+        //  VT420, Fast - ?
+        //  VT320         ?
+        //  VT220         6 lines per second
+        //  VT100         6 lines per second (60Hz power)
+        //                5 lines per second (50Hz power
+        // if (FAST) {
+        //    smoothScrollProgres = smoothScrollTime / 55.555;
+        //} else {  // Slow
+            smoothScrollProgress = smoothScrollTime /  111.111;
+        //}
+    }
 
     ::getDimensions( vmode /* clientID */, &twid, &thi );
     hisv = horz->isVisible();
@@ -853,6 +884,9 @@ void KClient::writeMe()
         syncSize();
     }
 
+    // Make sure soft-fonts are ready
+    softFont.refresh(twid, thi - tt_status[vmode]);
+
     int w, h;
     getSize( w, h );
 
@@ -862,6 +896,10 @@ void KClient::writeMe()
     r.top = 0;
     r.right = w;
     r.bottom = h;
+
+    if (smoothScrolling() && !scrollflag[VTERM]) {
+        r.bottom += font->getFontSpacedH();
+    }
 
     DWORD rgb = cell_video_attr_background_rgb(geterasecolor(vmode));
     if ( rgb != savebgcolor ) {
@@ -881,9 +919,6 @@ void KClient::writeMe()
             : cell_video_attr_foreground_rgb(colornormal);
         ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
     }
-
-    // Make sure soft-fonts are ready
-    softFont.refresh(twid, thi - tt_status[vmode]);
 
     // Figure out which soft fonts are valid
     int validSoftFonts[DRCS_BUFFERS];
@@ -1176,7 +1211,8 @@ void KClient::writeMe()
     }
 
     // Draw the cursor
-    if( clientPaint->cursorVisible && cursor_displayed && _inFocus) {
+    if( clientPaint->cursorVisible && cursor_displayed && _inFocus &&
+            !smoothScrolling()) {
         int adjustedH = font->getFontH();
         if( tt_cursor == 2 )        // full
             ;
@@ -1208,7 +1244,34 @@ void KClient::writeMe()
     } else 
 #endif /* COMMENT */
     {
-        BitBlt( hdcScreen(), 0, 0, w, h, hdc(), 0, 0, SRCCOPY );
+        if (smoothScrolling() && !scrollflag[vmode]) {
+            int offset = 0;
+            int lineHeight = font->getFontSpacedH();
+
+            if (tt_status[vmode]) {
+                BitBlt(hdcScreen(),
+                    0, lineHeight * (thi - 1), w, lineHeight,
+                    hdc(), 0, thi * lineHeight,
+                    SRCCOPY);
+            }
+
+            offset = (int)(smoothScrollProgress * lineHeight);
+
+            if (offset > lineHeight) {
+                offset = lineHeight;
+            }
+
+            // Copy everything except the status line
+            BitBlt( hdcScreen(),
+                0, 0, w, lineHeight * (thi - (tt_status[vmode]?1:0)),
+                hdc(),
+                0, offset, SRCCOPY );
+
+            // Now grab the status line
+
+        } else {
+            BitBlt( hdcScreen(), 0, 0, w, h, hdc(), 0, 0, SRCCOPY );
+        }
     }
 
     // adjust the vertical scrollbar
@@ -1233,6 +1296,14 @@ void KClient::writeMe()
     vert->setPos( vscrollpos );
     hscrollpos = VscrnGetScrollHorz(vmode);
     horz->setPos( hscrollpos );
+
+    if (smoothScrollProgress >= 1) {
+        // Finished the smooth scroll event. Unblock scrolling.
+        smoothScrollProgress = 0;
+        smoothScrollTime = 0;
+        in_smooth_scroll = FALSE;
+        PostSmoothScrollFinishedSem();
+    }
 }
 
 void KClient::SetWorkStoreRect(RECT* rect, _K_WORK_STORE* kws, KFont *font,

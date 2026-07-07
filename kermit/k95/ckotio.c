@@ -1904,6 +1904,7 @@ sysinit() {
     CreateCommMutex( FALSE );
 #ifdef KUI
     CreateDRCSBufferCriticalSection();
+    CreateSmoothScrollFinishedSem(FALSE);
 #endif /* KUI */
 #ifdef CK_SSL
     CreateSSLMutex( FALSE );
@@ -2519,6 +2520,7 @@ syscleanup() {
     CloseAlarmSem() ;
 #ifdef KUI
     CloseDRCSBufferCriticalSection();
+    CloseSmoothScrollFinishedSem();
 #endif /* KUI */
 #ifdef CK_SSL
     CloseSSLMutex() ;

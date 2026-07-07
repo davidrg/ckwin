@@ -133,6 +133,8 @@ private:    // this section is for performance
         long maxcells,
         uchar** workTempOut);
 
+    bool smoothScrolling();
+
     CRITICAL_SECTION csDraw;
 
     IKTerm* ikterm;
@@ -196,6 +198,9 @@ private:    // this section is for performance
     long _msgret;
 
     KSoftFont softFont;
+
+    double smoothScrollProgress;
+    long smoothScrollTime;
 };
 
 #endif

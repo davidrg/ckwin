@@ -89,6 +89,9 @@ int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD | VT_CHAR_ATTR_UNDERLINE;
 int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
 #endif /* KUI */
 extern int updmode ;
+#ifdef KUI
+extern bool in_smooth_scroll;
+#endif /* KUI */
 extern int priority ;
 extern int tt_modechg;
 extern cell_video_attr_t defaultattribute ;
@@ -3694,6 +3697,15 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     static vt_cell_attr_t blank_cell_attrs[MAXTERMCOL];
 #endif /* KUI */
 
+#ifdef KUI
+    // TODO: only if the view page
+    if (updmode == TTU_SMOOTH && vmode == VTERM && in_smooth_scroll
+        && page == vscrn_current_page_number(VTERM, TRUE) && updown == UPWARD) {
+        /* Wait for the last scroll to finish. */
+        WaitSmoothScrollFinishedSem(5000);
+    }
+#endif /* KUI */
+
     if ( fillchar == NUL )
         fillchar = SP ;
 
@@ -3723,8 +3735,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
         last_cellcolor = cellcolor ;
     }
 
+#ifndef KUI
     if ( updmode == TTU_SMOOTH )
         msleep(1) ;
+#endif /* KUI */
 
     debug(F111,"VscrnScroll","vmode",vmode);
     debug(F111,"VscrnScroll","updown",updown);
@@ -3985,6 +3999,14 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     }
     ReleaseVscrnMutex( vmode ) ;
     debug(F100,"VscrnScroll releases mutex","",0);
+
+#ifdef KUI
+    if (updmode == TTU_SMOOTH && vmode == VTERM && updown == UPWARD &&
+            page == vscrn_current_page_number(VTERM, TRUE)) {
+        in_smooth_scroll = TRUE;
+        ResetSmoothScrollFinishedSem();
+    }
+#endif /* KUI */
 }
 
 

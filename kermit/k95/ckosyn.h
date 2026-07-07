@@ -371,4 +371,13 @@ _PROTOTYP( APIRET RequestZoutDumpMutex, (unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseZoutDumpMutex, (void) ) ;
 _PROTOTYP( APIRET CloseZoutDumpMutex, (void) ) ;
 
+#ifdef KUI
+_PROTOTYP( APIRET CreateSmoothScrollFinishedSem, (BOOL) ) ;
+_PROTOTYP( APIRET PostSmoothScrollFinishedSem, (void) ) ;
+ _PROTOTYP( APIRET WaitSmoothScrollFinishedSem, (unsigned long) ) ;
+_PROTOTYP( APIRET WaitAndResetSmoothScrollFinishedSem, (unsigned long) ) ;
+ _PROTOTYP( APIRET ResetSmoothScrollFinishedSem, (void) ) ;
+_PROTOTYP( APIRET CloseSmoothScrollFinishedSem, (void) ) ;
+#endif /* KUI */
+
 #endif /* CKOSYN_H */

@@ -7488,11 +7488,19 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
 						page);
     }
     else {
+#ifdef KUI
+        /* Suppress smooth-scroll, as we aren't really doing a scroll */
+        int updmode_backup = updmode;
+        updmode = TTU_FAST;
+#endif /* KUI */
         VscrnScrollPage(vmode,UPWARD,
                      	0,VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
                      	-1, -1,
                      	VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
                      	TRUE,fillchar, page);
+#ifdef KUI
+        updmode = updmode_backup;
+#endif /* KUI */
 
 #ifdef KUI
         if (ISDECTERM(tt_type_mode) || ISK95(tt_type_mode)) {

@@ -5519,8 +5519,12 @@ settrm() {
             return(mode);
         } else {
             y = cmnum(
+#ifdef KUI
+            "Interval between screen updates in CONNECT mode, milliseconds",
+#else
             "Pause between FAST screen updates in CONNECT mode, milliseconds",
-                      "100",10,&x,xxstring
+#endif /* KUI */
+                      "20",10,&x,xxstring
                       );
             if (x < 0 || x > 1000 ) {
                 printf(
