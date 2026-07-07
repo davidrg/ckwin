@@ -91,6 +91,7 @@ int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
 extern int updmode ;
 #ifdef KUI
 extern bool in_smooth_scroll;
+extern bool decsclm_pending;
 #endif /* KUI */
 extern int priority ;
 extern int tt_modechg;
@@ -4006,6 +4007,15 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
         in_smooth_scroll = TRUE;
         ResetSmoothScrollFinishedSem();
     }
+
+    /* The VT220 and up defer DECSCLM taking effect until after the next scroll.
+     * */
+    if (decsclm_pending) {
+        if (updmode == TTU_SMOOTH) updmode = TTU_FAST;
+        else updmode = TTU_SMOOTH;
+        decsclm_pending = FALSE;
+    }
+
 #endif /* KUI */
 }
 

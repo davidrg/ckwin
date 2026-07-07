@@ -214,6 +214,7 @@ int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
 int     priority        = XYP_REG ;
 #ifdef KUI
 bool    in_smooth_scroll = FALSE;
+bool    decsclm_pending = FALSE;
 #endif /* KUI */
 
 int tn_bold = 0;                        /* TELNET negotiation bold */
@@ -3538,11 +3539,39 @@ conect(int async) {
 
 void
 SmoothScroll( void ) {
+#ifdef KUI
+    /* TODO: Should probably be for VT100 too, but I don't have one to test
+     * against to confirm. */
+    if (ISVT220(tt_type_mode)) {
+        /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
+         * state until after the next scroll event. */
+        if (updmode == TTU_SMOOTH) return;
+
+        /* This indicates to VscrnScrollPage that we want it to toggle the
+         * scroll mode */
+        decsclm_pending = TRUE;
+        return;
+    }
+#endif /* KUI */
     updmode = TTU_SMOOTH ;
 }
 
 void
 JumpScroll( void ) {
+#ifdef KUI
+    /* TODO: Should probably be for VT100 too, but I don't have one to test
+     * against to confirm. */
+    if (ISVT220(tt_type_mode)) {
+        /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
+         * state until after the next scroll event. */
+        if (updmode == TTU_FAST) return;
+
+        /* This indicates to VscrnScrollPage that we want it to toggle the
+         * scroll mode */
+        decsclm_pending = TRUE;
+        return;
+    }
+#endif /* KUI */
     updmode = TTU_FAST ;
 }
 

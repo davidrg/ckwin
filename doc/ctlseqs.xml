@@ -9711,8 +9711,15 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:277"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 dtterm"/>
-                <p>Console version only: Enable smooth (slow) scrolling mode.
-                    K95G (the GUI version) presently ignores this setting.
+                <p>Enable smooth (slow) scrolling mode.</p>
+                <p>In the console versions of K95 for Windows and OS/2 this just
+                    inserts a brief pause on each scroll.
+                </p>
+                <p>
+                    In K95G this enables proper smooth scroll. On VT220 and
+                    higher emulations as well as the K95 terminal type, changing
+                    DECSCLM does not take effect until after the next scroll
+                    event.
                 </p>
             </section>
             <section role="parameter" id="decscnm" mnemonic="DECSCNM" title="Reverse screen">
@@ -11714,9 +11721,11 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:277"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 dtterm"/>
                 <p>
-                    Switches to Jump (fast) scrolling. Only affects the console version
-                    of K95—the GUI version (K95G) only supports jump scrolling at the moment so
-                    is always in this mode
+                    Switches to Jump (fast) scrolling.
+                </p>
+                <p>
+                    In K95G for VT220 and higher emulations this does not take
+                    effect until after the next scroll event.
                 </p>
             </section>
             <section role="parameter" mnemonic="DECSCNM" id="r-decscnm" title="Normal screen">
