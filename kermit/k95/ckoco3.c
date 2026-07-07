@@ -19294,8 +19294,19 @@ set_page_margins(int page, int topmargin, int bottommargin,
 /*---------------------------------------------------------------------------*/
 void
 setmargins(int topmargin, int bottommargin) {
- 	vscrn_setc_page_margin_top(VTERM,topmargin);
- 	vscrn_setc_page_margin_bot(VTERM,bottommargin);
+    int cursorPage = vscrn_current_page_number(VTERM, FALSE);
+
+    if (cursorPage == 0 || on_alternate_buffer(VTERM)) {
+        /* Xterm does not provide separate margins for the alternate screen, so
+         * they must be kept in sync with the first page */
+        vscrn_set_page_margin_top(VTERM, 0, topmargin);
+        vscrn_set_page_margin_bot(VTERM, 0, bottommargin);
+        vscrn_set_page_margin_top(VTERM, ALTERNATE_BUFFER_PAGE(VTERM), topmargin);
+        vscrn_set_page_margin_bot(VTERM, ALTERNATE_BUFFER_PAGE(VTERM), bottommargin);
+    } else {
+        vscrn_setc_page_margin_top(VTERM,topmargin);
+        vscrn_setc_page_margin_bot(VTERM,bottommargin);
+    }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -19303,8 +19314,19 @@ setmargins(int topmargin, int bottommargin) {
 /*---------------------------------------------------------------------------*/
 void
 setlrmargins(int leftmargin, int rightmargin) {
- 	vscrn_setc_page_margin_left(VTERM,leftmargin);
- 	vscrn_setc_page_margin_right(VTERM,rightmargin);
+    int cursorPage = vscrn_current_page_number(VTERM, FALSE);
+
+    if (cursorPage == 0 || on_alternate_buffer(VTERM)) {
+        /* Xterm does not provide separate margins for the alternate screen, so
+         * they must be kept in sync with the first page */
+        vscrn_set_page_margin_left(VTERM, 0, leftmargin);
+        vscrn_set_page_margin_right(VTERM, 0, rightmargin);
+        vscrn_set_page_margin_left(VTERM, ALTERNATE_BUFFER_PAGE(VTERM), leftmargin);
+        vscrn_set_page_margin_right(VTERM, ALTERNATE_BUFFER_PAGE(VTERM), rightmargin);
+    } else {
+        vscrn_setc_page_margin_left(VTERM,leftmargin);
+        vscrn_setc_page_margin_right(VTERM,rightmargin);
+    }
 }
 
 /*---------------------------------------------------------------------------*/

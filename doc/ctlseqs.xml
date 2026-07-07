@@ -21143,6 +21143,12 @@ DCS $ q 3 , } ST</pre>
             </p>
             <ul>
                 <li>Only two pages - the normal and alternate screens</li>
+                <li>The two pages do not have distinct margins. An
+                    <a href="#decslrm">DECSLRM</a> or
+                    <a href="#decstbm">DECSTBM</a> on the alternate screen
+                    also sets margins for the normal screen (page 1 in K95) and
+                    vice versa.
+                </li>
                 <li>Page Cursor Coupling is always on - moving between screens
                     moves both the cursor and the display</li>
                 <li>The current page is selected via one of a number of DEC Private
