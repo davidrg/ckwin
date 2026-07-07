@@ -5520,7 +5520,7 @@ settrm() {
         } else {
             y = cmnum(
             "Pause between FAST screen updates in CONNECT mode, milliseconds",
-                      "100",20,&x,xxstring
+                      "100",10,&x,xxstring
                       );
             if (x < 0 || x > 1000 ) {
                 printf(
