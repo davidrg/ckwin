@@ -134,11 +134,16 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
     // debug(F111,"KTimerProc()","dwtime",dwtime);
     KClient* client = (KClient*) kglob->hwndset->find( hwnd );
     if( client ) {
-        if( ::VscrnClean( vmode /* client->getClientID() */ )
-            && (!tt_sync_output || vmode != VTERM))
-            client->getDrawInfo();
-        else
-            client->checkBlink();
+        if (updmode == TTU_SMOOTH && vmode == VTERM && in_smooth_scroll) {
+            // We're smooth-scrolling.
+            client->smoothScroll();
+        } else {
+            if( ::VscrnClean( vmode /* client->getClientID() */ )
+                && (!tt_sync_output || vmode != VTERM))
+                client->getDrawInfo();
+            else
+                client->checkBlink();
+        }
     }
 #ifndef NOKVERBS
     if ( win32ScrollUp ) {
@@ -698,7 +703,7 @@ void KClient::getEndSize( int& w, int& h )
 Bool KClient::paint()
 {
     clearPaintRgn();
-    if (tt_sync_output && vmode == VTERM) {
+    if ((tt_sync_output && vmode == VTERM) || smoothScrolling()) {
         /* in synchronized output mode - keep re-rendering the existing display
          * until we exit synchronized output mode. */
         writeMe();
@@ -769,7 +774,7 @@ void KClient::checkBlink()
      * besides the cursor.*/
     if (ws_blinking && ((blinkOn && cursorCount == blinkInterval) || (cursorCount == 0)) )
         writeMe();
-    else if (smoothScrolling())
+    else if (smoothScrolling()) /* Skip rendering cursor during smooth-scroll */
         writeMe();
 
     else if (cursorCount%300 == 0) {
@@ -830,9 +835,64 @@ void KClient::syncSize()
 }
 
 /*------------------------------------------------------------------------
+ Handle Smooth Scrolling
 ------------------------------------------------------------------------*/
+/* How Smooth Scroll works (updmode == TTU_SMOOTH):
+ *   When a scroll completes, VscrnScrollPage will set in_smooth_scroll = TRUE
+ *   and reset the Smooth-Scroll-Finished semaphore. On the next scroll,
+ *   VscrnScrollPage will wait on the Smooth-Scroll-Finished and won't start the
+ *   scroll until the last one has completed.
+ *
+ *   If in_smooth_scroll==True and scrollback isn't being viewed
+ *   (!scrollflag[vnum]) then IKterm::getDrawInfo() will grab a slightly
+ *   enlarged snapshot of the vscreen moving the top back by one line so that
+ *   both the old and new top are present.
+ *
+ *   Over here in KClient during a smooth-scroll the timer will call the
+ *   KClient::smoothScroll() rather than KClient::getDrawInfo() or
+ *   KClient::checkBlink() every time it fires.
+ *
+ *   KClient::smoothScroll() increases the scroll progress each time it fires,
+ *   then writeMe() will use that progress to offset the rendered bitmap
+ *   vertically by some percentage of the line height so that the appropriate
+ *   fraction of the old top and new bottom are visible.
+ *
+ *   When the smooth-scroll progress reaches 100%, KClient::writeMe() will reset
+ *   the progress to zero, set in_smooth_scroll to FALSE and post the
+ *   Smooth-Scroll-Finished semaphore to allow any pending scroll to proceed and
+ *   start the process all over again.
+ */
+
 bool KClient::smoothScrolling() {
     return updmode == TTU_SMOOTH && vmode == VTERM && in_smooth_scroll;
+}
+
+void KClient::smoothScroll() {
+    smoothScrollTime += tt_update;
+
+    // Update progress. The speeds are:
+    //  VT520, Slow - 9 lines per second, or 111.111ms per line
+    //  VT520, Fast - 18 lines per second, or 55.555ms per line
+    //  VT420, Slow - ?
+    //  VT420, Fast - ?
+    //  VT320         ?
+    //  VT220         6 lines per second
+    //  VT100         6 lines per second (60Hz power)
+    //                5 lines per second (50Hz power
+    // if (FAST) {
+    //    smoothScrollProgres = smoothScrollTime / 55.555;
+    //} else {  // Slow
+        smoothScrollProgress = smoothScrollTime /  111.111;
+    //}
+
+
+    // If we're just starting our smooth scroll, refresh our copy of the vscrn
+    // so that we have the slightly enlarged buffer we need.
+    if (smoothScrollTime == tt_update) {
+        getDrawInfo();
+    } else {
+        checkBlink();
+    }
 }
 
 /*------------------------------------------------------------------------
@@ -843,25 +903,6 @@ void KClient::writeMe()
 {
     int twid, thi, hisv;
     //debug(F100,"KClient::writeMe()","",0);
-
-    if (smoothScrolling()) {
-        smoothScrollTime += tt_update;
-
-        // Update progress. The speeds are:
-        //  VT520, Slow - 9 lines per second, or 111.111ms per line
-        //  VT520, Fast - 18 lines per second, or 55.555ms per line
-        //  VT420, Slow - ?
-        //  VT420, Fast - ?
-        //  VT320         ?
-        //  VT220         6 lines per second
-        //  VT100         6 lines per second (60Hz power)
-        //                5 lines per second (50Hz power
-        // if (FAST) {
-        //    smoothScrollProgres = smoothScrollTime / 55.555;
-        //} else {  // Slow
-            smoothScrollProgress = smoothScrollTime /  111.111;
-        //}
-    }
 
     ::getDimensions( vmode /* clientID */, &twid, &thi );
     hisv = horz->isVisible();

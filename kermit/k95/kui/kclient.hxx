@@ -70,6 +70,7 @@ public:
 
     void checkBlink();
     void getDrawInfo();
+    void smoothScroll();
     void drawDisabledState( int w, int h );
 
     void getEndSize( int& w, int& h );
