@@ -45,6 +45,7 @@
 static HPCON hPc = NULL;
 static BOOL conPtyAvailable = FALSE, conPtyChecked = FALSE;
 static HINSTANCE hkernel=NULL;
+static HINSTANCE hconpty=NULL;
 
 typedef HRESULT (WINAPI *CreatePseudoConsole_t)(
     _In_ COORD size,
@@ -92,30 +93,82 @@ UpdateProcThreadAttribute_t p_UpdateProcThreadAttribute;
 
 void load_conpty() {
     FARPROC p;
+    wchar_t conptyPath[CKMAXPATH];
+    DWORD pathLen;
+
     /* Only bother doing this load library business once */
     conPtyChecked = TRUE;
 
     hkernel = LoadLibrary("kernel32.dll");
 
-    p = GetProcAddress(hkernel, "CreatePseudoConsole");
+    /* First, try to load from the same directory as the executable */
+
+    /* Get the location of the K95 executable */
+    pathLen = GetModuleFileNameW(NULL, conptyPath, MAX_PATH);
+
+    /* If there is enough space to tack on "conpty.dll"... */
+    if (pathLen > 0 && pathLen < MAX_PATH - 11) {
+        /* Find the last backslash - the executable name comes after that */
+        wchar_t *c = wcsrchr(conptyPath, L'\\');
+        if (c != NULL) {
+            /* Replace the executable name with "conpty.dll" */
+            wcsncpy_s(c, MAX_PATH - (c - conptyPath), L"\\conpty.dll", 11);
+
+            hconpty = LoadLibraryW(conptyPath);
+        }
+    }
+
+    if (hconpty == NULL) {
+        /* If that fails, look for it on the path */
+        debug(F100, "Failed to load bundled ConPTY, trying PATH", 0, 0);
+        hconpty = LoadLibrary("conpty.dll");
+        if (hconpty == NULL) {
+            /* If that fails, use the version of ConPTY shipped with windows */
+            debug(F100, "Failed to load bundled ConPTY from PATH, falling back to kernel32", 0, 0);
+            hconpty = hkernel;
+        }
+    }
+
+    p = GetProcAddress(hconpty, "CreatePseudoConsole");
     if (p == NULL) {
         conPtyAvailable = FALSE;
         return;
     }
     p_CreatePseudoConsole = (CreatePseudoConsole_t)p;
 
-    p = GetProcAddress(hkernel, "ClosePseudoConsole");
+    p = GetProcAddress(hconpty, "ClosePseudoConsole");
+    if (p == NULL) {
+        debug(F100, "Failed to load ClosePseudoConsole from conpty.dll", 0, 0);
+        conPtyAvailable = FALSE;
+        return;
+    }
     p_ClosePseudoConsole = (ClosePseudoConsole_t)p;
 
-    p = GetProcAddress(hkernel, "ResizePseudoConsole");
+    p = GetProcAddress(hconpty, "ResizePseudoConsole");
+    if (p == NULL) {
+        debug(F100, "Failed to load ResizePseudoConsole from conpty.dll", 0, 0);
+        conPtyAvailable = FALSE;
+        return;
+    }
     p_ResizePseudoConsole = (ResizePseudoConsole_t)p;
 
     p = GetProcAddress(hkernel, "InitializeProcThreadAttributeList");
+    if (p == NULL) {
+        debug(F100, "Failed to load InitializeProcThreadAttributeList from kernel32.dll", 0, 0);
+        conPtyAvailable = FALSE;
+        return;
+    }
     p_InitializeProcThreadAttributeList = (InitializeProcThreadAttributeList_t)p;
 
     p = GetProcAddress(hkernel, "UpdateProcThreadAttribute");
+    if (p == NULL) {
+        debug(F100, "Failed to load UpdateProcThreadAttribute from kernel32.dll", 0, 0);
+        conPtyAvailable = FALSE;
+        return;
+    }
     p_UpdateProcThreadAttribute = (UpdateProcThreadAttribute_t)p;
 
+    debug(F100, "ConPTY functions loaded", 0, 0);
     conPtyAvailable = TRUE;
 }
 
