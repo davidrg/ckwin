@@ -11303,6 +11303,14 @@ setlin(xx, zz, fc) int xx, zz, fc;
             cmfdbi(&nx,_CMIFI,"Filename","","",0,0,xxstring,NULL,NULL);
 #endif /* NETFILE */
 #ifdef PTYORPIPE
+#ifdef NT
+#ifdef CK_CONPTY
+        } else if (mynet == NET_PTY) {
+            /* On Windows, run the shell if nothing else is specified. Otherwise
+             * we try to run dftty which is "0" which is unhelpful. */
+            cmfdbi(&nx,_CMTXT,"Command","cmd.exe","",0,0,xxstring,NULL,NULL);
+#endif /* CK_CONPTY */
+#endif /* NT */
         } else if (mynet == NET_CMD || mynet == NET_PTY) {
             cmfdbi(&nx,_CMTXT,"Command","","",0,0,xxstring,NULL,NULL);
 #endif /* PTYORPIPE */
