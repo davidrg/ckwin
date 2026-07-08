@@ -5934,7 +5934,15 @@ VscrnInit( BYTE vmode )
             	{
             	    extern bool decncsm;
                 	if ( !VscrnIsClear(vmode, p ) && !decncsm && !decscpp_resize) {
+#ifdef KUI
+                	    /* Suppress smooth-scroll, as we aren't really doing a scroll */
+                	    int updmode_backup = updmode;
+                	    updmode = TTU_FAST;
+#endif /* KUI */
                     	VscrnScrollPage( vmode, UPWARD, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
+#ifdef KUI
+                	    updmode = updmode_backup;
+#endif /* KUI */
                     	clrscr = 1 ;
                 	}
             	}
