@@ -1289,27 +1289,43 @@ void KClient::writeMe()
             int offset = 0;
             int lineHeight = font->getFontSpacedH();
 
-            if (tt_status[vmode]) {
-                BitBlt(hdcScreen(),
-                    0, lineHeight * (thi - 1), w, lineHeight,
-                    hdc(), 0, thi * lineHeight,
-                    SRCCOPY);
-            }
-
+            // Scroll progress determines how much of the old screen top we show
+            // and how much of the new screen bottom.
             offset = (int)(smoothScrollProgress * lineHeight);
 
             if (offset > lineHeight) {
                 offset = lineHeight;
             }
 
+            // The bottom coordinate of the terminal area (excluding the status
+            // line)
+            int terminal_bottom = lineHeight * (thi - (tt_status[vmode]?1:0));
+
+            // The bottom of the screen area (including the status line)
+            int screen_bottom = terminal_bottom +
+                    lineHeight * (tt_status[vmode]?1:0);
+
             // Copy everything except the status line
             BitBlt( hdcScreen(),
-                0, 0, w, lineHeight * (thi - (tt_status[vmode]?1:0)),
+                0, 0, w, terminal_bottom,
                 hdc(),
                 0, offset, SRCCOPY );
 
             // Now grab the status line
+            if (tt_status[vmode]) {
+                BitBlt(hdcScreen(),
+                    0, terminal_bottom,
+                    w, lineHeight,
+                    hdc(),
+                    0, thi * lineHeight,
+                    SRCCOPY);
+            }
 
+            // Lastly, fill anything *below* the status line in case we're
+            // mid-resize and the window is expanding.
+            r.top = screen_bottom+2; // +2 or a visible line appears below the
+                                     // status line.
+            FillRect( hdcScreen(), &r, bgBrush );
         } else {
             BitBlt( hdcScreen(), 0, 0, w, h, hdc(), 0, 0, SRCCOPY );
         }
