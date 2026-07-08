@@ -422,7 +422,7 @@ jobs:
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
             ${{github.workspace}}\conpty
-          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver4-${{env.CONPTY_VERSION}}
+          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+conpty-${{env.CONPTY_VERSION}}+ver1
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'

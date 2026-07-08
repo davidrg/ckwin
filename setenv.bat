@@ -557,15 +557,35 @@ if exist %ibm20dir%\lib\tcp32dll.lib echo found %ibm20dir%\lib\tcp32dll.lib
 REM Try to find updated ConPTY library
 if not exist %root%\conpty\Microsoft.Windows.Console.ConPTY\inc\conpty.h goto :noconpty
 echo Found updated ConPTY in %root%\conpty\Microsoft.Windows.Console.ConPTY
-set CONPTY_ARCH=none
-if "%CKB_TARGET_ARCH%" == "AMD64" set CONPTY_ARCH=x64
-if "%CKB_TARGET_ARCH%" == "ARM64" set CONPTY_ARCH=arm64
-if "%CKB_TARGET_ARCH%" == "x86" set CONPTY_ARCH=x86
-if "%CONPTY_ARCH%" == "none" goto :noconpty
 
-set CK_CONPTY_DIST=%root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-%CONPTY_ARCH%\native\conpty.dll
-set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\%CONPTY_ARCH%\OpenConsole.exe
+if "%CKB_TARGET_ARCH%" == "x86" goto :conptyx8632
+if "%CKB_TARGET_ARCH%" == "AMD64" goto :conptyx8664
+if "%CKB_TARGET_ARCH%" == "ARM64" goto :conptyarm64
 
+goto :noconpty
+
+:conptyx8632
+REM x86-32 can run on x86-64 and arm64, so all three variants of openconsole are needed
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\x86-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\x64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\arm64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-x86\native\conpty.dll
+goto :conptydone
+
+:conptyx8664
+REM x86-64 can run on arm64 too, so both variants of openconsole are needed
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\x64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\arm64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-x64\native\conpty.dll
+goto :conptydone
+
+:conptyarm64
+REM arm64 only works on arm64, so only one variant of openconsole needed
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-arm64\native\conpty.dll
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\arm64\OpenConsole.exe
+goto :conptydone
+
+:conptydone
 :noconpty
 
 REM --------------------------------------------------------------

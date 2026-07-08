@@ -36,6 +36,12 @@ echo Done!
 if exist Microsoft.Windows.Console.ConPTY.%CONPTY_VERSION% (
     if exist Microsoft.Windows.Console.ConPTY rmdir /S /Q Microsoft.Windows.Console.ConPTY
     ren Microsoft.Windows.Console.ConPTY.%CONPTY_VERSION%  Microsoft.Windows.Console.ConPTY
+    copy %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\x86\OpenConsole.exe %root%\conpty\Microsoft.Windows.Console.ConPTY\x86-openconsole.exe
+    copy %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\x64\OpenConsole.exe %root%\conpty\Microsoft.Windows.Console.ConPTY\x64-openconsole.exe
+    copy %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\arm64\OpenConsole.exe %root%\conpty\Microsoft.Windows.Console.ConPTY\arm64-openconsole.exe
+) else (
+    echo Package download failed.
+    goto :end
 )
 
 if not "%CK_DIST_DLLS%"=="%CK_DIST_DLLS:conpty.dll=%" (
@@ -43,15 +49,30 @@ if not "%CK_DIST_DLLS%"=="%CK_DIST_DLLS:conpty.dll=%" (
     goto :end
 )
 
-set CONPTY_ARCH=none
-if "%CKB_TARGET_ARCH%" == "AMD64" set CONPTY_ARCH=x64
-if "%CKB_TARGET_ARCH%" == "ARM64" set CONPTY_ARCH=arm64
-if "%CKB_TARGET_ARCH%" == "x86" set CONPTY_ARCH=x86
-if "%CONPTY_ARCH%" == "none" goto :end
+if "%CKB_TARGET_ARCH%" == "x86" goto :archx8632
+if "%CKB_TARGET_ARCH%" == "AMD64" goto :archx8664
+if "%CKB_TARGET_ARCH%" == "ARM64" goto :archarm64
+goto :end
 
-set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-%CONPTY_ARCH%\native\conpty.dll
-set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\%CONPTY_ARCH%\OpenConsole.exe
+:archx8632
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\x86-OpenConsole.exe
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\x64-OpenConsole.exe
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\arm64-OpenConsole.exe
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-x86\native\conpty.dll
+goto :done
 
+:archx8664
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\x64-OpenConsole.exe
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\arm64-OpenConsole.exe
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-x64\native\conpty.dll
+goto :done
+
+:archarm64
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-arm64\native\conpty.dll
+set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\arm64\OpenConsole.exe
+goto :done
+
+:done
 echo DIST DLLs updated:
 echo %CK_DIST_DLLS%
 
