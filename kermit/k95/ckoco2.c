@@ -3699,9 +3699,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 #endif /* KUI */
 
 #ifdef KUI
-    // TODO: only if the view page
     if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
-        && in_smooth_scroll && page == vscrn_current_page_number(VTERM, TRUE)  && updown == UPWARD) {
+        && in_smooth_scroll && page == vscrn_current_page_number(VTERM, TRUE)
+        && updown == UPWARD) {
         /* Wait for the last scroll to finish. */
         WaitSmoothScrollFinishedSem(5000);
     }
@@ -3759,6 +3759,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
     debug(F101,"VscrnScroll has VscrnMutex","",vmode);
     switch (updown) {
+        case UPWARD_JUMP:
         case UPWARD:
             if (savetobuffer && topmargin == 0 && !lrmm) {
                 if (topmargin) {

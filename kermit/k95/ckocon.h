@@ -135,6 +135,7 @@
 #endif /* FALSE */
 #define FALSE 0
 
+#define UPWARD_JUMP 5                   /* Scroll up, no smooth scrolling */
 #define UPWARD   6                      /* Scroll up */
 #define DOWNWARD 7                      /* Scroll down */
 #define LBUFSIZE roll.bufsize           /* Maximum lines in rollback buffer */
