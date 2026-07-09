@@ -533,6 +533,7 @@ int      savedwrap[SAVED_CURSORS]={FALSE,FALSE,FALSE,FALSE,FALSE} ;
 int      savedrow[SAVED_CURSORS] = {0,0,0,0,0};
 int      savedcol[SAVED_CURSORS] = {0,0,0,0,0};
 int      savedpage[SAVED_CURSORS] = {0,0,0,0,0};
+bool     savedlcf[SAVED_CURSORS] = {FALSE,FALSE,FALSE,FALSE,FALSE};
 extern int      tt_rkeys_saved[], tt_rkeys[];
 
 bool     deccolm = FALSE;               /* 80/132-column mode */
@@ -10902,6 +10903,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor X/Y only, 1 = all */
         savedattrib[slot] = attrib;            /* Current DEC character attributes */
         saverelcursor[slot] = relcursor;       /* Cursor addressing mode */
         savedwrap[slot]     = tt_wrap;         /* Wrap mode */
+        savedlcf[slot] = wrapit;    /* Last column flag */
 
         if ( x==1 ) {
             for (i=0; i<4; i++)
@@ -10953,7 +10955,17 @@ restorecurpos(int vmode, int x) {
             crossedoutattribute=savedcrossedoutattribute[slot];
             attrib = savedattrib[slot];
             relcursor = saverelcursor[slot];   /* Restore cursor addressing mode */
+
+            /* TODO: This is proabably for switching in and out of the status
+             * line. Current behaviour is wrong. Status line needs a separate
+             * saved cursor slot, and tt_wrap among other things should only be
+             * saved/restored when switching in and out of the status line. */
             tt_wrap = savedwrap[slot] ;       /* Restore wrap mode */
+
+            if (tt_type != TT_VT100 && tt_type != TT_VT102) {
+                /* The VT10x does not save the last column flag, the rest do */
+                wrapit = savedlcf[slot];
+            }
 
             if ( x==1 ) {                       /* Restore char sets */
                 for (i=0; i<4; i++)
@@ -19208,7 +19220,17 @@ wrtch(unsigned short ch) {
         default:;                       /* Ignore */
         }
     }
-    lgotoxy(vmode,wherex[vmode],wherey[vmode]);
+
+    if (ch == LF && (tt_type == TT_VT100 || tt_type == TT_VT102)) {
+        /* LF does not reset the LCF on a real VT100. The VT220 and VT520
+         * emulating a VT100 do reset the LCF. */
+        bool lcf = wrapit;
+        lgotoxy(vmode,wherex[vmode],wherey[vmode]);
+        wrapit = lcf;
+    } else {
+        lgotoxy(vmode,wherex[vmode],wherey[vmode]);
+    }
+
     if (cursor_on_visible_page(vmode)) {
         /* always mark the Terminal as requiring the update.. if the cursor is
          * on the visible page. */
@@ -20714,7 +20736,19 @@ vtcsi(void)
                 wrapit = FALSE;
             break;
         case 'C':               /* CUF - Cursor forward, stay on same line */
-            cursorright(0);
+            if (tt_type == TT_VT100 || tt_type == TT_VT102) {
+                /* The VT10x and only the VT10x does not reset the
+                 * LCF on CUF. The VT220 and VT520 when emulating a VT100 do.
+                 * cursorright() always resets the LCF, so take a backup before
+                 * calling.
+                 */
+                bool lcf = wrapit;
+                cursorright(0);
+                wrapit = lcf;
+            }
+            else {
+                cursorright(0);
+            }
             break;
         case 'D':               /* CUB - Cursor back, stay on same line */
             cursorleft(0);
@@ -20762,6 +20796,12 @@ vtcsi(void)
                 }
                 clreoscr_escape(VTERM,SP);
             }
+
+            if (tt_type != TT_VT100 && tt_type != TT_VT102) {
+                /* The VT10x and only the VT10x do not clear the LCF on
+                 * erase display. The VT220 and VT520 emulating a VT100 do. */
+                wrapit = FALSE;
+            }
             break;
         case 'V': /* PP - Preceding Page */
 			if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
@@ -20779,10 +20819,18 @@ vtcsi(void)
                 ba80_fkey_read = -1;
             }
                 /* Erase from cursor to end of line */
-            else if ( private == TRUE )
-                selclrtoeoln(VTERM,SP);
-            else
-                clrtoeoln(VTERM,SP);
+            else {
+                if ( private == TRUE )
+                    selclrtoeoln(VTERM,SP);
+                else
+                    clrtoeoln(VTERM,SP);
+
+                if (tt_type != TT_VT100 && tt_type != TT_VT102) {
+                    /* The VT10x and only the VT10x do not clear the LCF on
+                     * erase line. The VT220 and VT520 emulating a VT100 do. */
+                    wrapit = FALSE;
+                }
+            }
             break;
         case '?':               /* DEC private */
             private = TRUE;
@@ -22151,11 +22199,21 @@ vtcsi(void)
                         cursorena[VTERM] = TRUE ;
                     }
                 }
-                else  /* CUF - Cursor right pn chars */
+                else {
+                    /* CUF - Cursor right pn chars */
+                    bool lcf = wrapit;
                     do {
                         cursorright(0);
                         pn[1] = pn[1] - 1;
                     } while (pn[1] > 0);
+
+                    if (tt_type == TT_VT100 || tt_type == TT_VT102) {
+                        /* The VT10x and only the VT10x does not reset the LCF
+                         * on CUF. The VT220 and VT520 when emulating a VT100
+                         * do. So restore the LCF from the earlier backup  */
+                        wrapit = lcf;
+                    }
+                }
                 break;
             case 'c':
                 if ( zdsext && ISVT220(tt_type) ) {
@@ -22527,7 +22585,8 @@ vtcsi(void)
                 }
                 /* 'H' is also CUP - Direct cursor address for */
                 /* !ansiext, so don't put a break here   */
-            case 'f':   /* HVP - Direct cursor address */
+            case 'f': { /* HVP - Direct cursor address */
+                bool lcf = wrapit;
                 if ( IS97801(tt_type_mode) && decsasd == SASD_STATUS )
                     setdecsasd(SASD_TERMINAL);
 
@@ -22545,22 +22604,22 @@ vtcsi(void)
                     pn[1] = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                 if (pn[2] == 0)
                     pn[2] = 1;
-				if (relcursor)
-					pn[2] += vscrn_c_page_margin_left(VTERM) - 1;
+                if (relcursor)
+                    pn[2] += vscrn_c_page_margin_left(VTERM) - 1;
 
-				{
-					/* Ensure coordinates are to the left of screen right, or
-					 * if DECOM is set, the right margin */
-					int r = (relcursor ? vscrn_c_page_margin_right(VTERM)
-									   : VscrnGetWidth(VTERM));
+                {
+                    /* Ensure coordinates are to the left of screen right, or
+                     * if DECOM is set, the right margin */
+                    int r = (relcursor ? vscrn_c_page_margin_right(VTERM)
+                                       : VscrnGetWidth(VTERM));
 
-					/* if this line is double width, then its half length */
-                	if (isdoublewidth(pn[1])) {
-						r = r / 2;
-					}
+                    /* if this line is double width, then its half length */
+                    if (isdoublewidth(pn[1])) {
+                        r = r / 2;
+                    }
 
-					if (pn[2] > r) pn[2] = r;
-				}
+                    if (pn[2] > r) pn[2] = r;
+                }
 
                 wrapit = FALSE;
 
@@ -22573,14 +22632,23 @@ vtcsi(void)
                         if ( decssdt == SSDT_INDICATOR )
                             setdecssdt(SSDT_HOST_WRITABLE);
                         setdecsasd(SASD_STATUS);
-                    }
+                         }
                 }
 
                 if ( decsasd == SASD_STATUS )
                     lgotoxy( VSTATUS, pn[2], 1 );
                 else
                     lgotoxy(VTERM, pn[2], pn[1]);
-                break;
+
+                if (tt_type == TT_VT100 || tt_type == TT_VT102) {
+                    /* The VT10x and only the VT10x does not reset the
+                     * LCF on CUP or HVP. The VT220 and VT520 when emulating a
+                     * VT100 do. So restore the LCF from a backup taken earlier.
+                     */
+                    wrapit = lcf;
+                }
+            }
+            break;
             case 'I':
                 if ( ansiext && private ) {
                     if ( ISBA80(tt_type_mode) ) {
@@ -25681,6 +25749,13 @@ vtcsi(void)
                             break;
                         }
                     }
+
+                    if (tt_type != TT_VT100 && tt_type != TT_VT102) {
+                        /* The VT10x and only the VT10x do not clear the LCF on
+                         * erase display. The VT220 and VT520 emulating a VT100
+                         * do. */
+                        wrapit = FALSE;
+                    }
                 } else {
                     /* Erase in Display (ED) */
                     /* ??? For the 97801, the called functions must be */
@@ -25869,6 +25944,13 @@ vtcsi(void)
                         break;
                     default:
                         break;
+                    }
+
+                    if (tt_type != TT_VT100 && tt_type != TT_VT102) {
+                        /* The VT10x and only the VT10x do not clear the LCF on
+                         * erase line. The VT220 and VT520 emulating a VT100
+                         * do. */
+                        wrapit = FALSE;
                     }
                 }
                 break;
@@ -26218,6 +26300,13 @@ vtcsi(void)
                     default:
                         break;
                     }
+
+                    if (tt_type != TT_VT100 && tt_type != TT_VT102) {
+                        /* The VT10x and only the VT10x do not clear the LCF on
+                         * erase line. The VT220 and VT520 emulating a VT100
+                         * do. */
+                        wrapit = FALSE;
+                    }
                 }
                 break;
             case 'L':
@@ -26462,6 +26551,13 @@ vtcsi(void)
                                    pn[1],
                                    blankvcell
                                    );
+
+                    if (tt_type != TT_VT520 && tt_type != TT_VT525 &&
+                            tt_type != TT_K95) {
+                        /* The VT220 and 420 clear the LCF on ICH. The VT520
+                         * does not. */
+                        wrapit = FALSE;
+                    }
                 }
                 break;
             case 'N':
@@ -26569,6 +26665,12 @@ vtcsi(void)
                                    pn[1],
                                    blankvcell
                                    ) ;
+
+                    if (tt_type != TT_VT100 && tt_type != TT_VT102) {
+                        /* The VT10x and only the VT10x do not clear the LCF on
+                         * DCH. The VT220 and VT520 emulating a VT100 do. */
+                        wrapit = FALSE;
+                    }
                 }
                 break;
             case 'Q':   /* SEE - Select Editing Extent */
@@ -28631,8 +28733,19 @@ vtescape( void )
                                  FALSE,
                                  SP,
                                  vscrn_current_page_number(vmode, FALSE) );
-                else
+                else if (tt_type == TT_VT100 || tt_type == TT_VT102) {
+                    /* The VT10x and only the VT10x does not reset the
+                     * LCF on RI. The VT220 and VT520 when emulating a VT100 do.
+                     * cursorup() always resets the LCF, so take a backup before
+                     * calling.
+                     */
+                    bool lcf = wrapit;
                     cursorup(0);
+                    wrapit = lcf;
+                }
+                else {
+                    cursorup(0);
+                }
             }
             else if ( ISH19(tt_type_mode) && achar == 'M' ) {
                 /* H19 - Delete Line */
@@ -29439,6 +29552,13 @@ vt100(unsigned short vtch) {
                  sendchars(answerback,strlen(answerback)) ;
              break;
          case HT:               /* Horizontal tab */
+             if (tt_type_mode == TT_VT220 || tt_type_mode == TT_VT220PC) {
+                 /* The VT220, and only the VT220, clears the last column flag
+                  * on TAB. STD-070 says it should too, but given all later
+                  * terminals don't do this I guess DEC decided it was a bad
+                  * idea. */
+                 wrapit = FALSE;
+             }
              cursortab(1);
              break;
          case SYN:      /* Ctrl-V - AVATAR AVTCODE */
