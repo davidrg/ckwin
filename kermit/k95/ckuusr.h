@@ -1216,7 +1216,10 @@ struct stringint {			/* String and (wide) integer */
 #ifdef OS2
 #define   XYTUPD 25     /*  Terminal Screen-update */
 #define    TTU_FAST 0   /*     FAST but jerky */
-#define    TTU_SMOOTH 1 /*     SMOOTH but slow */
+#define    TTU_SMOOTH 1 /*     SMOOTH but slow (Slow Smooth aka Smooth-2) */
+#ifdef KUI
+#define    TTU_SMOOTH2 2 /*    SMOOTH but less slow (Fast Smooth aka Smooth-4) */
+#endif /* KUI */
 #define   XYTFON 26     /*  Terminal Full screen Font */
 #define    TTF_ROM    0 /*     ROM font */
 #define    TTF_CY1    1 /*     CYRILL1 font */

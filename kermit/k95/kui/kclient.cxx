@@ -44,6 +44,7 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int tt_update;
+extern int tt_type;
 extern int updmode ;
 extern bool in_smooth_scroll;
 extern vscrn_t vscrn[];
@@ -134,7 +135,8 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
     // debug(F111,"KTimerProc()","dwtime",dwtime);
     KClient* client = (KClient*) kglob->hwndset->find( hwnd );
     if( client ) {
-        if (updmode == TTU_SMOOTH && vmode == VTERM && in_smooth_scroll) {
+        if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
+                && in_smooth_scroll) {
             // We're smooth-scrolling.
             client->smoothScroll();
         } else {
@@ -837,7 +839,7 @@ void KClient::syncSize()
 /*------------------------------------------------------------------------
  Handle Smooth Scrolling
 ------------------------------------------------------------------------*/
-/* How Smooth Scroll works (updmode == TTU_SMOOTH):
+/* How Smooth Scroll works (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2):
  *   When a scroll completes, VscrnScrollPage will set in_smooth_scroll = TRUE
  *   and reset the Smooth-Scroll-Finished semaphore. On the next scroll,
  *   VscrnScrollPage will wait on the Smooth-Scroll-Finished and won't start the
@@ -864,27 +866,41 @@ void KClient::syncSize()
  */
 
 bool KClient::smoothScrolling() {
-    return updmode == TTU_SMOOTH && vmode == VTERM && in_smooth_scroll;
+    return (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
+        && in_smooth_scroll;
 }
 
 void KClient::smoothScroll() {
     smoothScrollTime += tt_update;
 
-    // Update progress. The speeds are:
-    //  VT520, Slow - 9 lines per second, or 111.111ms per line
-    //  VT520, Fast - 18 lines per second, or 55.555ms per line
-    //  VT420, Slow - ?
-    //  VT420, Fast - ?
-    //  VT320         ?
-    //  VT220         6 lines per second
-    //  VT100         6 lines per second (60Hz power)
-    //                5 lines per second (50Hz power
-    // if (FAST) {
-    //    smoothScrollProgres = smoothScrollTime / 55.555;
-    //} else {  // Slow
-        smoothScrollProgress = smoothScrollTime /  111.111;
-    //}
+    // Speed in lines per second
+    int fast, slow;
 
+    switch (tt_type) {
+    case TT_VT420:
+    case TT_VT520:
+    case TT_VT525:
+    case TT_K95:
+        slow = 9;
+        fast = 18;
+        break;
+    case TT_VT320: // Based on a video, looks to be the same as the VT220
+    case TT_VT220:
+    case TT_VT100:
+    default:
+        slow = fast = 6;
+        break;
+    }
+
+    float ms_per_line;
+
+    if (updmode == TTU_SMOOTH2) {
+        ms_per_line = 1000.0f / (float)fast;
+    } else {
+        ms_per_line = 1000.0f / (float)slow;
+    }
+
+    smoothScrollProgress = smoothScrollTime /  ms_per_line;
 
     // If we're just starting our smooth scroll, refresh our copy of the vscrn
     // so that we have the slightly enlarged buffer we need.

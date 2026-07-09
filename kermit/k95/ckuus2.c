@@ -8551,9 +8551,20 @@ static char *hxyterm[] = {
 "  completely repainted each time there is a change.",
 " ",
 
+#ifdef KUI
+  "SET TERMINAL SCREEN-UPDATE { FAST, SMOOTH, SMOOTH-FAST } [ <milliseconds> ]",
+#else
 "SET TERMINAL SCREEN-UPDATE { FAST, SMOOTH } [ <milliseconds> ]",
+#endif /* KUI */
 "  Chooses the mechanism used for screen updating and the update frequency.",
-"  Defaults are FAST scrolling with updates every 100 milliseconds.",
+"  Defaults are FAST (jump) scrolling with updates every 20 milliseconds.",
+" ",
+#ifdef KUI
+"  SMOOTH and SMOOTH-FAST are both smooth scrolling. For terminals that offered",
+"  two speed options, SMOOTH is the slow option and SMOOTH-FAST is the fast",
+"  option. For other terminals such as the VT100, VT220 and VT320 both options",
+"  are the same speed."
+#endif /* KUI */
 " ",
 
 "SET TERMINAL SCROLLBACK <lines>",

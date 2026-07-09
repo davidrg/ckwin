@@ -3700,8 +3700,8 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
 #ifdef KUI
     // TODO: only if the view page
-    if (updmode == TTU_SMOOTH && vmode == VTERM && in_smooth_scroll
-        && page == vscrn_current_page_number(VTERM, TRUE) && updown == UPWARD) {
+    if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
+        && in_smooth_scroll && page == vscrn_current_page_number(VTERM, TRUE)  && updown == UPWARD) {
         /* Wait for the last scroll to finish. */
         WaitSmoothScrollFinishedSem(5000);
     }
@@ -4002,8 +4002,8 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F100,"VscrnScroll releases mutex","",0);
 
 #ifdef KUI
-    if (updmode == TTU_SMOOTH && vmode == VTERM && updown == UPWARD &&
-            page == vscrn_current_page_number(VTERM, TRUE)) {
+    if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM &&
+            page == vscrn_current_page_number(VTERM, TRUE) && updown == UPWARD) {
         in_smooth_scroll = TRUE;
         ResetSmoothScrollFinishedSem();
     }
@@ -4011,7 +4011,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     /* The VT220 and up defer DECSCLM taking effect until after the next scroll.
      * */
     if (decsclm_pending) {
-        if (updmode == TTU_SMOOTH) updmode = TTU_FAST;
+        if (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) updmode = TTU_FAST;
         else updmode = TTU_SMOOTH;
         decsclm_pending = FALSE;
     }
@@ -5934,15 +5934,7 @@ VscrnInit( BYTE vmode )
             	{
             	    extern bool decncsm;
                 	if ( !VscrnIsClear(vmode, p ) && !decncsm && !decscpp_resize) {
-#ifdef KUI
-                	    /* Suppress smooth-scroll, as we aren't really doing a scroll */
-                	    int updmode_backup = updmode;
-                	    updmode = TTU_FAST;
-#endif /* KUI */
-                    	VscrnScrollPage( vmode, UPWARD, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
-#ifdef KUI
-                	    updmode = updmode_backup;
-#endif /* KUI */
+                    	VscrnScrollPage( vmode, UPWARD_JUMP, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}
             	}

@@ -21113,7 +21113,7 @@ vtcsi(void)
                             pn[2] = deccolm ? 1 : 2 ;
                             break;
                         case 4: /* DECSCLM */
-                            pn[2] = (updmode == TTU_SMOOTH) ? 1 : 2 ;
+                            pn[2] = (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) ? 1 : 2 ;
                             break;
                         case 5: /* DECSCNM */
                             pn[2] = decscnm ? 1 : 2 ;

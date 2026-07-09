@@ -136,7 +136,8 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
     unsigned long page_top = page->top;
     unsigned long page_scrolltop = page->scrolltop;
 
-    bool smooth_scrolling = updmode == TTU_SMOOTH && in_smooth_scroll && !scrollflag[vnum];
+    bool smooth_scrolling = (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2)
+            && in_smooth_scroll && !scrollflag[vnum];
     if (smooth_scrolling) {
         /* Increase the height so we have both the old top and new bottom in the
          * buffer */

@@ -2205,8 +2205,14 @@ struct keytab msktab[] = { /* SET MS-DOS KERMIT compatibilities */
 int nmsk = (sizeof(msktab) / sizeof(struct keytab));
 
 struct keytab scrnupd[] = {             /* SET TERMINAL SCREEN-UPDATE */
-    { "fast",   TTU_FAST,   0 },
-    { "smooth", TTU_SMOOTH, 0 }
+    { "fast",   TTU_FAST,   0 },        /* Jump scroll */
+    { "jump",   TTU_FAST,   CM_INV },
+    { "smooth", TTU_SMOOTH, 0 },        /* Smooth scroll, slow (Smooth-2) */
+#ifdef KUI
+    { "smooth-fast", TTU_SMOOTH2, 0 },  /* Smooth scroll, fast (Smooth-4) */
+#else
+    { "smooth-fast", TTU_SMOOTH, CM_INV },
+#endif
 };
 int nscrnupd = (sizeof(scrnupd) / sizeof(struct keytab));
 

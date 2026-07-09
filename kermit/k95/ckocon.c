@@ -3545,7 +3545,7 @@ SmoothScroll( void ) {
     if (ISVT220(tt_type_mode)) {
         /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
          * state until after the next scroll event. */
-        if (updmode == TTU_SMOOTH) return;
+        if (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) return;
 
         /* This indicates to VscrnScrollPage that we want it to toggle the
          * scroll mode */
