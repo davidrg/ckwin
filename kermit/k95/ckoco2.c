@@ -91,6 +91,7 @@ int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
 extern int updmode ;
 #ifdef KUI
 extern bool in_smooth_scroll;
+bool    smooth_scroll_upwards;
 extern bool decsclm_pending;
 #endif /* KUI */
 extern int priority ;
@@ -3666,7 +3667,9 @@ clear_cell_attrs(videoline *dest, int start, int end) {
  *
  * Parameters:
  *     vmode        vscreen to scroll
- *     updown       Scroll UPWARD or DOWNWARD
+ *     updown       Scroll UPWARD* or DOWNWARD*
+ *                  UPWARD and DOWNWARD_SMOOTHLY may smooth scroll
+ *                  UPWARD_JUMP and DOWNWARD will never smooth scroll
  *     topmargin    Top line of region to scroll. Zero based.
  *     bottommargin Bottom line of region to scroll. Zero based.
  *     leftmargin   Left column of region to scroll. Use -1 for entire line.
@@ -3701,9 +3704,15 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 #ifdef KUI
     if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
         && in_smooth_scroll && page == vscrn_current_page_number(VTERM, TRUE)
-        && updown == UPWARD) {
+        && updown != UPWARD_JUMP && updown != DOWNWARD) {
         /* Wait for the last scroll to finish. */
         WaitSmoothScrollFinishedSem(5000);
+
+        if (DOWNWARD_SMOOTHLY) {
+            /* The current bottom line needs to be preserved through the scroll
+             * operation */
+            bottommargin += 1;
+        }
     }
 #endif /* KUI */
 
@@ -3912,6 +3921,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 #endif /* NOKVERBS */
             break;
 
+        case DOWNWARD_SMOOTHLY:
         case DOWNWARD: {
             vscrn_page_t *p = &vscrn[vmode].pages[page];
 
@@ -4004,8 +4014,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
 #ifdef KUI
     if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM &&
-            page == vscrn_current_page_number(VTERM, TRUE) && updown == UPWARD) {
+            page == vscrn_current_page_number(VTERM, TRUE)
+            && updown != UPWARD_JUMP && updown != DOWNWARD) {
         in_smooth_scroll = TRUE;
+        smooth_scroll_upwards = updown == UPWARD;
         ResetSmoothScrollFinishedSem();
     }
 

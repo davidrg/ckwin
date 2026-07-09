@@ -47,6 +47,7 @@ extern int tt_update;
 extern int tt_type;
 extern int updmode ;
 extern bool in_smooth_scroll;
+extern bool smooth_scroll_upwards;
 extern vscrn_t vscrn[];
 extern int scrollflag[];
 extern enum markmodes markmodeflag[] ;
@@ -954,7 +955,9 @@ void KClient::writeMe()
     r.right = w;
     r.bottom = h;
 
-    if (smoothScrolling() && !scrollflag[VTERM]) {
+    bool sscroll = smoothScrolling();
+
+    if (sscroll && !scrollflag[VTERM]) {
         r.bottom += font->getFontSpacedH();
     }
 
@@ -1307,11 +1310,14 @@ void KClient::writeMe()
 
             // Scroll progress determines how much of the old screen top we show
             // and how much of the new screen bottom.
-            offset = (int)(smoothScrollProgress * lineHeight);
-
-            if (offset > lineHeight) {
-                offset = lineHeight;
+            if (smooth_scroll_upwards) {
+                offset = (int)(smoothScrollProgress * lineHeight);
+            } else {
+                offset = (int)((1.0 - smoothScrollProgress) * lineHeight);
             }
+
+            if (offset > lineHeight) offset = lineHeight;
+            if (offset < 0) offset = 0;
 
             // The bottom coordinate of the terminal area (excluding the status
             // line)

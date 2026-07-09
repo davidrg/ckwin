@@ -214,6 +214,7 @@ int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
 int     priority        = XYP_REG ;
 #ifdef KUI
 bool    in_smooth_scroll = FALSE;
+bool    smooth_scroll_upwards = FALSE;
 bool    decsclm_pending = FALSE;
 #endif /* KUI */
 

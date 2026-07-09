@@ -1951,6 +1951,10 @@ DECTSR		462
             <!-- 0x8D -->
             <p>Reverse Index—moves the cursor up one, scrolling the screen
                 if the cursor is already at the top margin.</p>
+            <p>If the cursor is at the top of the screen and smooth scrolling is
+                enabled (<tt>SET TERM SCREEN-UPDATE SMOOTH</tt>) the contents of
+                the screen will scroll smoothly down.
+            </p>
         </section>
         <section role="ctlseq" id="ssg2l" ctlseq="ESC N" mnemonic="SS2" title="Single shift G2, left" groups="isvt220 isansi">
             <ref src="e48:84"/>

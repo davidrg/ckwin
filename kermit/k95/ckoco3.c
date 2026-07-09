@@ -26767,6 +26767,13 @@ vtcsi(void)
                                      SP,
                                      FALSE);
                     } else { /* Roll Mode */
+                        /* TODO:
+                         * This should scroll smoothly. But it shouldn't do so
+                         * using VscrnScrollPage. SD (and SU) are for panning
+                         * a viewport smaller than the page up and down (like
+                         * using the vertical scrollbar), and when smooth
+                         * scrolling is on it should pan smoothly.
+                         */
                         VscrnScrollPage(
                             VTERM,      /* Vscrn */
                             DOWNWARD,   /* Direction */
@@ -28600,7 +28607,7 @@ vtescape( void )
             if (ISVT100(tt_type_mode)) {
                 if (vscrn_c_page_margin_top(VTERM) == wherey[VTERM])
                     VscrnScrollPage(VTERM,
-                                 DOWNWARD,
+                                 DOWNWARD_SMOOTHLY,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
                                  vscrn_c_page_margin_left(VTERM) - 1,

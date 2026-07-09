@@ -9,6 +9,7 @@ extern vscrn_t vscrn[VNUM]; /* = {0,0,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1
 extern int inecho;          /* do we echo script INPUT output? */
 extern int updmode ;
 extern bool in_smooth_scroll;
+extern bool smooth_scroll_upwards;
 extern int priority ;
 extern cell_video_attr_t defaultattribute ;
 extern int cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[];
@@ -142,7 +143,11 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
         /* Increase the height so we have both the old top and new bottom in the
          * buffer */
         ys += 1;
-        page_top -= 1;
+        // Upwards means we include the old top
+        if (smooth_scroll_upwards) {
+            page_top -= 1;
+        }
+        // And downwards means we include the old bottom
     }
 
     textBuffer = kcp->textBuffer;

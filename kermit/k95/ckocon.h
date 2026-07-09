@@ -135,9 +135,16 @@
 #endif /* FALSE */
 #define FALSE 0
 
+/* VscrnScrollPage scroll directions. Upward will normally scroll smoothly if
+ * in that mode with UPWARD_JUMP for those situations (eg screen clearing) where
+ * that is not appropriate. DOWNWARD will always jump-scroll with
+ * DOWNWARD_SMOOTHLY for the one situation where smooth-scroll is appropriate.
+ */
 #define UPWARD_JUMP 5                   /* Scroll up, no smooth scrolling */
-#define UPWARD   6                      /* Scroll up */
+#define UPWARD   6                      /* Scroll up, */
 #define DOWNWARD 7                      /* Scroll down */
+#define DOWNWARD_SMOOTHLY 8             /* Scroll down, smooth scroll allowed */
+
 #define LBUFSIZE roll.bufsize           /* Maximum lines in rollback buffer */
 
 /*
