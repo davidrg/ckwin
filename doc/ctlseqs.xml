@@ -2302,6 +2302,12 @@ DECTSR		462
                 the terminal scrolls up one line. Otherwise, the cursor remains at the end
                 of the line
             </p>
+            <p>
+                If a downwards smooth scroll (as a result of an
+                <a href="#ri">RI</a> on the top line) is currently in progress,
+                then a line feed anywhere is blocked until the smooth-scroll
+                finishes.
+            </p>
 
             <p badges="s97801">
                 If in page mode and the cursor is at the bottom margin, the cursor is sent

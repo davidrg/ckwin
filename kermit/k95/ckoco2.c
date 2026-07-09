@@ -3704,15 +3704,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 #ifdef KUI
     if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
         && in_smooth_scroll && page == vscrn_current_page_number(VTERM, TRUE)
-        && updown != UPWARD_JUMP && updown != DOWNWARD) {
-        /* Wait for the last scroll to finish. */
-        WaitSmoothScrollFinishedSem(5000);
-
-        if (DOWNWARD_SMOOTHLY) {
-            /* The current bottom line needs to be preserved through the scroll
-             * operation */
-            bottommargin += 1;
-        }
+        && updown == DOWNWARD_SMOOTHLY) {
+        /* The current bottom line needs to be preserved through the scroll
+         * operation */
+        bottommargin += 1;
     }
 #endif /* KUI */
 
@@ -4016,6 +4011,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM &&
             page == vscrn_current_page_number(VTERM, TRUE)
             && updown != UPWARD_JUMP && updown != DOWNWARD) {
+
+        /* Begin a new smooth-scroll! This will block any further LF characters
+         * until it completes.*/
         in_smooth_scroll = TRUE;
         smooth_scroll_upwards = updown == UPWARD;
         ResetSmoothScrollFinishedSem();

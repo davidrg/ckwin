@@ -267,6 +267,7 @@ extern int  scrninitialized[] ;
 extern bool scrollflag[] ;
 extern bool viewonly ;           /* View Only Terminal mode */
 extern int  updmode ;            /* Fast/Smooth scrolling */
+extern bool in_smooth_scroll ;
 extern int priority ;
 extern TID  tidRdComWrtScr ;
 
@@ -19080,6 +19081,20 @@ wrtch(unsigned short ch) {
                 prtline( wherey[VTERM], LF ) ;
             }
             if ( decsasd == SASD_TERMINAL ) {
+                /* If a smooth scroll is in progress, a line feed anywhere is
+                 * blocked until the scroll is finished. If we don't do this,
+                 * then you'll see the prompt in GNU Less jump up a little every
+                 * time you scroll up. The VT100 Technical Manual (EK-VT100-TM)
+                 * also says "When a line feed is received the microprocessor
+                 * waits for the current scroll to end" (pg 4-96) so this is
+                 * probably the correct place for the wait. */
+                if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2)
+                    && vmode == VTERM && in_smooth_scroll
+                    && vscrn_current_page_number(VTERM, FALSE) == vscrn_current_page_number(VTERM, TRUE)
+                ) {
+                    WaitSmoothScrollFinishedSem(5000);
+                }
+
                 if (wherey[vmode] == vscrn_c_page_margin_bot(VTERM)) {
                     if ( IS97801(tt_type_mode) ) {
                         if ( !sni_pagemode )
