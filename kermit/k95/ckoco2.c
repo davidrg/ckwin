@@ -3602,58 +3602,6 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
     return rc ;
 }
 
-#ifdef KUI
-#ifdef PACKED_CELL_ATTRS
-/* Copies a range of cell attributes from one packed array of attributes to
- * another */
-void
-copy_cell_attrs(videoline *dest, videoline *source, int start, int end) {
-    if (start%2 == 1) {
-        /* Copy only the lower 4 bits at start */
-        CELL_ATTR_SET(dest, start, CELL_ATTR_GET(source, start));
-        start++;
-    }
-    if (end%2 == 0) {
-        /* Copy the upper 4 bits at end manually */
-        CELL_ATTR_SET(dest, end, CELL_ATTR_GET(source, end));
-        end--;
-    }
-
-    /* Copy everything else. Divide by two because we're
-     * storing two cells worth of attributes in each
-     * byte */
-    start = start / 2;
-    end = end / 2;
-    memcpy(dest->cell_attrs + start,
-           source->cell_attrs + start,
-           sizeof(vt_cell_attr_t) * end-start+1);
-}
-
-/* Clears a range of cell attributes in a packed array of attributes.
- */
-void
-clear_cell_attrs(videoline *dest, int start, int end) {
-
-    if (start%2 == 1) {
-        /* Copy only the lower 4 bits at start */
-        CELL_ATTR_SET(dest, start, CA_ATTR_NONE);
-        start++;
-    }
-    if (end%2 == 0) {
-        /* Copy the upper 4 bits at end manually */
-        CELL_ATTR_SET(dest, end, CA_ATTR_NONE);
-        end--;
-    }
-
-    start = start / 2;
-    end = end / 2;
-    memset(dest->cell_attrs + start,
-           CA_ATTR_NONE | CA_ATTR_NONE << 4,
-           sizeof(vt_cell_attr_t) * end);
-
-}
-#endif /* PACKED_CELL_ATTRS */
-#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* VscrnScrollPage                                          | Page: Specified*/
@@ -3833,16 +3781,6 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         memcpy(this_line.vt_char_attrs+leftmargin,
                                next_line.vt_char_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
-#ifdef KUI
-#ifndef PACKED_CELL_ATTRS
-                        memcpy(this_line.cell_attrs+leftmargin,
-                               next_line.cell_attrs+leftmargin,
-                               sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
-#else /* PACKED_CELL_ATTRS */
-                        copy_cell_attrs(&this_line, &next_line, leftmargin,
-                            rightmargin);
-#endif /* PACKED_CELL_ATTRS */
-#endif /* KUI */
                     }
                 }
 
@@ -3873,15 +3811,6 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                         memcpy(line->vt_char_attrs+leftmargin,
                                blank_attrs+leftmargin,
                                sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
-#ifdef KUI
-#ifndef PACKED_CELL_ATTRS
-                        memcpy(line->cell_attrs+leftmargin,
-                               blank_cell_attrs+leftmargin,
-                               sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
-#else /* PACKED_CELL_ATTRS */
-                        clear_cell_attrs(line, leftmargin, rightmargin-leftmargin+1);
-#endif /* PACKED_CELL_ATTRS */
-#endif /* KUI */
                     }
                 }
             }
@@ -3927,16 +3856,6 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     memcpy(this_line.vt_char_attrs+leftmargin,
                            prev_line.vt_char_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
-#ifdef KUI
-#ifndef PACKED_CELL_ATTRS
-                    memcpy(this_line.cell_attrs+leftmargin,
-                           prev_line.cell_attrs+leftmargin,
-                           sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
-#else /* PACKED_CELL_ATTRS */
-                    copy_cell_attrs(&this_line, &prev_line, leftmargin,
-                        rightmargin);
-#endif /* PACKED_CELL_ATTRS */
-#endif /* KUI */
                 }
             }
 
@@ -3968,15 +3887,6 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                     memcpy(line->vt_char_attrs+leftmargin,
                            blank_attrs+leftmargin,
                            sizeof(vt_char_attr_t) * (rightmargin-leftmargin+1));
-#ifdef KUI
-#ifndef PACKED_CELL_ATTRS
-                    memcpy(line->cell_attrs+leftmargin,
-                           blank_cell_attrs+leftmargin,
-                           sizeof(vt_cell_attr_t) * (rightmargin-leftmargin+1));
-#else /* PACKED_CELL_ATTRS */
-                    clear_cell_attrs(line, leftmargin, rightmargin-leftmargin+1);
-#endif /* PACKED_CELL_ATTRS */
-#endif /* KUI */
                 }
             }
             break;
