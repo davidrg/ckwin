@@ -3198,6 +3198,11 @@ DECTSR		462
                 double-height or double-wide attributes set will scroll twice as
                 fast as lines without those attributes set.
             </p>
+            <p>
+                If the screen scrolls to the right, any
+                <a href="#decdrlbr">Ruled Lines</a> on the screen are
+                unaffected. They do not move.
+            </p>
         </section>
         <section role="ctlseq" id="scp" mnemonic="SCP" ctlseq="ESC 7"
                  title="Save Cursor (ANSI)" groups="isansi" badges="aaa">
@@ -3265,6 +3270,11 @@ DECTSR		462
                 at the right margin, it scrolls the screen one column to the left.
                 Clears the <a href="#lcf">Last Column Flag</a> if the current
                 position is to the left of the right margin.
+            </p>
+            <p>
+                If the screen scrolls to the left, any
+                <a href="#decdrlbr">Ruled Lines</a> on the screen are
+                unaffected. They do not move.
             </p>
         </section>
         <section role="ctlseq" id="zgua" ctlseq="ESC :" mnemonic="zGUA" title="Guard Unprotected Areas" not-implemented="true" badges="aaa">
@@ -16939,7 +16949,7 @@ DCS $ q 3 , } ST</pre>
                 <a href="#decerlbra">DECERLBRA</a>. They are treated as an
                 attribute on character cells themselves, so control sequences
                 that move or remove character cells will affect ruled lines.
-                Control sequences that  delete charcter cells such as
+                Control sequences that delete charcter cells such as
                 <a href="#dl">DL</a> will also delete any ruled lines in the
                 affected area, while those that move character cells like
                 <a href="#il">IL</a> or scrolling will move ruled lines.
@@ -17013,14 +17023,15 @@ DCS $ q 3 , } ST</pre>
             </p>
             <p>
                 When ruled lines cross left/right margins, the line segements
-                within the margins will scroll with text in the margins. DECterm
-                does not do this as DECterm does not support setting left/right
-                margins. WRQ Reflection 8.0.2 also chooses not to do this even
-                though it <em>does</em> support left/right margins. Should a
-                good reason for Reflections behaviour surface (DEC has not
-                <em>publicly</em> defined what should happen in this case)
-                Kermit 95 may change to match it so this behaviour should not be
-                relied upon.
+                within the margins will <em>not</em> scroll with the text in
+                the margins. Ruled lines only scroll when the entire line
+                scrolls. This is consistent with the only other terminal
+                emulators that implement this feature - DECterm (which does not
+                support left/right marigns) and WRQ Reflection (which behaves
+                the same way as K95 when left/right margins are involved). It is
+                also consistent with other features from the Horizontal Scrolling
+                extension (of which DECLRMM is a part) such as DECFI, DECBI, ICH
+                and DCH not affecting ruled lines.
             </p>
             <p>
                 Ruled Lines are only supported on Windows under K95G. The console
@@ -19592,6 +19603,11 @@ DCS $ q 3 , } ST</pre>
                 right margin shifting right. If the cursor is outside the page
                 margins, DECIC is ignored.
             </p>
+            <p>
+                Any <a href="#decdrlbr">Ruled Lines</a> on the screen between
+                the cursor and the right margin are unaffected - the are not
+                shifted right.
+            </p>
         </section>
         <section role="ctlseq" id="decsasd"
                  mnemonic="DECSASD" title="Select Active Status Display">
@@ -19797,6 +19813,11 @@ DCS $ q 3 , } ST</pre>
                 the right margin towards the cursor. One or more empty columns
                 are inserted at the right margin. If the cursor is outside the
                 page margins, DECDC is ignored.
+            </p>
+            <p>
+                Any <a href="#decdrlbr">Ruled Lines</a> on the screen between
+                the cursor and the right margin are unaffected - the are not
+                shifted towards the cursor.
             </p>
         </section>
         <section role="ctlseq" id="decssdt"
