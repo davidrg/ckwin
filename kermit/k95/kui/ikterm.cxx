@@ -10,6 +10,8 @@ extern int inecho;          /* do we echo script INPUT output? */
 extern int updmode ;
 extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
+extern int smooth_scroll_top, smooth_scroll_bottom;
+extern videoline s_scroll_backup_line;
 extern int priority ;
 extern cell_video_attr_t defaultattribute ;
 extern int cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[];
@@ -90,8 +92,15 @@ IKTerm::~IKTerm()
 BOOL IKTerm::getDrawInfo() {
     return getDrawInfo( vmode );
 }
+BOOL IKTerm::getDrawInfo(BYTE vscrn_number) {
+    return getDrawInfo( vscrn_number, FALSE );
+}
 
-BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
+bool IKTerm::getSmoothScrollDrawInfo() {
+    return getDrawInfo( vmode, TRUE );
+}
+
+BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
 {
 	vnum = vscrn_number;
 #ifdef EXCLUSIVE
@@ -137,12 +146,23 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
     unsigned long page_top = page->top;
     unsigned long page_scrolltop = page->scrolltop;
 
-    bool smooth_scrolling = (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2)
-            && in_smooth_scroll && !scrollflag[vnum];
-    if (smooth_scrolling) {
+    bool scrollRegionOnly = smoothScroll && s_scroll_backup_line.cells != NULL
+        && smooth_scroll_top != -1 && smooth_scroll_bottom != -1;
+
+    if (smoothScroll) {
+        // TODO: Take pwidth and pheight into account for situations where the
+        //       window is smaller than the buffer. This would primarily affect
+        //       scrolling within a region - if the region fits into the
+        //       viewport then we don't need to treat it as a scroll region.
+        if (scrollRegionOnly) {
+            page_top += smooth_scroll_top;
+            ys = 1 + smooth_scroll_bottom - smooth_scroll_top;
+        }
+
         /* Increase the height so we have both the old top and new bottom in the
          * buffer */
         ys += 1;
+
         // Upwards means we include the old top
         if (smooth_scroll_upwards) {
             page_top -= 1;
@@ -181,6 +201,21 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
                 line = &page->lines[(page_top+y)%page->linecount] ;
             else
                 line = &page->lines[(page_scrolltop+y)%page->linecount] ;
+
+            // If we're rendering only the scroll region for a smooth-scroll
+            // operation, then the additional line that is scrolling away has
+            // been stashed in s_scroll_backup_line by VscrnScrollPage. We need
+            // to slot that in now.
+            if (scrollRegionOnly) {
+                if (smooth_scroll_upwards && y == 0) {
+                    // Substitute the top for the backup line
+                    line = &s_scroll_backup_line;
+                } else if (!smooth_scroll_upwards && y == ys - 1) {
+                    // Substitute the bottom for the backup line
+                    line = &s_scroll_backup_line;
+                }
+            }
+
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -393,8 +428,8 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
 #endif /* EXCLUSIVE */
 
     /* Status Line Display */
-    if ( vnum == VTERM && tt_status[vnum] && decssdt != SSDT_BLANK ||
-         vnum != VTERM && tt_status[vnum] || decssdt_override)
+    if ( (vnum == VTERM && tt_status[vnum] && decssdt != SSDT_BLANK ||
+         vnum != VTERM && tt_status[vnum] || decssdt_override) && !scrollRegionOnly)
     {
         if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1
                   && !decssdt_override && !scrollflag[vnum]) {

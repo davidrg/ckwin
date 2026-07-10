@@ -122,7 +122,7 @@ private:    // this section is for performance
     static void drawRuledLines(
         HDC hdc, HPEN pen, int cells, KFont* font, RECT rect,
         BOOL rlTop, BOOL rlBottom, BOOL rlLeft, BOOL rlRight);
-    static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0);
+    static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0, bool blinkOn=TRUE);
     HBITMAP renderToBitmap(int vnum, DWORD **outPixels);
 #ifdef CK_HAVE_GDIPLUS
     BOOL renderToImageFile(int vnum, char* filename, const wchar_t* format);
@@ -148,6 +148,8 @@ private:    // this section is for performance
     HDC _hdc;
     HDC _hdcScreen;
     HDC _hdcScratch;
+    HDC _hdcSScrollBlinkOn;
+    HDC _hdcSScrollBlinkOff;
     HBITMAP compatBitmap;
     HBITMAP scratchBitmap;
     HRGN hrgnPaint;

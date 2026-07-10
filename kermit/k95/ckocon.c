@@ -213,9 +213,13 @@ bool    viewonly = FALSE ;              /* View only terminal mode */
 int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
 int     priority        = XYP_REG ;
 #ifdef KUI
-bool    in_smooth_scroll = FALSE;
-bool    smooth_scroll_upwards = FALSE;
-bool    decsclm_pending = FALSE;
+bool    in_smooth_scroll = FALSE;         /* Smooth scroll in progress */
+bool    smooth_scroll_upwards = FALSE;   /* Direction is upwards */
+int     smooth_scroll_bottom;           /* Bottom line of the smooth scroll */
+int     smooth_scroll_top;             /* Top line of the smooth scroll */
+bool    decsclm_pending = FALSE;      /* Toggle scroll mode after next scroll*/
+videoline s_scroll_backup_line =     /* Line the scroll event erased */
+    { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0};
 #endif /* KUI */
 
 int tn_bold = 0;                        /* TELNET negotiation bold */
