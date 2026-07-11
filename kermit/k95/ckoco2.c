@@ -3627,6 +3627,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 void
 BackupLineForSmoothScroll(videoline *line) {
     s_scroll_backup_line.width = line->width;
+    s_scroll_backup_line.vt_line_attr = line->vt_line_attr;
     s_scroll_backup_line.markbeg = line->markbeg;
     s_scroll_backup_line.markshowend = line->markshowend;
     s_scroll_backup_line.markend = line->markend;
