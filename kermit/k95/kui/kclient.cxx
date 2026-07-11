@@ -1032,6 +1032,11 @@ void KClient::smoothScroll() {
         smoothScrollTime = 0;
         smoothScrollRendering = FALSE;
         in_smooth_scroll = FALSE;
+
+        // Force a refresh of the draw info in case we were rendering a scroll
+        // region.
+        getDrawInfo();
+
         PostSmoothScrollFinishedSem();
     }
 }
