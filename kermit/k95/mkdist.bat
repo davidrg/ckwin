@@ -92,6 +92,23 @@ copy %WATCOM%\binnt\plbr*.dll dist
 @echo Copy enabled optional dependencies
 for %%I in (%CK_DIST_DLLS%) do copy %%I dist\
 
+REM Move any variants of OpenConsole.exe being shipped into
+REM architecture-specific directories where conpty.dll will look for them
+if exist dist\x86-openconsole.exe (
+    if not exist dist\x86\NUL mkdir dist\x86
+    move dist\x86-openconsole.exe dist\x86\OpenConsole.exe
+)
+
+if exist dist\x64-openconsole.exe (
+    if not exist dist\x64\NUL mkdir dist\x64
+    move dist\x64-openconsole.exe dist\x64\OpenConsole.exe
+)
+
+if exist dist\arm64-openconsole.exe (
+    if not exist dist\arm64\NUL mkdir dist\arm64
+    move dist\arm64-openconsole.exe dist\arm64\OpenConsole.exe
+)
+
 @echo Copy licenses
 copy ..\..\COPYING dist
 if exist dist\ssh.dll copy %libssh_root%\COPYING dist\COPYING.libssh

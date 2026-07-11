@@ -249,6 +249,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - The default screen update interval is now 20 milliseconds giving a frame rate
    of 50 frames per second. The old default was 100 milliseconds (10fps), but
    overridden by the default k95custom.ini.
+ - An updated version of ConPTY is now packaged with kermit 95 for modern x86,
+   x86-64 and arm64 hosts to enable better terminal emulation in PTY sessions.
+ - The PTY command will now launch the Windows shell (cmd.exe) by default if no
+   other command is specified
 
 ### New terminal control sequences
 > [!NOTE]

@@ -554,6 +554,40 @@ set CKB_IBMTCP20=no
 if exist %ibm20dir%\lib\tcp32dll.lib set CKB_IBMTCP20=yes
 if exist %ibm20dir%\lib\tcp32dll.lib echo found %ibm20dir%\lib\tcp32dll.lib
 
+REM Try to find updated ConPTY library
+if not exist %root%\conpty\Microsoft.Windows.Console.ConPTY\inc\conpty.h goto :noconpty
+echo Found updated ConPTY in %root%\conpty\Microsoft.Windows.Console.ConPTY
+
+if "%CKB_TARGET_ARCH%" == "x86" goto :conptyx8632
+if "%CKB_TARGET_ARCH%" == "AMD64" goto :conptyx8664
+if "%CKB_TARGET_ARCH%" == "ARM64" goto :conptyarm64
+
+goto :noconpty
+
+:conptyx8632
+REM x86-32 can run on x86-64 and arm64, so all three variants of openconsole are needed
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\x86-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\x64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\arm64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-x86\native\conpty.dll
+goto :conptydone
+
+:conptyx8664
+REM x86-64 can run on arm64 too, so both variants of openconsole are needed
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\x64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\arm64-OpenConsole.exe
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-x64\native\conpty.dll
+goto :conptydone
+
+:conptyarm64
+REM arm64 only works on arm64, so only one variant of openconsole needed
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\runtimes\win-arm64\native\conpty.dll
+set CK_CONPTY_DIST=%CK_CONPTY_DIST% %root%\conpty\Microsoft.Windows.Console.ConPTY\build\native\runtimes\arm64\OpenConsole.exe
+goto :conptydone
+
+:conptydone
+:noconpty
+
 REM --------------------------------------------------------------
 REM Detect compiler so the OpenZinc build environment can be setup 
 REM --------------------------------------------------------------
@@ -1007,6 +1041,11 @@ REM        and remove their dist files.
 
 set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES% %CKB_REXX_DIST_DLLS% %CK_DIST_ASAN%
 
+REM ConPTY is only supported on Visual C++ 2019 (CKB_MSC_VER=192) or higher
+if %CKB_MSC_VER% GEQ 192 (
+    set CK_DIST_DLLS=%CK_DIST_DLLS% %CK_CONPTY_DIST%
+)
+
 REM If this build can run on Windows 9x, include ctrl2cap for swapping the
 REM CTRL and Caps Lock keys, and the accent grave and esc keys:
 if "%CKB_9X_COMPATIBLE%" == "yes" set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\kermit\ctrl2cap\ctrl2cap.vxd %root%\kermit\ctrl2cap\ctrl2cap.txt %root%\kermit\ctrl2cap\ctrl2cap.license
@@ -1019,13 +1058,10 @@ echo.
 echo Library path set to:
 echo    %lib%
 echo.
-echo DIST DLLs set to:
+echo DIST files set to:
 echo    %CK_DIST_DLLS%
 echo.
 echo Compiler: %CK_COMPILER_NAME%
-echo.
-echo Dist files set to:
-echo    %CK_DIST_DLLS%
 echo.
 echo Optional Dependencies:
 echo     zlib: %CKF_ZLIB%
@@ -1038,6 +1074,8 @@ echo      SRP: %CKF_SRP%
 echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%, DNS-SRV: %CKF_K4W_WSHELPER%, KRB4: %CKF_K4W_KRB4%)
 if "%CKF_REXX%" == "yes" echo     REXX: %CKF_REXX% (%REXX_LIB%)
 if "%CKF_REXX%" == "no" echo     REXX: %CKF_REXX%
+if "%CK_CONPTY_DIST%" == "" echo   ConPTY: No
+if "%CK_CONPTY_DIST%" neq "" echo   ConPTY: Yes
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running

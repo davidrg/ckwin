@@ -42,6 +42,10 @@ env:
   LIBSSH_VERSION: 0.10.6
   # TODO: When upgrading to 0.11, drop -DCMAKE_POLICY_VERSION_MINIMUM=3.5 from
   #       the ARM build jobs, and the /F flag from all the others.
+  #
+  # Microsoft.Windows.Console.ConPTY from Nuget
+  #    https://www.nuget.org/packages/Microsoft.Windows.Console.ConPTY/
+  CONPTY_VERSION: 1.24.260512001
   # OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
   # But we don't want to waste the resources of the generous OpenZinc developer,
   # so we grab it from a mirror
@@ -52,8 +56,8 @@ env:
   KFW_x86: https://web.mit.edu/kerberos/dist/kfw/4.1/kfw-4.1-i386.msi
   KFW_x86_64: https://web.mit.edu/kerberos/dist/kfw/4.1/kfw-4.1-amd64.msi
   # Infozip
-  #INFOZIP_FTP: https://ftp.zx.net.nz/pub/archive/ftp.info-zip.org/pub/infozip/
-  INFOZIP_FTP: ftp://ftp.info-zip.org/pub/infozip/
+  INFOZIP_FTP: https://ftp.zx.net.nz/pub/archive/ftp.info-zip.org/pub/infozip/
+  #INFOZIP_FTP: ftp://ftp.info-zip.org/pub/infozip/
   # Use JOM instead of nmake for parallel builds
   JOM: https://download.qt.io/official_releases/jom/jom.zip
   # Download it from sourceforge distribution page
@@ -417,7 +421,8 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver4
+            ${{github.workspace}}\conpty
+          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+conpty-${{env.CONPTY_VERSION}}+ver1
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -512,6 +517,12 @@ jobs:
           del rexxre.zip
           dir rexxre
           # CD out of the rexx directory
+          cd ..
+  
+          cd conpty
+          $env:root="${{ github.workspace }}"
+          $env:CONPTY_VERSION="${{ env.CONPTY_VERSION }}"
+          cmd /c getconpty.bat
           cd ..
   
           # Install perl modules required by OpenSSL build
