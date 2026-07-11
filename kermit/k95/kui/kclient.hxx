@@ -136,6 +136,8 @@ private:    // this section is for performance
 
     bool smoothScrolling();
 
+    bool getSmoothScrollDrawInfo();
+
     CRITICAL_SECTION csDraw;
 
     IKTerm* ikterm;
@@ -152,6 +154,8 @@ private:    // this section is for performance
     HDC _hdcSScrollBlinkOff;
     HBITMAP compatBitmap;
     HBITMAP scratchBitmap;
+    HBITMAP scrollBlinkOnBitmap;
+    HBITMAP scrollBlinkOffBitmap;
     HRGN hrgnPaint;
     HBRUSH disabledBrush;
     HBRUSH bgBrush;
@@ -204,6 +208,12 @@ private:    // this section is for performance
 
     double smoothScrollProgress;
     long smoothScrollTime;
+
+    // If a smooth scroll event is currently being rendered smoothly.
+    // During mark mode, a popup, or if a different vscreen is being
+    // displayed then the vscreen is rendered normally but the smooth
+    // smooth scroll progress is still calculated.
+    bool smoothScrollRendering;
 };
 
 #endif

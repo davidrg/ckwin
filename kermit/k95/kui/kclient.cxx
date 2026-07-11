@@ -137,8 +137,7 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
     // debug(F111,"KTimerProc()","dwtime",dwtime);
     KClient* client = (KClient*) kglob->hwndset->find( hwnd );
     if( client ) {
-        if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
-                && in_smooth_scroll) {
+        if (updmode >= TTU_SMOOTH && in_smooth_scroll) {
             // We're smooth-scrolling.
             client->smoothScroll();
         } else {
@@ -204,6 +203,7 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , screenNormal(FALSE)
     , smoothScrollProgress( 0.0 )
     , smoothScrollTime( 0 )
+    , smoothScrollRendering ( FALSE )
 {
     InitializeCriticalSection(&csDraw);
 
@@ -262,6 +262,8 @@ KClient::~KClient()
     if ( _hdcSScrollBlinkOff != 0 ) DeleteDC( _hdcSScrollBlinkOff );
     DeleteObject( compatBitmap );
     DeleteObject( scratchBitmap );
+    DeleteObject( scrollBlinkOnBitmap );
+    DeleteObject( scrollBlinkOffBitmap );
     DeleteObject( hrgnPaint );
     DeleteObject( disabledBrush );
     DeleteObject( bgBrush );
@@ -899,10 +901,61 @@ void KClient::syncSize()
  *   region with an offset for scroll progress.
  */
 
+bool KClient::getSmoothScrollDrawInfo() {
+    BOOL success = TRUE;
+
+    EnterCriticalSection(&csDraw);
+
+    if (smooth_scroll_top != -1 && smooth_scroll_bottom != -1) {
+        // We're only scrolling part of the screen. That complicates matters
+        // somewhat. This means we need to render the screen in two stages.
+
+        // For the first stage we need to render the terminal as though
+        // we're not doing smooth scrolling. But don't render it to the
+        // screen - render it to another HDC off to the side. To do this,
+        // we'll use the static rendering functions originally created to
+        // render screenshots.
+        if (_hdcSScrollBlinkOn == 0) {
+            _hdcSScrollBlinkOn = CreateCompatibleDC( _hdcScreen );
+            scrollBlinkOnBitmap = CreateCompatibleBitmap( _hdcScreen
+                    , kglob->sysMets->screenWidth()
+                    , kglob->sysMets->screenHeight() );
+            SelectObject(_hdcSScrollBlinkOn, scrollBlinkOnBitmap);
+        }
+        if (_hdcSScrollBlinkOff == 0) {
+            _hdcSScrollBlinkOff = CreateCompatibleDC( _hdcScreen );
+            scrollBlinkOffBitmap = CreateCompatibleBitmap( _hdcScreen
+                    , kglob->sysMets->screenWidth()
+                    , kglob->sysMets->screenHeight() );
+            SelectObject(_hdcSScrollBlinkOff, scrollBlinkOffBitmap);
+        }
+
+
+        // And we have to render it twice - once with all of the blinking
+        // elements ON, and again with them OFF.
+        success = success && renderToDc(_hdcSScrollBlinkOn, font, VTERM, margin(), TRUE);
+        success = success && renderToDc(_hdcSScrollBlinkOff, font, VTERM, margin(), FALSE);
+
+        // The second stage will then only render the scrolling region, and
+        // it will copy all the non-scrolling content out of the pair of HDC
+        // we prepared above.
+    }
+
+    memset( workTemp, '\0', workTempSize );
+    success = success && ikterm->getSmoothScrollDrawInfo();
+
+    LeaveCriticalSection(&csDraw);
+
+    if (success) {
+        smoothScrollRendering = TRUE;
+        writeMe();
+    }
+
+    return success;
+}
 
 bool KClient::smoothScrolling() {
-    return updmode >= TTU_SMOOTH && vmode == VTERM && in_smooth_scroll
-        && !scrollflag[vmode];
+    return updmode >= TTU_SMOOTH && vmode == VTERM && in_smooth_scroll;
 }
 
 void KClient::smoothScroll() {
@@ -935,47 +988,51 @@ void KClient::smoothScroll() {
         ms_per_line = 1000.0f / (float)slow;
     }
 
+    // Update progress
     smoothScrollProgress = smoothScrollTime /  ms_per_line;
 
-    // If we're just starting our smooth scroll, refresh our copy of the vscrn
-    // so that we have the slightly enlarged buffer we need.
-    if (smoothScrollTime == tt_update) {
-        EnterCriticalSection(&csDraw);
+    // Figure out if we should *show* the smooth scroll.
+    bool popupActive = FALSE;
+    bool selectionActive = markmodeflag[VTERM] == marking;
+    bool viewingScrollback = scrollflag[VTERM];
+    bool onVterm = vmode == VTERM;
 
-        if (smooth_scroll_top != -1 && smooth_scroll_bottom != -1) {
-            // We're only scrolling part of the screen. That complicates matters
-            // somewhat. This means we need to render the screen in two stages.
+    if ( ! RequestVscrnMutex( VTERM, 200 ) ) {
+        popupActive = vscrn[VTERM].popup != NULL;
+        ReleaseVscrnMutex(VTERM);
+    }
 
-            // For the first stage we need to render the terminal as though
-            // we're not doing smooth scrolling. But don't render it to the
-            // screen - render it to another HDC off to the side. To do this,
-            // we'll use the static rendering functions originally created to
-            // render screenshots.
-            if (_hdcSScrollBlinkOn == 0) {
-                _hdcSScrollBlinkOn = CreateCompatibleDC( _hdcScreen );
-            }
-            if (_hdcSScrollBlinkOff == 0) {
-                _hdcSScrollBlinkOff = CreateCompatibleDC( _hdcScreen );
-            }
+    // We only render a smooth scroll event if the user is on VTERM, isn't
+    // selecting text, isn't viewing scrollback, and doesn't have a popup
+    // open. We still compute the smooth scroll though.
+    bool smoothRender = !popupActive && !selectionActive && !viewingScrollback
+        && onVterm;
 
-            // And we have to render it twice - once with all of the blinking
-            // elements ON, and again with them OFF.
-            renderToDc(_hdcSScrollBlinkOn, font, vmode, margin(), TRUE);
-            renderToDc(_hdcSScrollBlinkOn, font, vmode, margin(), FALSE);
-
-            // The second stage will then only render the scrolling region, and
-            // it will copy all the non-scrolling content out of the pair of HDC
-            // we prepared above.
+    if (smoothRender != smoothScrollRendering || VscrnClean(vmode)) {
+        // We're switching between Smooth Scroll rendering and Jump Scroll
+        // rendering. Refresh the draw info.
+        if (!smoothRender) {
+            smoothScrollRendering = smoothRender;
+            getDrawInfo();
+        } else {
+            getSmoothScrollDrawInfo();
         }
-
-        memset( workTemp, '\0', workTempSize );
-        ikterm->getSmoothScrollDrawInfo();
-
-        LeaveCriticalSection(&csDraw);
-
+    } else if (smoothRender) {
+        // Render current smoothScroll progress
         writeMe();
     } else {
+        // Same mode as before - just re-render the existing buffer snapshot
+        // if needed.
         checkBlink();
+    }
+
+    if (smoothScrollProgress >= 1) {
+        // Finished the smooth scroll event. Unblock scrolling.
+        smoothScrollProgress = 0;
+        smoothScrollTime = 0;
+        smoothScrollRendering = FALSE;
+        in_smooth_scroll = FALSE;
+        PostSmoothScrollFinishedSem();
     }
 }
 
@@ -988,8 +1045,7 @@ void KClient::writeMe()
     int twid, thi, hisv;
     //debug(F100,"KClient::writeMe()","",0);
 
-    bool sscroll = smoothScrolling();
-    bool scrollRegionRender = sscroll
+    bool scrollRegionRender = smoothScrollRendering
         && smooth_scroll_top != -1 && smooth_scroll_bottom != -1;
 
     ::getDimensions( vmode /* clientID */, &twid, &thi );
@@ -1033,7 +1089,7 @@ void KClient::writeMe()
     r.right = w;
     r.bottom = h;
 
-    if (sscroll && !scrollflag[VTERM]) {
+    if (smoothScrollRendering) {
         r.bottom += lineHeight;
     }
 
@@ -1348,7 +1404,7 @@ void KClient::writeMe()
 
     // Draw the cursor
     if( clientPaint->cursorVisible && cursor_displayed && _inFocus &&
-            !smoothScrolling()) {
+            !smoothScrollRendering) {
         int adjustedH = font->getFontH();
         if( tt_cursor == 2 )        // full
             ;
@@ -1380,7 +1436,7 @@ void KClient::writeMe()
     } else 
 #endif /* COMMENT */
     {
-        if (sscroll && !scrollflag[vmode]) {
+        if (smoothScrollRendering) {
             int offset = 0;
 
             // Scroll progress determines how much of the old screen top we show
@@ -1397,14 +1453,23 @@ void KClient::writeMe()
             if (scrollRegionRender) {
                 // We're scrolling only part of the screen. First, copy the
                 // non-scrolling bits prepared at the start of the scroll event.
+
+                int top = smooth_scroll_top * lineHeight;
+                int bottom = smooth_scroll_bottom * lineHeight;
+
+                // The top:
                 BitBlt( hdcScreen(),
-                    0, 0, w, real_height,
-                    !blink || blinkOn ? _hdcSScrollBlinkOff : _hdcSScrollBlinkOff,
+                    0, 0, w, top,
+                    blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
                     0, 0, SRCCOPY );
 
-                // Then copy only the scrolling region
-                int top = smooth_scroll_top * lineHeight;
+                // The bottom:
+                BitBlt( hdcScreen(),
+                    0, bottom + lineHeight, w, real_height,
+                    blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
+                    0, bottom + lineHeight, SRCCOPY );
 
+                // Then copy only the scrolling region
                 BitBlt( hdcScreen(),
                     0, top, w, h,
                     hdc(),
@@ -1467,14 +1532,6 @@ void KClient::writeMe()
     vert->setPos( vscrollpos );
     hscrollpos = VscrnGetScrollHorz(vmode);
     horz->setPos( hscrollpos );
-
-    if (smoothScrollProgress >= 1) {
-        // Finished the smooth scroll event. Unblock scrolling.
-        smoothScrollProgress = 0;
-        smoothScrollTime = 0;
-        in_smooth_scroll = FALSE;
-        PostSmoothScrollFinishedSem();
-    }
 }
 
 void KClient::SetWorkStoreRect(RECT* rect, _K_WORK_STORE* kws, KFont *font,
@@ -1676,6 +1733,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
     cell_video_attr_t prevAttr = cell_video_attr_init_vio_attribute(255);
     vt_char_attr_t prevEffect = uchar(-1);
     vt_cell_attr_t prevCellAttr = 0;
+    COLORREF textColor;
     BOOL blink;
 	Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
     for( i = 0; i < wc; i++ )
@@ -1690,7 +1748,8 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
             /* to be set by the user and stored somewhere.                       */
             /* The RGBTable is now set via SET GUI RGB commands.                 */
             SetBkColor( hdc, cell_video_attr_background_rgb(prevAttr));
-            SetTextColor( hdc, cell_video_attr_foreground_rgb(prevAttr));
+            textColor = cell_video_attr_foreground_rgb(prevAttr);
+            SetTextColor( hdc, textColor);
         }
 
         // If a soft-font is being used, we can skip all of this as none of
@@ -1718,15 +1777,18 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
                 normal = !underline && !blink;
             }
 
-			if (dim) {
-				// Cut the colours intensity by dividing each component by 2.
-				// We can just quickly do this with a right-shift. Because there
-			    // are three separate numbers packed in we need to mask out the
-				// high bit of each as part of this so that the low bit of each
-				// value to the left is erased.
-				SetTextColor( hdc,
-					(cell_video_attr_foreground_rgb(prevAttr) >> 1) & 0x7F7F7F);
-			}
+            if (dim) {
+                // Cut the colours intensity by dividing each component by 2.
+                // We can just quickly do this with a right-shift. Because there
+                // are three separate numbers packed in we need to mask out the
+                // high bit of each as part of this so that the low bit of each
+                // value to the left is erased.
+                SetTextColor( hdc, (textColor >> 1) & 0x7F7F7F);
+            } else {
+                // If not dim, reset the textColor just in case dim is turned
+                // off without the text colour also changing.
+                SetTextColor( hdc, textColor);
+            }
 
             if( normal )
                 font->resetFont( hdc );
@@ -1735,20 +1797,12 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
                     font->setCrossedOutBoldUnderlineItalic( hdc );
                 else if( bold && underline )
                     font->setCrossedOutBoldUnderline( hdc );
-                /*else if( dim && underline && italic )
-                    font->setCrossedOutDimUnderlineItalic( hdc );
-                else if( dim && underline )
-                    font->setCrossedOutDimUnderline( hdc );*/
                 else if( underline && italic )
                     font->setCrossedOutUnderlineItalic( hdc );
                 else if( bold && italic )
                     font->setCrossedOutBoldItalic( hdc );
                 else if( bold )
                     font->setCrossedOutBold( hdc );
-                /*else if( dim && italic )
-                    font->setCrossedOutDimItalic( hdc );
-                else if( dim )
-                    font->setCrossedOutDim( hdc );*/
                 else if( underline )
                     font->setCrossedOutUnderline( hdc );
                 else if ( italic )
@@ -1760,20 +1814,12 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
                 font->setBoldUnderlineItalic( hdc );
             else if( bold && underline )
                 font->setBoldUnderline( hdc );
-            /*else if( dim && underline && italic )
-                font->setDimUnderlineItalic( hdc );
-            else if( dim && underline )
-                font->setDimUnderline( hdc );*/
             else if( underline && italic )
                 font->setUnderlineItalic( hdc );
             else if( bold && italic )
                 font->setBoldItalic( hdc );
             else if( bold )
                 font->setBold( hdc );
-            /*else if( dim && italic )
-                font->setDimItalic( hdc );
-            else if( dim )
-                font->setDim( hdc );*/
             else if( underline )
                 font->setUnderline( hdc );
             else if ( italic )
@@ -1795,7 +1841,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
         // with the selected attributes.
         SetWorkStoreRect(&rect, kws, font, twid, thi, margin);
 
-        if (blinkOn) {
+        if (!blink || blinkOn) {
             if (kws->fontBuffer == NO_SOFT_FONT) {
                 ExtTextOutW( hdc, rect.left, rect.top,
                              ETO_CLIPPED | ETO_OPAQUE,
