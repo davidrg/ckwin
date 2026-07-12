@@ -1517,23 +1517,25 @@ void KClient::writeMe()
 
     // adjust the vertical scrollbar
     //
-    int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : clientPaint->page_length;
-    vert->setRange( max, thi - (tt_status[vmode]?1:0), FALSE );
-    horz->setRange( clientPaint->maxWidth, VscrnGetWidth(vmode) );
+    if (!scroll_tbm && !scroll_lrm) {
+        int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : clientPaint->page_length;
+        vert->setRange( max, thi - (tt_status[vmode]?1:0), FALSE );
+        horz->setRange( clientPaint->maxWidth, VscrnGetWidth(vmode) );
 
-    vscrollpos = max - (thi - (tt_status[vmode]?1:0));
-    if( scrollflag[vmode /* clientID */] )
-    {
-        if( clientPaint->scrolltop >= clientPaint->beg ) {
-            vscrollpos = clientPaint->scrolltop - clientPaint->beg;
-        }
-        else if( clientPaint->scrolltop < clientPaint->end ) {
-            vscrollpos = tt_scrsize[vmode /* clientID */] - clientPaint->beg 
-                    + clientPaint->scrolltop;
+        vscrollpos = max - (thi - (tt_status[vmode]?1:0));
+        if( scrollflag[vmode /* clientID */] )
+        {
+            if( clientPaint->scrolltop >= clientPaint->beg ) {
+                vscrollpos = clientPaint->scrolltop - clientPaint->beg;
+            }
+            else if( clientPaint->scrolltop < clientPaint->end ) {
+                vscrollpos = tt_scrsize[vmode /* clientID */] - clientPaint->beg
+                        + clientPaint->scrolltop;
+            }
         }
     }
 
-    // adjust the horizontal scrollbar (not currently used)
+    // adjust the horizontal scrollbar
     vert->setPos( vscrollpos );
     hscrollpos = VscrnGetScrollHorz(vmode);
     horz->setPos( hscrollpos );
