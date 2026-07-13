@@ -20,6 +20,7 @@ typedef struct _K_CLIENT_PAINT {
     unsigned long   maxWidth;
     int             page;
     int             page_length;
+    int             height;
 } K_CLIENT_PAINT;
 
 struct vscrn_struct;

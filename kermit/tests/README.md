@@ -38,3 +38,9 @@ use DECALN.
 
 A patch is provided, [vttest-decaln.patch](vttest-decaln.patch), to enable the
 monochrome Rectangular Area Operations tests to work correctly.
+
+## Smooth-Scroll Test
+
+`scrolltest.sh` can be used to exercise Kermit 95s smooth-scroll support
+combined with various combinations of margins as well as smooth-scrolling in the
+reverse direction.

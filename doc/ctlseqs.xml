@@ -9385,8 +9385,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 4</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
                 <p>
-                    Enable Smooth Scrolling. Only supported in the console
-                    version of K95 at this time (not K95G).
+                    Enable Smooth Scrolling.
                 </p>
             </section>
             <section role="parameter" mnemonic="IRM" id="sm-4"

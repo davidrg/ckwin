@@ -267,7 +267,9 @@ extern int  scrninitialized[] ;
 extern bool scrollflag[] ;
 extern bool viewonly ;           /* View Only Terminal mode */
 extern int  updmode ;            /* Fast/Smooth scrolling */
+#ifdef KUI
 extern bool in_smooth_scroll ;
+#endif /* KUI */
 extern int priority ;
 extern TID  tidRdComWrtScr ;
 
@@ -19093,6 +19095,7 @@ wrtch(unsigned short ch) {
                 prtline( wherey[VTERM], LF ) ;
             }
             if ( decsasd == SASD_TERMINAL ) {
+#ifdef KUI
                 /* If a smooth scroll is in progress, a line feed anywhere is
                  * blocked until the scroll is finished. If we don't do this,
                  * then you'll see the prompt in GNU Less jump up a little every
@@ -19100,12 +19103,13 @@ wrtch(unsigned short ch) {
                  * also says "When a line feed is received the microprocessor
                  * waits for the current scroll to end" (pg 4-96) so this is
                  * probably the correct place for the wait. */
-                if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2)
+                if (updmode >= TTU_SMOOTH
                     && vmode == VTERM && in_smooth_scroll
                     && vscrn_current_page_number(VTERM, FALSE) == vscrn_current_page_number(VTERM, TRUE)
                 ) {
                     WaitSmoothScrollFinishedSem(5000);
                 }
+#endif /* KUI */
 
                 if (wherey[vmode] == vscrn_c_page_margin_bot(VTERM)) {
                     if ( IS97801(tt_type_mode) ) {
@@ -21190,7 +21194,7 @@ vtcsi(void)
                             pn[2] = deccolm ? 1 : 2 ;
                             break;
                         case 4: /* DECSCLM */
-                            pn[2] = (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) ? 1 : 2 ;
+                            pn[2] = updmode >= TTU_SMOOTH ? 1 : 2 ;
                             break;
                         case 5: /* DECSCNM */
                             pn[2] = decscnm ? 1 : 2 ;

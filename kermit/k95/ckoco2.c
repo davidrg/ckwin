@@ -95,6 +95,7 @@ extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern bool decsclm_pending;
 extern int smooth_scroll_top, smooth_scroll_bottom;
+extern int smooth_scroll_left, smooth_scroll_right;
 extern videoline s_scroll_backup_line;
 extern int tt_type;
 #endif /* KUI */
@@ -3742,11 +3743,20 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 
     #ifdef KUI
     smooth_scroll_top = smooth_scroll_bottom = -1;
-    if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM
+    smooth_scroll_left = smooth_scroll_right = -1;
+    if (updmode >= TTU_SMOOTH && vmode == VTERM
         && page == vscrn_current_page_number(VTERM, TRUE)
-        && (!lrmm || tt_type != TT_VT420)) {
-        /* The VT420 does not smooth-scroll between the left and right margins,
-         * but the VT520 does */
+        && (!lrmm || ISK95(tt_type))) {
+        /* No DEC terminal scrolls between the L/R margins, but K95 does! */
+
+        if (topmargin != 0 || bottommargin != VscrnGetPageHeight(vmode, TRUE)) {
+            smooth_scroll_top = topmargin;
+            smooth_scroll_bottom = bottommargin;
+        }
+        if (lrmm) {
+            smooth_scroll_left = leftmargin;
+            smooth_scroll_right = rightmargin;
+        }
 
         if (updown == DOWNWARD_SMOOTHLY &&
             bottommargin == VscrnGetPageHeight(vmode, TRUE)) {
@@ -3755,11 +3765,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
              * one extra line in the screen buffer to do the job. */
             bottommargin += 1;
             use_backup_line = FALSE;
-        } else if (updown == UPWARD && topmargin == 0 && savetobuffer) {
+        } else if (updown == UPWARD && (topmargin == 0 && savetobuffer && !lrmm)) {
             /* If we're scrolling upward and the top margin is screen top, and
              * we're saving to scrollback, we get the top line preserved for
              * free! */
-            use_backup_line = FALSE;
+             use_backup_line = FALSE;
         } else {
             /* Else we have to preserve the line that is being erased manually.
              * The Smooth Scroll Backup Line will be used to hold it. */
@@ -4015,7 +4025,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F100,"VscrnScroll releases mutex","",0);
 
 #ifdef KUI
-    if ((updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) && vmode == VTERM &&
+    if (updmode >= TTU_SMOOTH && vmode == VTERM &&
             page == vscrn_current_page_number(VTERM, TRUE)
             && updown != UPWARD_JUMP && updown != DOWNWARD) {
 
@@ -4023,19 +4033,17 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
          * until it completes.*/
         in_smooth_scroll = TRUE;
         smooth_scroll_upwards = updown == UPWARD;
-        if (use_backup_line) {
-            smooth_scroll_top = topmargin;
-            smooth_scroll_bottom = bottommargin;
-        } else {
-            smooth_scroll_top = smooth_scroll_bottom = -1;
-        }
+
         ResetSmoothScrollFinishedSem();
+    } else {
+        smooth_scroll_top = smooth_scroll_bottom = -1;
+        smooth_scroll_left = smooth_scroll_right = -1;
     }
 
     /* The VT220 and up defer DECSCLM taking effect until after the next scroll.
      * */
     if (decsclm_pending) {
-        if (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) updmode = TTU_FAST;
+        if (updmode >= TTU_SMOOTH) updmode = TTU_FAST;
         else updmode = TTU_SMOOTH;
         decsclm_pending = FALSE;
     }

@@ -11,6 +11,7 @@ extern int updmode ;
 extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern int smooth_scroll_top, smooth_scroll_bottom;
+extern int smooth_scroll_left, smooth_scroll_right;
 extern videoline s_scroll_backup_line;
 extern int priority ;
 extern cell_video_attr_t defaultattribute ;
@@ -113,7 +114,6 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
 #endif /* EXCLUSIVE */
 
     xs = VscrnGetWidth( vnum );
-    ys = VscrnGetHeight( vnum );
 
     c = 0;
     cursor_offset = 0;
@@ -126,6 +126,29 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
         ReleaseVscrnMutex(vnum) ;
         return FALSE;
     }
+
+    // These variables are...
+    //      xs - x size? Width of the area to be rendered
+    //      xho - x horizontal offset? For horizontal scrolling
+    //      ys - Y size? Height of the area to be rendered
+    //      xo - Overlay X coordinate
+    //      yo - Overlay Y coordinate
+    //  pwidth - Physical screen width in columns.
+    // pheight - Physical screen height in rows.
+    //
+    // pwidth, pheight, tt_modechg, TVC_ENA, etc, are all just a result of much
+    // of this class being a copy&paste of the console-mode rendering code
+    // adjusted to output to K_CLIENT_PAINT instead of win32 conhost (or an OS/2
+    // vio window). In KUI builds pwidth and pheight are never assigned a value
+    // and the SET TERM VIDEO-CHANGE command does not assign a value to
+    // tt_modechg, so its always TVC_ENA.
+    //
+    // Someday all of this should change to implement the Windowing Extension.
+    // In that case TVC_W95 should be treated as TVC_ENA, and TVC_DIS would mean
+    // scrolling the viewport. A new vbuf->hscroll and associated KVerbs would
+    // need to be added too. This work will likely impact how the smooth scroll
+    // stuff works - it will need to determine if the scrolling area is even in
+    // the viewport, etc.
 
     xs = (tt_modechg == TVC_ENA ) ? vbuf->width : pwidth;
     xho = vbuf->hscroll > (MAXTERMCOL-pwidth) ? 
@@ -146,28 +169,49 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
     unsigned long page_top = page->top;
     unsigned long page_scrolltop = page->scrolltop;
 
-    bool scrollRegionOnly = smoothScroll && s_scroll_backup_line.cells != NULL
-        && smooth_scroll_top != -1 && smooth_scroll_bottom != -1;
+    // Scrolling between left and right margins.
+    bool lrmm = smooth_scroll_left != -1 && smooth_scroll_right != -1;
+    bool tbmm = smooth_scroll_top != -1 && smooth_scroll_bottom != -1;
+
+    // Scrolling between top and bottom margins with the help of a backup line
+    bool useBackupLine = (tbmm || lrmm ) && s_scroll_backup_line.cells != NULL;
 
     if (smoothScroll) {
         // TODO: Take pwidth and pheight into account for situations where the
         //       window is smaller than the buffer. This would primarily affect
         //       scrolling within a region - if the region fits into the
         //       viewport then we don't need to treat it as a scroll region.
-        if (scrollRegionOnly) {
-            page_top += smooth_scroll_top;
-            ys = 1 + smooth_scroll_bottom - smooth_scroll_top;
-        }
 
-        /* Increase the height so we have both the old top and new bottom in the
-         * buffer */
+        int height = ys;
+        int top = smooth_scroll_top < 0 ? 1 : smooth_scroll_top + 1;
+        int bot = smooth_scroll_bottom < 0 ? ys : smooth_scroll_bottom + 1;
+
+        // ys is the height of the region we're getting draw info for.
+        // Recalculate it taking the top and bottom margins into account.
+        ys = bot - top + 1;
+
+        // Then add one to account for the line saved by VscrnScrollPage that
+        // we'll slot in at either the top or bottom.
         ys += 1;
 
-        // Upwards means we include the old top
+        // The top of the area we're rendering will start at the top margin.
+        page_top += top - 1;
+
+        // If we're scrolling up, then it gets slotted in at the top so we need
+        // to make room there for it. Else it's slotted in at the bottom - the
+        // enlarged ys provides room.
         if (smooth_scroll_upwards) {
             page_top -= 1;
         }
-        // And downwards means we include the old bottom
+        else if (bot == height && useBackupLine) {
+            // If we're using the backup line, scrolling in the reverse
+            // direction, and the bottom of the scroll region is the screen
+            // bottom, then we've got to enlarge ys further, or the backup line
+            // gets placed in the wrong place and doesn't render.
+            ys += 1;
+        }
+    } else {
+        useBackupLine = lrmm = false;
     }
 
     textBuffer = kcp->textBuffer;
@@ -206,7 +250,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
             // operation, then the additional line that is scrolling away has
             // been stashed in s_scroll_backup_line by VscrnScrollPage. We need
             // to slot that in now.
-            if (scrollRegionOnly) {
+            if (useBackupLine) {
                 if (smooth_scroll_upwards && y == 0) {
                     // Substitute the top for the backup line
                     line = &s_scroll_backup_line;
@@ -429,7 +473,8 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
 
     /* Status Line Display */
     if ( (vnum == VTERM && tt_status[vnum] && decssdt != SSDT_BLANK ||
-         vnum != VTERM && tt_status[vnum] || decssdt_override) && !scrollRegionOnly)
+         vnum != VTERM && tt_status[vnum] || decssdt_override) &&
+         !useBackupLine && !lrmm)
     {
         if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1
                   && !decssdt_override && !scrollflag[vnum]) {
@@ -475,6 +520,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
     kcp->len = c;
     kcp->page = vscrn[vnum].view_page;
     kcp->page_length = page->linecount;
+    kcp->height = ys + tt_status[vnum];
     return TRUE;
 }
 

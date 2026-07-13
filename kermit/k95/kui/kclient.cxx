@@ -49,6 +49,7 @@ extern int updmode ;
 extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern int smooth_scroll_top, smooth_scroll_bottom;
+extern int smooth_scroll_left, smooth_scroll_right;
 extern vscrn_t vscrn[];
 extern int scrollflag[];
 extern enum markmodes markmodeflag[] ;
@@ -137,7 +138,7 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
     // debug(F111,"KTimerProc()","dwtime",dwtime);
     KClient* client = (KClient*) kglob->hwndset->find( hwnd );
     if( client ) {
-        if (updmode >= TTU_SMOOTH && in_smooth_scroll) {
+        if ((updmode >= TTU_SMOOTH && in_smooth_scroll) || client->smoothScrolling()) {
             // We're smooth-scrolling.
             client->smoothScroll();
         } else {
@@ -904,9 +905,16 @@ void KClient::syncSize()
 bool KClient::getSmoothScrollDrawInfo() {
     BOOL success = TRUE;
 
+    DWORD rgb = cell_video_attr_background_rgb(geterasecolor(VTERM));
+    HBRUSH bgBrush = CreateSolidBrush( rgb );
+    HGDIOBJ tempObj;
+
     EnterCriticalSection(&csDraw);
 
-    if (smooth_scroll_top != -1 && smooth_scroll_bottom != -1) {
+    bool tbmm = smooth_scroll_top != -1 && smooth_scroll_bottom != -1;
+    bool lrmm = smooth_scroll_left != -1 && smooth_scroll_right != -1;
+
+    if (tbmm || lrmm) {
         // We're only scrolling part of the screen. That complicates matters
         // somewhat. This means we need to render the screen in two stages.
 
@@ -930,6 +938,17 @@ bool KClient::getSmoothScrollDrawInfo() {
             SelectObject(_hdcSScrollBlinkOff, scrollBlinkOffBitmap);
         }
 
+        // Fully erase both DCs. Normally clearPaintRgn() does this for _hdc.
+        // If we don't do this, then dragging the window larger while a smooth
+        // scroll is ongoing may reveal content from when the window was
+        // previously that size
+        tempObj = SelectObject(_hdcSScrollBlinkOn, bgBrush);
+        PaintRgn(_hdcSScrollBlinkOn, hrgnPaint);
+        SelectObject(_hdcSScrollBlinkOn, tempObj);
+
+        tempObj = SelectObject(_hdcSScrollBlinkOff, bgBrush);
+        PaintRgn(_hdcSScrollBlinkOff, hrgnPaint);
+        SelectObject(_hdcSScrollBlinkOff, tempObj);
 
         // And we have to render it twice - once with all of the blinking
         // elements ON, and again with them OFF.
@@ -941,6 +960,10 @@ bool KClient::getSmoothScrollDrawInfo() {
         // we prepared above.
     }
 
+    tempObj = SelectObject(_hdcScratch, bgBrush);
+    PaintRgn(_hdcScratch, hrgnPaint);
+    SelectObject(_hdcScratch, tempObj);
+
     memset( workTemp, '\0', workTempSize );
     success = success && ikterm->getSmoothScrollDrawInfo();
 
@@ -951,11 +974,18 @@ bool KClient::getSmoothScrollDrawInfo() {
         writeMe();
     }
 
+    DeleteObject( bgBrush );
+
     return success;
 }
 
 bool KClient::smoothScrolling() {
-    return updmode >= TTU_SMOOTH && vmode == VTERM && in_smooth_scroll;
+    // We're smooth scrolling if we're on VTERM, and either a smooth
+    // scroll was started (in_smooth_scroll), or has not yet been
+    // finished (smoothProgress > 0). We have to accept both, otherwise
+    // forcing smooth scroll off mid-scroll might not result in the
+    // semaphore being raised, etc.
+    return vmode == VTERM && (in_smooth_scroll || smoothScrollProgress > 0);
 }
 
 void KClient::smoothScroll() {
@@ -982,10 +1012,10 @@ void KClient::smoothScroll() {
 
     float ms_per_line;
 
-    if (updmode == TTU_SMOOTH2) {
-        ms_per_line = 1000.0f / (float)fast;
-    } else {
+    if (updmode == TTU_SMOOTH) {
         ms_per_line = 1000.0f / (float)slow;
+    } else {
+        ms_per_line = 1000.0f / (float)fast;
     }
 
     // Update progress
@@ -1041,17 +1071,69 @@ void KClient::smoothScroll() {
     }
 }
 
+/* Calculates the vertical offset based on current smooth scroll progres */
+int KClient::smoothScrollOffset(int lineHeight) const {
+    int offset = 0;
+
+    if (!smoothScrollRendering) return offset;
+
+    // Scroll progress determines how much of the old screen top we show
+    // and how much of the new screen bottom.
+    if (smooth_scroll_upwards) {
+        offset = (int)(smoothScrollProgress * lineHeight);
+    } else {
+        offset = (int)((1.0 - smoothScrollProgress) * lineHeight);
+    }
+
+    if (offset > lineHeight) offset = lineHeight;
+    if (offset < 0) offset = 0;
+
+    return offset;
+}
+
 /*------------------------------------------------------------------------
     update the memory DC with all the drawing and then copy it 
     into the screen DC.  Also update the cursor position.
 ------------------------------------------------------------------------*/
 void KClient::writeMe()
 {
+    /* TODO: Refactor this into a KTermGdiRenderer or similar.
+     *       - Only the actual terminal painting stuff should move
+     *          - It should take a k_CLIENT_PAINT and paint whatever it says
+     *          - It should be able to render to an arbitrary HDC at given
+     *            coordinates so that, eg, a single line could be repainted
+     *          - It should replace the existing renderToDc() function, and the
+     *            other screenshot stuff should move elsewhere (perhaps a
+     *            KTerminalScreenshot class?)
+     *          - All the Smooth-Scroll multi-render-and-composite stuff should
+     *            be a separate render function that repeatedly calls the
+     *            renderer as necessary to get all the bits it needs
+     *          - Anything not GDI-specific should be pushed into a parent class
+     *            (AbstractKTermRenderer?) to allow for other non-GDI renderer
+     *            implementations in the future (GDI+? Direct2D? OS/2 GPI?)
+     *       - The stuff for updating status bars should go to another function,
+     *         as should the stuff for deciding the visibility of blinking
+     *         stuff.
+     *       - The K_WORK_STORE stuff could probably be moved to IKTerm and done
+     *         at the same time data is being gathered from the terminal buffer.
+     *         I'm not sure there is a good reason to loop through all of the
+     *         screen data twice.
+     *       - IKTerm needs a more flexible API allowing arbitrary regions of
+     *         the terminal buffer to be obtained, along with a helper "whole
+     *         screen" method. This would allow, eg, screenshotting the entire
+     *         scrollback or rendering a single line so that blinking the cursor
+     *         doesn't require the whole terminal to be re-rendered.
+     */
+
     int twid, thi, hisv;
     //debug(F100,"KClient::writeMe()","",0);
 
-    bool scrollRegionRender = smoothScrollRendering
-        && smooth_scroll_top != -1 && smooth_scroll_bottom != -1;
+    // Smooth-scrolling between top and bottom margins
+    bool scroll_tbm = smoothScrollRendering
+         && smooth_scroll_top != -1 && smooth_scroll_bottom != -1;
+
+    bool scroll_lrm = smoothScrollRendering
+         && smooth_scroll_left != -1 && smooth_scroll_right != -1;
 
     ::getDimensions( vmode /* clientID */, &twid, &thi );
     hisv = horz->isVisible();
@@ -1079,12 +1161,19 @@ void KClient::writeMe()
 
     int lineHeight = font->getFontSpacedH();
 
-    int w, h, real_height;
+    int w, h, screen_height, screen_thi;
     getSize( w, h );
 
-    if (scrollRegionRender) {
-        real_height = h;
-        h = (1 + smooth_scroll_bottom - smooth_scroll_top) * lineHeight;
+    // Take backup copies of these, as during smooth-scroll events we'll be
+    // rendering one line more than the screen height.
+    screen_thi = thi;
+    screen_height = h;
+
+    if (smoothScrollRendering) {
+        // When rendering a smooth-scroll, we'll render as many lines as IKTerm
+        // gives us rather than whatever the screen height is.
+        thi = clientPaint->height;
+        h = thi * lineHeight;
     }
 
     // Erase the background with default color
@@ -1093,10 +1182,6 @@ void KClient::writeMe()
     r.top = 0;
     r.right = w;
     r.bottom = h;
-
-    if (smoothScrollRendering) {
-        r.bottom += lineHeight;
-    }
 
     DWORD rgb = cell_video_attr_background_rgb(geterasecolor(vmode));
     if ( rgb != savebgcolor ) {
@@ -1401,6 +1486,23 @@ void KClient::writeMe()
                 RECT rect;
                 SetWorkStoreRect(&rect, kws, font, twid, thi, margin());
 
+                // Apply the smooth scroll offset (if there is one) when smooth
+                // scrolling between the left and right margins so the lines
+                // don't jump around. One line height is added or removed to
+                // counteract the offset applied at compositing time.
+                if (smoothScrollRendering && scroll_lrm) {
+                    int offset;
+                    if (smooth_scroll_upwards) {
+                        offset = smoothScrollOffset(lineHeight) - lineHeight;
+                        rect.top += offset;
+                        rect.bottom += offset;
+                    } else {
+                        offset = smoothScrollOffset(lineHeight);
+                        rect.top += offset;
+                        rect.bottom += offset;
+                    }
+                }
+
                 drawRuledLines(hdc(), ruledLinePen, kws->length, font, rect,
                                rlTop, rlBottom, rlLeft, rlRight);
             }
@@ -1430,88 +1532,142 @@ void KClient::writeMe()
         cursor_displayed = 0;
 
     if( vmode /* clientID */ == VTERM && !::isConnected() )
-        drawDisabledState( w, h );
+        drawDisabledState( w, screen_height );
 
 #ifdef COMMENT
     if ( IsZoomed(parent->hwnd()) ) {
         int cx, cy, cw, ch;
         ((KAppWin *)parent)->getClientCoord( cx, cy, cw, ch );
 
-        StretchBlt( hdcScreen(), 0, 0, cw, ch, hdc(), 0, 0, w, h, SRCCOPY );
+        StretchBlt( hdcScreen(), 0, 0, cw, ch, hdc(), 0, 0, w, screen_height, SRCCOPY );
     } else 
 #endif /* COMMENT */
     {
         if (smoothScrollRendering) {
-            int offset = 0;
+            int offset = smoothScrollOffset(lineHeight);
 
-            // Scroll progress determines how much of the old screen top we show
-            // and how much of the new screen bottom.
-            if (smooth_scroll_upwards) {
-                offset = (int)(smoothScrollProgress * lineHeight);
-            } else {
-                offset = (int)((1.0 - smoothScrollProgress) * lineHeight);
-            }
-
-            if (offset > lineHeight) offset = lineHeight;
-            if (offset < 0) offset = 0;
-
-            if (scrollRegionRender) {
+            if (scroll_tbm || scroll_lrm) {
                 // We're scrolling only part of the screen. First, copy the
-                // non-scrolling bits prepared at the start of the scroll event.
+                // non-scrolling bits prepared at the start of the scroll event,
+                // then copy the scrolling portion.
 
-                int top = smooth_scroll_top * lineHeight;
-                int bottom = smooth_scroll_bottom * lineHeight;
-
-                // The top:
-                BitBlt( hdcScreen(),
-                    0, 0, w, top,
-                    blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
-                    0, 0, SRCCOPY );
-
-                // The bottom:
-                BitBlt( hdcScreen(),
-                    0, bottom + lineHeight, w, real_height,
-                    blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
-                    0, bottom + lineHeight, SRCCOPY );
-
-                // Then copy only the scrolling region
-                BitBlt( hdcScreen(),
-                    0, top, w, h,
-                    hdc(),
-                    0, offset, SRCCOPY );
-            } else {
                 // The bottom coordinate of the terminal area (excluding the status
                 // line)
+                int terminal_bottom = lineHeight * (screen_thi - (tt_status[vmode]?1:0));
+
+                // In pixels:
+                int top;   // Top of the scroll region (0 if top margin not set)
+                int height; // Height of the scroll region
+                int left;  // Left of the scroll region
+                int width; // Width of the scroll region
+
+                if (scroll_tbm) {
+                    int bottom; // Bottom of the scroll region
+
+                    top = smooth_scroll_top * lineHeight;
+                    bottom = (smooth_scroll_bottom+1) * lineHeight;
+                    height = (smooth_scroll_bottom - smooth_scroll_top + 1) * lineHeight;
+
+                    // The top:
+                    BitBlt( _hdcScratch,
+                        0, 0,    // left, top
+                        w, top,  // width, height
+                        blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
+                        0, 0,    // left, top
+                        SRCCOPY
+                        );
+
+                    // The bottom:
+                    BitBlt( _hdcScratch,
+                        0, bottom,
+                        w,
+                        terminal_bottom - bottom +
+                            (!tt_status[vmode] ? margin():0),
+                        blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
+                        0, bottom, SRCCOPY );
+
+                } else {
+                    top = 0;
+                    height = terminal_bottom;
+                }
+
+                if (scroll_lrm) {
+                    int right;
+
+                    left = smooth_scroll_left * font->getFontW();
+                    right = (smooth_scroll_right + 1) * font->getFontW();
+                    width = (1+smooth_scroll_right - smooth_scroll_left) * font->getFontW();
+
+                    // The left:
+                    BitBlt( _hdcScratch,
+                        0, top,                 // x, y
+                        left, height,       // width, height
+                        blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
+                        0, top,                 // x, y
+                        SRCCOPY
+                        );
+
+                    // The right:
+                    BitBlt( _hdcScratch,
+                        right, top,
+                        w - right, height, // width, height
+                        blinkOn ? _hdcSScrollBlinkOn : _hdcSScrollBlinkOff,
+                        right, top,
+                        SRCCOPY
+                        );
+                } else {
+                    left = 0;
+                    width = w;
+                }
+
+                // Then copy only the scrolling region
+                BitBlt( _hdcScratch,
+                    left, top,
+                    width, height,
+                    hdc(),
+                    left,
+                    offset, SRCCOPY );
+
+                // Now grab the status line
+                if (tt_status[vmode]) {
+                    BitBlt(_hdcScratch,
+                        0, terminal_bottom,
+                        w, lineHeight + margin(),  // margin to fill to screen edge
+                        _hdcSScrollBlinkOn,
+                        0,
+                        (screen_thi-1) * lineHeight,  // this includes the status line, so -1
+                        SRCCOPY);
+                }
+
+                BitBlt( hdcScreen(), 0, 0, w, screen_height,
+                    _hdcScratch, 0, 0, SRCCOPY );
+
+
+            } else { // Smooth-scrolling the entire screen
+
                 int terminal_bottom = lineHeight * (thi - (tt_status[vmode]?1:0));
 
-                // The bottom of the screen area (including the status line)
-                int screen_bottom = terminal_bottom +
-                        lineHeight * (tt_status[vmode]?1:0);
-
                 // Copy everything except the status line
-                BitBlt( hdcScreen(),
+                BitBlt( _hdcScratch,
                     0, 0, w, terminal_bottom,
                     hdc(),
                     0, offset, SRCCOPY );
 
                 // Now grab the status line
                 if (tt_status[vmode]) {
-                    BitBlt(hdcScreen(),
-                        0, terminal_bottom,
-                        w, lineHeight,
-                        hdc(),
-                        0, thi * lineHeight,
-                        SRCCOPY);
+                    BitBlt(_hdcScratch,
+                       0, (screen_thi-1) * lineHeight,
+                       w, lineHeight + margin(),
+                       hdc(),
+                       0, (thi-1) * lineHeight,
+                       SRCCOPY);
                 }
 
-                // Lastly, fill anything *below* the status line in case we're
-                // mid-resize and the window is expanding.
-                r.top = screen_bottom+2; // +2 or a visible line appears below
-                                         // the status line.
-                FillRect( hdcScreen(), &r, bgBrush );
+                BitBlt( hdcScreen(), 0, 0, w, screen_height,
+                    _hdcScratch, 0, 0, SRCCOPY );
             }
         } else {
-            BitBlt( hdcScreen(), 0, 0, w, h, hdc(), 0, 0, SRCCOPY );
+           BitBlt( hdcScreen(), 0, 0, w, h, hdc(), 0, 0, SRCCOPY );
         }
     }
 

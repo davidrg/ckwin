@@ -84,6 +84,8 @@ public:
     void stopTimer();
     void startTimer();
 
+    bool smoothScrolling();
+
     BOOL renderToEmfFile(int vnum, char* filename);
 #ifdef CK_SAVE_TO_IMAGE
     BOOL renderToBmpFile(int vnum, char* filename);
@@ -134,9 +136,8 @@ private:    // this section is for performance
         long maxcells,
         uchar** workTempOut);
 
-    bool smoothScrolling();
-
     bool getSmoothScrollDrawInfo();
+    int smoothScrollOffset(int lineHeight) const;
 
     CRITICAL_SECTION csDraw;
 

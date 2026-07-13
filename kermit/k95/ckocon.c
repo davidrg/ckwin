@@ -213,8 +213,10 @@ bool    viewonly = FALSE ;              /* View only terminal mode */
 int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
 int     priority        = XYP_REG ;
 #ifdef KUI
-bool    in_smooth_scroll = FALSE;         /* Smooth scroll in progress */
-bool    smooth_scroll_upwards = FALSE;   /* Direction is upwards */
+bool    in_smooth_scroll = FALSE;           /* Smooth scroll in progress */
+bool    smooth_scroll_upwards = FALSE;     /* Direction is upwards */
+int     smooth_scroll_left;               /* Left border of the scroll region */
+int     smooth_scroll_right;             /* Right border of the scroll region */
 int     smooth_scroll_bottom;           /* Bottom line of the smooth scroll */
 int     smooth_scroll_top;             /* Top line of the smooth scroll */
 bool    decsclm_pending = FALSE;      /* Toggle scroll mode after next scroll*/
@@ -3550,7 +3552,7 @@ SmoothScroll( void ) {
     if (ISVT220(tt_type_mode)) {
         /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
          * state until after the next scroll event. */
-        if (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2) return;
+        if (updmode >= TTU_SMOOTH) return;
 
         /* This indicates to VscrnScrollPage that we want it to toggle the
          * scroll mode */
