@@ -402,6 +402,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - [DECDLDA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdlda) - Set how many font buffers are available (VT520 only), queryable with DECRQSS
  - [DECSWBV](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decswbv) - Set Warning Bell Volume
  - [DECPS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decps) - Play Sound (VT520)
+ - [DECSCLM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsclm) - Smooth Scroll (K95G only)
  - [DECSSCLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsscls) - Set Scroll Speed
 
 ### Fixed Bugs
