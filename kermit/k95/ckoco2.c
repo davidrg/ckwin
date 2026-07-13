@@ -92,7 +92,7 @@ extern int updmode ;
 #ifdef KUI
 /* Smooth-Scroll related state */
 extern int scrollmode, tt_scrollmode;
-extern bool in_smooth_scroll;
+extern bool in_smooth_scroll, in_bg_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern bool decsclm_pending;
 extern int smooth_speed_pending;
@@ -101,6 +101,7 @@ extern int smooth_scroll_top, smooth_scroll_bottom;
 extern int smooth_scroll_left, smooth_scroll_right;
 extern videoline s_scroll_backup_line;
 extern int tt_type;
+extern DWORD bg_smooth_scroll_ends;
 #endif /* KUI */
 extern int priority ;
 extern int tt_modechg;
@@ -4028,16 +4029,31 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F100,"VscrnScroll releases mutex","",0);
 
 #ifdef KUI
-    if (scrollmode >= TTS_SMOOTH && vmode == VTERM &&
-            page == vscrn_current_page_number(VTERM, TRUE)
+    if (scrollmode >= TTS_SMOOTH && vmode == VTERM
             && updown != UPWARD_JUMP && updown != DOWNWARD) {
-
         /* Begin a new smooth-scroll! This will block any further LF characters
-         * until it completes.*/
-        in_smooth_scroll = TRUE;
-        smooth_scroll_upwards = updown == UPWARD;
+         * until it completes*/
 
-        ResetSmoothScrollFinishedSem();
+        if (page == vscrn_current_page_number(VTERM, TRUE)) {
+            /* Cursor on the visible page. The renderer will manage the smooth
+             * scroll and post a semaphore when it is done.
+             */
+            in_smooth_scroll = TRUE;
+            in_bg_smooth_scroll = FALSE;
+            smooth_scroll_upwards = updown == UPWARD;
+
+            ResetSmoothScrollFinishedSem();
+        } else {
+            /* Cursor is on a background page. There is nothing for the renderer
+             * to render, so we'll just set a flag, and the next LF will complete
+             * the smooth scroll. */
+
+            float ms_per_line = 1000.0f / (float)(smooth_speed < 1 ? 6 : smooth_speed);
+
+            in_smooth_scroll = FALSE;
+            bg_smooth_scroll_ends = timeGetTime() + (DWORD)ms_per_line;
+            in_bg_smooth_scroll = TRUE;
+        }
     } else {
         smooth_scroll_top = smooth_scroll_bottom = -1;
         smooth_scroll_left = smooth_scroll_right = -1;

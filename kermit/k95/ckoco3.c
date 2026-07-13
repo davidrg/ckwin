@@ -268,10 +268,11 @@ extern bool scrollflag[] ;
 extern bool viewonly ;           /* View Only Terminal mode */
 #ifdef KUI
 extern int  scrollmode ;            /* Fast/Smooth scrolling */
-extern bool in_smooth_scroll ;
+extern bool in_smooth_scroll, in_bg_smooth_scroll ;
 extern int smooth_speed;
 extern int smooth_speed_pending;
 extern int tt_smooth_speed;
+extern DWORD bg_smooth_scroll_ends;
 #else
 extern int updmode;
 extern int tt_updmode;
@@ -19153,11 +19154,21 @@ wrtch(unsigned short ch) {
                  * also says "When a line feed is received the microprocessor
                  * waits for the current scroll to end" (pg 4-96) so this is
                  * probably the correct place for the wait. */
-                if (scrollmode >= TTS_SMOOTH
-                    && vmode == VTERM && in_smooth_scroll
-                    && vscrn_current_page_number(VTERM, FALSE) == vscrn_current_page_number(VTERM, TRUE)
-                ) {
-                    WaitSmoothScrollFinishedSem(5000);
+                if (scrollmode >= TTS_SMOOTH && vmode == VTERM) {
+                    if (in_smooth_scroll) {
+                        WaitSmoothScrollFinishedSem(5000);
+                    } else if (in_bg_smooth_scroll) {
+                        /* Smooth scrolling on a background page just introduces
+                         * a delay. There is nothing to render, so we just
+                         * pause for the length of time the renderer *would*
+                         * have spent scrolling the line */
+                        DWORD time = timeGetTime();
+                        int sleep_time = bg_smooth_scroll_ends - time;
+                        if (sleep_time > 0) {
+                            msleep(sleep_time);
+                        }
+                        in_bg_smooth_scroll = FALSE;
+                    }
                 }
 #endif /* KUI */
 

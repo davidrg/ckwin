@@ -227,6 +227,10 @@ bool    smooth_speed_pending = -1;/* Speed in lines per second, pending */
 bool    decsclm_pending = FALSE; /* Toggle scroll mode after next scroll */
 videoline s_scroll_backup_line =/* Line the scroll event erased */
     { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0};
+
+/* Smooth scroll in progress on a background (non-visible) page */
+bool    in_bg_smooth_scroll = FALSE;
+DWORD   bg_smooth_scroll_ends = 0;
 #endif /* KUI */
 
 int tn_bold = 0;                        /* TELNET negotiation bold */
