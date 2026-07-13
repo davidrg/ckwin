@@ -1698,6 +1698,9 @@ _PROTOTYP( void VscrnScrollPage, (BYTE, int, int, int, int, int, int, int, CHAR,
 _PROTOTYP( BOOL IsOS2FullScreen, (void) ) ;
 _PROTOTYP( void SmoothScroll, (void) ) ;
 _PROTOTYP( void JumpScroll, (void ) ) ;
+#ifdef KUI
+_PROTOTYP( int SmoothScrollSpeed, (int) ) ;
+#endif /* KUI */
 
 
 _PROTOTYP( APIRET VscrnSelect, ( BYTE, int ) ) ;

@@ -91,9 +91,11 @@ int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
 extern int updmode ;
 #ifdef KUI
 /* Smooth-Scroll related state */
+extern int scrollmode, tt_scrollmode;
 extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern bool decsclm_pending;
+extern int smooth_speed;
 extern int smooth_scroll_top, smooth_scroll_bottom;
 extern int smooth_scroll_left, smooth_scroll_right;
 extern videoline s_scroll_backup_line;
@@ -3744,7 +3746,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     #ifdef KUI
     smooth_scroll_top = smooth_scroll_bottom = -1;
     smooth_scroll_left = smooth_scroll_right = -1;
-    if (updmode >= TTU_SMOOTH && vmode == VTERM
+    if (scrollmode >= TTS_SMOOTH && vmode == VTERM
         && page == vscrn_current_page_number(VTERM, TRUE)
         && (!lrmm || ISK95(tt_type))) {
         /* No DEC terminal scrolls between the L/R margins, but K95 does! */
@@ -4025,7 +4027,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F100,"VscrnScroll releases mutex","",0);
 
 #ifdef KUI
-    if (updmode >= TTU_SMOOTH && vmode == VTERM &&
+    if (scrollmode >= TTS_SMOOTH && vmode == VTERM &&
             page == vscrn_current_page_number(VTERM, TRUE)
             && updown != UPWARD_JUMP && updown != DOWNWARD) {
 
@@ -4043,8 +4045,11 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     /* The VT220 and up defer DECSCLM taking effect until after the next scroll.
      * */
     if (decsclm_pending) {
-        if (updmode >= TTU_SMOOTH) updmode = TTU_FAST;
-        else updmode = TTU_SMOOTH;
+        if (scrollmode >= TTS_SMOOTH) updmode = TTS_JUMP;
+        else {
+            scrollmode = TTS_SMOOTH_2;
+            smooth_speed = SmoothScrollSpeed(TTS_SMOOTH_2);
+        }
         decsclm_pending = FALSE;
     }
 
@@ -5925,6 +5930,9 @@ VscrnInit( BYTE vmode )
           crossedoutattribute = colorcrossedout ;
           dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
+#ifdef KUI
+          scrollmode = tt_scrollmode;
+#endif /* KUI */
       }
       old_height = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
 	  old_width = VscrnGetWidth(VTERM);

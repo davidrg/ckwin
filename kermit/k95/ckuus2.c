@@ -8551,21 +8551,24 @@ static char *hxyterm[] = {
 "  completely repainted each time there is a change.",
 " ",
 
-#ifdef KUI
-  "SET TERMINAL SCREEN-UPDATE { FAST, SMOOTH, SMOOTH-FAST } [ <milliseconds> ]",
-#else
 "SET TERMINAL SCREEN-UPDATE { FAST, SMOOTH } [ <milliseconds> ]",
-#endif /* KUI */
 "  Chooses the mechanism used for screen updating and the update frequency.",
-"  Defaults are FAST (jump) scrolling with updates every 20 milliseconds.",
+"  Defaults are FAST with updates every 20 milliseconds. The SMOOTH option",
+"  (not supported in K95G) updates the screen every time it changes.",
 " ",
 #ifdef KUI
-"  SMOOTH and SMOOTH-FAST are both smooth scrolling. For terminals that offered",
-"  two speed options, SMOOTH is the slow option and SMOOTH-FAST is the fast",
-"  option. For other terminals such as the VT100, VT220 and VT320 both options",
-"  are the same speed."
-#endif /* KUI */
+"SET TERMINAL SCROLL-MODE { JUMP, SMOOTH [ speed ], SMOOTH-2, SMOOTH-4 }",
+"  Sets the scrolling mode. When in Jump Scrolling mode, the terminal adds new",
+"  lines as fast as they are received, while Smooth Scrolling mode adds them",
+"  smoothly at a speed that makes them recogniszable if not readable.",
 " ",
+"  The SMOOTH option lets you specify a speed from 1 to 36 lines per second, ",
+"  while SMOOTH-2 and SMOOTH-4 correspond to slow and fast speeds on those ",
+"  terminals that offer two speed options. For the K95 terminal type, SMOOTH-2",
+"  is nine lines per second and SMOOTH-4 is twice that. For terminals offering",
+"  only one speed option, SMOOTH-4 is the same as SMOOTH-2.",
+" ",
+#endif /* KUI */
 
 "SET TERMINAL SCROLLBACK <lines>",
 "  Sets size of CONNECT virtual screen buffer.  <lines> includes the active",

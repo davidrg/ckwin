@@ -595,18 +595,32 @@ on your computer.  If you are using a speech or Braille device, you should use
 <dd>Chooses the mechanism used for screen updating and the update frequency.
 <tt>SMOOTH</tt> means the screen is repainted every time a character arrives.
 <tt>FAST</tt> means the screen is repainted at fixed intervals.  The default
-is <tt>FAST</tt> with an interval of 100 milliseconds (1/10 second).  Use
+is <tt>FAST</tt> with an interval of 20 milliseconds (1/50 second). In console
+versions of Kermit (not K95G), use
 <tt>SMOOTH</tt> to give priority to echoing; use <tt>FAST</tt> to give
 priority to throughput.  Vary the interval to achieve optimum results for your
 PC.  On VT100 and above, the host may use escape sequences to switch Kermit
 between <tt>FAST</tt> and <tt>SMOOTH</tt>; <tt>FAST</tt> is selected by the
 Jump-scrolling escape sequence; <tt>SMOOTH</tt> is selected by the VT100
-smooth-scrolling sequence.  However, note that K95 does not presently
-implement smooth scrolling in the VT100 sense.  If the host switches K95 from
+smooth-scrolling sequence. K95G instead implements proper smooth scrolling, and
+the escape sequence controls that, rather than the screen update mode.
+If the host switches K95 from
 <tt>SMOOTH</tt> to <tt>FAST</tt>, the most recently specified (or if none,
 default) update interval is used.  If you are using a speech or Braille
 device, you should <tt>SET TERMINAL SCREEN-UPDATE SMOOTH</tt>. SMOOTH is not
 supported by K95G at this time.
+
+<p>
+<dt><tt><a name="sttscr">SET TERMINAL SCROLL-MODE <i>{</i> JUMP, SMOOTH <i>[ speed ]</i>, SMOOTH-2, SMOOTH-4 <i>}</i></tt>
+<dd>Sets the scrolling mode. When in Jump Scrolling mode, the terminal
+    adds new lines as fast as they are received, while Smooth Scrolling mode
+    adds them smoothly at a speed that makes them recogniszable if not readable.
+<p> The <tt>SMOOTH</tt> option lets you specify a speed from 1 to 36 lines per
+    second, while <tt>SMOOTH-2</tt> and <tt>SMOOTH-4</tt> correspond to slow and
+    fast speeds on those terminals that offer two speed options. For the K95
+    terminal type, <tt>SMOOTH-2</tt> is nine lines per second and
+    <tt>SMOOTH-4</tt> is twice that. For terminals offering only one speed
+    option, <tt>SMOOTH-4</tt> is the same as <tt>SMOOTH-2</tt>.
 
 <p>
 <dt><tt><a name="t_scroll">SET TERMINAL SCROLLBACK <i>lines</i></tt>

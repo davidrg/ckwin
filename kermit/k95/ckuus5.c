@@ -344,6 +344,9 @@ _PROTOTYP (int os2getcplist, (int *, int) );
 extern int tt_mouse;
 #endif /* OS2MOUSE */
 extern int tt_update, tt_updmode, updmode, tt_utf8;
+#ifdef KUI
+extern int tt_scrollmode, tt_smooth_speed;
+#endif /* KUI */
 #ifndef IKSDONLY
 extern int tt_status[];
 #endif /* IKSDONLY */
@@ -6390,6 +6393,27 @@ shotrm() {
           tt_roll[VTERM]?"insert":"overwrite","Scrollback", tt_scrsize[VTERM]);
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
+#ifdef KUI
+    /* Terminal Scroll Mode (Smooth or Jump) */
+    if (tt_scrollmode == TTS_JUMP) {
+        printf(" %19s: %-13s  %13s: %s\n","Scroll-mode",
+        "jump","Speed", "n/a");
+    } else {
+        switch (tt_scrollmode) {
+        case TTS_SMOOTH_2: s = "smooth-2"; break;
+        case TTS_SMOOTH_4: s = "smooth-4"; break;
+        default: case TTS_SMOOTH: s = "smooth"; break;
+        }
+        printf(" %19s: %-13s  %13s: %d lines per second\n","Scroll-mode",
+        "jump","Speed", tt_smooth_speed);
+    }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+    /* Historically, TTU_SMOOTH has always meant "redraw the screen every time
+     * it changes" which is quite different from smooth scrolling. K95G does not
+     * currently implement TTU_SMOOTH. */
+    s = "fast";
+#else
     if (updmode == tt_updmode)
       if (updmode == TTU_FAST)
         s = "fast (fast)";
@@ -6400,6 +6424,7 @@ shotrm() {
         s = "fast (smooth)";
       else
         s = "smooth (fast)";
+#endif
 
     printf(" %19s: %-13s  %13s: %d ms\n","Screen-update: mode",s,
            "interval",tt_update);

@@ -266,9 +266,14 @@ extern char     * d_name;
 extern int  scrninitialized[] ;
 extern bool scrollflag[] ;
 extern bool viewonly ;           /* View Only Terminal mode */
-extern int  updmode ;            /* Fast/Smooth scrolling */
 #ifdef KUI
+extern int  scrollmode ;            /* Fast/Smooth scrolling */
 extern bool in_smooth_scroll ;
+extern int smooth_speed;
+extern int tt_smooth_speed;
+#else
+extern int updmode;
+extern int tt_updmode;
 #endif /* KUI */
 extern int priority ;
 extern TID  tidRdComWrtScr ;
@@ -739,7 +744,9 @@ extern int cmd_cols;                    /* Screen columns */
 extern int tt_ctstmo;                   /* CTS timeout */
 extern int tt_pacing;                   /* Output-pacing */
 extern int tt_mouse;                    /* Mouse */
-extern int tt_updmode;                  /* Terminal Screen Update Mode */
+#ifdef KUI
+extern int tt_scrollmode;               /* Terminal Scrolling Mode */
+#endif /* KUI */
 extern int tt_url_hilite;
 extern int tt_url_hilite_attr;
 int tt_type_vt52 = TT_VT52 ;            /* Terminal Type Mode before entering VT52 mode */
@@ -11243,10 +11250,15 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     udkreset() ;                        /* Reset UDKs     */
     deccolm = FALSE;                    /* default column mode */
     tt_cols[VTERM] = tt_cols_usr ;
+#ifdef KUI
+    scrollmode = tt_scrollmode;      /* set terminal scroll mode to original */
+    smooth_speed = tt_smooth_speed;
+#else
     if (tt_updmode == TTU_FAST ) /* set terminal scroll mode to original */
         JumpScroll();
     else
         SmoothScroll();
+#endif /* KUI */
     if (vmode==VTERM)
         SetCols(VTERM) ;
     naws();
@@ -19103,7 +19115,7 @@ wrtch(unsigned short ch) {
                  * also says "When a line feed is received the microprocessor
                  * waits for the current scroll to end" (pg 4-96) so this is
                  * probably the correct place for the wait. */
-                if (updmode >= TTU_SMOOTH
+                if (scrollmode >= TTS_SMOOTH
                     && vmode == VTERM && in_smooth_scroll
                     && vscrn_current_page_number(VTERM, FALSE) == vscrn_current_page_number(VTERM, TRUE)
                 ) {
@@ -21194,7 +21206,11 @@ vtcsi(void)
                             pn[2] = deccolm ? 1 : 2 ;
                             break;
                         case 4: /* DECSCLM */
+#ifdef KUI
+                            pn[2] = scrollmode >= TTS_SMOOTH ? 1 : 2 ;
+#else
                             pn[2] = updmode >= TTU_SMOOTH ? 1 : 2 ;
+#endif /* KUI */
                             break;
                         case 5: /* DECSCNM */
                             pn[2] = decscnm ? 1 : 2 ;

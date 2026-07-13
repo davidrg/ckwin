@@ -1216,10 +1216,7 @@ struct stringint {			/* String and (wide) integer */
 #ifdef OS2
 #define   XYTUPD 25     /*  Terminal Screen-update */
 #define    TTU_FAST 0   /*     FAST but jerky */
-#define    TTU_SMOOTH 1 /*     SMOOTH but slow (Slow Smooth aka Smooth-2) */
-#ifdef KUI
-#define    TTU_SMOOTH2 2 /*    SMOOTH but less slow (Fast Smooth aka Smooth-4) */
-#endif /* KUI */
+#define    TTU_SMOOTH 1 /*     SMOOTH but slow */
 #define   XYTFON 26     /*  Terminal Full screen Font */
 #define    TTF_ROM    0 /*     ROM font */
 #define    TTF_CY1    1 /*     CYRILL1 font */
@@ -1352,6 +1349,11 @@ struct stringint {			/* String and (wide) integer */
 #define     P_COUNT   1
 #define     P_ACTIVE  2
 #define   XYTCLRRS  70  /* SET TERM CLEAR-ON-RESIZE */
+#define   XYTSCROLL 71  /* SET TERM SCROLL */
+#define     TTS_JUMP     0
+#define     TTS_SMOOTH   1
+#define     TTS_SMOOTH_2 2
+#define     TTS_SMOOTH_4 3
 #endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */

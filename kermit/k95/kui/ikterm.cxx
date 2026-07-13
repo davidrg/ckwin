@@ -7,7 +7,6 @@ extern "C" {
 extern enum markmodes markmodeflag[] ;
 extern vscrn_t vscrn[VNUM]; /* = {0,0,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0}; */
 extern int inecho;          /* do we echo script INPUT output? */
-extern int updmode ;
 extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern int smooth_scroll_top, smooth_scroll_bottom;
@@ -16,7 +15,7 @@ extern videoline s_scroll_backup_line;
 extern int priority ;
 extern cell_video_attr_t defaultattribute ;
 extern int cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[];
-extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
+extern int tt_update, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor, scrninitialized[], ttyfd, viewonly, carrier, network,
            tt_scrsize[], tt_modechg, pheight, pwidth, tt_status[], screenon, 
            decssdt, tt_url_hilite, tt_url_hilite_attr, tt_type_mode, ttnum;

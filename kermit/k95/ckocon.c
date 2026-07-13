@@ -213,14 +213,18 @@ bool    viewonly = FALSE ;              /* View only terminal mode */
 int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
 int     priority        = XYP_REG ;
 #ifdef KUI
-bool    in_smooth_scroll = FALSE;           /* Smooth scroll in progress */
-bool    smooth_scroll_upwards = FALSE;     /* Direction is upwards */
-int     smooth_scroll_left;               /* Left border of the scroll region */
-int     smooth_scroll_right;             /* Right border of the scroll region */
-int     smooth_scroll_bottom;           /* Bottom line of the smooth scroll */
-int     smooth_scroll_top;             /* Top line of the smooth scroll */
-bool    decsclm_pending = FALSE;      /* Toggle scroll mode after next scroll*/
-videoline s_scroll_backup_line =     /* Line the scroll event erased */
+int     scrollmode      = TTS_JUMP ;        /* Scroll mode - active setting */
+int     tt_scrollmode   = TTS_JUMP ;       /* Scroll mode - user setting */
+int     smooth_speed    = 6;              /* Speed in lines per second, active*/
+int     tt_smooth_speed = 6;             /* Speed in lines per second, user */
+bool    in_smooth_scroll = FALSE;       /* Smooth scroll in progress */
+bool    smooth_scroll_upwards = FALSE; /* Direction is upwards */
+int     smooth_scroll_left;           /* Left border of the scroll region */
+int     smooth_scroll_right;         /* Right border of the scroll region */
+int     smooth_scroll_bottom;       /* Bottom line of the smooth scroll */
+int     smooth_scroll_top;         /* Top line of the smooth scroll */
+bool    decsclm_pending = FALSE;  /* Toggle scroll mode after next scroll */
+videoline s_scroll_backup_line = /* Line the scroll event erased */
     { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0};
 #endif /* KUI */
 
@@ -330,7 +334,6 @@ extern int cmd_rows;                    /* Screen rows */
 extern int cmd_cols;                    /* Screen columns */
 extern int tt_ctstmo;                   /* CTS timeout */
 extern int tt_pacing;                   /* Output-pacing */
-extern int tt_updmode;                  /* Terminal Screen Update Mode */
 extern bool escapestatus[VNUM] ;        /* are we in ESCAPE mode? */
 /* extern int tt_idlesnd_tmo;           /* Idle Send Timeout, disabled */
 extern char * tt_idlesnd_str;           /* Idle Send String, none */
@@ -3552,15 +3555,18 @@ SmoothScroll( void ) {
     if (ISVT220(tt_type_mode)) {
         /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
          * state until after the next scroll event. */
-        if (updmode >= TTU_SMOOTH) return;
+        if (scrollmode >= TTS_SMOOTH) return;
 
         /* This indicates to VscrnScrollPage that we want it to toggle the
          * scroll mode */
         decsclm_pending = TRUE;
         return;
+    } else {
+        scrollmode = TTS_SMOOTH_2 ;
     }
-#endif /* KUI */
+#else
     updmode = TTU_SMOOTH ;
+#endif /* KUI */
 }
 
 void
@@ -3571,16 +3577,36 @@ JumpScroll( void ) {
     if (ISVT220(tt_type_mode)) {
         /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
          * state until after the next scroll event. */
-        if (updmode == TTU_FAST) return;
+        if (scrollmode == TTS_JUMP) return;
 
         /* This indicates to VscrnScrollPage that we want it to toggle the
          * scroll mode */
         decsclm_pending = TRUE;
         return;
+    } else {
+        scrollmode = TTS_JUMP;
     }
-#endif /* KUI */
+#else
     updmode = TTU_FAST ;
+#endif /* KUI */
 }
+
+#ifdef KUI
+/* Gets the standard smooth-scroll speed for a given smooth-scroll mode */
+int
+SmoothScrollSpeed(int mode) {
+    if (mode == TTS_SMOOTH) return tt_smooth_speed;
+    if (mode == TTS_SMOOTH_4) {
+        if (ISVT420(tt_type)) return 18;
+        /* if (ISVT340(tt_type)) return 12;  */
+        /* else fall through - terminal doesn't support smooth-4 */
+    }
+
+    if (ISVT420(tt_type)) return 9;
+    if (ISVT320(tt_type)) return 5;
+    return 6; /* 60Hz VT100, VT220 */
+}
+#endif /* KUI */
 
 char* protoString(void); /* Defined in ckoco3.c */
 

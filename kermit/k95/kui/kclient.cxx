@@ -45,7 +45,8 @@ extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int tt_update;
 extern int tt_type;
-extern int updmode ;
+extern int scrollmode ;
+extern int smooth_speed;
 extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern int smooth_scroll_top, smooth_scroll_bottom;
@@ -138,7 +139,7 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
     // debug(F111,"KTimerProc()","dwtime",dwtime);
     KClient* client = (KClient*) kglob->hwndset->find( hwnd );
     if( client ) {
-        if ((updmode >= TTU_SMOOTH && in_smooth_scroll) || client->smoothScrolling()) {
+        if ((scrollmode >= TTS_SMOOTH && in_smooth_scroll) || client->smoothScrolling()) {
             // We're smooth-scrolling.
             client->smoothScroll();
         } else {
@@ -849,7 +850,7 @@ void KClient::syncSize()
 /*------------------------------------------------------------------------
  Handle Smooth Scrolling
 ------------------------------------------------------------------------*/
-/* How Smooth Scroll works (updmode == TTU_SMOOTH || updmode == TTU_SMOOTH2):
+/* How Smooth Scroll works (scrollmode >= TTS_SMOOTH):
  *   When a scroll completes, VscrnScrollPage will set in_smooth_scroll = TRUE
  *   and reset the Smooth-Scroll-Finished semaphore. On the next scroll,
  *   VscrnScrollPage will wait on the Smooth-Scroll-Finished and won't start the
@@ -991,32 +992,7 @@ bool KClient::smoothScrolling() {
 void KClient::smoothScroll() {
     smoothScrollTime += tt_update;
 
-    // Speed in lines per second
-    int fast, slow;
-
-    switch (tt_type) {
-    case TT_VT420:
-    case TT_VT520:
-    case TT_VT525:
-    case TT_K95:
-        slow = 9;
-        fast = 18;
-        break;
-    case TT_VT320: // Based on a video, looks to be the same as the VT220
-    case TT_VT220:
-    case TT_VT100:
-    default:
-        slow = fast = 6;
-        break;
-    }
-
-    float ms_per_line;
-
-    if (updmode == TTU_SMOOTH) {
-        ms_per_line = 1000.0f / (float)slow;
-    } else {
-        ms_per_line = 1000.0f / (float)fast;
-    }
+    float ms_per_line = 1000.0f / (float)(smooth_speed < 1 ? 6 : smooth_speed);
 
     // Update progress
     smoothScrollProgress = smoothScrollTime /  ms_per_line;
