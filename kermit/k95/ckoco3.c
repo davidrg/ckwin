@@ -270,6 +270,7 @@ extern bool viewonly ;           /* View Only Terminal mode */
 extern int  scrollmode ;            /* Fast/Smooth scrolling */
 extern bool in_smooth_scroll ;
 extern int smooth_speed;
+extern int smooth_speed_pending;
 extern int tt_smooth_speed;
 #else
 extern int updmode;
@@ -17322,6 +17323,43 @@ dodcs( void )
                     case SP: {
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
+                        case 'p': {    /* DECSSCLS */
+                            int decsscls = -1;
+#ifdef KUI
+                            /* The VT520 reports a recent speed change as though
+                             * it has already taken effect */
+                            int speed = smooth_speed_pending == -1
+                                ? smooth_speed : smooth_speed_pending;
+
+                            if (ISK95(tt_type_mode)) {
+                                if (scrollmode == TTS_JUMP) decsscls = 9;
+                                else if (speed <= 3) decsscls = 0;
+                                else if (speed <= 6) decsscls = 1;
+                                else if (speed <= 9) decsscls = 2;
+                                else if (speed <= 12) decsscls = 3;
+                                else if (speed <= 18) decsscls = 4;
+                                else if (speed <= 22) decsscls = 5;
+                                else if (speed <= 27) decsscls = 6;
+                                else if (speed <= 31) decsscls = 7;
+                                else if (speed <= 36) decsscls = 8;
+                            } else if (ISVT520(tt_type_mode)) {
+                                /* ?4l, 9 = 9
+                                 * ?4h, 0...3 = 2
+                                 * 4..8 = 4 */
+                                if (scrollmode == TTS_JUMP) decsscls = 9;
+                                else if (scrollmode == TTS_SMOOTH_2 ||
+                                         speed <= 9)
+                                    decsscls = 2;
+                                else decsscls = 4;
+                            }
+#endif /* KUI */
+                            if (decsscls >= 0) {
+                                char buf[10];
+                                _snprintf(buf, sizeof(buf), "%d p", decsscls);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+                            }
+                        } /* 'p' */
                         case 'q': {    /*  DECSCUSR  */
                             _snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                  (tt_cursor == TTC_BLOCK && tt_cursor_blink == 1) ? "1 q"
@@ -27874,6 +27912,37 @@ vtcsi(void)
 						}
 					}
 					break;
+                case 'p':       /* DECSSCLS  - Set Scroll Speed - VT510 */
+#ifdef KUI
+                    if (ISK95(tt_type_mode)) {
+                        switch (pn[1]) {
+                        case 0: smooth_speed_pending = 3; break;
+                        case 1: smooth_speed_pending = 6; break;
+                        case 2: smooth_speed_pending = 9; break;
+                        case 3: smooth_speed_pending = 12; break;
+                        case 4: smooth_speed_pending = 18; break;
+                        case 5: smooth_speed_pending = 22; break;
+                        case 6: smooth_speed_pending = 27; break;
+                        case 7: smooth_speed_pending = 31; break;
+                        case 8: smooth_speed_pending = 36; break;
+                        }
+                        if (pn[1] == 9) JumpScroll();
+                        else if (pn[1] < 9) SmoothScroll();
+                    }
+                    else
+#endif /* KUI */
+                    if (ISVT520(tt_type_mode)) {
+                        if (pn[1] <= 3) SmoothScroll();
+                        else if (pn[1] <= 8) {
+#ifdef KUI
+                            smooth_speed_pending = 18;
+#endif /* KUI */
+                            SmoothScroll();
+                        } else if (pn[1] == 9) {
+                            JumpScroll();
+                        }
+                    }
+                    break;
                 case 'q':       /* DECSCUSR - Set Cursor Type - VT520 */
                     switch ( pn[1] ) {
                     case 0:

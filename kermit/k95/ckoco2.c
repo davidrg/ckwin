@@ -95,6 +95,7 @@ extern int scrollmode, tt_scrollmode;
 extern bool in_smooth_scroll;
 extern bool smooth_scroll_upwards;
 extern bool decsclm_pending;
+extern int smooth_speed_pending;
 extern int smooth_speed;
 extern int smooth_scroll_top, smooth_scroll_bottom;
 extern int smooth_scroll_left, smooth_scroll_right;
@@ -4045,10 +4046,24 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     /* The VT220 and up defer DECSCLM taking effect until after the next scroll.
      * */
     if (decsclm_pending) {
-        if (scrollmode >= TTS_SMOOTH) updmode = TTS_JUMP;
-        else {
-            scrollmode = TTS_SMOOTH_2;
-            smooth_speed = SmoothScrollSpeed(TTS_SMOOTH_2);
+        if (smooth_speed_pending == -1) {
+            if (scrollmode >= TTS_SMOOTH) scrollmode = TTS_JUMP;
+            else {
+                scrollmode = TTS_SMOOTH_2;
+                smooth_speed = SmoothScrollSpeed(TTS_SMOOTH_2);
+            }
+        } else {
+            int speed_2 = SmoothScrollSpeed(TTS_SMOOTH_2);
+            int speed_4 = SmoothScrollSpeed(TTS_SMOOTH_4);
+            if (smooth_speed_pending == speed_2) {
+                scrollmode = TTS_SMOOTH_2;
+            } else if (smooth_speed_pending == speed_4) {
+                scrollmode = TTS_SMOOTH_4;
+            } else {
+                scrollmode = TTS_SMOOTH;
+            }
+            smooth_speed = smooth_speed_pending;
+            smooth_speed_pending = -1;
         }
         decsclm_pending = FALSE;
     }

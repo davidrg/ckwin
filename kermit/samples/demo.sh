@@ -270,11 +270,52 @@ function da_implied_extensions {
         esac
 }
 
+# Request DEC private mode
+function decrqm() {
+        MODE=$1   # Mode to query
+        OUT=$2    # Output full result (true) or just state number (false)
+
+        # -s    Do not echo input
+        # -t    Timmeout - give up after 1s
+        # -d y  Delimiter: Continue reading until a 'y' is read?
+        # -p    Prompt
+        #read -s -t 1 -d y -p $'\e[?3$p'   A; echo "A=$A" | cat -v
+        read -s -t 1 -d y -p $'\e[?'${MODE}'$p' RESP
+
+        # Response is something like: ^[[?3;2$
+        # where 3 is the queried mode, and 2 is the state. State is one of:
+        #       0       Not Recognised
+        #       1       Set
+        #       2       Reset
+        #       3       Permanently Set
+        #       4       Permanently Reset
+
+        # $2 is the mode, $3 is the state
+        RMODE=$(echo $RESP | awk -F'[?;$]' '{print $2}')
+        STATE=$(echo $RESP | awk -F'[?;$]' '{print $3}')
+
+        # This would only happen if the terminal processed requests out of order
+        if [ "$RMODE" != "$MODE" ]; then
+                echo "Error: unexpected mode in respose: $RMODE"
+        fi
+
+
+        if [ "$OUT" = true ]; then
+                SSTATE=$(decrqm_modetext $STATE)
+                echo "MODE ${MODE} STATE=${STATE} (${SSTATE})"
+        else
+                echo $STATE
+        fi
+}
+
 # Request String
 function decrqss() {
         REQ=$1   # String to request
+        TRIM=$2  # Trim?
 
-        read -s -t 5 -d '\\' -r -p $'\eP$q'$REQ$'\e\\' RESP
+        printf -v PROMPT '\x1bP$q%s\x1b\\' "$REQ"
+
+        read -s -t 5 -d '\\' -r -p "${PROMPT}" RESP
         # '
 
         # Response is something like: ^Px$rD....D^\
@@ -285,7 +326,11 @@ function decrqss() {
         if [ "$STAT" = "0" ]; then
                 echo "Invalid Request"
         else
-                echo $RESP
+                if [[ "$TRIM" == "true" ]]; then
+                        echo ${RESP/"$REQ"/""}
+                else
+                        echo ${RESP}
+                fi
         fi
 }
 
@@ -299,6 +344,66 @@ function vtstar_drcs_fix {
     done
     printf '\x1b[m'
   fi
+}
+
+function scroll_away {
+  # Need the terminal height for this!
+  HEIGHT=$(decrqss '*|' "true")
+  if [[ "$HEIGHT" == "" ]]; then
+    return
+  fi
+
+  # OK to scroll away?
+  OK=1
+
+  SSCROLL_RESET=0
+  case $(decrqm 4) in
+    0) OK=0 ;; # Not recognised
+    1) OK=1 ;; # Set
+    2) OK=1; SSCROLL_RESET=1 ;; # Reset
+    3) OK=1 ;; # Permanently Set
+    4) OK=0 ;; # Permanently Reset
+    *) OK=0 ;; # Error
+  esac
+
+  if [[ "$OK" == "0" ]]; then
+    # Smooth scroll not supported
+    return
+  fi
+
+  printf '\x1b[3H'
+  ORIGINAL_SPEED=$(decrqss ' p')
+
+  SPEED=8
+  INCREMENT=$((HEIGHT/8))
+
+  # Temporarily turn smooth-scroll on
+  printf '\x1b[5H\x1b[?4h'
+  printf "\x1b[8 p"  # Go to max speed
+
+  # Scroll the demo screen away downwards
+  for (( i = 1; i <= $HEIGHT; i++ )); do
+    printf '\x1b[H'  # Go to screen top
+    printf '\x1bM'   # Reverse Index to insert a new line
+    printf '\r\n'    # LF to trigger a smooth scroll
+
+    if (( (i+1) % INCREMENT == 0)); then
+      # Accelerate!
+      SPEED=$((SPEED - 1))
+      printf "\x1b[%d p" $SPEED
+    fi
+  done
+
+  # Restore the previous speed setting
+  printf '\x1b[%s' "${ORIGINAL_SPEED}"
+
+  # Then back off as it was off when we started
+  if [[ "$SSCROLL_RESET" == "1" ]]; then
+        printf '\x1b[?4l'
+  fi
+
+  # Back to the bottom
+  printf '\x1b[%dH' $HEIGHT
 }
 
 # Top Banner
@@ -999,13 +1104,18 @@ printf '\x1b[5m\t\t\t'
 # Cursor off
 printf '\x1b[?25l'
 
-read -n 1 -s -r -p "Strike any key to continue..."
+read -n 1 -s -r -p 'Strike any key to continue...'
 
 # Clear the line
 printf '\x1b[2K'
 
-# Blinking off
-printf '\x1b[0m\n'
+# DECOM and DECLRMM off
+printf '\x1b[?6;69l'
+
+# Clear margins and make sure attributes are normal
+printf '\x1b[r\x1b[s\x1b[m'
+
+scroll_away
 
 # Cursor back on
 printf '\x1b[?25h'
@@ -1030,12 +1140,6 @@ fi
 # Erase ruled lines in case a full screen app that doesn't know how to erase
 # them is launched next. DECterm requires all the semicolons, K95 doesn't.
 printf '\x1b[0;;;;,t'
-
-# DECOM and DECLRMM off
-printf '\x1b[?6;69l'
-
-# Clear margins and make sure attributes are normal
-printf '\x1b[r\x1b[s\x1b[m'
 
 # Go to the bottom line, as clearing the margins will have put the cursor at 1,1
 # which is a double-height line.

@@ -223,8 +223,9 @@ int     smooth_scroll_left;           /* Left border of the scroll region */
 int     smooth_scroll_right;         /* Right border of the scroll region */
 int     smooth_scroll_bottom;       /* Bottom line of the smooth scroll */
 int     smooth_scroll_top;         /* Top line of the smooth scroll */
-bool    decsclm_pending = FALSE;  /* Toggle scroll mode after next scroll */
-videoline s_scroll_backup_line = /* Line the scroll event erased */
+bool    smooth_speed_pending = -1;/* Speed in lines per second, pending */
+bool    decsclm_pending = FALSE; /* Toggle scroll mode after next scroll */
+videoline s_scroll_backup_line =/* Line the scroll event erased */
     { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0};
 #endif /* KUI */
 
@@ -3555,7 +3556,7 @@ SmoothScroll( void ) {
     if (ISVT220(tt_type_mode)) {
         /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
          * state until after the next scroll event. */
-        if (scrollmode >= TTS_SMOOTH) return;
+        if (scrollmode >= TTS_SMOOTH && smooth_speed_pending == -1) return;
 
         /* This indicates to VscrnScrollPage that we want it to toggle the
          * scroll mode */
@@ -3581,6 +3582,7 @@ JumpScroll( void ) {
 
         /* This indicates to VscrnScrollPage that we want it to toggle the
          * scroll mode */
+        smooth_speed_pending = -1;
         decsclm_pending = TRUE;
         return;
     } else {
