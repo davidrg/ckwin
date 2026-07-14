@@ -2498,6 +2498,8 @@ syscleanup() {
     debug(F100,"keybufcleanup done","",0);
 #endif /* NOLOCAL */
 
+    if ( !k95stdout ) TermScrnUpdCleanup() ;
+
     le_clean();
 
 	/* TODO: A lot of this should probably done for KUI too! */
@@ -2539,7 +2541,7 @@ syscleanup() {
 #ifdef NT
     CloseSerialMutex() ;
 #ifndef KUI
-    if ( !stdout )
+    if ( !k95stdout )
         CloseHandle(VioHandle);
     VioHandle = 0 ;
 #endif /* ! KUI */
