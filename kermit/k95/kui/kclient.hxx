@@ -70,6 +70,7 @@ public:
 
     void checkBlink();
     void getDrawInfo();
+    void smoothScroll();
     void drawDisabledState( int w, int h );
 
     void getEndSize( int& w, int& h );
@@ -82,6 +83,8 @@ public:
 
     void stopTimer();
     void startTimer();
+
+    bool smoothScrolling();
 
     BOOL renderToEmfFile(int vnum, char* filename);
 #ifdef CK_SAVE_TO_IMAGE
@@ -121,7 +124,7 @@ private:    // this section is for performance
     static void drawRuledLines(
         HDC hdc, HPEN pen, int cells, KFont* font, RECT rect,
         BOOL rlTop, BOOL rlBottom, BOOL rlLeft, BOOL rlRight);
-    static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0);
+    static BOOL renderToDc(HDC hdc, KFont *font, int vnum, int margin=0, bool blinkOn=TRUE);
     HBITMAP renderToBitmap(int vnum, DWORD **outPixels);
 #ifdef CK_HAVE_GDIPLUS
     BOOL renderToImageFile(int vnum, char* filename, const wchar_t* format);
@@ -132,6 +135,9 @@ private:    // this section is for performance
         struct _K_CLIENT_PAINT* clientPaint,
         long maxcells,
         uchar** workTempOut);
+
+    bool getSmoothScrollDrawInfo();
+    int smoothScrollOffset(int lineHeight) const;
 
     CRITICAL_SECTION csDraw;
 
@@ -145,8 +151,12 @@ private:    // this section is for performance
     HDC _hdc;
     HDC _hdcScreen;
     HDC _hdcScratch;
+    HDC _hdcSScrollBlinkOn;
+    HDC _hdcSScrollBlinkOff;
     HBITMAP compatBitmap;
     HBITMAP scratchBitmap;
+    HBITMAP scrollBlinkOnBitmap;
+    HBITMAP scrollBlinkOffBitmap;
     HRGN hrgnPaint;
     HBRUSH disabledBrush;
     HBRUSH bgBrush;
@@ -196,6 +206,15 @@ private:    // this section is for performance
     long _msgret;
 
     KSoftFont softFont;
+
+    double smoothScrollProgress;
+    long smoothScrollTime;
+
+    // If a smooth scroll event is currently being rendered smoothly.
+    // During mark mode, a popup, or if a different vscreen is being
+    // displayed then the vscreen is rendered normally but the smooth
+    // smooth scroll progress is still calculated.
+    bool smoothScrollRendering;
 };
 
 #endif

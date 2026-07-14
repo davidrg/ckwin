@@ -1062,6 +1062,11 @@ static struct keytab trmtab[] = {
     { "screen-mode",     XYTSCNM,   0 },
     { "screen-optimize", XYTOPTI,   0 },
     { "screen-update",   XYTUPD,    0 },
+#ifdef KUI
+    { "scroll-mode",     XYTSCROLL, 0 },
+#else
+    { "scroll-mode",     XYTSCROLL, CM_INV },
+#endif /* KUI */
     { "scrollback",      XYSCRS,    0 },
     { "send-data",         XYTSEND, 0 },
     { "send-end-of-block", XYTSEOB, 0 },
@@ -1441,6 +1446,8 @@ extern int updmode;
 int tt_status[VNUM] = {1,1,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {1,1,0,0};
 #else  /* KUI */
+extern int tt_scrollmode, scrollmode;
+extern int smooth_speed, tt_smooth_speed;
 extern CKFLOAT floatval;
 CKFLOAT tt_linespacing[VNUM] = {1.0,1.0,1.0,1.0};
 #ifdef K95G
@@ -2206,9 +2213,18 @@ int nmsk = (sizeof(msktab) / sizeof(struct keytab));
 
 struct keytab scrnupd[] = {             /* SET TERMINAL SCREEN-UPDATE */
     { "fast",   TTU_FAST,   0 },
-    { "smooth", TTU_SMOOTH, 0 }
+    { "smooth", TTU_SMOOTH, 0 },
 };
 int nscrnupd = (sizeof(scrnupd) / sizeof(struct keytab));
+
+struct keytab scrmode[] = {             /* SET TERMINAL SCROLL-MODE */
+    { "jump",     TTS_JUMP,   0 },
+    { "smooth",   TTS_SMOOTH, 0 },
+    { "smooth-2", TTS_SMOOTH_2, 0 },
+    { "smooth-4", TTS_SMOOTH_4, 0 },
+};
+int nscrmode = (sizeof(scrmode) / sizeof(struct keytab));
+
 
 #ifdef PCFONTS
 /* This definition of the term_font[] table is only for     */
@@ -5519,8 +5535,12 @@ settrm() {
             return(mode);
         } else {
             y = cmnum(
+#ifdef KUI
+            "Interval between screen updates in CONNECT mode, milliseconds",
+#else
             "Pause between FAST screen updates in CONNECT mode, milliseconds",
-                      "100",10,&x,xxstring
+#endif /* KUI */
+                      "20",10,&x,xxstring
                       );
             if (x < 0 || x > 1000 ) {
                 printf(
@@ -5534,6 +5554,36 @@ settrm() {
             return(setnum(&tt_update,x,y,10000));
         }
     }
+    case XYTSCROLL: {
+        int mode;
+        if ((mode = cmkey(scrmode,nscrmode,"","fast",xxstring)) < 0) {
+            return(mode);
+        } else {
+            int speed;
+            if (mode == TTS_SMOOTH) {
+                y = cmnum("Speed in lines per second","9",10,&speed,xxstring);
+            }
+            if ((y = cmcfm()) < 0) return(y);
+#ifdef KUI
+
+            if (mode == TTS_SMOOTH) {
+                if (speed < 1 || speed > 36 ) {
+                    printf("\n?The speed must be between 1 and 36 lines per second.\n");
+                    return(success = 0);
+                }
+            } else {
+                speed = SmoothScrollSpeed(mode);
+            }
+
+            smooth_speed = tt_smooth_speed = speed;
+            scrollmode = tt_scrollmode = mode;
+            return(setnum(&tt_smooth_speed,speed,y,36));
+#else
+            return(success = TRUE);
+#endif /* KUI */
+        }
+    }
+    break;
     case XYTCTRL:
           if ((x = cmkey(termctrl,ntermctrl,"","7",xxstring)) < 0) {
               return(x);

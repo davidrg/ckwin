@@ -266,7 +266,17 @@ extern char     * d_name;
 extern int  scrninitialized[] ;
 extern bool scrollflag[] ;
 extern bool viewonly ;           /* View Only Terminal mode */
-extern int  updmode ;            /* Fast/Smooth scrolling */
+#ifdef KUI
+extern int  scrollmode ;            /* Fast/Smooth scrolling */
+extern bool in_smooth_scroll, in_bg_smooth_scroll ;
+extern int smooth_speed;
+extern int smooth_speed_pending;
+extern int tt_smooth_speed;
+extern DWORD bg_smooth_scroll_ends;
+#else
+extern int updmode;
+extern int tt_updmode;
+#endif /* KUI */
 extern int priority ;
 extern TID  tidRdComWrtScr ;
 
@@ -736,7 +746,9 @@ extern int cmd_cols;                    /* Screen columns */
 extern int tt_ctstmo;                   /* CTS timeout */
 extern int tt_pacing;                   /* Output-pacing */
 extern int tt_mouse;                    /* Mouse */
-extern int tt_updmode;                  /* Terminal Screen Update Mode */
+#ifdef KUI
+extern int tt_scrollmode;               /* Terminal Scrolling Mode */
+#endif /* KUI */
 extern int tt_url_hilite;
 extern int tt_url_hilite_attr;
 int tt_type_vt52 = TT_VT52 ;            /* Terminal Type Mode before entering VT52 mode */
@@ -7489,7 +7501,7 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
 						page);
     }
     else {
-        VscrnScrollPage(vmode,UPWARD,
+        VscrnScrollPage(vmode,UPWARD_JUMP,
                      	0,VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
                      	-1, -1,
                      	VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
@@ -11240,10 +11252,15 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     udkreset() ;                        /* Reset UDKs     */
     deccolm = FALSE;                    /* default column mode */
     tt_cols[VTERM] = tt_cols_usr ;
+#ifdef KUI
+    scrollmode = tt_scrollmode;      /* set terminal scroll mode to original */
+    smooth_speed = tt_smooth_speed;
+#else
     if (tt_updmode == TTU_FAST ) /* set terminal scroll mode to original */
         JumpScroll();
     else
         SmoothScroll();
+#endif /* KUI */
     if (vmode==VTERM)
         SetCols(VTERM) ;
     naws();
@@ -17307,6 +17324,43 @@ dodcs( void )
                     case SP: {
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
+                        case 'p': {    /* DECSSCLS */
+                            int decsscls = -1;
+#ifdef KUI
+                            /* The VT520 reports a recent speed change as though
+                             * it has already taken effect */
+                            int speed = smooth_speed_pending == -1
+                                ? smooth_speed : smooth_speed_pending;
+
+                            if (ISK95(tt_type_mode)) {
+                                if (scrollmode == TTS_JUMP) decsscls = 9;
+                                else if (speed <= 3) decsscls = 0;
+                                else if (speed <= 6) decsscls = 1;
+                                else if (speed <= 9) decsscls = 2;
+                                else if (speed <= 12) decsscls = 3;
+                                else if (speed <= 18) decsscls = 4;
+                                else if (speed <= 22) decsscls = 5;
+                                else if (speed <= 27) decsscls = 6;
+                                else if (speed <= 31) decsscls = 7;
+                                else if (speed <= 36) decsscls = 8;
+                            } else if (ISVT520(tt_type_mode)) {
+                                /* ?4l, 9 = 9
+                                 * ?4h, 0...3 = 2
+                                 * 4..8 = 4 */
+                                if (scrollmode == TTS_JUMP) decsscls = 9;
+                                else if (scrollmode == TTS_SMOOTH_2 ||
+                                         speed <= 9)
+                                    decsscls = 2;
+                                else decsscls = 4;
+                            }
+#endif /* KUI */
+                            if (decsscls >= 0) {
+                                char buf[10];
+                                _snprintf(buf, sizeof(buf), "%d p", decsscls);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+                            }
+                        } /* 'p' */
                         case 'q': {    /*  DECSCUSR  */
                             _snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                  (tt_cursor == TTC_BLOCK && tt_cursor_blink == 1) ? "1 q"
@@ -19092,6 +19146,32 @@ wrtch(unsigned short ch) {
                 prtline( wherey[VTERM], LF ) ;
             }
             if ( decsasd == SASD_TERMINAL ) {
+#ifdef KUI
+                /* If a smooth scroll is in progress, a line feed anywhere is
+                 * blocked until the scroll is finished. If we don't do this,
+                 * then you'll see the prompt in GNU Less jump up a little every
+                 * time you scroll up. The VT100 Technical Manual (EK-VT100-TM)
+                 * also says "When a line feed is received the microprocessor
+                 * waits for the current scroll to end" (pg 4-96) so this is
+                 * probably the correct place for the wait. */
+                if (scrollmode >= TTS_SMOOTH && vmode == VTERM) {
+                    if (in_smooth_scroll) {
+                        WaitSmoothScrollFinishedSem(5000);
+                    } else if (in_bg_smooth_scroll) {
+                        /* Smooth scrolling on a background page just introduces
+                         * a delay. There is nothing to render, so we just
+                         * pause for the length of time the renderer *would*
+                         * have spent scrolling the line */
+                        DWORD time = timeGetTime();
+                        int sleep_time = bg_smooth_scroll_ends - time;
+                        if (sleep_time > 0) {
+                            msleep(sleep_time);
+                        }
+                        in_bg_smooth_scroll = FALSE;
+                    }
+                }
+#endif /* KUI */
+
                 if (wherey[vmode] == vscrn_c_page_margin_bot(VTERM)) {
                     if ( IS97801(tt_type_mode) ) {
                         if ( !sni_pagemode )
@@ -21175,7 +21255,11 @@ vtcsi(void)
                             pn[2] = deccolm ? 1 : 2 ;
                             break;
                         case 4: /* DECSCLM */
-                            pn[2] = (updmode == TTU_SMOOTH) ? 1 : 2 ;
+#ifdef KUI
+                            pn[2] = scrollmode >= TTS_SMOOTH ? 1 : 2 ;
+#else
+                            pn[2] = updmode >= TTU_SMOOTH ? 1 : 2 ;
+#endif /* KUI */
                             break;
                         case 5: /* DECSCNM */
                             pn[2] = decscnm ? 1 : 2 ;
@@ -26891,6 +26975,13 @@ vtcsi(void)
                                      SP,
                                      FALSE);
                     } else { /* Roll Mode */
+                        /* TODO:
+                         * This should scroll smoothly. But it shouldn't do so
+                         * using VscrnScrollPage. SD (and SU) are for panning
+                         * a viewport smaller than the page up and down (like
+                         * using the vertical scrollbar), and when smooth
+                         * scrolling is on it should pan smoothly.
+                         */
                         VscrnScrollPage(
                             VTERM,      /* Vscrn */
                             DOWNWARD,   /* Direction */
@@ -27832,6 +27923,37 @@ vtcsi(void)
 						}
 					}
 					break;
+                case 'p':       /* DECSSCLS  - Set Scroll Speed - VT510 */
+#ifdef KUI
+                    if (ISK95(tt_type_mode)) {
+                        switch (pn[1]) {
+                        case 0: smooth_speed_pending = 3; break;
+                        case 1: smooth_speed_pending = 6; break;
+                        case 2: smooth_speed_pending = 9; break;
+                        case 3: smooth_speed_pending = 12; break;
+                        case 4: smooth_speed_pending = 18; break;
+                        case 5: smooth_speed_pending = 22; break;
+                        case 6: smooth_speed_pending = 27; break;
+                        case 7: smooth_speed_pending = 31; break;
+                        case 8: smooth_speed_pending = 36; break;
+                        }
+                        if (pn[1] == 9) JumpScroll();
+                        else if (pn[1] < 9) SmoothScroll();
+                    }
+                    else
+#endif /* KUI */
+                    if (ISVT520(tt_type_mode)) {
+                        if (pn[1] <= 3) SmoothScroll();
+                        else if (pn[1] <= 8) {
+#ifdef KUI
+                            smooth_speed_pending = 18;
+#endif /* KUI */
+                            SmoothScroll();
+                        } else if (pn[1] == 9) {
+                            JumpScroll();
+                        }
+                    }
+                    break;
                 case 'q':       /* DECSCUSR - Set Cursor Type - VT520 */
                     switch ( pn[1] ) {
                     case 0:
@@ -28724,7 +28846,7 @@ vtescape( void )
             if (ISVT100(tt_type_mode)) {
                 if (vscrn_c_page_margin_top(VTERM) == wherey[VTERM])
                     VscrnScrollPage(VTERM,
-                                 DOWNWARD,
+                                 DOWNWARD_SMOOTHLY,
                                  vscrn_c_page_margin_top(VTERM) - 1,
                                  vscrn_c_page_margin_bot(VTERM) - 1,
                                  vscrn_c_page_margin_left(VTERM) - 1,

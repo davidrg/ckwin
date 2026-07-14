@@ -89,6 +89,20 @@ int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD | VT_CHAR_ATTR_UNDERLINE;
 int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
 #endif /* KUI */
 extern int updmode ;
+#ifdef KUI
+/* Smooth-Scroll related state */
+extern int scrollmode, tt_scrollmode;
+extern bool in_smooth_scroll, in_bg_smooth_scroll;
+extern bool smooth_scroll_upwards;
+extern bool decsclm_pending;
+extern int smooth_speed_pending;
+extern int smooth_speed;
+extern int smooth_scroll_top, smooth_scroll_bottom;
+extern int smooth_scroll_left, smooth_scroll_right;
+extern videoline s_scroll_backup_line;
+extern int tt_type;
+extern DWORD bg_smooth_scroll_ends;
+#endif /* KUI */
 extern int priority ;
 extern int tt_modechg;
 extern cell_video_attr_t defaultattribute ;
@@ -2520,6 +2534,16 @@ int VscrnGetHeight( BYTE vmode ) {
     return VscrnGetHeightEx(vmode, TRUE);
 }
 
+/* Gets the height of the screen excluding the status line */
+int VscrnGetPageHeight(BYTE vmode, BOOL orStatusLine) {
+
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
+        vmode = VSTATUS ;
+
+    return (vscrn[vmode].height ? vscrn[vmode].height : MAXTERMROW) -(tt_status[vmode]?2:1);
+
+}
+
 /*---------------------------------------------------------------------------*/
 /* VscrnGetDisplayHeight                                    | Page: n/a      */
 /*---------------------------------------------------------------------------*/
@@ -3603,6 +3627,30 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 }
 
 
+#ifdef KUI
+/* Takes a backup copy of a video line for smooth scroll operations */
+void
+BackupLineForSmoothScroll(videoline *line) {
+    s_scroll_backup_line.width = line->width;
+    s_scroll_backup_line.vt_line_attr = line->vt_line_attr;
+    s_scroll_backup_line.markbeg = line->markbeg;
+    s_scroll_backup_line.markshowend = line->markshowend;
+    s_scroll_backup_line.markend = line->markend;
+    memcpy(s_scroll_backup_line.cells,
+        line->cells,
+        sizeof(viocell) * MAXTERMCOL);
+    memcpy(s_scroll_backup_line.vt_char_attrs,
+        line->vt_char_attrs,
+        sizeof(vt_char_attr_t) * MAXTERMCOL);
+    memcpy(s_scroll_backup_line.cell_attrs,
+        line->cell_attrs,
+        sizeof(vt_cell_attr_t) * MAXTERMCOL);
+    memcpy(s_scroll_backup_line.hyperlinks,
+        line->hyperlinks,
+        sizeof(unsigned short) * MAXTERMCOL);
+}
+#endif /* KUI */
+
 /*---------------------------------------------------------------------------*/
 /* VscrnScrollPage                                          | Page: Specified*/
 /*---------------------------------------------------------------------------*/
@@ -3610,7 +3658,9 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
  *
  * Parameters:
  *     vmode        vscreen to scroll
- *     updown       Scroll UPWARD or DOWNWARD
+ *     updown       Scroll UPWARD* or DOWNWARD*
+ *                  UPWARD and DOWNWARD_SMOOTHLY may smooth scroll
+ *                  UPWARD_JUMP and DOWNWARD will never smooth scroll
  *     topmargin    Top line of region to scroll. Zero based.
  *     bottommargin Bottom line of region to scroll. Zero based.
  *     leftmargin   Left column of region to scroll. Use -1 for entire line.
@@ -3633,6 +3683,9 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     int i, x, vs_width, lrmm;
     long  obeg, oend, otop, nbeg, nend, ntop ;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
+#ifdef KUI
+    bool use_backup_line = FALSE;
+#endif /* KUI */
 
     static CHAR last_fillchar = 0;
     static cell_video_attr_t last_cellcolor = cell_video_attr_init_vio_attribute(0);
@@ -3671,8 +3724,10 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
         last_cellcolor = cellcolor ;
     }
 
+#ifndef KUI
     if ( updmode == TTU_SMOOTH )
         msleep(1) ;
+#endif /* KUI */
 
     debug(F111,"VscrnScroll","vmode",vmode);
     debug(F111,"VscrnScroll","updown",updown);
@@ -3690,8 +3745,66 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     lrmm = (leftmargin != 0 || rightmargin != vs_width-1) &&
         leftmargin < rightmargin;
 
+    #ifdef KUI
+    smooth_scroll_top = smooth_scroll_bottom = -1;
+    smooth_scroll_left = smooth_scroll_right = -1;
+    if (scrollmode >= TTS_SMOOTH && vmode == VTERM
+        && page == vscrn_current_page_number(VTERM, TRUE)
+        && (!lrmm || ISK95(tt_type))) {
+        /* No DEC terminal scrolls between the L/R margins, but K95 does! */
+
+        if (topmargin != 0 || bottommargin != VscrnGetPageHeight(vmode, TRUE)) {
+            smooth_scroll_top = topmargin;
+            smooth_scroll_bottom = bottommargin;
+        }
+        if (lrmm) {
+            smooth_scroll_left = leftmargin;
+            smooth_scroll_right = rightmargin;
+        }
+
+        if (updown == DOWNWARD_SMOOTHLY &&
+            bottommargin == VscrnGetPageHeight(vmode, TRUE)) {
+            /* When scrolling downward, we need to preserve the bottom line. If
+             * the bottom margin is the page margin, then we can just preserve
+             * one extra line in the screen buffer to do the job. */
+            bottommargin += 1;
+            use_backup_line = FALSE;
+        } else if (updown == UPWARD && (topmargin == 0 && savetobuffer && !lrmm)) {
+            /* If we're scrolling upward and the top margin is screen top, and
+             * we're saving to scrollback, we get the top line preserved for
+             * free! */
+             use_backup_line = FALSE;
+        } else {
+            /* Else we have to preserve the line that is being erased manually.
+             * The Smooth Scroll Backup Line will be used to hold it. */
+            use_backup_line = TRUE;
+
+            if (s_scroll_backup_line.cells == NULL) {
+                /* The backup line has never been used. Initialise it. */
+                s_scroll_backup_line.cells = malloc(
+                    sizeof(viocell) * MAXTERMCOL);
+                s_scroll_backup_line.vt_char_attrs = malloc(
+                    sizeof(vt_char_attr_t) * MAXTERMCOL);
+                s_scroll_backup_line.cell_attrs = malloc(
+                    sizeof(vt_cell_attr_t) * MAXTERMCOL);
+                s_scroll_backup_line.hyperlinks = malloc(
+                    sizeof(unsigned short) * MAXTERMCOL);
+                memset(s_scroll_backup_line.cells, 0,
+                    sizeof(viocell) * MAXTERMCOL);
+                memset(s_scroll_backup_line.vt_char_attrs, 0,
+                    sizeof(vt_char_attr_t) * MAXTERMCOL);
+                memset(s_scroll_backup_line.cell_attrs, 0,
+                    sizeof(vt_cell_attr_t) * MAXTERMCOL);
+                memset(s_scroll_backup_line.hyperlinks, 0,
+                    sizeof(unsigned short) * MAXTERMCOL);
+            }
+        }
+    }
+#endif /* KUI */
+
     debug(F101,"VscrnScroll has VscrnMutex","",vmode);
     switch (updown) {
+        case UPWARD_JUMP:
         case UPWARD:
             if (savetobuffer && topmargin == 0 && !lrmm) {
                 if (topmargin) {
@@ -3759,6 +3872,15 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                 vscrn_page_t *p = &vscrn[vmode].pages[page];
 
                 for ( i = topmargin ; i <= bottommargin - nlines ; i++ ) {
+#ifdef KUI
+                    if (i == topmargin && use_backup_line) {
+                        /* Take a copy of the line at the top margin as the
+                         * smooth scroll process will need it. */
+                        BackupLineForSmoothScroll(
+                            VscrnGetPageLineFromTop(vmode, i, page));
+                    }
+#endif /* KUI */
+
                     if (!lrmm) {
                         /* save line to be deleted */
                         linetodelete = *VscrnGetPageLineFromTop(vmode, i, page) ;
@@ -3825,10 +3947,20 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
 #endif /* NOKVERBS */
             break;
 
+        case DOWNWARD_SMOOTHLY:
         case DOWNWARD: {
             vscrn_page_t *p = &vscrn[vmode].pages[page];
 
             for ( i = bottommargin ; i >= topmargin+nlines ; i-- ) {
+#ifdef KUI
+                if (i == bottommargin && use_backup_line) {
+                    /* Take a copy of the line at the bottom margin as the
+                     * smooth scroll process will need it. */
+                    BackupLineForSmoothScroll(
+                        VscrnGetPageLineFromTop(vmode, i, page));
+                }
+#endif /* KUI */
+
                 if (!lrmm)
                 {
                     /* save line to be deleted */
@@ -3895,6 +4027,64 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     }
     ReleaseVscrnMutex( vmode ) ;
     debug(F100,"VscrnScroll releases mutex","",0);
+
+#ifdef KUI
+    if (scrollmode >= TTS_SMOOTH && vmode == VTERM && (!lrmm || ISK95(tt_type))
+            && updown != UPWARD_JUMP && updown != DOWNWARD) {
+        /* Begin a new smooth-scroll! This will block any further LF characters
+         * until it completes*/
+
+        if (page == vscrn_current_page_number(VTERM, TRUE)) {
+            /* Cursor on the visible page. The renderer will manage the smooth
+             * scroll and post a semaphore when it is done.
+             */
+            in_smooth_scroll = TRUE;
+            in_bg_smooth_scroll = FALSE;
+            smooth_scroll_upwards = updown == UPWARD;
+
+            ResetSmoothScrollFinishedSem();
+        } else {
+            /* Cursor is on a background page. There is nothing for the renderer
+             * to render, so we'll just set a flag, and the next LF will complete
+             * the smooth scroll. */
+
+            float ms_per_line = 1000.0f / (float)(smooth_speed < 1 ? 6 : smooth_speed);
+
+            in_smooth_scroll = FALSE;
+            bg_smooth_scroll_ends = timeGetTime() + (DWORD)ms_per_line;
+            in_bg_smooth_scroll = TRUE;
+        }
+    } else {
+        smooth_scroll_top = smooth_scroll_bottom = -1;
+        smooth_scroll_left = smooth_scroll_right = -1;
+    }
+
+    /* The VT100 and up defer DECSCLM taking effect until after the next scroll.
+     * */
+    if (decsclm_pending) {
+        if (smooth_speed_pending == -1) {
+            if (scrollmode >= TTS_SMOOTH) scrollmode = TTS_JUMP;
+            else {
+                scrollmode = TTS_SMOOTH_2;
+                smooth_speed = SmoothScrollSpeed(TTS_SMOOTH_2);
+            }
+        } else {
+            int speed_2 = SmoothScrollSpeed(TTS_SMOOTH_2);
+            int speed_4 = SmoothScrollSpeed(TTS_SMOOTH_4);
+            if (smooth_speed_pending == speed_2) {
+                scrollmode = TTS_SMOOTH_2;
+            } else if (smooth_speed_pending == speed_4) {
+                scrollmode = TTS_SMOOTH_4;
+            } else {
+                scrollmode = TTS_SMOOTH;
+            }
+            smooth_speed = smooth_speed_pending;
+            smooth_speed_pending = -1;
+        }
+        decsclm_pending = FALSE;
+    }
+
+#endif /* KUI */
 }
 
 
@@ -5771,6 +5961,9 @@ VscrnInit( BYTE vmode )
           crossedoutattribute = colorcrossedout ;
           dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
+#ifdef KUI
+          scrollmode = tt_scrollmode;
+#endif /* KUI */
       }
       old_height = VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0);
 	  old_width = VscrnGetWidth(VTERM);
@@ -5812,7 +6005,7 @@ VscrnInit( BYTE vmode )
             	{
             	    extern bool decncsm;
                 	if ( !VscrnIsClear(vmode, p ) && !decncsm && !decscpp_resize) {
-                    	VscrnScrollPage( vmode, UPWARD, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
+                    	VscrnScrollPage( vmode, UPWARD_JUMP, 0, sz-1, -1, -1, sz-1, TRUE, SP, p ) ;
                     	clrscr = 1 ;
                 	}
             	}

@@ -121,6 +121,10 @@ HANDLE hevTAPIInit = (HANDLE) 0 ;
 HANDLE hevRichEditInit = (HANDLE) 0;
 HANDLE hevRichEditClose = (HANDLE) 0;
 HANDLE hmtxRichEdit = (HANDLE) 0 ;
+
+#ifdef KUI
+HANDLE hevSmoothScrollFinished = (HANDLE) 0;
+#endif /* KUI */
 #else /* NT */
 #ifdef OS2MOUSE
 #define INCL_MOU
@@ -197,6 +201,10 @@ HMUX hmtxZoutDump = (HMUX) 0;
 HEV hevRichEditInit = (HEV) 0;
 HEV hevRichEditClose = (HEV) 0;
 HMTX hmtxRichEdit = (HMTX) 0 ;
+
+#ifdef KUI
+HEV hevSmoothScrollFinished = (HEV) 0;
+#endif /* KUI */
 #endif /* NT */
 
 int CtrlCCount = -1 ;
@@ -4301,3 +4309,103 @@ CloseZoutDumpMutex( void )
     return rc ;
 #endif /* NT */
 }
+
+#ifdef KUI
+
+APIRET
+CreateSmoothScrollFinishedSem( BOOL posted ) {
+    if ( hevSmoothScrollFinished )
+#ifdef NT
+        CloseHandle( hevSmoothScrollFinished ) ;
+    hevSmoothScrollFinished = CreateEvent( NULL, TRUE, posted, NULL ) ;
+    return hevSmoothScrollFinished == NULL ? GetLastError() : 0 ;
+#else /* not NT */
+        DosCloseEventSem( hevSmoothScrollFinished ) ;
+    return DosCreateEventSem( NULL, &hevSmoothScrollFinished, 0, posted ) ;
+#endif /* NT */
+}
+
+
+APIRET
+PostSmoothScrollFinishedSem( void )
+{
+#ifdef NT
+    BOOL rc = 0 ;
+
+    rc = SetEvent( hevSmoothScrollFinished ) ;
+    return rc == TRUE ? 0 : GetLastError() ;
+#else /* not NT */
+    return DosPostEventSem( hevSmoothScrollFinished ) ;
+#endif /* NT */
+}
+
+APIRET
+WaitSmoothScrollFinishedSem( ULONG timo )
+{
+#ifdef NT
+    DWORD rc = 0 ;
+
+    rc = WaitForSingleObjectEx( hevSmoothScrollFinished, timo, TRUE ) ;
+    return rc == WAIT_OBJECT_0 ? 0 : rc ;
+#else /* not NT */
+    APIRET rc = 0 ;
+
+    rc = DosWaitEventSem( hevSmoothScrollFinished, timo ) ;
+    return rc ;
+#endif /* NT */
+}
+
+APIRET
+WaitAndResetSmoothScrollFinishedSem( ULONG timo )
+{
+#ifdef NT
+    DWORD rc = 0 ;
+
+    rc = WaitForSingleObjectEx( hevSmoothScrollFinished, timo, TRUE ) ;
+    if ( rc == WAIT_OBJECT_0 )
+        ResetEvent( hevSmoothScrollFinished ) ;
+    return rc == WAIT_OBJECT_0 ;
+#else /* not NT */
+    APIRET rc = 0 ;
+    ULONG  semcount = 0 ;
+
+    rc = DosWaitEventSem( hevSmoothScrollFinished, timo ) ;
+    if ( !rc )
+        DosResetEventSem( hevSmoothScrollFinished, &semcount ) ;
+    return semcount ;
+#endif /* NT */
+}
+
+APIRET
+ResetSmoothScrollFinishedSem( void )
+{
+#ifdef NT
+    BOOL rc = 0 ;
+
+    rc = ResetEvent( hevSmoothScrollFinished ) ;
+    return rc ;
+#else /* not NT */
+    APIRET rc = 0 ;
+    ULONG semcount = 0 ;
+
+    rc = DosResetEventSem( hevSmoothScrollFinished, &semcount ) ;
+    return rc ;
+#endif /* NT */
+}
+
+APIRET
+CloseSmoothScrollFinishedSem( void )
+{
+#ifdef NT
+    BOOL rc = 0 ;
+    rc = CloseHandle( hevSmoothScrollFinished ) ;
+    hevSmoothScrollFinished = (HANDLE) NULL ;
+    return rc == TRUE ? 0 : GetLastError() ;
+#else /* not NT */
+    APIRET rc ;
+    rc = DosCloseEventSem( hevSmoothScrollFinished ) ;
+    hevSmoothScrollFinished = 0 ;
+    return rc ;
+#endif /* NT */
+}
+#endif /* KUI */

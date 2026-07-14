@@ -84,6 +84,9 @@ extern int tt_hidattr;
 extern int tt_sac;
 extern bool xprintff; /* Print formfeed */
 extern int tcsl;
+#ifdef KUI
+extern int smooth_speed; /* Smooth scroll speed (lines per second) */
+#endif /* KUI */
 
 extern struct _vtG G[];
 extern struct _vtG *GL, *GR;
@@ -2956,6 +2959,9 @@ wyseascii( int ch )
                     debug(F110,"Wyse Escape","Smooth scroll @ 1 row/second",0);
                     if ( debses )
                         break;
+#ifdef KUI
+                    smooth_speed = 1;
+#endif /* KUI */
                     SmoothScroll() ;
                     break;
                 case '=':
@@ -2963,6 +2969,9 @@ wyseascii( int ch )
                     debug(F110,"Wyse Escape","Smooth scroll @ 2 row/second",0);
                     if ( debses )
                         break;
+#ifdef KUI
+                    smooth_speed = 2;
+#endif /* KUI */
                     SmoothScroll() ;
                     break;
                 case '>':
@@ -2970,6 +2979,9 @@ wyseascii( int ch )
                     debug(F110,"Wyse Escape","Smooth scroll @ 4 row/second",0);
                     if ( debses )
                         break;
+#ifdef KUI
+                    smooth_speed = 4;
+#endif /* KUI */
                     SmoothScroll() ;
                     break;
                 case '?':
@@ -2977,6 +2989,9 @@ wyseascii( int ch )
                     debug(F110,"Wyse Escape","Smooth scroll @ 8 row/second",0);
                     if ( debses )
                         break;
+#ifdef KUI
+                    smooth_speed = 8;
+#endif /* KUI */
                     SmoothScroll() ;
                     break;
                 case '@':

@@ -212,6 +212,26 @@ extern bool scrollstatus[] ;
 bool    viewonly = FALSE ;              /* View only terminal mode */
 int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
 int     priority        = XYP_REG ;
+#ifdef KUI
+int     scrollmode      = TTS_JUMP ;        /* Scroll mode - active setting */
+int     tt_scrollmode   = TTS_JUMP ;       /* Scroll mode - user setting */
+int     smooth_speed    = 6;              /* Speed in lines per second, active*/
+int     tt_smooth_speed = 6;             /* Speed in lines per second, user */
+bool    in_smooth_scroll = FALSE;       /* Smooth scroll in progress */
+bool    smooth_scroll_upwards = FALSE; /* Direction is upwards */
+int     smooth_scroll_left;           /* Left border of the scroll region */
+int     smooth_scroll_right;         /* Right border of the scroll region */
+int     smooth_scroll_bottom;       /* Bottom line of the smooth scroll */
+int     smooth_scroll_top;         /* Top line of the smooth scroll */
+bool    smooth_speed_pending = -1;/* Speed in lines per second, pending */
+bool    decsclm_pending = FALSE; /* Toggle scroll mode after next scroll */
+videoline s_scroll_backup_line =/* Line the scroll event erased */
+    { 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0};
+
+/* Smooth scroll in progress on a background (non-visible) page */
+bool    in_bg_smooth_scroll = FALSE;
+DWORD   bg_smooth_scroll_ends = 0;
+#endif /* KUI */
 
 int tn_bold = 0;                        /* TELNET negotiation bold */
 int esc_exit = 0;                       /* Escape back = exit */
@@ -319,7 +339,6 @@ extern int cmd_rows;                    /* Screen rows */
 extern int cmd_cols;                    /* Screen columns */
 extern int tt_ctstmo;                   /* CTS timeout */
 extern int tt_pacing;                   /* Output-pacing */
-extern int tt_updmode;                  /* Terminal Screen Update Mode */
 extern bool escapestatus[VNUM] ;        /* are we in ESCAPE mode? */
 /* extern int tt_idlesnd_tmo;           /* Idle Send Timeout, disabled */
 extern char * tt_idlesnd_str;           /* Idle Send String, none */
@@ -3535,13 +3554,61 @@ conect(int async) {
 
 void
 SmoothScroll( void ) {
+#ifdef KUI
+    if (ISVT100(tt_type_mode)) {
+        /* The VT100 and up defer changing the scroll mode state until after
+         * the next scroll event. */
+        if (scrollmode >= TTS_SMOOTH && smooth_speed_pending == -1) return;
+
+        /* This indicates to VscrnScrollPage that we want it to toggle the
+         * scroll mode */
+        decsclm_pending = TRUE;
+        return;
+    } else {
+        scrollmode = TTS_SMOOTH_2 ;
+    }
+#else
     updmode = TTU_SMOOTH ;
+#endif /* KUI */
 }
 
 void
 JumpScroll( void ) {
+#ifdef KUI
+    if (ISVT100(tt_type_mode)) {
+        /* The VT100 and up defer changing the scroll mode state until after
+         * the next scroll event. */
+        if (scrollmode == TTS_JUMP) return;
+
+        /* This indicates to VscrnScrollPage that we want it to toggle the
+         * scroll mode */
+        smooth_speed_pending = -1;
+        decsclm_pending = TRUE;
+        return;
+    } else {
+        scrollmode = TTS_JUMP;
+    }
+#else
     updmode = TTU_FAST ;
+#endif /* KUI */
 }
+
+#ifdef KUI
+/* Gets the standard smooth-scroll speed for a given smooth-scroll mode */
+int
+SmoothScrollSpeed(int mode) {
+    if (mode == TTS_SMOOTH) return tt_smooth_speed;
+    if (mode == TTS_SMOOTH_4) {
+        if (ISVT420(tt_type)) return 18;
+        /* if (ISVT340(tt_type)) return 12;  */
+        /* else fall through - terminal doesn't support smooth-4 */
+    }
+
+    if (ISVT420(tt_type)) return 9;
+    if (ISVT320(tt_type)) return 5;
+    return 6; /* 60Hz VT100, VT220 */
+}
+#endif /* KUI */
 
 char* protoString(void); /* Defined in ckoco3.c */
 

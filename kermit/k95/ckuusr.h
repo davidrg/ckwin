@@ -1349,6 +1349,11 @@ struct stringint {			/* String and (wide) integer */
 #define     P_COUNT   1
 #define     P_ACTIVE  2
 #define   XYTCLRRS  70  /* SET TERM CLEAR-ON-RESIZE */
+#define   XYTSCROLL 71  /* SET TERM SCROLL */
+#define     TTS_JUMP     0
+#define     TTS_SMOOTH   1
+#define     TTS_SMOOTH_2 2
+#define     TTS_SMOOTH_4 3
 #endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */

@@ -167,6 +167,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    `SET TERM CLEAR-ON-RESIZE { ON, OFF }` 
  - Soft-fonts (DRCS) for VT220 and higher emulations are now supported
  - The VT520 Play Sound control sequence is now supported.
+ - Proper Smooth Scroll is now supported in K95G.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -253,6 +254,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    x86-64 and arm64 hosts to enable better terminal emulation in PTY sessions.
  - The PTY command will now launch the Windows shell (cmd.exe) by default if no
    other command is specified
+ - WYSE WY-50 and compatible escape sequences for setting the smooth scrolling
+   speed (`ESC `` <`, `ESC `` =`, `ESC `` >`, `ESC `` ?`) now set the
+   appropriate smooth-scroll speed.
 
 ### New terminal control sequences
 > [!NOTE]
@@ -398,6 +402,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - [DECDLDA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdlda) - Set how many font buffers are available (VT520 only), queryable with DECRQSS
  - [DECSWBV](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decswbv) - Set Warning Bell Volume
  - [DECPS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decps) - Play Sound (VT520)
+ - [DECSCLM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsclm) - Smooth Scroll (K95G only)
+ - [DECSSCLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsscls) - Set Scroll Speed
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made

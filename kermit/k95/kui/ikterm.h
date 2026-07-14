@@ -20,6 +20,7 @@ typedef struct _K_CLIENT_PAINT {
     unsigned long   maxWidth;
     int             page;
     int             page_length;
+    int             height;
 } K_CLIENT_PAINT;
 
 struct vscrn_struct;
@@ -31,6 +32,9 @@ public:
     ~IKTerm();
     BOOL getDrawInfo();
     BOOL getDrawInfo(BYTE vscrn_number);
+    BOOL getDrawInfo(BYTE vscrn_number, bool smoothScroll);
+
+    bool getSmoothScrollDrawInfo();
 
     BOOL newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UINT sysKey );
     BOOL keyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown );

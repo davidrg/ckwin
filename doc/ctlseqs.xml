@@ -1953,6 +1953,10 @@ DECTSR		462
                 if the cursor is already at the top margin.</p>
             <p>Resets the <a href="#lcf">Last Column Flag</a> for all emulations
                 except VT100/VT102.</p>
+            <p>If the cursor is at the top of the screen and smooth scrolling is
+                enabled (<tt>SET TERM SCREEN-UPDATE SMOOTH</tt>) the contents of
+                the screen will scroll smoothly down.
+            </p>
         </section>
         <section role="ctlseq" id="ssg2l" ctlseq="ESC N" mnemonic="SS2" title="Single shift G2, left" groups="isvt220 isansi">
             <ref src="e48:84"/>
@@ -2303,6 +2307,13 @@ DECTSR		462
 
             <p>Resets the <a href="#lcf">Last Column Flag</a> for all emulations
                 except VT520/K95.</p>
+
+            <p>
+                If a downwards smooth scroll (as a result of an
+                <a href="#ri">RI</a> on the top line) is currently in progress,
+                then a line feed anywhere is blocked until the smooth-scroll
+                finishes.
+            </p>
 
             <p badges="s97801">
                 If in page mode and the cursor is at the bottom margin, the cursor is sent
@@ -6227,7 +6238,6 @@ VT420:
                     DECSLCK    SP v         Set Lock Key Style
                     DECSMBV    SP u         Set Margin Bell Volume
                     DECSPP      + w         Set Port Parameter
-                    DECSSCLS   SP p         Set Scroll Speed
                     DECSTRL     " u         Set Transmit Rate Limit
                     DECSWBV    SP t         Set Warning Bell Volume
                     DECTME     SP ~         Terminal Mode Emulation
@@ -6304,6 +6314,19 @@ VT420:
                     and the conformance level will reflect the chosen terminal
                     type. The only part of this response you can actually change
                     via DECRQSS is the 8-bit/7-bit controls setting.
+                </p>
+            </section>
+            <section role="parameter" id="decrqss-decsscls" mnemonic="DECSSCLS"
+                     title="Scroll Speed">
+                <ctlseq><param-text/> = SP p</ctlseq>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional=""/>
+                <p>
+                    Reports the current <a href="#decsscls">DECSSCLS</a>
+                    setting - the scroll mode and speed. A response for Jump
+                    Scroll might look like <tt><cc>DCS</cc> 1 $ r 9 SP [q] <cc>ST</cc></tt>
+                    (where SP is the space character)
                 </p>
             </section>
             <section role="parameter" id="decrqss-decscusr" mnemonic="DECSCUSR"
@@ -9374,8 +9397,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 4</ctlseq>
                 <termsupp first="sco" series="sco" additional=""/>
                 <p>
-                    Enable Smooth Scrolling. Only supported in the console
-                    version of K95 at this time (not K95G).
+                    Enable Smooth Scrolling.
                 </p>
             </section>
             <section role="parameter" mnemonic="IRM" id="sm-4"
@@ -9742,8 +9764,16 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:277"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 dtterm"/>
-                <p>Console version only: Enable smooth (slow) scrolling mode.
-                    K95G (the GUI version) presently ignores this setting.
+                <p>Enable smooth (slow) scrolling mode.</p>
+                <p>In the console versions of K95 for Windows and OS/2 this just
+                    inserts a brief pause on each scroll.
+                </p>
+                <p>
+                    In K95G this enables proper smooth scroll. On VT100 and
+                    higher emulations as well as the K95 terminal type, changing
+                    DECSCLM does not take effect until after the next scroll
+                    event. For terminals supporting multiple speeds, this sets
+                    the slow speed (SMOOTH-2).
                 </p>
             </section>
             <section role="parameter" id="decscnm" mnemonic="DECSCNM" title="Reverse screen">
@@ -11745,9 +11775,11 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:277"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 dtterm"/>
                 <p>
-                    Switches to Jump (fast) scrolling. Only affects the console version
-                    of K95—the GUI version (K95G) only supports jump scrolling at the moment so
-                    is always in this mode
+                    Switches to Jump (fast) scrolling.
+                </p>
+                <p>
+                    In K95G for VT220 and higher emulations this does not take
+                    effect until after the next scroll event.
                 </p>
             </section>
             <section role="parameter" mnemonic="DECSCNM" id="r-decscnm" title="Normal screen">
@@ -14793,12 +14825,86 @@ DCS $ q 3 , } ST</pre>
             <p>Resets the terminal</p>
         </section>
         <section role="ctlseq" mnemonic="DECSSCLS" id="decsscls"
-                 title="Set Scroll Speed"
-                 not-implemented="true" todo="true">
+                 title="Set Scroll Speed" badges="vt520 k95">
             <ctlseq>CSI <param-single/> SP p</ctlseq>
             <ref src="vt510:DECSSCLS.html"/>
             <ref src="vt52x:300"/>
             <termsupp first="vt510" series="vt" additional=""/>
+            <p>Selects from one of a number of smooth-scroll speeds, or sets
+                jump-scroll mode. Only supported by K95G.
+            </p>
+            <p>The VT520 only offers three settings:</p>
+            <ul>
+                <li>0-3: smooth-2, 9 lines per second</li>
+                <li>4-8: smooth-4, 18 lines per second</li>
+                <li>9: jump scroll</li>
+            </ul>
+            <p>
+                The K95 terminal type expands this to a wider range of speeds:
+            </p>
+            <table>
+                <tr>
+                    <th><em>Ps</em></th>
+                    <th>Mode</th>
+                    <th>Lines Per Second</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>Smooth</td>
+                    <td>3</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Smooth</td>
+                    <td>6</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Smooth-2</td>
+                    <td>9</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Smooth</td>
+                    <td>12</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Smooth-4</td>
+                    <td>18</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Smooth</td>
+                    <td>22</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Smooth</td>
+                    <td>27</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Smooth</td>
+                    <td>31</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>Smooth</td>
+                    <td>36</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td>Jump</td>
+                    <td>As fast as received</td>
+                </tr>
+            </table>
+            <p>
+                This setting can be queried via
+                <a href="#decrqss-decsscls">DECRQSS</a>, and the status of
+                smooth scroll (any speed) or jump scroll can be queried via
+                <a href="#decrqm-4">DECRQM</a>.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="DECSCL" id="decscl" title="Select Conformance Level">
             <ctlseq>CSI <param-single symbol="Pl"/> ; <param-single symbol="Pc"/> " p</ctlseq>
