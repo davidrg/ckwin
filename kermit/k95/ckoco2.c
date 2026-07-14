@@ -4059,7 +4059,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
         smooth_scroll_left = smooth_scroll_right = -1;
     }
 
-    /* The VT220 and up defer DECSCLM taking effect until after the next scroll.
+    /* The VT100 and up defer DECSCLM taking effect until after the next scroll.
      * */
     if (decsclm_pending) {
         if (smooth_speed_pending == -1) {

@@ -9769,7 +9769,7 @@ DCS $ q 3 , } ST</pre>
                     inserts a brief pause on each scroll.
                 </p>
                 <p>
-                    In K95G this enables proper smooth scroll. On VT220 and
+                    In K95G this enables proper smooth scroll. On VT100 and
                     higher emulations as well as the K95 terminal type, changing
                     DECSCLM does not take effect until after the next scroll
                     event. For terminals supporting multiple speeds, this sets
