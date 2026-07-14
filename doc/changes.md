@@ -168,6 +168,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Soft-fonts (DRCS) for VT220 and higher emulations are now supported
  - The VT520 Play Sound control sequence is now supported.
  - Proper Smooth Scroll is now supported in K95G.
+ - New `CLEAR TERMINAL SCROLLBACK-ONLY` command. Clears the scrollback while
+   preserving current terminal screen contents.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -405,7 +407,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - [DECSCLM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsclm) - Smooth Scroll (K95G only)
  - [DECSSCLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsscls) - Set Scroll Speed
  - DSR-85 Multiple Session Configuration Status Report (VT420 and up) now 
-   reports not configured.   
+   reports not configured.
+ - [ED-3 (xt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ed-3xt) - Clear Scrollback (K95 only), xterm extension
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made

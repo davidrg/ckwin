@@ -793,10 +793,52 @@ clearcmdscreen(void) {
 /*---------------------------------------------------------------------------*/
 /* clearscrollback                                          | Page: First    */
 /*---------------------------------------------------------------------------*/
-/* Clears the scrollback, which is associated with the first page only       */
+/* Clears the scrollback, which is associated with the first page only.      */
+/* Optionally preserves the current contents of the screen, erasing          */
+/* scrollback only. When preserving the current screen, scrollback data is   */
+/* not erased from memory, it is just rendered inaccessible and will         */
+/* eventually be overwritten by new data.                                    */
 void
-clearscrollback( BYTE vmode ) {
-    ULONG bufsize = VscrnGetPageBufferSize(vmode, FALSE, 0) ;
+clearscrollback( BYTE vmode, BOOL keep_screen ) {
+    ULONG bufsize;
+
+    RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
+
+    bufsize = VscrnGetPageBufferSize(vmode, FALSE, 0) ;
+
+    if (keep_screen) {
+        int top, i, len;
+        int page = 0; /* Only page 0 has scrollback */
+
+        /* We can't get away with just setting the page top as the beginning of
+         * the scrollback - KUI won't show this as "scrollback empty", and
+         * VscrnScrollPage will make the old scrollback available again on the
+         * next scroll. So instead we copy the current screen to the top of the
+         * vscreen buffer, then reset the beginning, top and end of the page.
+         */
+
+        top = VscrnGetPageTop(vmode, FALSE, page) ;
+        len = VscrnGetHeight(vmode) -(tt_status[vmode]?2:1);
+
+        /* Copy the contents of the line to the top of the vscreen buffer */
+        for (i = 0; i <= len; i++) {
+            VscrnCopyLine(VscrnGetPageLineFromTop(vmode, i, page),
+                VscrnGetPageLine(vmode, i, page));
+        }
+
+        VscrnSetPageTop(vmode, 0, FALSE, page, TRUE);
+        VscrnSetPageBegin(vmode, 0, page);
+        VscrnSetPageEnd(vmode, len, page) ;
+
+        scrollstatus[vmode] = FALSE ;
+        scrollflag[vmode] = FALSE ;
+        cursoron[vmode] = FALSE ;
+
+        if ( IsConnectMode() || vmode != VTERM )
+            VscrnIsDirty(vmode);
+
+        return;
+    }
 
     VscrnSetBufferSize( vmode, 256, vscrn[vmode].page_count ) ;
     VscrnSetBufferSize( vmode, bufsize, vscrn[vmode].page_count ) ;
@@ -804,6 +846,8 @@ clearscrollback( BYTE vmode ) {
     scrollflag[vmode] = FALSE ;
     cursoron[vmode] = FALSE ;
     cleartermpage(vmode, 0) ;
+
+    ReleaseVscrnMutex(vmode);
 }
 
 /*---------------------------------------------------------------------------*/

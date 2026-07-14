@@ -7185,10 +7185,19 @@ DCS $ q 3 , } ST</pre>
                     and clears the <a href="#lcf">Last Column Flag</a>.</p>
             </section>
             <section role="parameter" id="ed-3xt" title="Erase Saved Lines"
-                     not-implemented="true" todo="true">
+                     badges="k95 xterm">
                 <ctlseq><param-single/> = 3</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-J:Ps-=-3.1DDF"/>
                 <termsupp first="xterm" series="xt" additional="linux putty"/>
+                <p>
+                    Erases scrollback while preserving the current contents of
+                    the terminal screen.
+                </p>
+                <p>
+                    Note that data formerly visible in scrollback is <em>not</em>
+                    erased from memory, it is just rendered inaccessible via
+                    scrollback and will eventually be overwritten by new data.
+                </p>
             </section>
             <section role="parameter" badges="s97801" id="ed-3" title="Clear to end of screen with Space">
                 <ctlseq><param-single/> = 3</ctlseq>
@@ -7421,12 +7430,16 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECSED.html"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm wt"/>
             </section>
-            <section role="parameter" id="decsed-3xt"
-                     title="Selective Erase Saved Lines"
-                     not-implemented="true" todo="true">
+            <section role="parameter" id="decsed-3xt" badges="k95 xterm"
+                     title="Selective Erase Saved Lines">
                 <ctlseq><param-single/> = 3</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-J:Ps-=-3.1E4B"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    While the Xterm documentation calls this selective erase,
+                    the actual implementation in xterm-409b is the same as for
+                    <a href="#ed-3xt">ED-3</a> and K95 does the same.
+                </p>
             </section>
         </section>
         <section role="ctlseq" id="SGF" mnemonic="SGF"

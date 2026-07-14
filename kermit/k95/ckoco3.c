@@ -14018,7 +14018,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             VscrnIsDirty(mode);
             return;
         case K_CLRSCROLL:
-            clearscrollback(mode);
+            clearscrollback(mode, FALSE);
             VscrnIsDirty(mode);
             return;
         case K_SESSION:
@@ -25837,6 +25837,14 @@ vtcsi(void)
                                 }
                             }
                             break;
+                        case 3: if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                            /* Selective Erase Scrollback (xterm) */
+                            /* While the xterm docuemntation says this is
+                             * selective erase, in xterm-409b it is an
+                             * unselective erase of everything in scrollback */
+                            clearscrollback(VTERM, TRUE);
+                            break;
+                        }
                         default:
                             break;
                         }
@@ -25901,6 +25909,10 @@ vtcsi(void)
                         /* Clear Attributes */
                         if ( IS97801(tt_type_mode) ) {
                             clreoreg_escape(VTERM,NUL);
+                        }
+                        else if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                            /* Erase Scrollback (xterm) */
+                            clearscrollback(VTERM, TRUE);
                         }
                         break;
                     case 4:
