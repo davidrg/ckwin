@@ -4029,7 +4029,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
     debug(F100,"VscrnScroll releases mutex","",0);
 
 #ifdef KUI
-    if (scrollmode >= TTS_SMOOTH && vmode == VTERM
+    if (scrollmode >= TTS_SMOOTH && vmode == VTERM && (!lrmm || ISK95(tt_type))
             && updown != UPWARD_JUMP && updown != DOWNWARD) {
         /* Begin a new smooth-scroll! This will block any further LF characters
          * until it completes*/
