@@ -1645,6 +1645,7 @@ _PROTOTYP( void   TermScrnUpd, ( void * ) ) ;
 #endif /* KUI */
 _PROTOTYP( videoline * VscrnGetPageLineFromTop, ( BYTE, SHORT, int ) ) ;
 _PROTOTYP( videoline * VscrnGetLineFromTop, ( BYTE, SHORT, BOOL ) ) ;
+_PROTOTYP( videoline * VscrnGetPageLine, ( BYTE, SHORT, int ) ) ;
 _PROTOTYP( videoline * VscrnGetLine, ( BYTE, SHORT ) ) ;
 _PROTOTYP( USHORT VscrnGetLineVtAttr, ( BYTE, SHORT ) ) ;
 /*_PROTOTYP( USHORT VscrnSetLineVtAttr, ( BYTE, SHORT, USHORT ) ) ;*/
@@ -1689,6 +1690,7 @@ _PROTOTYP( position * VscrnGetCurPosEx, ( BYTE, BOOL ) ) ;
 _PROTOTYP( position * VscrnGetCurPos, ( BYTE ) ) ;
 _PROTOTYP( VOID VscrnSetBookmark, ( BYTE, int, int ) ) ;
 _PROTOTYP( int VscrnGetBookmark, ( BYTE, int ) ) ;
+_PROTOTYP( VOID VscrnCopyLine, (videoline *, videoline *) ) ;
 
 
 _PROTOTYP( bool IsWARPed, ( void ) ) ;
@@ -1767,7 +1769,7 @@ _PROTOTYP(void clearcmdscreen, (void));
 #endif /* KUI */
 _PROTOTYP(void cleartermpage, (BYTE,int));
 _PROTOTYP(void cleartermscreen, (BYTE));
-_PROTOTYP(void clearscrollback, (BYTE) ) ;
+_PROTOTYP(void clearscrollback, (BYTE, BOOL) ) ;
 _PROTOTYP(cell_video_attr_t geterasecolor, (int));
 _PROTOTYP(void clrtoeoln, (BYTE,CHAR));
 _PROTOTYP(void clrbol_escape, (BYTE,CHAR));

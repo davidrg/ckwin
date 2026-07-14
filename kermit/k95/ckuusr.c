@@ -3506,6 +3506,7 @@ int nbeeptab = sizeof(beeptab)/sizeof(struct keytab);
 #define CLR_C_EOS 4
 #define CLR_C_LIN 5
 #define CLR_C_SCR 6
+#define CLR_C_SCRO 7
 
 struct keytab clrcmdtab[] = {
     { "all",        CLR_C_ALL, 0 },
@@ -3514,7 +3515,8 @@ struct keytab clrcmdtab[] = {
     { "eol",        CLR_C_EOL, 0 },
     { "eos",        CLR_C_EOS, 0 },
     { "line",       CLR_C_LIN, 0 },
-    { "scrollback", CLR_C_SCR, 0 }
+    { "scrollback", CLR_C_SCR, 0 },
+    { "scrollback-only", CLR_C_SCRO, 0}
 };
 int nclrcmd = sizeof(clrcmdtab)/sizeof(struct keytab);
 #endif /* OS2 */
@@ -6807,7 +6809,7 @@ doclear() {
 #ifndef NOLOCAL
     switch (x) {
       case CLR_SCL:
-	clearscrollback(VTERM);
+	clearscrollback(VTERM, FALSE);
 	break;
       case CLR_CMD:
 	switch ( z ) {
@@ -6830,7 +6832,10 @@ doclear() {
 	    clrline_escape(VCMD,SP);
 	    break;
 	  case CLR_C_SCR:
-	    clearscrollback(VCMD);
+	    clearscrollback(VCMD, FALSE);
+	    break;
+      case CLR_C_SCRO:
+	    clearscrollback(VCMD, TRUE);
 	    break;
 	default:
 	    printf("Not implemented yet, sorry.\n");
@@ -6867,7 +6872,10 @@ doclear() {
 	    clrline_escape(VTERM,SP);
 	    break;
 	 case CLR_C_SCR:
-	     clearscrollback(VTERM);
+	     clearscrollback(VTERM, FALSE);
+	     break;
+      case CLR_C_SCRO:
+	     clearscrollback(VTERM, TRUE);
 	     break;
 	 default:
 	     printf("Not implemented yet, sorry.\n");

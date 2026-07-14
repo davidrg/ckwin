@@ -33,89 +33,90 @@ The first group are for general use and are independent of which terminal
 is being emulated.
 <p>
 <pre>
-   \Kanswerback    Transmit answerback string to host
-   \Kautodownload  Toggle on/off terminal autodownload.
-   \Kbacknext      Continue backward search
-   \Kbacksearch    Begin backward search 
-   \Kbreak         Transmit a BREAK signal
-   \Kbytesize      Toggle terminal bytesize between 7 and 8 bits.
-   \Kclearscreen   Clear the Terminal screen
-   \Kcompose 	   Compose an accented character
-   \Kdebug         Enter/exit Terminal Debug mode
-   \Kdnarr         Transmit Terminal Down Arrow sequence
-   \Kdnone         Roll screen down one line
-   \Kdnhscn        Roll screen down half of one page
-   \Kdnscn         Roll screen down one page
-   \Kdos           "Push" to command shell
-   \Kdump          Dump the current screen text to SET PRINTER device
-   \Kendscn        Roll screen to the bottom of buffer
-   \Kexit          Exit terminal mode
-   \Kflipscn       Reverse foreground and background colors
-   \Kfnkeys        Display function key labels in HP and Wyse emulations
-   \Kfwdnext       Continue forward search
-   \Kfwdsearch     Begin forward search
-   \Kgobook        Goto bookmark in rollback buffer
-   \Kgoto          Goto line number in rollback buffer
-   \Khangup        Hangup line and return to command prompt
-   \Khelp          Display popup help
-   \Kholdscrn      Pause data input
-   \Khomscn        Roll screen to beginning of buffer
-   \Kignore        Ignore keystroke
-   \Kkbemacs       Switch to EMACS keyboard mode
-   \Kkbenglish     Switch to normal keyboard mode
-   \Kkbhebrew      Switch to HEBREW keyboard mode
-   \Kkbrussian     Switch to Russian keyboard mode
-   \Kkbwp          Switch to Word Perfect 5.1 keyboard mode
-   \Kkeyclick      Toggle Keyclick On/Off
-   \Klbreak        Transmit Long Break signal
-   \Klfall         Scroll to left margin
-   \Klfarr         Transmit Terminal Left Arrow sequence
-   \Klfone         Scroll left one column
-   \Klfpage        Scroll left eight columns
-   \Klogoff        Turn Session Log Off
-   \Klogon         Turn Session Log On
-   \Kmarkcancel    Cancel Mark Mode
-   \Kmarkcopyclip  Copy marked text to clipboard
-   \Kmarkcopyhost  Copy marked text to host
-   \Kmarkstart     Start Mark Mode  <!--       \Kmarkselect is marked as invisible
-   \Kmarkselect    Mark Mode: Place marked text into \v(select)           -->
-   \Kmousecurpos   Transmit sequence to move cursor to mouse position
-   \Kmousemark     Mouse drag sequence marks text
-   \Kmouseurl      Start Browser with selected URL
-   \Knull          Transmit Null to host
-   \Kos2           "Push" to command shell
-   \Kpaste         Paste text from clipboard to host
-   \Kprintff       Send Formfeed to SET PRINTER device
-   \Kprtauto       Toggle Auto-print mode
-   \Kprtcopy       Toggle Copy-Print mode
-   \Kprtctrl       Toggle Ctrl-print mode
-   \Kquit          Disconnect from host and terminate Kermit
-   \Kreset         Reset terminal
-   \Krtall         Scroll to right margin
-   \Krtarr         Transmit Terminal Right Arrow sequence
-   \Krtone         Scroll right one column
-   \Krtpage        Scroll right eight columns
-   \Ksession       Toggle on/off session logging to 'session.log' <!--
-   \Kdebuglog      Toggle Debug Logging to File                      This Kverb is marked invisible-->
-   \Ksetbook       Set bookmark 
-   \Kstatus        Toggle statusline (None, Indicator, Host Writeable)
-   \Ktermtype      Toggle Terminal Type
-   \Ktn_ao         Transmit Telnet Cancel-Output request
-   \Ktn_ayt        Transmit Telnet "are you there?" request
-   \Ktn_ec         Transmit Telnet Erase Character request
-   \Ktn_el         Transmit Telnet Erase Line request
-   \Ktn_ga         Transmit Telnet Go Ahead request
-   \Ktn_ip         Transmit Telnet "interrupt process" request
-   \Ktn_logout     Transmit Telnet Do Logout Option
-   \Ktn_naws       Transmit Window Size (if Telnet NAWS is active)
-   \Ktn_sak        Transmit AIX Trusted Shell request
-   \Kucs2          Unicode UCS-2 U+xxxx Compose Key
-   \Kuparr         Transmit Terminal Up Arrow sequence
-   \Kupone         Roll screen up one line
-   \Kuphscn        Roll screen up half of one page
-   \Kupscn	       Roll screen up one page
-   \Kurl           Treat text under cursor position as a URL <!--  \Kemacs_overwrite is marked as invisible
-   \Kemacs_overwrite  Transmit EMACS Overwrite toggle command sequence -->
+   \Kanswerback      Transmit answerback string to host
+   \Kautodownload    Toggle on/off terminal autodownload.
+   \Kbacknext        Continue backward search
+   \Kbacksearch      Begin backward search
+   \Kbreak           Transmit a BREAK signal
+   \Kbytesize        Toggle terminal bytesize between 7 and 8 bits.
+   \Kclearscreen     Clear the Terminal screen
+   \Kclearscrollback Clear the terminal screen and scrollback buffer
+   \Kcompose 	     Compose an accented character
+   \Kdebug           Enter/exit Terminal Debug mode
+   \Kdnarr           Transmit Terminal Down Arrow sequence
+   \Kdnone           Roll screen down one line
+   \Kdnhscn          Roll screen down half of one page
+   \Kdnscn           Roll screen down one page
+   \Kdos             "Push" to command shell
+   \Kdump            Dump the current screen text to SET PRINTER device
+   \Kendscn          Roll screen to the bottom of buffer
+   \Kexit            Exit terminal mode
+   \Kflipscn         Reverse foreground and background colors
+   \Kfnkeys          Display function key labels in HP and Wyse emulations
+   \Kfwdnext         Continue forward search
+   \Kfwdsearch       Begin forward search
+   \Kgobook          Goto bookmark in rollback buffer
+   \Kgoto            Goto line number in rollback buffer
+   \Khangup          Hangup line and return to command prompt
+   \Khelp            Display popup help
+   \Kholdscrn        Pause data input
+   \Khomscn          Roll screen to beginning of buffer
+   \Kignore          Ignore keystroke
+   \Kkbemacs         Switch to EMACS keyboard mode
+   \Kkbenglish       Switch to normal keyboard mode
+   \Kkbhebrew        Switch to HEBREW keyboard mode
+   \Kkbrussian       Switch to Russian keyboard mode
+   \Kkbwp            Switch to Word Perfect 5.1 keyboard mode
+   \Kkeyclick        Toggle Keyclick On/Off
+   \Klbreak          Transmit Long Break signal
+   \Klfall           Scroll to left margin
+   \Klfarr           Transmit Terminal Left Arrow sequence
+   \Klfone           Scroll left one column
+   \Klfpage          Scroll left eight columns
+   \Klogoff          Turn Session Log Off
+   \Klogon           Turn Session Log On
+   \Kmarkcancel      Cancel Mark Mode
+   \Kmarkcopyclip    Copy marked text to clipboard
+   \Kmarkcopyhost    Copy marked text to host
+   \Kmarkstart       Start Mark Mode  <!--   \Kmarkselect is marked as invisible
+   \Kmarkselect      Mark Mode: Place marked text into \v(select)           -->
+   \Kmousecurpos     Transmit sequence to move cursor to mouse position
+   \Kmousemark       Mouse drag sequence marks text
+   \Kmouseurl        Start Browser with selected URL
+   \Knull            Transmit Null to host
+   \Kos2             "Push" to command shell
+   \Kpaste           Paste text from clipboard to host
+   \Kprintff         Send Formfeed to SET PRINTER device
+   \Kprtauto         Toggle Auto-print mode
+   \Kprtcopy         Toggle Copy-Print mode
+   \Kprtctrl         Toggle Ctrl-print mode
+   \Kquit            Disconnect from host and terminate Kermit
+   \Kreset           Reset terminal
+   \Krtall           Scroll to right margin
+   \Krtarr           Transmit Terminal Right Arrow sequence
+   \Krtone           Scroll right one column
+   \Krtpage          Scroll right eight columns
+   \Ksession         Toggle on/off session logging to 'session.log' <!--
+   \Kdebuglog        Toggle Debug Logging to File                      This Kverb is marked invisible-->
+   \Ksetbook         Set bookmark
+   \Kstatus          Toggle statusline (None, Indicator, Host Writeable)
+   \Ktermtype        Toggle Terminal Type
+   \Ktn_ao           Transmit Telnet Cancel-Output request
+   \Ktn_ayt          Transmit Telnet "are you there?" request
+   \Ktn_ec           Transmit Telnet Erase Character request
+   \Ktn_el           Transmit Telnet Erase Line request
+   \Ktn_ga           Transmit Telnet Go Ahead request
+   \Ktn_ip           Transmit Telnet "interrupt process" request
+   \Ktn_logout       Transmit Telnet Do Logout Option
+   \Ktn_naws         Transmit Window Size (if Telnet NAWS is active)
+   \Ktn_sak          Transmit AIX Trusted Shell request
+   \Kucs2            Unicode UCS-2 U+xxxx Compose Key
+   \Kuparr           Transmit Terminal Up Arrow sequence
+   \Kupone           Roll screen up one line
+   \Kuphscn          Roll screen up half of one page
+   \Kupscn	         Roll screen up one page
+   \Kurl             Treat text under cursor position as a URL <!--  \Kemacs_overwrite is marked as invisible
+   \Kemacs_overwrite Transmit EMACS Overwrite toggle command sequence -->
 </pre>
 <p>
 For use with SCOANSI and AT386 emulations:

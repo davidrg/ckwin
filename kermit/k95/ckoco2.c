@@ -2369,6 +2369,28 @@ VscrnGetLineFromTop( BYTE vmode, SHORT y, BOOL view_page )
 }
 
 /*----------------------------------------------------------+----------------*/
+/* VscrnGetPagePage                                         | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
+videoline *
+VscrnGetPageLine( BYTE vmode, SHORT y, int page_number )  /* zero based */
+{
+    vscrn_page_t* page;
+
+    if ( vmode == VTERM && decsasd == SASD_STATUS )
+        vmode = VSTATUS ;
+
+    if ( !vscrn_view_page_valid(vmode) )
+        return(NULL);
+
+    page = &vscrn[vmode].pages[page_number];
+
+    while ( y < 0 )
+        y += page->linecount ;
+
+    return &page->lines[y%page->linecount] ;
+}
+
+/*----------------------------------------------------------+----------------*/
 /* VscrnGetLine                                             | Page: View     */
 /*----------------------------------------------------------+----------------*/
 videoline *
@@ -3627,27 +3649,39 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 }
 
 
+/*---------------------------------------------------------------------------*/
+/* VscrnCopyLine                                            | Page: All      */
+/*---------------------------------------------------------------------------*/
+/* Copies the contents of one videoline to another */
+void
+VscrnCopyLine(videoline *source, videoline *dest) {
+    dest->width = source->width;
+    dest->vt_line_attr = source->vt_line_attr;
+    dest->markbeg = source->markbeg;
+    dest->markshowend = source->markshowend;
+    dest->markend = source->markend;
+    memcpy(dest->cells,
+        source->cells,
+        sizeof(viocell) * MAXTERMCOL);
+    memcpy(dest->vt_char_attrs,
+        source->vt_char_attrs,
+        sizeof(vt_char_attr_t) * MAXTERMCOL);
+#ifdef KUI
+    memcpy(dest->cell_attrs,
+        source->cell_attrs,
+        sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
+#endif /* KUI */
+    memcpy(dest->hyperlinks,
+        source->hyperlinks,
+        sizeof(unsigned short) * MAXTERMCOL);
+}
+
+
 #ifdef KUI
 /* Takes a backup copy of a video line for smooth scroll operations */
 void
 BackupLineForSmoothScroll(videoline *line) {
-    s_scroll_backup_line.width = line->width;
-    s_scroll_backup_line.vt_line_attr = line->vt_line_attr;
-    s_scroll_backup_line.markbeg = line->markbeg;
-    s_scroll_backup_line.markshowend = line->markshowend;
-    s_scroll_backup_line.markend = line->markend;
-    memcpy(s_scroll_backup_line.cells,
-        line->cells,
-        sizeof(viocell) * MAXTERMCOL);
-    memcpy(s_scroll_backup_line.vt_char_attrs,
-        line->vt_char_attrs,
-        sizeof(vt_char_attr_t) * MAXTERMCOL);
-    memcpy(s_scroll_backup_line.cell_attrs,
-        line->cell_attrs,
-        sizeof(vt_cell_attr_t) * MAXTERMCOL);
-    memcpy(s_scroll_backup_line.hyperlinks,
-        line->hyperlinks,
-        sizeof(unsigned short) * MAXTERMCOL);
+    VscrnCopyLine(line, &s_scroll_backup_line);
 }
 #endif /* KUI */
 
@@ -3794,7 +3828,7 @@ VscrnScrollPage(BYTE vmode, int updown, int topmargin, int bottommargin,
                 memset(s_scroll_backup_line.vt_char_attrs, 0,
                     sizeof(vt_char_attr_t) * MAXTERMCOL);
                 memset(s_scroll_backup_line.cell_attrs, 0,
-                    sizeof(vt_cell_attr_t) * MAXTERMCOL);
+                    sizeof(vt_cell_attr_t) * CELL_ATTR_LEN);
                 memset(s_scroll_backup_line.hyperlinks, 0,
                     sizeof(unsigned short) * MAXTERMCOL);
             }
