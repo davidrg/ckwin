@@ -839,7 +839,8 @@ DECTSR		462
         </badgegroup>
         <badgegroup name="isvt520">
             <!-- When VT520 is implemented enough, this should contain
-                 only <badge name="vt520"/> -->
+                 only <badge name="vt520"/> and <badge name="k95"/>
+                 -->
             <badgegroup-ref name="isvt320"/>
         </badgegroup>
         <badgegroup name="isvt420">
@@ -8469,11 +8470,24 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="decst8c" mnemonic="DECST8C"
                  title="Set Tab at Every 8 Columns" ctlseq="CSI ? 5 W"
-                 not-implemented="true" todo="true">
+                 badges="vt510 vt520 vt525 k95 xterm">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-5-W.1C75"/>
             <ref src="vt510:DECST8C.html"/>
             <ref src="vt52x:303"/>
             <termsupp first="vt510" series="vt" additional="wt"/>
+            <p>
+                Sets a tab stop every 8 columns starting with column 9. Tab
+                stops are set out to 132 columns or the width of the terminal,
+                which ever is greater.
+            </p>
+            <p>
+                Note that that while this control sequence is documented as
+                being specifically <tt><cc>CSI</cc> ? 5 W</tt> the VT520
+                completely ignores the parameter and so Kermit 95 does too.
+                Applications should still use the control sequence as documented
+                and supply the parameter value of 5 as other terminals may
+                behave differently.
+            </p>
         </section>
 
         <!-- ######################### X ######################### -->

@@ -27375,6 +27375,25 @@ vtcsi(void)
                         cursordown(0);
                         pn[1] = pn[1] - 1;
                     } while (pn[1] > 0);
+                } else if ((ISVT520(tt_type_mode) || ISXTERM(tt_type_mode))
+                    && private) {  /* DECST8C - Tab stop every 8 columns */
+
+                    /* This control sequence is documented as being CSI ? 5 W
+                     * however the VT520 seems to ignore the parameter entirely.
+                     * Any value will result in tabs being set every 8 columns.
+                     */
+
+                    int i;
+                    int width = VscrnGetWidth(VTERM);
+
+                    /* The VT520 sets tab stops out to 132 columns, so we will
+                     * ensure at least that many are set even if the terminal is
+                     * currently narrower. */
+                    if (width < 132) width = 132;
+
+                    for (i = 1; i < width; i++) {
+                        htab[i] = (i % 8) == 1 ? 'T' : '0';
+                    }
                 }
                 break;
             case 'X':
