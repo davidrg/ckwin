@@ -800,14 +800,10 @@ clearcmdscreen(void) {
 /* eventually be overwritten by new data.                                    */
 void
 clearscrollback( BYTE vmode, BOOL keep_screen ) {
-    ULONG bufsize;
-    bool recreate_buffer=TRUE;
     int page = 0; /* Only page 0 has scrollback */
     int len;
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
-
-    bufsize = VscrnGetPageBufferSize(vmode, FALSE, 0) ;
 
     if (keep_screen) {
         int i;
@@ -842,52 +838,29 @@ clearscrollback( BYTE vmode, BOOL keep_screen ) {
         return;
     }
 
-    {
-        /* If we're in connect mode, and we arrived here on some thread other
-         * than the RdComWrtScr thread, then it isn't safe to recreate the
-         * buffer as RdComWrtScr isn't great about acquring the Vscrn Mutex.
-         */
-        extern TID tidRdComWrtScr ;
-#ifdef NT
-        DWORD rdComWrtScrThreadId;
-        DWORD thisThread = GetCurrentThreadId();
-        rdComWrtScrThreadId = GetThreadId(tidRdComWrtScr);
-#else /* OS2 */
-        PTIB ptib;
-        PPIB ppib;
-        APIRET rc;
-        TID thisThread;
-        TID rdComWrtScrThreadId = tidRdComWrtScr;
-        rc = DosGetInfoBlocks(&ptib, &ppib);
-        thisThread = ptib->tib_ptib2->tib2_ultid;
+#ifdef COMMENT
+    /* Prior to 3.0 beta 8 this is how K95 always cleared the scrollback,
+     * though I'm not sure why as it's more work than just moving the top,
+     * begin and end. It's also not safe given K95s multi-threaded nature
+     * as the RdComWrtScr thread isn't great about ensuring it has the vscrn
+     * mutex before doing things. Because of this, the K_CLRSCROLL can
+     * cause a crash if the RdComWrtScr thread is busy doing stuff with
+     * the vscrn.
+     */
+    ULONG bufsize = VscrnGetPageBufferSize(vmode, FALSE, 0) ;
+    VscrnSetBufferSize( vmode, 256, vscrn[vmode].page_count ) ;
+    VscrnSetBufferSize( vmode, bufsize, vscrn[vmode].page_count ) ;
+#else
+    /* Instead, just reuse the existing buffer. VscrnScrollPage erases lines as
+     * it reuses them, so the old stuff in the buffer won't ever be visible.
+     * This is much safer and *seems* to work just as well. */
+    VscrnGetPageTop(vmode, FALSE, page) ;
+    len = VscrnGetHeight(vmode) -(tt_status[vmode]?2:1);
+    VscrnSetPageTop(vmode, 0, FALSE, page, TRUE);
+    VscrnSetPageBegin(vmode, 0, page);
+    VscrnSetPageEnd(vmode, len, page) ;
+#endif /* COMMENT */
 
-        if (rc == 0)
-#endif /* NT */
-        if (IsConnectMode() && thisThread != rdComWrtScrThreadId) {
-            recreate_buffer=FALSE;
-        }
-    }
-
-    if (recreate_buffer) {
-        /* Prior to 3.0 beta 8 this is how K95 always cleared the scrollback,
-         * though I'm not sure why as it's more work than just moving the top,
-         * begin and end. It's also not safe given K95s multi-threaded nature
-         * as most of the terminal emulation code doesn't bother to acquire the
-         * Vscrn Mutex before trying to access it. Because of this, the
-         * K_CLRSCROLL can cause a crash if the RdComWrtScr thread is busy doing
-         * stuff with the vscrn.
-         */
-        VscrnSetBufferSize( vmode, 256, vscrn[vmode].page_count ) ;
-        VscrnSetBufferSize( vmode, bufsize, vscrn[vmode].page_count ) ;
-    } else {
-        /* This is much safer and *seems* to work just as well. Probably it
-         * could replace the old implementation entirely. */
-        VscrnGetPageTop(vmode, FALSE, page) ;
-        len = VscrnGetHeight(vmode) -(tt_status[vmode]?2:1);
-        VscrnSetPageTop(vmode, 0, FALSE, page, TRUE);
-        VscrnSetPageBegin(vmode, 0, page);
-        VscrnSetPageEnd(vmode, len, page) ;
-    }
     scrollstatus[vmode] = FALSE ;
     scrollflag[vmode] = FALSE ;
     cursoron[vmode] = FALSE ;
