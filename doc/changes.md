@@ -524,6 +524,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    history for K95 I've no way of knowing what change broke it, so I've removed 
    the code that was preventing it from being considered a national replacement 
    character set which seems to have fixed it. (K95 bug 842)
+ - Fixed the Clear Scrollback option causing a crash if the terminal is busy
+   receiving a lot of data. Previously K95 would delete and recreate the buffer,
+   now instead it will just reuse the existing one erasing lines as they are
+   reused.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
