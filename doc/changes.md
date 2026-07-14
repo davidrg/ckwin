@@ -404,6 +404,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - [DECPS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decps) - Play Sound (VT520)
  - [DECSCLM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsclm) - Smooth Scroll (K95G only)
  - [DECSSCLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsscls) - Set Scroll Speed
+ - DSR-85 Multiple Session Configuration Status Report (VT420 and up) now 
+   reports not configured.   
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made

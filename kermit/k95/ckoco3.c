@@ -24371,6 +24371,14 @@ vtcsi(void)
 					}
 					break;
 				}
+            case 85: {
+                    if (private && ISVT420(tt_type_mode)) {
+                        /* Multiple-Session Configuration Status Report */
+
+                        /* Not configured for multiple sessions */
+                        sendescseq("[?83n");
+                    }
+                }
                 }
                 break;
             case 'o': 

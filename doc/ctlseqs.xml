@@ -14571,14 +14571,19 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:328"/>
                 <termsupp first="vt420" series="vt" additional="vt510 wt"/>
             </section>
-            <section role="parameter" id="dsr-mscsr"
-                     title="Multiple-Session Configuration Status Report"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 85</ctlseq>
+            <section role="parameter" id="dsr-mscsr" groups="isvt420"
+                     title="Multiple-Session Configuration Status Report">
+                <ctlseq><param-single/> = ? 85</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-n:Ps-=-8-5.1ED6"/>
                 <ref src="vt420:264"/>
                 <termsupp first="vt420" series="vt" additional="wt"/>
                 <!-- Windows Terminal responds with not supported -->
+                <p>
+                    Responds with <tt><cc>ESC</cc> [ ? 83 n</tt> to indicate
+                    that multiple sessions are not configured, as Kermit 95
+                    does not currently support the TD/SMP protocol or any other
+                    form of multi-session support.
+                </p>
             </section>
         </section>
 
