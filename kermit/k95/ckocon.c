@@ -3575,11 +3575,9 @@ SmoothScroll( void ) {
 void
 JumpScroll( void ) {
 #ifdef KUI
-    /* TODO: Should probably be for VT100 too, but I don't have one to test
-     * against to confirm. */
-    if (ISVT220(tt_type_mode)) {
-        /* The VT220 and up (maybe VT100 too?) defer changing the scroll mode
-         * state until after the next scroll event. */
+    if (ISVT100(tt_type_mode)) {
+        /* The VT100 and up defer changing the scroll mode state until after
+         * the next scroll event. */
         if (scrollmode == TTS_JUMP) return;
 
         /* This indicates to VscrnScrollPage that we want it to toggle the
