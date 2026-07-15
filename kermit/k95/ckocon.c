@@ -832,6 +832,8 @@ clearscrollback( BYTE vmode, BOOL keep_screen ) {
         scrollflag[vmode] = FALSE ;
         cursoron[vmode] = FALSE ;
 
+        ReleaseVscrnMutex(vmode);
+
         if ( IsConnectMode() || vmode != VTERM )
             VscrnIsDirty(vmode);
 
@@ -865,6 +867,8 @@ clearscrollback( BYTE vmode, BOOL keep_screen ) {
     scrollflag[vmode] = FALSE ;
     cursoron[vmode] = FALSE ;
     cleartermpage(vmode, 0) ;
+
+    VscrnIsDirty(vmode);
 
     ReleaseVscrnMutex(vmode);
 }
