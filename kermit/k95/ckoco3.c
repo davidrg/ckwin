@@ -9028,11 +9028,11 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
      *
      * decsace == FALSE, stream else rectangle
      */
-    if ( k < 1 ) pn[1] = 1;
-    if ( k < 2 ) pn[2] = 1;
-    if ( k < 3 ) pn[3] = VscrnGetHeight(vmode)
+    if ( k < 1 || pn[1] == 0 ) pn[1] = 1;
+    if ( k < 2 || pn[2] == 0 ) pn[2] = 1;
+    if ( k < 3 || pn[3] == 0 ) pn[3] = VscrnGetHeight(vmode)
          -(tt_status[vmode]?1:0);
-    if ( k < 4 ) pn[4] = VscrnGetWidth(vmode);
+    if ( k < 4 || pn[4] == 0 ) pn[4] = VscrnGetWidth(vmode);
     if ( k < 5 ) {
         pn[5] = 0;
         k = 5;
