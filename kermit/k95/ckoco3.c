@@ -21735,15 +21735,15 @@ vtcsi(void)
                          * page becomes last available page if too large
                          * if destination is off page, clip off page data
                          */
-                        if ( k < 1 ) pn[1] = 1;
-                        if ( k < 2 ) pn[2] = 1;
-                        if ( k < 3 ) pn[3] = VscrnGetHeight(VTERM)
+                        if ( k < 1 || pn[1] == 0) pn[1] = 1;
+                        if ( k < 2 || pn[2] == 0) pn[2] = 1;
+                        if ( k < 3 || pn[3] == 0) pn[3] = VscrnGetHeight(VTERM)
                              -(tt_status[VTERM]?1:0);
-                        if ( k < 4 ) pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 5 ) pn[5] = 1;
-                        if ( k < 6 ) pn[6] = 1;
-                        if ( k < 7 ) pn[7] = 1;
-                        if ( k < 8 ) pn[8] = 1;
+                        if ( k < 4 || pn[4] == 0) pn[4] = VscrnGetWidth(VTERM);
+                        if ( k < 5 || pn[5] == 0) pn[5] = 1;
+                        if ( k < 6 || pn[6] == 0) pn[6] = 1;
+                        if ( k < 7 || pn[7] == 0) pn[7] = 1;
+                        if ( k < 8 || pn[8] == 0) pn[8] = 1;
                         k = 8;
 
                         if ( pn[3] < pn[1] || pn[4] < pn[2] )
