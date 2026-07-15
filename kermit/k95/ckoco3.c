@@ -21569,12 +21569,12 @@ vtcsi(void)
                          * decsace == FALSE, stream else rectangle
                          */
 
-                        if ( k < 1 ) pn[1] = 1;
-                        if ( k < 2 ) pn[2] = 1;
-                        if ( k < 3 ) pn[3] = VscrnGetHeight(VTERM)
+                        if ( k < 1 || pn[1] = 0 ) pn[1] = 1;
+                        if ( k < 2 || pn[1] = 0 ) pn[2] = 1;
+                        if ( k < 3 || pn[1] = 0 ) pn[3] = VscrnGetHeight(VTERM)
                              -(tt_status[VTERM]?1:0);
-                        if ( k < 4 ) pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 5 ) {
+                        if ( k < 4 || pn[1] = 0 ) pn[4] = VscrnGetWidth(VTERM);
+                        if ( k < 5 || pn[1] = 0 ) {
                             pn[5] = 0;
                             k = 5;
                         }
