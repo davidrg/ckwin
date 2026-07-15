@@ -703,7 +703,7 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;"DRCS_EXT"8;9;15;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;"DRCS_EXT"8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;"DRCS_EXT"8;9;15;22;28;32;"EXT_LATIN2""EXT_RULED_LINES"44c",     /* Kermit 95 self-personality */
+    "K95",    {"K95",NULL}, "[?64;1;2;6;"DRCS_EXT"8;9;15;21;22;28;32;"EXT_LATIN2""EXT_RULED_LINES"44c",     /* Kermit 95 self-personality */
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;DRCS;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
@@ -21843,7 +21843,7 @@ vtcsi(void)
                         /* pn[5] - Right border    default=Width */
                         if ( k < 5 || pn[5] > VscrnGetWidth(VTERM) ||
                              pn[5] < 1 )
-                            pn[4] = VscrnGetWidth(VTERM);
+                            pn[5] = VscrnGetWidth(VTERM);
                         if ( k < 4 || pn[4] > VscrnGetHeight(VTERM)
                              -(tt_status[VTERM]?1:0) || pn[4] < 1 )
                             pn[4] = VscrnGetHeight(VTERM)
