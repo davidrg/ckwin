@@ -9,6 +9,8 @@ echo Collecting build artifcats...
 if exist dist\NUL rmdir /S /Q dist
 move kermit\k95\dist .\
 
+move ..\kermit\cm\src\cm.exe .\
+
 if "%CKF_ZINC%" == "no" goto :nozinc
 cd dist
 move ..\kermit\dialer\dist\* .\
