@@ -11291,6 +11291,11 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 				if ( !VscrnIsClear(VTERM, p)) {
             		clrpage(VTERM,SP,p);
 				}
+#ifdef KUI
+			    /* Erase ruled lines - these are normally perserved when the
+			     * screen is cleared */
+			    decerlbra_escape(1, 1, tt_cols[VTERM], tt_rows[VTERM]);
+#endif /* KUI */
 			}
 			lgotoxy(VTERM,1,1);       /* and home the cursor */
         }
