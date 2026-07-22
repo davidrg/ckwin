@@ -21608,6 +21608,7 @@ vtcsi(void)
                     if ( ISVT420(tt_type_mode) )
                     {
                         int w, h, x, y, z;
+                        rect_t area;
                         /*
                          * pn[1] - top-line border      default=1
                          * pn[2] - left-col border      default=1
@@ -21624,42 +21625,32 @@ vtcsi(void)
                          * decsace == FALSE, stream else rectangle
                          */
 
-                        if ( k < 1 || pn[1] == 0 ) pn[1] = 1;
-                        if ( k < 2 || pn[1] == 0 ) pn[2] = 1;
-                        if ( k < 3 || pn[1] == 0 ) pn[3] = VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0);
-                        if ( k < 4 || pn[1] == 0 ) pn[4] = VscrnGetWidth(VTERM);
+                        /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+                        if (k < 4) pn[4] = 0;
+                        if (k < 3) pn[3] = 0;
+                        if (k < 2) pn[2] = 0;
+                        if (k < 1) pn[1] = 0;
                         if ( k < 5 || pn[1] == 0 ) {
                             pn[5] = 0;
                             k = 5;
                         }
 
-                        if (relcursor) {
-                            /* Add top and left margins to the vertical and
-                             * horizontal coordinates */
-                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
-                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
-                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
-                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
-                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
-                                pn[3] = vscrn_c_page_margin_bot(VTERM);
-                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
-                                pn[4] = vscrn_c_page_margin_right(VTERM);
-                        }
+                        if (area.top > area.bottom) break;
+                        if (area.left > area.right) break;
 
-                        if ( pn[3] < pn[1] || pn[4] < pn[2] )
-                            break;
-
-                        w = pn[4] - pn[2] + 1;
-                        h = pn[3] - pn[1] + 1;
+                        w = area.right - area.left + 1;
+                        h = area.bottom - area.top + 1;
 
                         if ( decsace ) {        /* rectangle */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
+                                videoline * line = VscrnGetLineFromTop(VTERM, area.top+y-1, FALSE);
                                 for ( x=0; x<w; x++ ) {
                                     for ( z=5; z<=k; z++ ) {
-                                        USHORT a = line->vt_char_attrs[pn[2]+x-1];
+                                        USHORT a = line->vt_char_attrs[area.left+x-1];
                                         if (a == VT_CHAR_ATTR_ERASED) {
                                             /* In rectangle mode, unoccuped (erased)
                                              * character positions are changed to
@@ -21690,17 +21681,17 @@ vtcsi(void)
                                             else
                                                 a |= VT_CHAR_ATTR_REVERSE;
                                         }
-                                        line->vt_char_attrs[pn[2]+x-1] = a;
+                                        line->vt_char_attrs[area.left+x-1] = a;
                                     }
                                 }
                             }
                         } else {                /* stream */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
+                                videoline * line = VscrnGetLineFromTop(VTERM, area.top+y-1, FALSE);
                                 int rlimit = relcursor ? vscrn_c_page_margin_right(VTERM) : VscrnGetWidth(VTERM);
                                 int llimit = relcursor ? vscrn_c_page_margin_left(VTERM)-1 : 0;
-                                for ( x = (y==0 ? pn[2] - 1 : llimit);
-                                      x < ((y==h-1) ? pn[4] : rlimit);
+                                for ( x = (y==0 ? area.left - 1 : llimit);
+                                      x < ((y==h-1) ? area.right : rlimit);
                                       x++ ) {
                                     if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
                                         /* In stream mode, DECRARA doesn't affect
