@@ -18873,6 +18873,9 @@ DCS $ q 3 , } ST</pre>
                 character set is UTF8, then the second range is extended to
                 160-65535 to cover the Unicode base multilingual plane.
             </p>
+            <p>
+                DECFRA is unaffected by the margins unless DECOM is set.
+            </p>
         </section>
         <section role="ctlseq" id="decrqpkfm" mnemonic="DECRQPKFM"
                  title="Request Program Key Free Memory"
