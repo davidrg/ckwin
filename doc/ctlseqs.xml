@@ -17863,7 +17863,7 @@ DCS $ q 3 , } ST</pre>
                 the rectangle. If <a href="#decsace">DECSACE</a> is off (1 or 0) then the DECRARA affects the
                 stream of characters between the first and second character positions
                 specified. Coordinates are affected by <a href="#decom">DECOM</a>.
-                The <param-single symbol="Pm"/> is the SGR attributes
+                The <param-single symbol="Pm"/> are the SGR attributes
                 to change, one of:
             </p>
             <table>
@@ -17892,6 +17892,9 @@ DCS $ q 3 , } ST</pre>
                     <td>Negative image</td>
                 </tr>
             </table>
+            <p>
+                If no SGR attributes are specified, no action is taken.
+            </p>
         </section>
         <section role="ctlseq" id="decttpb" mnemonic="DECTTPB" todo="true"
                  title="Transmit Transparent Paste Buffer" not-implemented="true">

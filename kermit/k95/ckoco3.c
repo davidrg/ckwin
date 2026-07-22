@@ -21632,10 +21632,6 @@ vtcsi(void)
                         if (k < 3) pn[3] = 0;
                         if (k < 2) pn[2] = 0;
                         if (k < 1) pn[1] = 0;
-                        if ( k < 5 || pn[1] == 0 ) {
-                            pn[5] = 0;
-                            k = 5;
-                        }
 
                         area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
