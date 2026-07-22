@@ -19135,7 +19135,8 @@ DCS $ q 3 , } ST</pre>
                 and Pr is the right column.
                 These coordinates are affected by <a href="#decom">DECOM</a>.
                 The left column can not be greater than the right, and the top
-                can not be greater than the bottom.
+                can not be greater than the bottom. All must be within the
+                margins when DECOM is set.
             </p>
             <p>
                 Any erased cells within the rectangle are skipped aside from
