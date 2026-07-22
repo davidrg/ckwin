@@ -9063,6 +9063,7 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
     int pe[], int pn_pe_start[], int pn_pe_count[]) {
     int w, h, x, y;
     unsigned short z;
+    rect_t area;
     /*
      * pn[1] - top-line border      default=1
      * pn[2] - left-col border      default=1
@@ -9086,49 +9087,40 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
      *
      * decsace == FALSE, stream else rectangle
      */
-    if ( k < 1 || pn[1] == 0 ) pn[1] = 1;
-    if ( k < 2 || pn[2] == 0 ) pn[2] = 1;
-    if ( k < 3 || pn[3] == 0 ) pn[3] = VscrnGetHeight(vmode)
-         -(tt_status[vmode]?1:0);
-    if ( k < 4 || pn[4] == 0 ) pn[4] = VscrnGetWidth(vmode);
+
+    /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+    if (k < 4) pn[4] = 0;
+    if (k < 3) pn[3] = 0;
+    if (k < 2) pn[2] = 0;
+    if (k < 1) pn[1] = 0;
     if ( k < 5 ) {
         pn[5] = 0;
         k = 5;
     }
 
-    if (relcursor) {
-        /* Add top and left margins to the vertical and
-         * horizontal coordinates */
-        pn[1] += vscrn_c_page_margin_top(vmode)-1; /* top */
-        pn[2] += vscrn_c_page_margin_left(vmode)-1;/* lft */
-        pn[3] += vscrn_c_page_margin_top(vmode)-1; /* bot */
-        pn[4] += vscrn_c_page_margin_left(vmode)-1;/* rt */
+    area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
-        if (pn[3] > vscrn_c_page_margin_bot(vmode))
-            pn[3] = vscrn_c_page_margin_bot(vmode);
-        if (pn[4] > vscrn_c_page_margin_right(vmode))
-            pn[4] = vscrn_c_page_margin_right(vmode);
-    }
+    if (area.top > area.bottom) return;
+    if (area.left > area.right) return;
 
-    if ( pn[3] < pn[1] || pn[4] < pn[2] )
-        return;
-
-    w = pn[4] - pn[2] + 1;
-    h = pn[3] - pn[1] + 1;
+    w = area.right - area.left + 1;
+    h = area.bottom - area.top + 1;
 
     if ( decsace ) {        /* rectangle */
         for ( y=0; y<h; y++ ) {
-            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
+            videoline * line = VscrnGetLineFromTop(vmode, area.top+y-1, FALSE);
             for ( x=0; x<w; x++ ) {
                 for ( z=5; z<=k; z++ ) {
-                    vt_char_attr_t a = line->vt_char_attrs[pn[2]+x-1];
+                    vt_char_attr_t a = line->vt_char_attrs[area.left+x-1];
                     if (a == VT_CHAR_ATTR_ERASED) {
                         /* In rectangle mode, unoccuped (erased)
                          * character positions are changed to
                          * blanks (become unerased) */
                         a = VT_CHAR_ATTR_NORMAL;
                     }
-                    line->vt_char_attrs[pn[2]+x-1] = deccara_attribute(a, pn[z]);
+                    line->vt_char_attrs[area.left+x-1] = deccara_attribute(a, pn[z]);
 
                     /* Changing colours with DECCARA is an extension which
                      * STD-070 implies should be supported by the VT525:
@@ -9136,7 +9128,7 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
                      * So for now the VT525 is assumed to support it.
                      */
                     if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
-                        cell_video_attr_t attr = line->cells[pn[2]+x-1].video_attr;
+                        cell_video_attr_t attr = line->cells[area.left+x-1].video_attr;
                         if (pn[z] == 0 && colorreset) {
                             attr = defaultattribute;
                         }
@@ -9156,18 +9148,18 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
                             /* Handle 30..37, 40..47, 90..97 and 100..107 */
                             attr = deccara_video_attribute(attr, pn[z]);
                         }
-                        line->cells[pn[2]+x-1].video_attr = attr;
+                        line->cells[area.left+x-1].video_attr = attr;
                     }
                 }
             }
         }
     } else {                /* stream */
         for ( y=0; y<h; y++ ) {
-            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
+            videoline * line = VscrnGetLineFromTop(vmode, area.top+y-1, FALSE);
             int rlimit = relcursor ? vscrn_c_page_margin_right(vmode) : VscrnGetWidth(vmode);
             int llimit = relcursor ? vscrn_c_page_margin_left(vmode)-1 : 0;
-            for ( x = (y==0 ? pn[2] - 1 : llimit);
-                  x < ((y==h-1) ? pn[4] : rlimit);
+            for ( x = (y==0 ? area.left - 1 : llimit);
+                  x < ((y==h-1) ? area.right : rlimit);
                   x++ ) {
                 if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
                     /* In stream mode, DECCARA doesn't affect
