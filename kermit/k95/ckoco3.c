@@ -8885,6 +8885,64 @@ sgr_38_48(int pn[], int pe[], int k, unsigned short *pn_pos, int pn_pe_start[],
 }
 
 /*----------------------------------------------------------+----------------*/
+/* get_rect_area                                            | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Gets the area a rectangular area operation will be acting on given the
+ * parameters supplied, clipping to margins and applying defaults and DECOM as
+ * necessary. pn values should be initialised to zero if no value was supplied.
+ */
+typedef struct _rect_t
+{
+    int top;
+    int left;
+    int bottom;
+    int right;
+} rect_t;
+
+static rect_t get_rect_area(int vmode, int top, int left, int bottom, int right) {
+    int l_margin, r_margin, t_margin, b_margin;
+    int x_offset, y_offset, x_limit, y_limit;
+    rect_t result;
+
+    /* Margins currently in effect for the page the cursor is on */
+    t_margin = vscrn_c_page_margin_top(vmode);
+    b_margin = vscrn_c_page_margin_bot(vmode);
+    l_margin = vscrn_c_page_margin_left(vmode);
+    r_margin = vscrn_c_page_margin_right(vmode);
+
+    x_offset = relcursor ? l_margin - 1 : 0;
+    y_offset = relcursor ? t_margin - 1 : 0;
+
+    x_limit = relcursor ? r_margin : VscrnGetWidth(vmode);
+    y_limit = relcursor ? b_margin : VscrnGetHeight(vmode) - (tt_status[VTERM]?1:0);
+
+    result.top = top;
+    result.left = left;
+    result.bottom = bottom;
+    result.right = right;
+
+    /* Apply defaults */
+    if (result.top < 1) result.top = 1;
+    if (result.left < 1) result.left = 1;
+    if (result.bottom < 1) result.bottom = y_limit;
+    if (result.right < 1) result.right = x_limit;
+
+    /* DECOM */
+    result.top += y_offset;
+    result.left += x_offset;
+    result.bottom += y_offset;
+    result.right += x_offset;
+
+    /* Clamp to margins */
+    if (result.top > y_limit) result.top = y_limit;
+    if (result.left > x_limit) result.left = x_limit;
+    if (result.bottom > y_limit) result.bottom = y_limit;
+    if (result.right > x_limit) result.right = x_limit;
+
+    return result;
+}
+
+/*----------------------------------------------------------+----------------*/
 /* change_attributes_in_rectangle (DECCARA)                 | Page: cursor   */
 /*----------------------------------------------------------+----------------*/
 static vt_char_attr_t
@@ -9005,6 +9063,7 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
     int pe[], int pn_pe_start[], int pn_pe_count[]) {
     int w, h, x, y;
     unsigned short z;
+    rect_t area;
     /*
      * pn[1] - top-line border      default=1
      * pn[2] - left-col border      default=1
@@ -9028,49 +9087,40 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
      *
      * decsace == FALSE, stream else rectangle
      */
-    if ( k < 1 || pn[1] == 0 ) pn[1] = 1;
-    if ( k < 2 || pn[2] == 0 ) pn[2] = 1;
-    if ( k < 3 || pn[3] == 0 ) pn[3] = VscrnGetHeight(vmode)
-         -(tt_status[vmode]?1:0);
-    if ( k < 4 || pn[4] == 0 ) pn[4] = VscrnGetWidth(vmode);
+
+    /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+    if (k < 4) pn[4] = 0;
+    if (k < 3) pn[3] = 0;
+    if (k < 2) pn[2] = 0;
+    if (k < 1) pn[1] = 0;
     if ( k < 5 ) {
         pn[5] = 0;
         k = 5;
     }
 
-    if (relcursor) {
-        /* Add top and left margins to the vertical and
-         * horizontal coordinates */
-        pn[1] += vscrn_c_page_margin_top(vmode)-1; /* top */
-        pn[2] += vscrn_c_page_margin_left(vmode)-1;/* lft */
-        pn[3] += vscrn_c_page_margin_top(vmode)-1; /* bot */
-        pn[4] += vscrn_c_page_margin_left(vmode)-1;/* rt */
+    area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
-        if (pn[3] > vscrn_c_page_margin_bot(vmode))
-            pn[3] = vscrn_c_page_margin_bot(vmode);
-        if (pn[4] > vscrn_c_page_margin_right(vmode))
-            pn[4] = vscrn_c_page_margin_right(vmode);
-    }
+    if (area.top > area.bottom) return;
+    if (area.left > area.right) return;
 
-    if ( pn[3] < pn[1] || pn[4] < pn[2] )
-        return;
-
-    w = pn[4] - pn[2] + 1;
-    h = pn[3] - pn[1] + 1;
+    w = area.right - area.left + 1;
+    h = area.bottom - area.top + 1;
 
     if ( decsace ) {        /* rectangle */
         for ( y=0; y<h; y++ ) {
-            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
+            videoline * line = VscrnGetLineFromTop(vmode, area.top+y-1, FALSE);
             for ( x=0; x<w; x++ ) {
                 for ( z=5; z<=k; z++ ) {
-                    vt_char_attr_t a = line->vt_char_attrs[pn[2]+x-1];
+                    vt_char_attr_t a = line->vt_char_attrs[area.left+x-1];
                     if (a == VT_CHAR_ATTR_ERASED) {
                         /* In rectangle mode, unoccuped (erased)
                          * character positions are changed to
                          * blanks (become unerased) */
                         a = VT_CHAR_ATTR_NORMAL;
                     }
-                    line->vt_char_attrs[pn[2]+x-1] = deccara_attribute(a, pn[z]);
+                    line->vt_char_attrs[area.left+x-1] = deccara_attribute(a, pn[z]);
 
                     /* Changing colours with DECCARA is an extension which
                      * STD-070 implies should be supported by the VT525:
@@ -9078,7 +9128,7 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
                      * So for now the VT525 is assumed to support it.
                      */
                     if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
-                        cell_video_attr_t attr = line->cells[pn[2]+x-1].video_attr;
+                        cell_video_attr_t attr = line->cells[area.left+x-1].video_attr;
                         if (pn[z] == 0 && colorreset) {
                             attr = defaultattribute;
                         }
@@ -9098,18 +9148,18 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
                             /* Handle 30..37, 40..47, 90..97 and 100..107 */
                             attr = deccara_video_attribute(attr, pn[z]);
                         }
-                        line->cells[pn[2]+x-1].video_attr = attr;
+                        line->cells[area.left+x-1].video_attr = attr;
                     }
                 }
             }
         }
     } else {                /* stream */
         for ( y=0; y<h; y++ ) {
-            videoline * line = VscrnGetLineFromTop(vmode, pn[1]+y-1, FALSE);
+            videoline * line = VscrnGetLineFromTop(vmode, area.top+y-1, FALSE);
             int rlimit = relcursor ? vscrn_c_page_margin_right(vmode) : VscrnGetWidth(vmode);
             int llimit = relcursor ? vscrn_c_page_margin_left(vmode)-1 : 0;
-            for ( x = (y==0 ? pn[2] - 1 : llimit);
-                  x < ((y==h-1) ? pn[4] : rlimit);
+            for ( x = (y==0 ? area.left - 1 : llimit);
+                  x < ((y==h-1) ? area.right : rlimit);
                   x++ ) {
                 if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
                     /* In stream mode, DECCARA doesn't affect
@@ -21558,6 +21608,7 @@ vtcsi(void)
                     if ( ISVT420(tt_type_mode) )
                     {
                         int w, h, x, y, z;
+                        rect_t area;
                         /*
                          * pn[1] - top-line border      default=1
                          * pn[2] - left-col border      default=1
@@ -21574,42 +21625,28 @@ vtcsi(void)
                          * decsace == FALSE, stream else rectangle
                          */
 
-                        if ( k < 1 || pn[1] == 0 ) pn[1] = 1;
-                        if ( k < 2 || pn[1] == 0 ) pn[2] = 1;
-                        if ( k < 3 || pn[1] == 0 ) pn[3] = VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0);
-                        if ( k < 4 || pn[1] == 0 ) pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 5 || pn[1] == 0 ) {
-                            pn[5] = 0;
-                            k = 5;
-                        }
+                        /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+                        if (k < 4) pn[4] = 0;
+                        if (k < 3) pn[3] = 0;
+                        if (k < 2) pn[2] = 0;
+                        if (k < 1) pn[1] = 0;
 
-                        if (relcursor) {
-                            /* Add top and left margins to the vertical and
-                             * horizontal coordinates */
-                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
-                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
-                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
-                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
-                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
-                                pn[3] = vscrn_c_page_margin_bot(VTERM);
-                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
-                                pn[4] = vscrn_c_page_margin_right(VTERM);
-                        }
+                        if (area.top > area.bottom) break;
+                        if (area.left > area.right) break;
 
-                        if ( pn[3] < pn[1] || pn[4] < pn[2] )
-                            break;
-
-                        w = pn[4] - pn[2] + 1;
-                        h = pn[3] - pn[1] + 1;
+                        w = area.right - area.left + 1;
+                        h = area.bottom - area.top + 1;
 
                         if ( decsace ) {        /* rectangle */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
+                                videoline * line = VscrnGetLineFromTop(VTERM, area.top+y-1, FALSE);
                                 for ( x=0; x<w; x++ ) {
                                     for ( z=5; z<=k; z++ ) {
-                                        USHORT a = line->vt_char_attrs[pn[2]+x-1];
+                                        USHORT a = line->vt_char_attrs[area.left+x-1];
                                         if (a == VT_CHAR_ATTR_ERASED) {
                                             /* In rectangle mode, unoccuped (erased)
                                              * character positions are changed to
@@ -21640,17 +21677,17 @@ vtcsi(void)
                                             else
                                                 a |= VT_CHAR_ATTR_REVERSE;
                                         }
-                                        line->vt_char_attrs[pn[2]+x-1] = a;
+                                        line->vt_char_attrs[area.left+x-1] = a;
                                     }
                                 }
                             }
                         } else {                /* stream */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
+                                videoline * line = VscrnGetLineFromTop(VTERM, area.top+y-1, FALSE);
                                 int rlimit = relcursor ? vscrn_c_page_margin_right(VTERM) : VscrnGetWidth(VTERM);
                                 int llimit = relcursor ? vscrn_c_page_margin_left(VTERM)-1 : 0;
-                                for ( x = (y==0 ? pn[2] - 1 : llimit);
-                                      x < ((y==h-1) ? pn[4] : rlimit);
+                                for ( x = (y==0 ? area.left - 1 : llimit);
+                                      x < ((y==h-1) ? area.right : rlimit);
                                       x++ ) {
                                     if (line->vt_char_attrs[x] == VT_CHAR_ATTR_ERASED) {
                                         /* In stream mode, DECRARA doesn't affect
@@ -21846,36 +21883,22 @@ vtcsi(void)
                         /* pn[3] - left-col border default=1 */
                         /* pn[4] - bot-line border default=Height */
                         /* pn[5] - Right border    default=Width */
-                        if ( k < 5 || pn[5] > VscrnGetWidth(VTERM) ||
-                             pn[5] < 1 )
-                            pn[5] = VscrnGetWidth(VTERM);
-                        if ( k < 4 || pn[4] > VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0) || pn[4] < 1 )
-                            pn[4] = VscrnGetHeight(VTERM)
-                                -(tt_status[VTERM]?1:0);
-                        if ( k < 3 || pn[3] < 1 )
-                            pn[3] = 1 ;
-                        if ( k < 2 || pn[2] < 1 )
-                            pn[2] = 1 ;
-                        if ( k < 1 )
-                            pn[1] = SP ;
 
-                        if (relcursor) {
-                            /* Add top and left margins to the vertical and
-                             * horizontal coordinates */
-                            pn[2] += vscrn_c_page_margin_top(VTERM)-1; /* top */
-                            pn[3] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
-                            pn[4] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
-                            pn[5] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+                        rect_t area;
 
-                            if (pn[4] > vscrn_c_page_margin_bot(VTERM))
-                                pn[4] = vscrn_c_page_margin_bot(VTERM);
-                            if (pn[5] > vscrn_c_page_margin_right(VTERM))
-                                pn[5] = vscrn_c_page_margin_right(VTERM);
-                        }
+                        /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+                        if (k < 5) pn[5] = 0;
+                        if (k < 4) pn[4] = 0;
+                        if (k < 3) pn[3] = 0;
+                        if (k < 2) pn[2] = 0;
+                        if (k < 1) pn[1] = SP;
 
-                        if (pn[2] > pn[4]) break;
-                        if (pn[3] > pn[5]) break;
+                        area = get_rect_area(VTERM, pn[2], pn[3], pn[4], pn[5]);
+
+                        if (area.top > area.bottom) break;
+                        if (area.left > area.right) break;
 
                         /*  GL---------------------------   GR & BMP -------- */
                         if (pn[1] >= 32 && (pn[1] <= 126 || pn[1] >= 160)
@@ -21897,8 +21920,8 @@ vtcsi(void)
                                 cmdmsk = x;
                             }
 
-                            clrrect_escape( VTERM, pn[2], pn[3],
-                                            pn[4], pn[5], c ) ;
+                            clrrect_escape( VTERM, area.top, area.left,
+                                            area.bottom, area.right, c ) ;
                             if (cursor_on_visible_page(VTERM)) {
                                 VscrnIsDirty(VTERM);
                             }
@@ -21911,37 +21934,24 @@ vtcsi(void)
                         /* pn[2] - left-col border default=1 */
                         /* pn[3] - bot-line border default=Height */
                         /* pn[4] - Right border    default=Width */
-                        if ( k < 4 || pn[4] > VscrnGetWidth(VTERM) ||
-                             pn[4] < 1 )
-                            pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 3 || pn[3] > VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0) || pn[3] < 1 )
-                            pn[3] = VscrnGetHeight(VTERM)
-                                -(tt_status[VTERM]?1:0);
-                        if ( k < 2 || pn[2] < 1 )
-                            pn[2] = 1 ;
-                        if ( k < 1 || pn[1] < 1 )
-                            pn[1] = 1 ;
 
-                        if (relcursor) {
-                            /* Add top and left margins to the vertical and
-                             * horizontal coordinates */
-                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
-                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
-                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
-                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+                        rect_t area;
 
-                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
-                                pn[3] = vscrn_c_page_margin_bot(VTERM);
-                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
-                                pn[4] = vscrn_c_page_margin_right(VTERM);
-                        }
+                        /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+                        if (k < 4) pn[4] = 0;
+                        if (k < 3) pn[3] = 0;
+                        if (k < 2) pn[2] = 0;
+                        if (k < 1) pn[1] = 0;
 
-                        if (pn[1] > pn[3]) break;
-                        if (pn[2] > pn[4]) break;
+                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
-                        clrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], NUL ) ;
+                        if (area.top > area.bottom) break;
+                        if (area.left > area.right) break;
+
+                        clrrect_escape( VTERM, area.top, area.left,
+                                        area.bottom, area.right, NUL ) ;
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }
@@ -21953,37 +21963,24 @@ vtcsi(void)
                         /* pn[2] - left-col border default=1 */
                         /* pn[3] - bot-line border default=Height */
                         /* pn[4] - Right border    default=Width */
-                        if ( k < 4 || pn[4] > VscrnGetWidth(VTERM) ||
-                             pn[4] < 1 )
-                            pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 3 || pn[3] > VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0) || pn[3] < 1 )
-                            pn[3] = VscrnGetHeight(VTERM)
-                                -(tt_status[VTERM]?1:0);
-                        if ( k < 2 || pn[2] < 1 )
-                            pn[2] = 1 ;
-                        if ( k < 1 || pn[1] < 1 )
-                            pn[1] = 1 ;
 
-                        if (relcursor) {
-                            /* Add top and left margins to the vertical and
-                             * horizontal coordinates */
-                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
-                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
-                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
-                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+                        rect_t area;
 
-                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
-                                pn[3] = vscrn_c_page_margin_bot(VTERM);
-                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
-                                pn[4] = vscrn_c_page_margin_right(VTERM);
-                        }
+                        /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+                        if (k < 4) pn[4] = 0;
+                        if (k < 3) pn[3] = 0;
+                        if (k < 2) pn[2] = 0;
+                        if (k < 1) pn[1] = 0;
 
-                        if (pn[1] > pn[3]) break;
-                        if (pn[2] > pn[4]) break;
+                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
-                        selclrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], SP ) ;
+                        if (area.top > area.bottom) break;
+                        if (area.left > area.right) break;
+
+                        selclrrect_escape( VTERM, area.top, area.left,
+                                        area.bottom, area.right, SP ) ;
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }

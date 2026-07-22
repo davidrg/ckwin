@@ -17863,7 +17863,7 @@ DCS $ q 3 , } ST</pre>
                 the rectangle. If <a href="#decsace">DECSACE</a> is off (1 or 0) then the DECRARA affects the
                 stream of characters between the first and second character positions
                 specified. Coordinates are affected by <a href="#decom">DECOM</a>.
-                The <param-single symbol="Pm"/> is the SGR attributes
+                The <param-single symbol="Pm"/> are the SGR attributes
                 to change, one of:
             </p>
             <table>
@@ -17892,6 +17892,9 @@ DCS $ q 3 , } ST</pre>
                     <td>Negative image</td>
                 </tr>
             </table>
+            <p>
+                If no SGR attributes are specified, no action is taken.
+            </p>
         </section>
         <section role="ctlseq" id="decttpb" mnemonic="DECTTPB" todo="true"
                  title="Transmit Transparent Paste Buffer" not-implemented="true">
@@ -18873,6 +18876,9 @@ DCS $ q 3 , } ST</pre>
                 character set is UTF8, then the second range is extended to
                 160-65535 to cover the Unicode base multilingual plane.
             </p>
+            <p>
+                DECFRA is unaffected by the margins unless DECOM is set.
+            </p>
         </section>
         <section role="ctlseq" id="decrqpkfm" mnemonic="DECRQPKFM"
                  title="Request Program Key Free Memory"
@@ -19132,7 +19138,8 @@ DCS $ q 3 , } ST</pre>
                 and Pr is the right column.
                 These coordinates are affected by <a href="#decom">DECOM</a>.
                 The left column can not be greater than the right, and the top
-                can not be greater than the bottom.
+                can not be greater than the bottom. All must be within the
+                margins when DECOM is set.
             </p>
             <p>
                 Any erased cells within the rectangle are skipped aside from
