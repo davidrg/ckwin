@@ -21984,37 +21984,24 @@ vtcsi(void)
                         /* pn[2] - left-col border default=1 */
                         /* pn[3] - bot-line border default=Height */
                         /* pn[4] - Right border    default=Width */
-                        if ( k < 4 || pn[4] > VscrnGetWidth(VTERM) ||
-                             pn[4] < 1 )
-                            pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 3 || pn[3] > VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0) || pn[3] < 1 )
-                            pn[3] = VscrnGetHeight(VTERM)
-                                -(tt_status[VTERM]?1:0);
-                        if ( k < 2 || pn[2] < 1 )
-                            pn[2] = 1 ;
-                        if ( k < 1 || pn[1] < 1 )
-                            pn[1] = 1 ;
 
-                        if (relcursor) {
-                            /* Add top and left margins to the vertical and
-                             * horizontal coordinates */
-                            pn[1] += vscrn_c_page_margin_top(VTERM)-1; /* top */
-                            pn[2] += vscrn_c_page_margin_left(VTERM)-1;/* lft */
-                            pn[3] += vscrn_c_page_margin_top(VTERM)-1; /* bot */
-                            pn[4] += vscrn_c_page_margin_left(VTERM)-1;/* rt */
+                        rect_t area;
 
-                            if (pn[3] > vscrn_c_page_margin_bot(VTERM))
-                                pn[3] = vscrn_c_page_margin_bot(VTERM);
-                            if (pn[4] > vscrn_c_page_margin_right(VTERM))
-                                pn[4] = vscrn_c_page_margin_right(VTERM);
-                        }
+                        /* k is the number of parameters supplied. pn a global
+                         * and not erased so any parameter values not supplied
+                         * may contain stuff from a previous control sequence*/
+                        if (k < 4) pn[4] = 0;
+                        if (k < 3) pn[3] = 0;
+                        if (k < 2) pn[2] = 0;
+                        if (k < 1) pn[1] = 0;
 
-                        if (pn[1] > pn[3]) break;
-                        if (pn[2] > pn[4]) break;
+                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
 
-                        selclrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], SP ) ;
+                        if (area.top > area.bottom) break;
+                        if (area.left > area.right) break;
+
+                        selclrrect_escape( VTERM, area.top, area.left,
+                                        area.bottom, area.right, SP ) ;
                         if (cursor_on_visible_page(VTERM)) {
                             VscrnIsDirty(VTERM);
                         }
