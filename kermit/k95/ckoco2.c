@@ -2109,6 +2109,14 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
         }
     }
 
+    /* TX_DECSPEC has a null character in position 5/15 which we need to handle.
+     * I'm not confident that everything will handle a null appearing in the
+     * terminal buffer, so... */
+    if (Cell.c == NULL) {
+        Cell.c = ' ';
+        att.erased = TRUE;
+    }
+
     line->cells[Col] = Cell ;
     line->vt_char_attrs[Col] = vtattrib_to_int(att);
     line->hyperlinks[Col] = att.hyperlink ? att.linkid : 0;

@@ -529,6 +529,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    receiving a lot of data. Previously K95 would delete and recreate the buffer,
    now instead it will just reuse the existing one erasing lines as they are
    reused.
+ - Fixed position 5/15 (0x5F) in the DEC Special Graphics Character set being
+   underscore when it should have been the empty character / null.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
