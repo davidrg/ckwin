@@ -8571,7 +8571,19 @@ decdwl_escape(bool dwlflag) {
 
      if ( dwlflag != line->vt_line_attr ) {
          /* change size */
-       line->vt_line_attr = dwlflag ;
+         line->vt_line_attr = dwlflag ;
+         if (dwlflag & VT_LINE_ATTR_DOUBLE_WIDE) {
+             /* Erase the second half of the line that has now been pushed off
+              * screen */
+             int x;
+             cell_video_attr_t cellcolor = geterasecolor(vmode);
+             for ( x=VscrnGetWidth(VTERM) / 2 ; x < MAXTERMCOL ; x++ )
+             {
+                 line->cells[x].c = ' ' ;
+                 line->cells[x].video_attr = cellcolor ;
+                 line->vt_char_attrs[x] = VT_CHAR_ATTR_ERASED ;
+             }
+         }
     }
 }
 
