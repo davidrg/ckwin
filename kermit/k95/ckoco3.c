@@ -8902,6 +8902,8 @@ sgr_38_48(int pn[], int pe[], int k, unsigned short *pn_pos, int pn_pe_start[],
 /* Gets the area a rectangular area operation will be acting on given the
  * parameters supplied, clipping to margins and applying defaults and DECOM as
  * necessary. pn values should be initialised to zero if no value was supplied.
+ *
+ * Supply -1 for page to use the cursor page.
  */
 typedef struct _rect_t
 {
@@ -8911,16 +8913,18 @@ typedef struct _rect_t
     int right;
 } rect_t;
 
-static rect_t get_rect_area(int vmode, int top, int left, int bottom, int right) {
+static rect_t get_rect_area(int vmode, int page, int top, int left, int bottom, int right) {
     int l_margin, r_margin, t_margin, b_margin;
     int x_offset, y_offset, x_limit, y_limit;
     rect_t result;
 
+    if (page == -1) page = vscrn_current_page_number(vmode, FALSE);
+
     /* Margins currently in effect for the page the cursor is on */
-    t_margin = vscrn_c_page_margin_top(vmode);
-    b_margin = vscrn_c_page_margin_bot(vmode);
-    l_margin = vscrn_c_page_margin_left(vmode);
-    r_margin = vscrn_c_page_margin_right(vmode);
+    t_margin = vscrn_page_margin_top(vmode, page);
+    b_margin = vscrn_page_margin_bot(vmode, page);
+    l_margin = vscrn_page_margin_left(vmode, page);
+    r_margin = vscrn_page_margin_right(vmode, page);
 
     x_offset = relcursor ? l_margin - 1 : 0;
     y_offset = relcursor ? t_margin - 1 : 0;
@@ -9112,7 +9116,7 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
         k = 5;
     }
 
-    area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
+    area = get_rect_area(VTERM, -1, pn[1], pn[2], pn[3], pn[4]);
 
     if (area.top > area.bottom) return;
     if (area.left > area.right) return;
@@ -21645,7 +21649,7 @@ vtcsi(void)
                         if (k < 2) pn[2] = 0;
                         if (k < 1) pn[1] = 0;
 
-                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
+                        area = get_rect_area(VTERM, -1, pn[1], pn[2], pn[3], pn[4]);
 
                         if (area.top > area.bottom) break;
                         if (area.left > area.right) break;
@@ -21770,6 +21774,7 @@ vtcsi(void)
                         USHORT * attr_data = NULL;
                         int w, h, x, y;
                         int src_page, dest_page, max_page;
+                        rect_t src_area, dest_area;
 
                         /* Area to be copied:
                          * pn[1] - top-line border      default=1
@@ -21789,19 +21794,15 @@ vtcsi(void)
                          * page becomes last available page if too large
                          * if destination is off page, clip off page data
                          */
-                        if ( k < 1 || pn[1] == 0) pn[1] = 1;
-                        if ( k < 2 || pn[2] == 0) pn[2] = 1;
-                        if ( k < 3 || pn[3] == 0) pn[3] = VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0);
-                        if ( k < 4 || pn[4] == 0) pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 5 || pn[5] == 0) pn[5] = 1;
-                        if ( k < 6 || pn[6] == 0) pn[6] = 1;
-                        if ( k < 7 || pn[7] == 0) pn[7] = 1;
-                        if ( k < 8 || pn[8] == 0) pn[8] = 1;
-                        k = 8;
 
-                        if ( pn[3] < pn[1] || pn[4] < pn[2] )
-                            break;
+                        if (k < 8) pn[8] = 1; /* dest page */
+                        if (k < 7) pn[7] = 0; /* dest left */
+                        if (k < 6) pn[6] = 0; /* dest top */
+                        if (k < 5) pn[5] = 1; /* src page */
+                        if (k < 4) pn[4] = 0; /* right */
+                        if (k < 3) pn[3] = 0; /* bottom */
+                        if (k < 2) pn[2] = 0; /* left */
+                        if (k < 1) pn[1] = 0; /* top */
 
                         src_page = pn[5] - 1;
                         dest_page = pn[8] - 1;
@@ -21815,27 +21816,38 @@ vtcsi(void)
                             src_page = dest_page = ALTERNATE_BUFFER_PAGE(VTERM);
                         }
 
-                        if (relcursor) { /* DECOM enabled? */
-                            int src_margintop, src_marginleft, dest_margintop, dest_marginleft;
-                            src_margintop = vscrn_page_margin_top(VTERM, src_page);
-                            src_marginleft = vscrn_page_margin_left(VTERM, src_page);
-                            dest_margintop = vscrn_page_margin_top(VTERM, dest_page);
-                            dest_marginleft = vscrn_page_margin_left(VTERM, dest_page);
+                        /* Get source rect */
+                        src_area = get_rect_area(VTERM, src_page,
+                            pn[1], pn[2], pn[3], pn[4]);
 
-                            pn[1] += src_margintop - 1;  /* Top border */
-                            pn[2] += src_marginleft - 1; /* Left border */
-                            pn[3] += src_margintop - 1;  /* Bottom border */
-                            pn[4] += src_marginleft - 1; /* Right border */
-                            /* pn[5] - source page */
-                            pn[6] += dest_margintop - 1;  /* Top border */
-                            pn[7] += dest_marginleft - 1; /* left border */
-                            /* pn[7] - dest page */
-                        }
+                        if (src_area.top > src_area.bottom) break;
+                        if (src_area.left > src_area.right) break;
 
-                        w = pn[4] - pn[2] + 1;
-                        h = pn[3] - pn[1] + 1;
+                        /* And get destination rect */
+                        w = src_area.right - src_area.left + 1;
+                        h = src_area.bottom - src_area.top + 1;
 
+                        dest_area = get_rect_area(VTERM, dest_page,
+                            pn[6], pn[7], pn[6]+h, pn[7]+w);
+
+                        if (dest_area.top > dest_area.bottom) break;
+                        if (dest_area.left > dest_area.right) break;
+
+                        /* If the destination rectangle is smaller than the
+                         * source, then we need to adjust the source rectangle
+                         * to match the destination rectangle. */
+
+                        x = dest_area.right - dest_area.left + 1;
+                        y = dest_area.bottom - dest_area.top + 1;
+
+                        if (x < w ) w = x;
+                        if (y < h ) h = y;
+
+#ifdef NT
                         data = malloc(sizeof(USHORT) * w * h);
+#else
+                        data = malloc(sizeof(char) * w * h);
+#endif /* NT */
                         if ( !data )	/* sizeof(viocell.c) */
                             break;
 
@@ -21845,7 +21857,7 @@ vtcsi(void)
                             break;
                         }
 
-                        attr_data = malloc(sizeof(USHORT) * w * h);
+                        attr_data = malloc(sizeof(vt_char_attr_t) * w * h);
                         if ( !attr_data ) {/* sizeof(videoline.vt_char_attrs) */
                             if ( data ) free(data);
                             if (color_data) free(color_data);
@@ -21854,21 +21866,41 @@ vtcsi(void)
 
                         /* Read data from source page */
                         for ( y=0; y<h; y++ ) {
-                            videoline * line = VscrnGetPageLineFromTop(VTERM, pn[1]+y-1, src_page);
+                            int ww;
+                            videoline * line = VscrnGetPageLineFromTop(
+                                VTERM, src_area.top+y-1, src_page);
+
+                            /* While the source rectangle was clamped to the
+                             * source page and its margins, double-width lines
+                             * may go off the screen before they go outside the
+                             * rectangle, so each line needs to be checked */
+                            ww = VscrnGetWidth(VTERM);
+                            if (line->vt_line_attr & VT_LINE_ATTR_DOUBLE_WIDE)
+                                ww = VscrnGetWidth(VTERM) / 2;
+
                             for ( x=0; x<w; x++ ) {
-                                data[y*w + x] = line->cells[pn[2]+x-1].c;
-                                color_data[y*w + x] = line->cells[pn[2]+x-1].video_attr;
-                                attr_data[y*w + x] = line->vt_char_attrs[pn[2]+x-1];
+                                int src_coord, dest_coord;
+                                src_coord = src_area.left+x-1;
+                                dest_coord = y*w + x;
+
+                                /* And double-width cells outside the screen
+                                 * we will just record null */
+                                data[dest_coord] = src_coord >= ww ? 0 : line->cells[src_coord].c;
+                                color_data[dest_coord] = line->cells[src_coord].video_attr;
+                                attr_data[dest_coord] = line->vt_char_attrs[src_coord];
                             }
                         }
 
                         /* Write out to destination page */
                         for ( y=0; y<h; y++ ) {
-                            videoline * line = VscrnGetPageLineFromTop(VTERM, pn[6]+y-1, dest_page);
-                            for ( x=0; x<w && (pn[7]+x <= VscrnGetWidth(VTERM)); x++ ) {
-                                line->cells[pn[7]+x-1].c = data[y*w + x];
-                                line->cells[pn[7]+x-1].video_attr = color_data[y*w + x];
-                                line->vt_char_attrs[pn[7]+x-1] = attr_data[y*w + x];
+                            videoline * line = VscrnGetPageLineFromTop(
+                                VTERM, dest_area.top+y-1, dest_page);
+                            for ( x=0; x<w && (dest_area.left+x <= VscrnGetWidth(VTERM)); x++ ) {
+                                if (data[y*w + x] != 0) {
+                                    line->cells[dest_area.left+x-1].c = data[y*w + x];
+                                    line->cells[dest_area.left+x-1].video_attr = color_data[y*w + x];
+                                    line->vt_char_attrs[dest_area.left+x-1] = attr_data[y*w + x];
+                                }
                             }
                         }
                         free(data);
@@ -21907,7 +21939,7 @@ vtcsi(void)
                         if (k < 2) pn[2] = 0;
                         if (k < 1) pn[1] = SP;
 
-                        area = get_rect_area(VTERM, pn[2], pn[3], pn[4], pn[5]);
+                        area = get_rect_area(VTERM, -1, pn[2], pn[3], pn[4], pn[5]);
 
                         if (area.top > area.bottom) break;
                         if (area.left > area.right) break;
@@ -21957,7 +21989,7 @@ vtcsi(void)
                         if (k < 2) pn[2] = 0;
                         if (k < 1) pn[1] = 0;
 
-                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
+                        area = get_rect_area(VTERM, -1, pn[1], pn[2], pn[3], pn[4]);
 
                         if (area.top > area.bottom) break;
                         if (area.left > area.right) break;
@@ -21986,7 +22018,7 @@ vtcsi(void)
                         if (k < 2) pn[2] = 0;
                         if (k < 1) pn[1] = 0;
 
-                        area = get_rect_area(VTERM, pn[1], pn[2], pn[3], pn[4]);
+                        area = get_rect_area(VTERM, -1, pn[1], pn[2], pn[3], pn[4]);
 
                         if (area.top > area.bottom) break;
                         if (area.left > area.right) break;
