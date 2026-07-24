@@ -19137,7 +19137,8 @@ DCS $ q 3 , } ST</pre>
             <p>
                 Any erased cells within the rectangle are skipped aside from
                 having their background color updated to the current erase
-                color.
+                color. Cells are erased with the empty character (STD 070 says
+                Space, but the VT420 and VT520 disagree).
             </p>
         </section>
         <section role="ctlseq" id="decelr" mnemonic="DECELR"

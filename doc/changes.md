@@ -513,7 +513,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    current erase colour
  - Fixed DECFRA not filling with current SGR or protection attributes, and not
    obeying DECOM
- - Fixed DECERA, DECSERA, DECCARA and DECRARA not obeying DECOM
+ - Fixed DECSERA, DECCARA and DECRARA not obeying DECOM
+ - Fixed DECERA not obeying DECOM, and not erasing cells with null 
  - Fixed potential crash when exiting the console version of K95
  - Fixed possible read past end of string in `TAKE` command
  - Fixed possible read past end of string in `DIR` command
