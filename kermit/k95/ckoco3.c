@@ -8014,8 +8014,11 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, int fillchar 
     }
 
     if ( fillchar == NUL ) {
-        fillchar = SP ;  /* VT420+ DECERA erases with Space characer */
-        cell_attrib = VT_CHAR_ATTR_NORMAL;
+        /* STD 070 says DECERA erases with Space characer, but the VT420 and 520
+         * actually fill with the empty character, which we signal with the
+         * Erased Attribute */
+        fillchar = SP ;
+        cell_attrib = VT_CHAR_ATTR_ERASED;
         cellcolor = geterasecolor(vmode);
 
         fill = FALSE;
