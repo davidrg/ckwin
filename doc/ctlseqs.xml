@@ -116,8 +116,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST ref comment CDATA #IMPLIED>
 
         <!ELEMENT termsupp EMPTY>
-        <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print|wz|dtc) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt22z|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06) #REQUIRED>
+        <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print|wz|dtc|wrq) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt22z|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06|reflection2) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -712,6 +712,13 @@ DECTSR		462
                 uri="https://bitsavers.org/pdf/dec/printer/lj250/EK-LJ250-RM-001.pdf"
                 uri-type="pdf-page"
                 sort-order="270"/>
+        <refsrc name="wrqrvt"
+                key="wrqrvt"
+                uri="https://web.archive.org/web/20151010203019/http://docs.attachmate.com/reflection/14.0/rvtref.pdf"
+                uri-type="pdf-page"
+                pdf-page-offset="8"
+                sort-order="300"
+        />
     </references>
 
     <badges>
@@ -6016,6 +6023,16 @@ VT420:
             <ref src="dtc01:16"/>
         </section>
 
+        <section role="ctlseq" id="wrqcmd" mnemonic="WRQCMD"
+                 title="Invoke Reflection Command"
+                 not-implemented="true" todo="true">
+            <termsupp first="reflection2" series="wrq"/>
+            <ref src="wrqrvt:19"/>
+            <ctlseq>DCS 2000 ; <param-single symbol="term"/> ; <param-single symbol="tag"/> { <param-text symbol="commands"/> ST</ctlseq>
+            <p>Documented in the Reflection 5.21 VT Terminal Reference help file
+                dated January 1997
+            </p>
+        </section>
 
         <section role="ctlseq" id="decpak" mnemonic="DECPAK"
                  title="Program Alphanumeric Key"
@@ -9078,6 +9095,19 @@ DCS $ q 3 , } ST</pre>
                 with <tt><cc>CSI</cc> ? 6 c</tt>
             </p>
         </section>
+        <section role="ctlseq" id="wrqrqsn" mnemonic="WRQRQSN"
+                 title="Request Serial Number" todo="true" not-implemented="true">
+            <termsupp first="reflection2" series="wrq"/>
+            <ref src="wrqrvt:297"/>
+            <ctlseq>CSI 0 ; 1 2 3 4 c</ctlseq>
+            <p>
+                WRQ Reflection Serial Number Request. Reflection responds with a
+                14 character serial number.
+            </p>
+            <p>Documented in the Reflection 5.21 VT Terminal Reference help file
+                dated January 1997
+            </p>
+        </section>
         <section role="ctlseq" mnemonic="TCC" title="Tabulation Centred on Character"
                  not-implemented="true" todo="true">
             <ref src="e48:87"/>
@@ -9285,6 +9315,16 @@ DCS $ q 3 , } ST</pre>
                  not-implemented="true" todo="true">
             <ref src="e48:82"/>
             <ctlseq>CSI <param-single/> SP f</ctlseq>
+        </section>
+
+        <section role="ctlseq" title="Define WRQ Reflection Soft Key"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI &amp; f attr key label-length string-length label string</ctlseq>
+            <termsupp first="reflection2" series="wrq"/>
+            <ref src="wrqrvt:22"/>
+            <p>Documented in the Reflection 5.21 VT Terminal Reference help file
+                dated January 1997
+            </p>
         </section>
 
         <!-- ######################### g ######################### -->
