@@ -148,6 +148,15 @@ int cursor_right_margin(int);
 int cursor_left_margin(int);
 bool cursor_in_margins(int);
 
+typedef struct _rect_t
+{
+    int top;
+    int left;
+    int bottom;
+    int right;
+} rect_t;
+rect_t get_rect_area(int vmode, int page, int top, int left, int bottom, int right);
+
 /* These terminal types get DECLRMM */
 #define IS_DECLRMM_AVAILABLE(x) (ISVT420((x)) || ISXTERM((x)) || ISK95((x)))
 
@@ -8609,55 +8618,52 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
     include_color = tt_type_mode == TT_VT525 || ISK95(tt_type_mode)
         || ISXTERM(tt_type_mode);
 
-    height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
-    width = VscrnGetWidth(VTERM);
     max_page = term_max_page(VTERM);
-
-    if (top < 1) top = 1;
-    if (left < 1) left = 1;
-    if (bot < 1) bot = height;
-    if (right < 1) right = width;
 
     /* If page is zero, then do all pages. Otherwise do the specified page */
     if (page < 1) {
         page = 0;
-        top = 1;
-        left = 1;
-        bot = height;
-        right = width;
+        relcursor = FALSE;
     } else {
         page = page - 1;
         if (page > max_page) page = max_page;
         max_page = page;
     }
 
-    if (obey_margins) {
-        debug(F111, "DECRQCRA", "margintop", vscrn_page_margin_top(VTERM,page));
-        debug(F111, "DECRQCRA", "marginleft", vscrn_page_margin_left(VTERM,page));
-        debug(F111, "DECRQCRA", "marginbot", vscrn_page_margin_bot(VTERM,page));
-        debug(F111, "DECRQCRA", "marginright", vscrn_page_margin_right(VTERM,page));
-
-        top += vscrn_page_margin_top(VTERM,page) - 1;
-        bot += vscrn_page_margin_top(VTERM,page) - 1;
-        left += vscrn_page_margin_left(VTERM,page) - 1;
-        right += vscrn_page_margin_left(VTERM,page) - 1;
-
-        if (bot > vscrn_page_margin_bot(VTERM,page)) bot = vscrn_page_margin_bot(VTERM,page);
-        if (right > vscrn_page_margin_right(VTERM,page)) right = vscrn_page_margin_right(VTERM,page);
-    } else {
-        if (bot > height) bot = height;
-        if (top > bot) top = 1;
-        if (right > width) right = width;
-        if (left > right) left = 1;
-    }
-
-    debug(F111, "DECRQCRA", "top", top);
-    debug(F111, "DECRQCRA", "left", left);
-    debug(F111, "DECRQCRA", "bot", bot);
-    debug(F111, "DECRQCRA", "right", right);
-
     for (; page <= max_page; page++) {
         debug(F111, "DECRQCRA", "page", page);
+
+        /* If we've been asked to obey the margins, then get_rect_area will
+         * do that for us. If we're doing all pages then we always ignore
+         * margins and do the whole page */
+        if (obey_margins) {
+            rect_t area = get_rect_area(VTERM, page, top, left, bot, right);
+            top = area.top;
+            left = area.left;
+            bot = area.bottom;
+            right = area.right;
+            height = bot - top + 1;
+            width = right - left + 1;
+        } else {
+            height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
+            width = VscrnGetWidth(VTERM);
+
+            if (top < 1) top = 1;
+            if (left < 1) left = 1;
+            if (bot < 1) bot = height;
+            if (right < 1) right = width;
+
+            if (bot > height) bot = height;
+            if (top > bot) top = 1;
+            if (right > width) right = width;
+            if (left > right) left = 1;
+        }
+
+        debug(F111, "DECRQCRA", "top", top);
+        debug(F111, "DECRQCRA", "left", left);
+        debug(F111, "DECRQCRA", "bot", bot);
+        debug(F111, "DECRQCRA", "right", right);
+
         for ( y=top-1; y<bot; y++ ) {
             videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
             for ( x=left-1; x<right; x++ ) {
@@ -8905,13 +8911,6 @@ sgr_38_48(int pn[], int pe[], int k, unsigned short *pn_pos, int pn_pe_start[],
  *
  * Supply -1 for page to use the cursor page.
  */
-typedef struct _rect_t
-{
-    int top;
-    int left;
-    int bottom;
-    int right;
-} rect_t;
 
 static rect_t get_rect_area(int vmode, int page, int top, int left, int bottom, int right) {
     int l_margin, r_margin, t_margin, b_margin;
@@ -22139,10 +22138,10 @@ vtcsi(void)
                         char buf[20];
 
                         if (k < 2) pn[2] = 0;
-                        if (k < 3) pn[3] = 1;
-                        if (k < 4) pn[4] = 1;
-                        if (k < 5) pn[5] = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
-                        if (k < 6) pn[6] = VscrnGetWidth(VTERM);
+                        if (k < 3) pn[3] = 0;
+                        if (k < 4) pn[4] = 0;
+                        if (k < 5) pn[5] = 0;
+                        if (k < 6) pn[6] = 0;
                         k = 6;
 
                         pid = pn[1];
