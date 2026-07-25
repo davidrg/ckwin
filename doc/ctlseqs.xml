@@ -18877,6 +18877,16 @@ DCS $ q 3 , } ST</pre>
                 160-65535 to cover the Unicode base multilingual plane.
             </p>
             <p>
+                If no character is specified, then SPACE is used. The defaults
+                for the rectangular area are the top, left, bottom, and right
+                edges of the page.
+            </p>
+            <p badges="vt520 vt525">The VT520 does not use the default character
+                as specified by STD 070. Instead if no character is supplied the
+                control sequence is ignored. It is possible this may be a bug in
+                the VT520.
+            </p>
+            <p>
                 DECFRA is unaffected by the margins unless DECOM is set.
             </p>
         </section>

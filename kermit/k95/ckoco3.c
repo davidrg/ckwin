@@ -21937,7 +21937,20 @@ vtcsi(void)
                         if (k < 4) pn[4] = 0;
                         if (k < 3) pn[3] = 0;
                         if (k < 2) pn[2] = 0;
-                        if (k < 1) pn[1] = SP;
+                        if (k < 1) pn[1] = 0;
+
+                        /* VT520-BUG
+                         * The VT520 v2.1 (and I assume VT525) ignores DECFRA if
+                         * no character is specified. This doesn't comply with
+                         * STD 070 which says the character should default to 32
+                         * (SPACE), so it may be a bug in the VT520. The VT420
+                         * complies with STD 070, and K95 aims to as well. For
+                         * VT52x emulation we'll behave as the hardware does
+                         * bug or otherwise unless someone comes forward with a
+                         * newer firmware version that behaves differently. */
+                        if (tt_type != TT_VT520 && tt_type != TT_VT525 && pn[1] == 0) {
+                            pn[1] = SP;
+                        }
 
                         area = get_rect_area(VTERM, -1, pn[2], pn[3], pn[4], pn[5]);
 
