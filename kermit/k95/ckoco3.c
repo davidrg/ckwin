@@ -21720,6 +21720,39 @@ vtcsi(void)
                                             else
                                                 a |= VT_CHAR_ATTR_REVERSE;
                                         }
+                                        if (ISK95(tt_type)) {
+                                            /* For backwards compatibility, these
+                                             * are only supported by TT_K95 and
+                                             * are not reversed by option 0 in
+                                             * case there is any software out
+                                             * there relying on option 0 only
+                                             * reversing particular ttributes */
+                                            if (pn[z] == 2) {
+                                                if ( a & VT_CHAR_ATTR_DIM )
+                                                    a &= ~VT_CHAR_ATTR_DIM;
+                                                else
+                                                    a |= VT_CHAR_ATTR_DIM;
+                                            }
+                                            if (pn[z] == 3) {
+                                                if ( a & VT_CHAR_ATTR_ITALIC )
+                                                    a &= ~VT_CHAR_ATTR_ITALIC;
+                                                else
+                                                    a |= VT_CHAR_ATTR_ITALIC;
+                                            }
+                                            if (pn[z] == 8) {
+                                                if ( a & VT_CHAR_ATTR_INVISIBLE )
+                                                    a &= ~VT_CHAR_ATTR_INVISIBLE;
+                                                else
+                                                    a |= VT_CHAR_ATTR_INVISIBLE;
+                                            }
+                                            if (pn[z] == 9) {
+                                                if ( a & VT_CHAR_ATTR_CROSSEDOUT )
+                                                    a &= ~VT_CHAR_ATTR_CROSSEDOUT;
+                                                else
+                                                    a |= VT_CHAR_ATTR_CROSSEDOUT;
+                                            }
+                                        }
+
                                         line->vt_char_attrs[area.left+x-1] = a;
                                     }
                                 }

@@ -17893,11 +17893,24 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>0</td>
-                    <td>All attributes off (normal)</td>
+                    <td>
+                        All attributes reversed. For backwards compatibility,
+                        only those supported by the VT420 and VT520 are included
+                        in this operation - Italic, Dim, and Crossed-Out are
+                        excluded.
+                    </td>
                 </tr>
                 <tr>
                     <td>1</td>
                     <td>Bold</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><badge name="k95"/>Dim</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><badge name="k95"/>Italic</td>
                 </tr>
                 <tr>
                     <td>4</td>
@@ -17910,6 +17923,14 @@ DCS $ q 3 , } ST</pre>
                 <tr>
                     <td>7</td>
                     <td>Negative image</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td><badge name="k95"/>Invisible</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><badge name="k95"/>Crossed-out</td>
                 </tr>
             </table>
             <p>
