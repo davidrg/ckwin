@@ -8969,7 +8969,13 @@ deccara_attribute(vt_char_attr_t a, int pn) {
         case 1:
             a |= VT_CHAR_ATTR_BOLD;
             break;
-        case 4:
+        case 2: if (ISK95(tt_type_mode))
+            a |= VT_CHAR_ATTR_DIM;
+            break;
+        case 3: if (ISK95(tt_type_mode))
+            a |= VT_CHAR_ATTR_ITALIC;
+            break;
+        case 4: if (ISK95(tt_type_mode))
             a |= VT_CHAR_ATTR_UNDERLINE;
             break;
         case 5:
@@ -8978,8 +8984,15 @@ deccara_attribute(vt_char_attr_t a, int pn) {
         case 7:
             a |= VT_CHAR_ATTR_REVERSE;
             break;
+        case 9: if (ISK95(tt_type_mode))
+            a |= VT_CHAR_ATTR_CROSSEDOUT;
+            break;
         case 22:
             a &= ~VT_CHAR_ATTR_BOLD;
+            if (ISK95(tt_type_mode)) a &= ~VT_CHAR_ATTR_DIM;
+            break;
+        case 23: if (ISK95(tt_type_mode))
+            a &= !VT_CHAR_ATTR_ITALIC;
             break;
         case 24:
             a &= ~VT_CHAR_ATTR_UNDERLINE;
@@ -8989,6 +9002,12 @@ deccara_attribute(vt_char_attr_t a, int pn) {
             break;
         case 27:
             a &= ~VT_CHAR_ATTR_REVERSE;
+            break;
+        case 29: if (ISK95(tt_type_mode))
+            a &= ~VT_CHAR_ATTR_CROSSEDOUT;
+            break;
+        case 55: if (ISK95(tt_type_mode))
+            a &= ~VT_CHAR_ATTR_OVERLINE;
             break;
     }
     return a;
