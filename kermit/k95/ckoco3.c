@@ -20763,8 +20763,17 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 
             if ( vtattr & VT_CHAR_ATTR_REVERSE &&
                 truereverse /* not being simulated */ &&
-                decstglt != DECSTGLT_ALTERNATE )
-                colorval = byteswapcolors(colorval);
+                decstglt != DECSTGLT_ALTERNATE ) {
+                if (ISVT100(tt_type_mode)) {
+                    /* Swaps only the all four bits for four bit colours so the
+                     * intensity bit follows the swap like on real VTs */
+                    colorval = swapcolors_vt(colorval);
+                } else {
+                    /* Swaps only the lower three bits for four bit colours
+                     * leaving the intensity bit where it is */
+                    colorval = byteswapcolors(colorval);
+                }
+            }
 
         } /* not decstglt == DECSTGLT_ALTERNATE */
 
