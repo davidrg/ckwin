@@ -1293,7 +1293,7 @@ void KClient::writeMe()
         if( prevEffect != kws->effect && kws->fontBuffer == NO_SOFT_FONT )
         {
             prevEffect = kws->effect;
-            Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
+            Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL || prevEffect == VT_CHAR_ATTR_REVERSE) ? TRUE : FALSE;
             Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
             Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
@@ -1896,7 +1896,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
         if( prevEffect != kws->effect && kws->fontBuffer == NO_SOFT_FONT)
         {
             prevEffect = kws->effect;
-            Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
+            Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL || prevEffect == VT_CHAR_ATTR_REVERSE) ? TRUE : FALSE;
             Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
             Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);

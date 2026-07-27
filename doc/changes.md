@@ -537,6 +537,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    DEC VT emulations as this is what the real terminals do.
  - Fixed position 5/15 (0x5F) in the DEC Special Graphics Character set being
    underscore when it should have been the empty character / null.
+ - Fixed SGR font attributes not turning off if the reverse video attribute is 
+   set (K95 bug 843)
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
