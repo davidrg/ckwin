@@ -155,7 +155,8 @@ typedef struct _rect_t
     int bottom;
     int right;
 } rect_t;
-rect_t get_rect_area(int vmode, int page, int top, int left, int bottom, int right);
+
+static rect_t get_rect_area(int vmode, int page, int top, int left, int bottom, int right);
 
 /* These terminal types get DECLRMM */
 #define IS_DECLRMM_AVAILABLE(x) (ISVT420((x)) || ISXTERM((x)) || ISK95((x)))
