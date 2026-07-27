@@ -9009,9 +9009,6 @@ deccara_attribute(vt_char_attr_t a, int pn) {
         case 29: if (ISK95(tt_type_mode))
             a &= ~VT_CHAR_ATTR_CROSSEDOUT;
             break;
-        case 55: if (ISK95(tt_type_mode))
-            a &= ~VT_CHAR_ATTR_OVERLINE;
-            break;
     }
     return a;
 }
