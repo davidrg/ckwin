@@ -8624,10 +8624,23 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
 
     max_page = term_max_page(VTERM);
 
+    height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
+    width = VscrnGetWidth(VTERM);
+
+    if (top < 1) top = 1;
+    if (left < 1) left = 1;
+    if (bot < 1) bot = height;
+    if (right < 1) right = width;
+
+    if (bot > height) bot = height;
+    if (top > bot) top = 1;
+    if (right > width) right = width;
+    if (left > right) left = 1;
+
     /* If page is zero, then do all pages. Otherwise do the specified page */
     if (page < 1) {
         page = 0;
-        relcursor = FALSE;
+        obey_margins = FALSE;
     } else {
         page = page - 1;
         if (page > max_page) page = max_page;
@@ -8648,19 +8661,6 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
             right = area.right;
             height = bot - top + 1;
             width = right - left + 1;
-        } else {
-            height = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
-            width = VscrnGetWidth(VTERM);
-
-            if (top < 1) top = 1;
-            if (left < 1) left = 1;
-            if (bot < 1) bot = height;
-            if (right < 1) right = width;
-
-            if (bot > height) bot = height;
-            if (top > bot) top = 1;
-            if (right > width) right = width;
-            if (left > right) left = 1;
         }
 
         debug(F111, "DECRQCRA", "top", top);
