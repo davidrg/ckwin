@@ -57,7 +57,7 @@ extern enum markmodes markmodeflag[] ;
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic, truedim, truebold,
-        truecrossedout;
+        truecrossedout, trueoverline;
 extern int decstglt, decatcbm, decatcum;
 cell_video_attr_t geterasecolor(int);
 int tt_old_update;
@@ -1324,7 +1324,7 @@ void KClient::writeMe()
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
 			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
-            overline = trueunderline && ((prevEffect & VT_CHAR_ATTR_OVERLINE) ? TRUE : FALSE);
+            overline = trueoverline && ((prevEffect & VT_CHAR_ATTR_OVERLINE) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
             if (decstglt == DECSTGLT_ALTERNATE) {
@@ -1951,7 +1951,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
 			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
-            overline = trueunderline && ((prevEffect & VT_CHAR_ATTR_OVERLINE) ? TRUE : FALSE);
+            overline = trueoverline && ((prevEffect & VT_CHAR_ATTR_OVERLINE) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
             if (decstglt == DECSTGLT_ALTERNATE) {

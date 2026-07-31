@@ -331,6 +331,7 @@ cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27)
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
 cell_video_attr_t     colorcrossedout = cell_video_attr_init_vio_attribute(0x10);
+cell_video_attr_t     coloroverline   = cell_video_attr_init_vio_attribute(0xF0);
 #ifdef CK_COLORS_24BIT
 /* Entry 8 in the VT525 palette is black, so if we can default these to RGB */
 cell_video_attr_t     colordim        = cell_video_attr_init_rgb_attribute(192, 192, 192, 0, 0, 0);
@@ -361,9 +362,11 @@ int bold_font_only = FALSE;    /* Only do a bold font, not bold + bright? */
 #ifdef KUI
 int trueitalic    = TRUE ;
 int truecrossedout = TRUE;
+int trueoverline  = TRUE ;
 #else /* KUI */
 int trueitalic    = FALSE ;
 int truecrossedout = FALSE;
+int trueoverline  = FALSE ;
 #endif /* KUI */
 int colorAttPriority = TRUE ; /* Attribute colors take priority over SGR colors */
 /* xterm defaults this to FALSE, while K95 defaults it to TRUE */
@@ -378,9 +381,11 @@ int savedtruebold      = TRUE ;
 #ifdef KUI
 int savedtrueitalic    = TRUE ;
 int savedtruecrossedout = TRUE;
+int savedtrueoverline  = TRUE ;
 #else /* KUI */
 int savedtrueitalic    = FALSE ;
 int savedtruecrossedout = FALSE ;
+int savedtrueoverline  = FALSE ;
 #endif /* KUI */
 
 enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
@@ -464,7 +469,9 @@ cell_video_attr_t                       /* Video attribute bytes */
 	dimattribute=cell_video_attr_init_vio_attribute(0),
     saveddimattribute[SAVED_CURSORS]={0,0,0,0,0},
     crossedoutattribute=cell_video_attr_init_vio_attribute(0),
-    savedcrossedoutattribute[SAVED_CURSORS]={0,0,0,0,0}
+    savedcrossedoutattribute[SAVED_CURSORS]={0,0,0,0,0},
+    overlineattribute=cell_video_attr_init_vio_attribute(0),
+    savedoverlineattribute[SAVED_CURSORS]={0,0,0,0,0}
     ;
 
 cell_video_attr_t decatc_colors[16];
@@ -7368,6 +7375,7 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
 		dimattribute=swapcolors(dimattribute);
 		blinkattribute=swapcolors(blinkattribute);
         crossedoutattribute=swapcolors(crossedoutattribute);
+        overlineattribute=swapcolors(overlineattribute);
         attribute = swapcolors( attribute );
     } else if ( vmode == VCMD ) {
         colorcmd = swapcolors(colorcmd);
@@ -11003,6 +11011,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor X/Y only, 1 = all */
         savedboldattribute[slot] = boldattribute;
 		saveddimattribute[slot] = dimattribute;
         savedcrossedoutattribute[slot] = crossedoutattribute;
+        savedoverlineattribute[slot] = overlineattribute;
         savedattrib[slot] = attrib;            /* Current DEC character attributes */
         saverelcursor[slot] = relcursor;       /* Cursor addressing mode */
         savedwrap[slot]     = tt_wrap;         /* Wrap mode */
@@ -11056,6 +11065,7 @@ restorecurpos(int vmode, int x) {
             boldattribute=savedboldattribute[slot];
 			dimattribute=saveddimattribute[slot];
             crossedoutattribute=savedcrossedoutattribute[slot];
+            overlineattribute=savedoverlineattribute[slot];
             attrib = savedattrib[slot];
             relcursor = saverelcursor[slot];   /* Restore cursor addressing mode */
 
@@ -11179,6 +11189,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     boldattribute    = colorbold;
 	dimattribute     = colordim;
     crossedoutattribute = colorcrossedout;
+    overlineattribute = coloroverline;
 
     saveddefaultattribute[VTERM] = colornormal; /* Default saved values */
     savedunderlineattribute[VTERM] = colorunderline ;
@@ -11190,6 +11201,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedboldattribute[VTERM]  = colorbold;
 	saveddimattribute[VTERM] = colordim;
     savedcrossedoutattribute[VTERM] = colorcrossedout;
+    savedoverlineattribute[VTERM] = coloroverline;
     savedattribute[VTERM] = attribute;
 	use_bold_attr = bold_is_color;
 	use_blink_attr = blink_is_color;
@@ -11199,6 +11211,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
 	truereverse = savedtruereverse;
 	trueunderline = savedtrueunderline;
+    trueoverline = savedtrueoverline;
 	truedim = savedtruedim;
 	truebold = savedtruebold ;
 	trueitalic = savedtrueitalic;
@@ -12900,6 +12913,8 @@ resetcolors( int x )
 				byteswapcolors(colordim);
             crossedoutattribute =
                 byteswapcolors(colorcrossedout);
+            overlineattribute =
+                byteswapcolors(overlineattribute);
         }
         else {
             defaultattribute = colornormal ;
@@ -12911,6 +12926,7 @@ resetcolors( int x )
             boldattribute  = colorbold;
 			dimattribute   = colordim;
             crossedoutattribute = colorcrossedout;
+            overlineattribute = coloroverline;
         }
         attribute = defaultattribute ;
         borderattribute = colorborder ;
@@ -20724,6 +20740,9 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
                 else if ((vtattr & VT_CHAR_ATTR_CROSSEDOUT) &&
                          !truecrossedout /* crossed-out simulated by color */ )
                     colorval = crossedoutattribute;
+                else if ((vtattr & VT_CHAR_ATTR_OVERLINE) &&
+                         !trueoverline /* crossed-out simulated by color */ )
+                    colorval = overlineattribute;
                 else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
                     /* a graphic character */
                     colorval = graphicattribute ;

@@ -1468,12 +1468,13 @@ extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic,
 colorblink, colorbold, savedcolorselect, colordim,
-savedcolorcursor, colorcursor, colorcrossedout;
+savedcolorcursor, colorcursor, colorcrossedout, coloroverline;
 
 extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold,
-            truecrossedout;
+            truecrossedout, trueoverline;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
-		   savedtrueitalic, savedtruedim, savedtruebold, savedtruecrossedout;
+		   savedtrueitalic, savedtruedim, savedtruebold, savedtruecrossedout,
+           savedtrueoverline;
 extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr,
 		   dim_is_color, bold_font_only;
 
@@ -1530,6 +1531,7 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLDIM  15
 #define TTCOLCUR  16
 #define TTCOLCO   17
+#define TTCOLOVR  18
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "blink",              TTCOLBLI, 0 },      /* Blink color */
@@ -1544,6 +1546,7 @@ struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "help-text",          TTCOLHLP, 0 },      /* Help screens */
     { "italic",             TTCOLITA, 0 },      /* Italic Color */
     { "normal",             TTCOLNOR, CM_INV }, /* Normal screen text */
+    { "overlined-text",     TTCOLOVR, 0 },      /* Overline */
     { "palette",            TTCOLPAL, 0 },      /* Color palette */
     { "reset-on-esc[0m",    TTCOLRES, 0 },      /* Reset on ESC [ 0 m */
     { "reverse-video",      TTCOLREV, 0 },      /* Reverse video */
@@ -1585,7 +1588,8 @@ int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 #define TTATTINV  7
 #define TTATTITA  8
 #define TTATTCO   9
-#define TTATTDONE 10
+#define TTATTOVR  10
+#define TTATTDONE 11
 
 struct keytab ttyattrtab[] = {
     { "blink",     TTATTBLI, 0 },
@@ -1597,6 +1601,7 @@ struct keytab ttyattrtab[] = {
     { "crossed-out", TTATTCO, 0 },
     { "dim",       TTATTDIM, 0 },
     { "italic",    TTATTITA, 0 },
+    { "overline",  TTATTOVR, 0 },
     { "protected", TTATTPRO, 0 },
     { "reverse",   TTATTREV, 0 },
     { "underline", TTATTUND, 0 }
@@ -4723,6 +4728,9 @@ settrm() {
               case TTCOLCO:
                 colorcrossedout = attr;
                 break;
+              case TTCOLOVR:
+                coloroverline = attr;
+                break;
               case TTCOLUND:
                 colorunderline = attr;
                 break;
@@ -5996,6 +6004,12 @@ settrm() {
               if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
               if ((x = cmcfm()) < 0) return(x);
               savedtruecrossedout = truecrossedout = y;
+            break;
+
+          case TTATTOVR:
+              if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+              if ((x = cmcfm()) < 0) return(x);
+              savedtrueoverline = trueoverline = y;
             break;
 
           case TTATTPRO: {      /* Set default Protected Character attribute */

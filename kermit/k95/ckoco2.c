@@ -113,6 +113,7 @@ extern cell_video_attr_t graphicattribute ;
 extern cell_video_attr_t underlineattribute ;
 extern cell_video_attr_t borderattribute ;
 extern cell_video_attr_t crossedoutattribute;
+extern cell_video_attr_t overlineattribute;
 
 extern vtattrib attrib, cmdattrib;
 extern bool cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[] ;
@@ -5936,7 +5937,7 @@ VscrnInit( BYTE vmode )
    extern int scrninitialized[] ;
    extern cell_video_attr_t colornormal, colorunderline, colorborder,
     colorreverse, colorgraphic, colorcmd, coloritalic, colorblink, colorbold,
-    colordim, colorcrossedout ;
+    colordim, colorcrossedout, coloroverline ;
    BYTE clrscr = 0 ;
 #ifndef KUI
    CK_VIDEOMODEINFO m;
@@ -6003,6 +6004,7 @@ VscrnInit( BYTE vmode )
           blinkattribute = colorblink ;
           boldattribute = colorbold ;
           crossedoutattribute = colorcrossedout ;
+          overlineattribute = coloroverline;
           dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
 #ifdef KUI
