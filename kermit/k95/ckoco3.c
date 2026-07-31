@@ -21727,7 +21727,7 @@ vtcsi(void)
                                              * are not reversed by option 0 in
                                              * case there is any software out
                                              * there relying on option 0 only
-                                             * reversing particular ttributes */
+                                             * reversing particular attributes */
                                             if (pn[z] == 2) {
                                                 if ( a & VT_CHAR_ATTR_DIM )
                                                     a &= ~VT_CHAR_ATTR_DIM;
