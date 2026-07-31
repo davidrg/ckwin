@@ -18880,8 +18880,11 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             else if ( oscrecv ) /* it was a OSC string, */
             {
                 apcbuf[apclength] = NUL; /* terminate it */
-                if ( tt_type_mode >= TT_VT320 && /* and if we are a VT320 */
-                     tt_type_mode <= TT_WY370 )
+                if ( (tt_type_mode >= TT_VT320 && /* and if we are a VT320 */
+                     tt_type_mode <= TT_WY370) || /* or one of the others that*/
+                     ISK95(tt_type_mode) ||       /* support OSCs... */
+                     ISXTERM(tt_type_mode) ||
+                     ISDECTERM(tt_type_mode) || ISVTSTAR(tt_type_mode) )
                 {                            /* process it */
                     if (!debses)
                       doosc() ;

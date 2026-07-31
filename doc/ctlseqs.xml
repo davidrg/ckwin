@@ -2082,7 +2082,10 @@ DECTSR		462
             <termsupp first="vt50" series="vt" additional="vt330 vt340 tt"/>
             <p>String Terminator (ST, 0x9C)</p>
         </section>
-        <section role="ctlseq" id="osc" ctlseq="ESC ]" mnemonic="OSC" title="Operating System Command">
+        <section role="ctlseq" id="osc" ctlseq="ESC ]" mnemonic="OSC"
+                 title="Operating System Command"
+                 badges="vt320 vt320pc wy370 k95 decterm vtstar"
+                 groups="isxterm">
             <ref src="e48:65"/>
             <ref src="xt:h4-C1-lparen-8-Bit-rparen-Control-Characters:ESC-%5D.116D"/>
             <ref src="vt340:46"/>
