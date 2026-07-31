@@ -112,7 +112,6 @@ private:    // this section is for performance
     vt_char_attr_t prevEffect;
     vt_cell_attr_t prevCellAttr;
     COLORREF textColor;
-    COLORREF underlineColor;
 
     int wc;
     int vscrollpos;
