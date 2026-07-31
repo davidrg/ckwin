@@ -1249,6 +1249,7 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
     unsigned wyseattr:1;        /* Wyse Attribute */
     unsigned italic:1;          /* Italic */
 	unsigned crossedout:1;		/* Crossed out */
+    unsigned overline:1;        /* Overline */
     unsigned erased:1;          /* Erased cell */
     unsigned hyperlink:1;       /* Hyperlink */
     unsigned short linkid;      /* Hyperlink Index */
@@ -1270,7 +1271,7 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 #define VT_CHAR_ATTR_DIM              ((USHORT) 0x0080)
 #define WY_CHAR_ATTR                  ((USHORT) 0x0100)
 #define VT_CHAR_ATTR_ERASED           ((USHORT) 0x0200)
-#define VT_CHAR_RESERVED_3            ((USHORT) 0x0400)  /* Unused */
+#define VT_CHAR_ATTR_OVERLINE         ((USHORT) 0x0400)
 #define VT_CHAR_ATTR_ITALIC           ((USHORT) 0x0800)
 #define VT_CHAR_ATTR_HYPERLINK        ((USHORT) 0x1000)
 #define VT_CHAR_ATTR_CROSSEDOUT      ((USHORT) 0x2000)

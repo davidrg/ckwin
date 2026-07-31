@@ -112,6 +112,7 @@ private:    // this section is for performance
     vt_char_attr_t prevEffect;
     vt_cell_attr_t prevCellAttr;
     COLORREF textColor;
+    COLORREF underlineColor;
 
     int wc;
     int vscrollpos;
@@ -161,6 +162,7 @@ private:    // this section is for performance
     HBRUSH disabledBrush;
     HBRUSH bgBrush;
     HPEN ruledLinePen;
+    HPEN underlinePen;
     cell_video_attr_t normalAttr;
     bool screenNormal;
     DWORD savebgcolor;

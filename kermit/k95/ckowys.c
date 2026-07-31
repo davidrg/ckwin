@@ -119,8 +119,8 @@ static char wy_shiftlabelline[MAXTERMCOL+1] ;
 
 extern char fkeylabel[16][32];
 
-vtattrib WPattrib   ={0,0,0,0,0,1,0,1,0,0,0} ;/* Dim, and Protected */
-vtattrib defWPattrib={0,0,0,0,0,1,0,1,0,0,0} ;/* Dim, and Protected */
+vtattrib WPattrib   ={0,0,0,0,0,1,0,1,0,0,0, 0, 0, 0, 0} ;/* Dim, and Protected */
+vtattrib defWPattrib={0,0,0,0,0,1,0,1,0,0,0, 0, 0, 0, 0} ;/* Dim, and Protected */
 
 int
 wyinc(void)
@@ -207,7 +207,7 @@ wyse_tab( VOID )
         int x = wherex[VTERM]-1;
         int y = wherey[VTERM]-1;
         int field_found = 0;
-        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
 
         for ( ; y < h ; y++,x=0 ) {
             for (  ; x < w ; x++ ) {
@@ -280,7 +280,7 @@ wyse_backtab( VOID )
         int x = wherex[VTERM]-1;
         int y = wherey[VTERM]-1;
         int field_found = 0;
-        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
 
         /* First, we must find the beginning of the current field that we are on. */
         /* Then we must find the end of the previous field. */
@@ -1165,7 +1165,7 @@ wyseascii( int ch )
                 /* Home Cursor */
                 int xs = VscrnGetWidth(VTERM);
                 int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+                vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
                 debug(F110,"Wyse Escape","Clear screen to Protected SP; Protect Off; Home Cursor",0);
                 if ( debses )
                     break;
@@ -1207,7 +1207,7 @@ wyseascii( int ch )
                 /* Use protected characters if write-protect mode is on */
                 int xs = VscrnGetWidth(VTERM);
                 int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+                vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
                 int C1, C2, C ;
                 debug(F110,"Wyse Escape","Clear unprotected chars with code",0);
                 C1 = wyinc() ;

@@ -250,6 +250,8 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     getEndSize(previousWidth, previousHeight);
 
     ruledLinePen = (HPEN) GetStockObject( WHITE_PEN );
+    underlinePen = (HPEN) CreatePen(PS_SOLID, 1, 0); /* Temporary */
+    underlineColor = 0;
 }
 
 /*------------------------------------------------------------------------
@@ -270,6 +272,7 @@ KClient::~KClient()
     DeleteObject( disabledBrush );
     DeleteObject( bgBrush );
     DeleteObject (ruledLinePen);
+    DeleteObject (underlinePen);
 
     if( timerID )
         KillTimer( hWnd, timerID );
@@ -1266,6 +1269,7 @@ void KClient::writeMe()
 
     RECT rect;
     BOOL anyRuledLines = FALSE;
+    bool overline = FALSE;
     ws_blinking = 0;
     for( i = 0; i < wc; i++ )
     {
@@ -1286,19 +1290,42 @@ void KClient::writeMe()
 			SetBkColor( hdc(), cell_video_attr_background_rgb(prevAttr));
             textColor = cell_video_attr_foreground_rgb(prevAttr);
 			SetTextColor( hdc(), textColor);
+
+            DeleteObject(underlinePen);
+            underlinePen = CreatePen(PS_SOLID, 1, textColor);
+        }
+
+        if (prevCellAttr != kws->cellAttr ) {
+            prevCellAttr = kws->cellAttr;
+
+            anyRuledLines = anyRuledLines ||
+                            prevCellAttr & CA_ATTR_LEFT_BORDER ||
+                            prevCellAttr & CA_ATTR_TOP_BORDER ||
+                            prevCellAttr & CA_ATTR_RIGHT_BORDER ||
+                            prevCellAttr & CA_ATTR_BOTTOM_BORDER ;
         }
 
         // If a soft-font is being used, we can skip all of this as none of
         // these attributes will apply.
-        if( prevEffect != kws->effect && kws->fontBuffer == NO_SOFT_FONT )
+        if( prevEffect != kws->effect )
         {
             prevEffect = kws->effect;
-            Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL || prevEffect == VT_CHAR_ATTR_REVERSE) ? TRUE : FALSE;
+
+            // These attributes aren't presented using a different font. If they
+            // are all that is set, then the normal font should be used.
+            vt_char_attr_t non_font_attributes =
+                  VT_CHAR_ATTR_REVERSE
+                | VT_CHAR_ATTR_OVERLINE
+                | VT_CHAR_ATTR_BLINK
+                ;
+
+            Bool normal = (prevEffect & ~non_font_attributes) == VT_CHAR_ATTR_NORMAL;
             Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
             Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
 			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
+            overline = trueunderline && ((prevEffect & VT_CHAR_ATTR_OVERLINE) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
             if (decstglt == DECSTGLT_ALTERNATE) {
@@ -1313,18 +1340,20 @@ void KClient::writeMe()
                 normal = !underline && !blink;
             }
 
+            COLORREF newTextColor = textColor;
+
 			if (dim) {
 				// Cut the colours intensity by dividing each component by 2.
 				// We can just quickly do this with a right-shift. Because there
 			    // are three separate numbers packed in we need to mask out the
 				// high bit of each as part of this so that the low bit of each
 				// value to the left is erased.
-				SetTextColor( hdc(), (textColor >> 1) & 0x7F7F7F);
-			} else {
-			    // If not dim, reset the textColor just in case dim is turned
-			    // off without the text colour also changing.
-			    SetTextColor( hdc(), textColor);
+				newTextColor = (textColor >> 1) & 0x7F7F7F;
 			}
+            SetTextColor( hdc(), newTextColor);
+
+            DeleteObject(underlinePen);
+            underlinePen = CreatePen(PS_SOLID, 1, newTextColor);
 
             if( normal )
                 getFont()->resetFont( hdc() );
@@ -1393,6 +1422,13 @@ void KClient::writeMe()
                     (wchar_t*) &(textBuffer[ kws->offset ]),
                     kws->length,
                     kws->fontBuffer);
+            }
+
+            if (overline) {
+                HPEN oldPen = (HPEN)SelectObject( hdc(), underlinePen );
+                MoveToEx(hdc(), rect.left , rect.top, NULL);
+                LineTo(hdc(), rect.right, rect.top);
+                SelectObject(hdc(), oldPen);
             }
         }
         else {

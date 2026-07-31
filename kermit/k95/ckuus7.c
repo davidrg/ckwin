@@ -6001,7 +6001,7 @@ settrm() {
           case TTATTPRO: {      /* Set default Protected Character attribute */
               extern vtattrib WPattrib;    /* current WP Mode Attrib */
               extern vtattrib defWPattrib; /* default WP Mode Attrib */
-              vtattrib wpa = {0,0,0,0,0,1,0,0,0,0,0};   /* Protected */
+              vtattrib wpa = {0,0,0,0,0,1,0,0,0,0,0,0,0,0,0};   /* Protected */
               int done = 0;
 
               x = 0;

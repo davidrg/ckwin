@@ -140,7 +140,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - New SET BELL option to flash the window title and task bar button in addition
    to any visible/audible bell setting.
  - Synchronized Output mode
- - Crossed-out character attribute
+ - Crossed-out and overlined character attributes
  - VT420 text macros
  - REXX support has been extended to all Windows systems except for: NT 3.50 or
    older, and 64bit Windows systems with an Alpha or Itanium CPU. Newly

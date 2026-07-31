@@ -469,12 +469,12 @@ cell_video_attr_t                       /* Video attribute bytes */
 
 cell_video_attr_t decatc_colors[16];
 
-vtattrib attrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+vtattrib attrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
          savedattrib[SAVED_CURSORS]={
-                {0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
-         cmdattrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
+         cmdattrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 extern int wherex[];                    /* Screen column, 1-based */
 extern int wherey[];                    /* Screen row, 1-based */
@@ -7964,7 +7964,7 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys ;
     int x  = wherex[VTERM]-1 ;
     int y ;
-    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     viocell cell;
 
     cell.c = fillchar;
@@ -8325,7 +8325,7 @@ selclrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
     int x  = wherex[VTERM]-1 ;
     int y ;
-    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     viocell cell;
 
     cell.c = fillchar;
@@ -8421,7 +8421,7 @@ boxrect_escape( BYTE vmode, int row, int col )
 {
     int brow, bcol, erow, ecol, x, y ;
     viocell cell ;
-    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
     if ( vmode == VTERM ) {
         cell.video_attr = attribute ;
@@ -8991,6 +8991,9 @@ deccara_attribute(vt_char_attr_t a, int pn) {
         case 9: if (ISK95(tt_type_mode))
             a |= VT_CHAR_ATTR_CROSSEDOUT;
             break;
+        case 53: if (ISK95(tt_type_mode))
+            a &= VT_CHAR_ATTR_OVERLINE;
+            break;
         case 22:
             a &= ~VT_CHAR_ATTR_BOLD;
             if (ISK95(tt_type_mode)) a &= ~VT_CHAR_ATTR_DIM;
@@ -9009,6 +9012,9 @@ deccara_attribute(vt_char_attr_t a, int pn) {
             break;
         case 29: if (ISK95(tt_type_mode))
             a &= ~VT_CHAR_ATTR_CROSSEDOUT;
+            break;
+        case 55: if (ISK95(tt_type_mode))
+            a &= ~VT_CHAR_ATTR_OVERLINE;
             break;
     }
     return a;
@@ -17333,6 +17339,10 @@ dodcs( void )
                             strcat(sgrbuf, bgbuf);
                         }
 
+                        if (ISK95(tt_type_mode) && attrib.overline) {
+                            strcat(sgrbuf, ";53");
+                        }
+
                         /* Append final character (overwriting the trailing ';'),
                          * then assemble full DECRPSS response */
                         strcat(sgrbuf, "m");
@@ -18378,7 +18388,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                     /* now to process it  */
                     USHORT Row, Col;
                     viocell  vio={0,0};
-                    vtattrib vta={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                    vtattrib vta={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
                     pScrnBufInf = (PCONSOLE_SCREEN_BUFFER_INFO) vtnt_buf;
                     pCursor = (PCOORD) ((PCHAR) pScrnBufInf
@@ -19036,7 +19046,7 @@ scrninit() {
 void
 wrtch(unsigned short ch) {
     viocell cell;
-    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     int vmode = decsasd == SASD_TERMINAL ? VTERM : VSTATUS ;
     extern int k95stdio,k95stdin,k95stdout;
 
@@ -20656,7 +20666,8 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
            (WPattrib.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
            (WPattrib.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
            (WPattrib.wyseattr   ? WY_CHAR_ATTR           : 0) |
-		   (WPattrib.crossedout  ? VT_CHAR_ATTR_CROSSEDOUT:0) ;
+		   (WPattrib.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
+		   (WPattrib.overline   ? VT_CHAR_ATTR_OVERLINE  : 0) ;
         }
 
         if (vtattr & VT_CHAR_ATTR_HYPERLINK)
@@ -20866,7 +20877,7 @@ static bool  private=FALSE;
 static bool  ansiext=FALSE;
 static bool  zdsext=FALSE;
 static bool  kermext=FALSE;
-static vtattrib blankattrib={0,0,0,0,0,0,0,0,0,0,0,1 /* erased */,0,0};
+static vtattrib blankattrib={0,0,0,0,0,0,0,0,0,0,0,0,1 /* erased */,0,0};
 
 void
 vtcsi(void)
@@ -21062,6 +21073,7 @@ vtcsi(void)
             attrib.graphic = FALSE ;
             attrib.wyseattr = FALSE ;
 			attrib.crossedout = FALSE ;
+            attrib.overline = FALSE ;
             attrib.erased = FALSE;
             attrib.hyperlink = FALSE;
             attrib.linkid = 0;
@@ -21754,6 +21766,12 @@ vtcsi(void)
                                                     a &= ~VT_CHAR_ATTR_CROSSEDOUT;
                                                 else
                                                     a |= VT_CHAR_ATTR_CROSSEDOUT;
+                                            }
+                                            if (pn[z] == 53) {
+                                                if ( a & VT_CHAR_ATTR_OVERLINE )
+                                                    a &= ~VT_CHAR_ATTR_OVERLINE;
+                                                else
+                                                    a |= VT_CHAR_ATTR_OVERLINE;
                                             }
                                         }
 
@@ -24785,6 +24803,7 @@ vtcsi(void)
                         attrib.graphic = FALSE ;
                         attrib.dim = FALSE ;
 						attrib.crossedout = FALSE ;
+                        attrib.overline = FALSE ;
                         attrib.erased = FALSE;
                         attrib.wyseattr = FALSE ;
                         attrib.hyperlink = FALSE;
@@ -25038,6 +25057,7 @@ vtcsi(void)
                             attrib.wyseattr = FALSE ;
                             attrib.hyperlink = FALSE;
 							attrib.crossedout = FALSE;
+                            attrib.overline = FALSE;
                             attrib.erased = FALSE;
                             attrib.linkid = 0;
 
@@ -25687,6 +25707,16 @@ vtcsi(void)
                                 */
                                 break;
                             }
+                        case 53:
+                            if (ISK95(tt_type_mode)) {
+                                attrib.overline = TRUE;
+                            }
+                            break;
+                        case 55:
+                            if (ISK95(tt_type_mode)) {
+                                attrib.overline = FALSE;
+                            }
+                            break;
                         case 90: /* Colors */
                         case 91:
                         case 92:
