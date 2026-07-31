@@ -16986,6 +16986,14 @@ DCS $ q 3 , } ST</pre>
                     <td>Bold</td>
                 </tr>
                 <tr>
+                    <td>2</td>
+                    <td><badge name="k95"/>Dim</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><badge name="k95"/>Italic</td>
+                </tr>
+                <tr>
                     <td>4</td>
                     <td>Underline</td>
                 </tr>
@@ -16998,8 +17006,16 @@ DCS $ q 3 , } ST</pre>
                     <td>Negative image</td>
                 </tr>
                 <tr>
+                    <td>9</td>
+                    <td><badge name="k95"/>Crossed-out</td>
+                </tr>
+                <tr>
                     <td>22</td>
-                    <td>No bold</td>
+                    <td>No bold / Dim</td>
+                </tr>
+                <tr>
+                    <td>23</td>
+                    <td><badge name="k95"/>Not Italic</td>
                 </tr>
                 <tr>
                     <td>24</td>
@@ -17014,10 +17030,14 @@ DCS $ q 3 , } ST</pre>
                     <td>Positive image</td>
                 </tr>
                 <tr>
+                    <td>29</td>
+                    <td><badge name="k95"/>Not Crossed-out</td>
+                </tr>
+                <tr>
                     <td>
                         30...37
                     </td>
-                    <td>Set foreground color.
+                    <td><badge name="k95"/> Set foreground color.
                         See <a href="#sgr-30">SGR-30..37</a> for colour
                         assignments. VT525 and K95 terminal types only.
                     </td>
@@ -17026,7 +17046,7 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         38:2:Pi:Pr:Pg:Pb
                     </td>
-                    <td>Set foreground to an RGB color.
+                    <td><badge name="k95"/> Set foreground to an RGB color.
                         <a href="#sgr-38-rgb">See SGR for details</a>.
                         Note that only the parameter element syntax (colons)
                         shown here is supported. K95 terminal type only.
@@ -17036,7 +17056,7 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         38:5:Ps
                     </td>
-                    <td>Set foreground to an Indexed color.
+                    <td><badge name="k95"/> Set foreground to an Indexed color.
                         <a href="#sgr-38-ic">See SGR for details</a>.
                         Note that only the parameter element syntax (colons)
                         shown here is supported. K95 terminal type only.
@@ -17046,7 +17066,7 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         40...47
                     </td>
-                    <td>Set background color.
+                    <td><badge name="k95"/> Set background color.
                         See <a href="#sgr-40">SGR-40..47</a> for colour
                         assignments. VT525 and K95 terminal types only.
                     </td>
@@ -17055,7 +17075,7 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         48:2:Pi:Pr:Pg:Pb
                     </td>
-                    <td>Set foreground to an RGB color.
+                    <td><badge name="k95"/> Set foreground to an RGB color.
                         <a href="#sgr-48-rgb">See SGR for details</a>.
                         Note that only the parameter element syntax (colons)
                         shown here is supported. K95 terminal type only.
@@ -17065,7 +17085,7 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         48:5:Ps
                     </td>
-                    <td>Set foreground to an Indexed color.
+                    <td><badge name="k95"/> Set foreground to an Indexed color.
                         <a href="#sgr-48-ic">See SGR for details</a>.
                         Note that only the parameter element syntax (colons)
                         shown here is supported. K95 terminal type only.
@@ -17075,7 +17095,7 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         90...97
                     </td>
-                    <td>Set bright foreground color.
+                    <td><badge name="k95"/> Set bright foreground color.
                         See <a href="#sgr-90">SGR-90..97</a> for colour
                         assignments. K95 terminal type only.
                     </td>
@@ -17084,7 +17104,7 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         100...107
                     </td>
-                    <td>Set bright background color.
+                    <td><badge name="k95"/> Set bright background color.
                         See <a href="#sgr-100">SGR-100..107</a> for colour
                         assignments. K95 terminal type only.
                     </td>
@@ -17906,7 +17926,7 @@ DCS $ q 3 , } ST</pre>
                 the rectangle. If <a href="#decsace">DECSACE</a> is off (1 or 0) then the DECRARA affects the
                 stream of characters between the first and second character positions
                 specified. Coordinates are affected by <a href="#decom">DECOM</a>.
-                The <param-single symbol="Pm"/> is the SGR attributes
+                The <param-single symbol="Pm"/> are the SGR attributes
                 to change, one of:
             </p>
             <table>
@@ -17916,11 +17936,24 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>0</td>
-                    <td>All attributes off (normal)</td>
+                    <td>
+                        All attributes reversed. For backwards compatibility,
+                        only those supported by the VT420 and VT520 are included
+                        in this operation - Italic, Dim, and Crossed-Out are
+                        excluded.
+                    </td>
                 </tr>
                 <tr>
                     <td>1</td>
                     <td>Bold</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><badge name="k95"/>Dim</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><badge name="k95"/>Italic</td>
                 </tr>
                 <tr>
                     <td>4</td>
@@ -17934,7 +17967,18 @@ DCS $ q 3 , } ST</pre>
                     <td>7</td>
                     <td>Negative image</td>
                 </tr>
+                <tr>
+                    <td>8</td>
+                    <td><badge name="k95"/>Invisible</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td><badge name="k95"/>Crossed-out</td>
+                </tr>
             </table>
+            <p>
+                If no SGR attributes are specified, no action is taken.
+            </p>
         </section>
         <section role="ctlseq" id="decttpb" mnemonic="DECTTPB" todo="true"
                  title="Transmit Transparent Paste Buffer" not-implemented="true">
@@ -18916,6 +18960,19 @@ DCS $ q 3 , } ST</pre>
                 character set is UTF8, then the second range is extended to
                 160-65535 to cover the Unicode base multilingual plane.
             </p>
+            <p>
+                If no character is specified, then SPACE is used. The defaults
+                for the rectangular area are the top, left, bottom, and right
+                edges of the page.
+            </p>
+            <p badges="vt520 vt525">The VT520 does not use the default character
+                as specified by STD 070. Instead if no character is supplied the
+                control sequence is ignored. It is possible this may be a bug in
+                the VT520.
+            </p>
+            <p>
+                DECFRA is unaffected by the margins unless DECOM is set.
+            </p>
         </section>
         <section role="ctlseq" id="decrqpkfm" mnemonic="DECRQPKFM"
                  title="Request Program Key Free Memory"
@@ -19175,7 +19232,8 @@ DCS $ q 3 , } ST</pre>
                 and Pr is the right column.
                 These coordinates are affected by <a href="#decom">DECOM</a>.
                 The left column can not be greater than the right, and the top
-                can not be greater than the bottom.
+                can not be greater than the bottom. All must be within the
+                margins when DECOM is set.
             </p>
             <p>
                 Any erased cells within the rectangle are skipped aside from

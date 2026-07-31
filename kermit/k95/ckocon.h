@@ -408,11 +408,17 @@ cell_video_attr_t cell_video_attr_set(
 
 /**** Helper macros to make swapcolors() readable */
 
-/* Swap the lower 3 bits of the two indexed colours perserving the 4th bit */
+/* Swap the lower 3 bits of the two indexed colours preserving the 4th bit */
 #define rgbsc_swap_4b(x) (                                                     \
     cell_video_attr_set((x).flags,                                             \
                          0, 0, ((x).fg_b & 0x08) | ((x).bg_b & 0x07),          \
                          0, 0, ((x).bg_b & 0x08) | ((x).fg_b & 0x07) )    )
+
+/* Swaps all four bits of the two indexed colours */
+#define rgbsc_swap_4b_verbatim(x) (                                            \
+    cell_video_attr_set((x).flags,                                             \
+                         0, 0, (x).bg_b,                                       \
+                         0, 0, (x).fg_b  )    )
 
 #define rgbsc_swap_flags(flags) (                                              \
     /* If both indexed bits are set, nothing to swap */                        \
@@ -433,12 +439,24 @@ cell_video_attr_t cell_video_attr_set(
                             0, 0, (x).bg_b & 0x07,                             \
                         (x).fg_r, (x).fg_g, (x).fg_b)    )
 
+/* Swaps all four bits of the background with all bits of the foreground */
+#define rgbsc_swap_4b_bg_verbatim(x) (                                                  \
+    cell_video_attr_set(rgbsc_swap_flags((x).flags),                           \
+                            0, 0, (x).bg_b,                                    \
+                            (x).fg_r, (x).fg_g, (x).fg_b)    )
+
 /* Swap 3 bits of the foreground with all bits of the background preserving
  * nothing of the foregrounds remaining bits */
 #define rgbsc_swap_4b_fg(x) (                                                  \
     cell_video_attr_set(rgbsc_swap_flags((x).flags),                           \
                         (x).bg_r, (x).bg_g, (x).bg_b,                          \
                         0, 0, (x).fg_b & 0x07) )
+
+/* Swaps all four bits of the foreground with all bits of the background */
+#define rgbsc_swap_4b_fg_verbatim(x) (                                         \
+    cell_video_attr_set(rgbsc_swap_flags((x).flags),                           \
+                        (x).bg_r, (x).bg_g, (x).bg_b,                          \
+                        0, 0, (x).fg_b) )
 
 /* Swap everything */
 #define rgbsc_swap_all(x) (                                                    \
@@ -451,15 +469,16 @@ cell_video_attr_t cell_video_attr_set(
  *
  * The 4th bit for 4-bit indexed colors can have significant meaning - some
  * emulations display bold as an intense colour (4th bit set). So when swapping
- * the FG and BG colour, we want to leave the 4th bit where it is so that the
- * foreground text remains bold rather than ending up with a "bold" background.
+ * the FG and BG colour, we may want to leave the 4th bit where it is so that
+ * the foreground text remains bold rather than ending up with a "bold"
+ * background.
  *
  * Things get more difficult with 256-color & RGB support. If the index is 16 or
  * above then we can't assume the 4th bit holds any special significance. So
  * if both colors are 16 or above they'll be swapped verbatim. If only one of
  * the colours is below 16, that colour will have its 4th bit thrown away and
  * only the bottom 3 bits will be swapped over, while the other larger colour
- * will be sawpped over verbatim.
+ * will be swapped over verbatim.
  *
  * I don't know if this is the *correct* strategy. Perhaps if one colour is
  * above 16 we should assume both are from a larger palette and so swap both
@@ -473,6 +492,18 @@ cell_video_attr_t cell_video_attr_set(
     : cell_video_attr_fg_is_16colors(x)    ? rgbsc_swap_4b_fg(x) \
     : /* fg and bg are indexed && > 15 ? */  rgbsc_swap_all(x)   \
 )
+
+/* DECs VT terminals did give you a "bright" background when you set the reverse
+ * video attribute. So for those emulations we have an alterantive that swaps
+ * all colours verbatim. This is used by ComputeColorFromAttr which handles
+ * applying the bold and reverse colour attributes. */
+#define swapcolors_vt(x) (                                                \
+      cell_video_attr_is_rgb(x)            ? rgbsc_swap_all(x)            \
+    : cell_video_attr_fgbg_are_16colors(x) ? rgbsc_swap_4b_verbatim(x)    \
+    : cell_video_attr_bg_is_16colors(x)    ? rgbsc_swap_4b_bg_verbatim(x) \
+    : cell_video_attr_fg_is_16colors(x)    ? rgbsc_swap_4b_fg_verbatim(x) \
+    : /* fg and bg are indexed && > 15 ? */  rgbsc_swap_all(x)   \
+    )
 
 /* In the original K95 open-source release of the v2.2 code, swapcolors() and
  * byteswapcolors() had equivalent implementations (they did the same thing).
@@ -781,6 +812,10 @@ typedef unsigned short cell_video_attr_t;
 	         : ((((x)&0xFF00)>>8)|(((x)&0x0007)<<8)) /* FG < 16, discard FG 4th bit */ \
 )
 
+/* DECs VT terminals did give you a "bright" background when you set the reverse
+ * video attribute. So for that situation, just swap the two colours verbatim */
+#define swapcolors_vt(x) (swap_colors_verbatim((x)))
+
 /* In the original K95 open-source release of the v2.2 code, swapcolors() and
  * byteswapcolors() had equivalent implementations (they did the same thing).
  * I don't know why - perhaps at one point there was some difference in behaviour
@@ -946,6 +981,10 @@ typedef unsigned char cell_video_attr_t;  /* this really should be color_attr_t 
 */
 #define swapcolors(x) (((x)&(unsigned)0x88)|(((x)&0x70)>>4)|(((x)&0x07)<<4))
 #define byteswapcolors(x) ((((x)&0x70)>>4)|(((x)&0x07)<<4)|((x)&(unsigned char)0x88))
+
+/* This swaps the foreground and background colours *including* the intensity
+ * bit, just like the DEC VT does */
+#define swapcolors_vt(x) (((x)>>4)|((x)<<4))
 
 /* Initialise a colour attribute at declaration time with a constant
  * 16-color value pair packed into an unsigned char
@@ -1134,6 +1173,7 @@ cell_video_attr_t cell_video_attr_set(unsigned char value);
 #define cell_video_attr_equal(attr_a, attr_b) ((attr_a).a == (attr_b).a)
 #define swapcolors(x) cell_video_attr_from_vio_attribute((((x.a)&(unsigned)0x88)|(((x.a)&0x70)>>4)|(((x.a)&0x07)<<4)))
 #define byteswapcolors(x) cell_video_attr_from_vio_attribute(((((x.a)&0x70)>>4)|(((x.a)&0x07)<<4)|((x.a)&(unsigned char)0x88)))
+#define swapcolors_vt(x) cell_video_attr_from_vio_attribute((((x.a))|(((x.a))>>4)|(((x.a))<<4)))
 #endif /* CK_COLORS_DEBUG */
 #endif /* CK_COLORS_256 */
 #endif /* CK_COLORS_24BIT */

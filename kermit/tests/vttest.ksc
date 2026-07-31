@@ -459,8 +459,19 @@ def wait_for_push_return_prompt {
 	# Not on screen - wait up to two seconds for it to arrive.
 	input 5 {Push <RETURN>}
 	if fail {
-    	add_test_result FAIL FAIL
-		fail_and_stop 6 "Timeout waiting Push RETURN prompt "
+	    echo "-- Waiting for Push <RETURN> prompt (2nd chance)--"
+	    screen_contains_string {Push <RETURN>}
+    	if = \v(return) 1 {
+    		# Found it in the screen already.
+    		return
+    	}
+
+    	# Not on screen - wait up to two seconds for it to arrive.
+    	input 5 {Push <RETURN>}
+    	if fail {
+    	    add_test_result FAIL FAIL
+		    fail_and_stop 6 "Timeout waiting for Push RETURN prompt "
+		}
 	}
 }
 
@@ -2265,7 +2276,10 @@ def test_11_2_6_vt320_screen_display {
 	choose_multi_test_option 3 "11.2.6.2.3.1" "Cursor-movement in Status Line" "in the status-line" 2
 	do_test "11.2.6.2.3.2" "Cursor-movement in Status Line - test" "word" 2
 	do_test "11.2.6.2.3.3" "Cursor-movement in Status Line - normal" "" 2
-	wait_for_menu_prompt	
+	wait_for_menu_prompt
+
+	# The previous tests leave the status line off
+	set term status on
 
 	pop_menu # 11.2.6.2: Test Status line (DECSASD/DECSSDT)
 	pop_menu # 11.2.6: VT320 Screen-Display Tests
@@ -3211,12 +3225,12 @@ def test_11_3_7_vt420_reporting_functions {
     #      7. Set number of lines per screen (DECSNLS)
 	choose_submenu_option 3 "11.3.7.2.3" "VT420 Status-Strings Reports"
 	
-	choose_single_test_option 2 "11.3.7.2.3.2" "Enable local functions (DECELF)" " <27> P" 3
-	choose_single_test_option 3 "11.3.7.2.3.3" "Local function key control (DECLFKC)" " <27> P" 3
-	choose_single_test_option 4 "11.3.7.2.3.4" "Select attribute change extent (DECSACE)" " <27> P" 3
-	choose_single_test_option 5 "11.3.7.2.3.5" "Select modifier key reporting (DECSMKR)" " <27> P" 3
-	choose_single_test_option 6 "11.3.7.2.3.6" "Set left and right margins (DECSLRM)" " <27> P" 3
-	choose_single_test_option 7 "11.3.7.2.3.7" "Set number of lines per screen (DECSNLS)" " <27> P" 3
+	choose_single_test_option 2 "11.3.7.2.3.2" "Enable local functions (DECELF)" " <27> P" 1
+	choose_single_test_option 3 "11.3.7.2.3.3" "Local function key control (DECLFKC)" " <27> P" 1
+	choose_single_test_option 4 "11.3.7.2.3.4" "Select attribute change extent (DECSACE)" " <27> P" 1
+	choose_single_test_option 5 "11.3.7.2.3.5" "Select modifier key reporting (DECSMKR)" " <27> P" 1
+	choose_single_test_option 6 "11.3.7.2.3.6" "Set left and right margins (DECSLRM)" " <27> P" 1
+	choose_single_test_option 7 "11.3.7.2.3.7" "Set number of lines per screen (DECSNLS)" " <27> P" 1
 	
 	wait_for_menu_prompt
 	pop_menu # VT420 Status-Strings Reports
@@ -3244,25 +3258,25 @@ def test_11_3_7_vt420_reporting_functions {
 	choose_submenu_option 3 "11.3.7.3" "VT420 Device Status Reports (DSR)"
 	
 	# This seems to be the same as 11.1.1.1.3 and 11.2.5.2.3
-	choose_single_test_option 2 "11.3.7.3.2" "Test Printer Status" "<27> [ ?" 3
+	choose_single_test_option 2 "11.3.7.3.2" "Test Printer Status" "<27> [ ?" 1
 	
 	# This seems to be the same as 11.1.1.1.4 and 11.2.5.2.4
-	choose_single_test_option 3 "11.3.7.3.3" "Test UDK Status" " <27> [ ?" 3
+	choose_single_test_option 3 "11.3.7.3.3" "Test UDK Status" " <27> [ ?" 1
 	
 	# This seems to be the same as 11.1.1.1.1 and 11.2.5.2.2
-	choose_single_test_option 4 "11.3.7.3.4" "Test Keyboard Status" " <27> [ ?" 3
+	choose_single_test_option 4 "11.3.7.3.4" "Test Keyboard Status" " <27> [ ?" 1
 	
-	choose_single_test_option 5 "11.3.7.3.5" "Test Macro Space" " <27> [" 3
-	choose_single_test_option 6 "11.3.7.3.6" "Test Memory Checksum" " <27> P" 3
-	choose_single_test_option 7 "11.3.7.3.7" "Test Data Integrity" "" 3
-	choose_single_test_option 8 "11.3.7.3.8" "Test Multiple Session Status" "" 3
+	choose_single_test_option 5 "11.3.7.3.5" "Test Macro Space" " <27> [" 1
+	choose_single_test_option 6 "11.3.7.3.6" "Test Memory Checksum" " <27> P" 1
+	choose_single_test_option 7 "11.3.7.3.7" "Test Data Integrity" "" 1
+	choose_single_test_option 8 "11.3.7.3.8" "Test Multiple Session Status" "" 1
 	
 	# These two tests take quite a while to run
 	choose_single_test_option 9 "11.3.7.3.9" "Test Checksum of Rectangular Area (DECRQCRA): GL" "mismatched." 28
 	choose_single_test_option 10 "11.3.7.3.10" "Test Checksum of Rectangular Area (DECRQCRA): GR" "mismatched." 28
 	
 	# This seems to be the same as 11.2.5.2.7
-	choose_single_test_option 11 "11.3.7.3.11" "Test Extended Cursor-Position (DECXCPR)" "Page" 3
+	choose_single_test_option 11 "11.3.7.3.11" "Test Extended Cursor-Position (DECXCPR)" "Page" 1
 	
 	pop_menu # VT420 Device Status Reports (DSR)
 
@@ -3621,17 +3635,17 @@ def test_11_4_5_vt520_reporting_functions {
     #     11. Terminal Mode Emulation (DECTME)
     #     12. Update Session (DECUS)
 	choose_submenu_option 3 "11.4.5.2.3" "VT520 Status-Strings Reports"
-	choose_single_test_option 2 "11.4.5.2.3.2" "Alternate Text Color (DECATC)" "bold reverse underline blink" 3
-	choose_single_test_option 3 "11.4.5.2.3.3" "Assign Color (DECAC)" "window frame" 3
-	choose_single_test_option 4 "11.4.5.2.3.4" "CRT Saver Timing (DECCRTST)" "<27> P" 3
-	choose_single_test_option 5 "11.4.5.2.3.5" "Down Line Load Allocation (DECDLDA)" "<27> P" 3
-	choose_single_test_option 6 "11.4.5.2.3.6" "Energy Save Timing (DECSEST)" "<27> P" 3
-	choose_single_test_option 7 "11.4.5.2.3.7" "Select Auto Repeat Rate (DECARR)" "<27> P" 3
-	choose_single_test_option 8 "11.4.5.2.3.8" "Select Color Lookup Table (DECSTGLT)" "<27> P" 3
-	choose_single_test_option 9 "11.4.5.2.3.9" "Select Zero Symbol (DECSZS)" "<27> P" 3
-	choose_single_test_option 10 "11.4.5.2.3.10" "Session Page Memory Allocation (DECSPMA)" "<27> P" 3
-	choose_single_test_option 11 "11.4.5.2.3.11" "Terminal Mode Emulation (DECTME)" "<27> P" 3
-	choose_single_test_option 12 "11.4.5.2.3.12" "Update Session (DECUS)" "<27> P" 3
+	choose_single_test_option 2 "11.4.5.2.3.2" "Alternate Text Color (DECATC)" "bold reverse underline blink" 1
+	choose_single_test_option 3 "11.4.5.2.3.3" "Assign Color (DECAC)" "window frame" 1
+	choose_single_test_option 4 "11.4.5.2.3.4" "CRT Saver Timing (DECCRTST)" "<27> P" 1
+	choose_single_test_option 5 "11.4.5.2.3.5" "Down Line Load Allocation (DECDLDA)" "<27> P" 1
+	choose_single_test_option 6 "11.4.5.2.3.6" "Energy Save Timing (DECSEST)" "<27> P" 1
+	choose_single_test_option 7 "11.4.5.2.3.7" "Select Auto Repeat Rate (DECARR)" "<27> P" 1
+	choose_single_test_option 8 "11.4.5.2.3.8" "Select Color Lookup Table (DECSTGLT)" "<27> P" 1
+	choose_single_test_option 9 "11.4.5.2.3.9" "Select Zero Symbol (DECSZS)" "<27> P" 1
+	choose_single_test_option 10 "11.4.5.2.3.10" "Session Page Memory Allocation (DECSPMA)" "<27> P" 1
+	choose_single_test_option 11 "11.4.5.2.3.11" "Terminal Mode Emulation (DECTME)" "<27> P" 1
+	choose_single_test_option 12 "11.4.5.2.3.12" "Update Session (DECUS)" "<27> P" 1
 
 	#	Menu 11.4.5.2.3.1: VT510 Status-Strings Reports
 	#
@@ -3654,29 +3668,29 @@ def test_11_4_5_vt520_reporting_functions {
     #     14. Set Margin Bell Volume (DECSMBV)
 	choose_submenu_option 1 "11.4.5.2.3.1" "VT510 Status-Strings Reports"
 	
-	choose_single_test_option 2 "11.4.5.2.3.1.2" "Select Communication Port (DECSCP)" "<27> P" 3
-	choose_single_test_option 3 "11.4.5.2.3.1.3" "Select Communication Speed (DECSCS)" "<27> P" 3
-	choose_single_test_option 4 "11.4.5.2.3.1.4" "Select Digital Printed Data Type (DECSDPT)" "<27> P" 3
-	choose_single_test_option 5 "11.4.5.2.3.1.5" "Select Disconnect Delay Time (DECSDDT)" "<27> P" 3
-	choose_single_test_option 6 "11.4.5.2.3.1.6" "Select Flow Control Type (DECSFC)" "<27> P" 3
-	choose_single_test_option 7 "11.4.5.2.3.1.7" "Select Printer Type (DECSPRTT)" "<27> P" 3
-	choose_single_test_option 8 "11.4.5.2.3.1.8" "Select ProPrinter Character Set (DECSPPCS)" "<27> P" 3
-	choose_single_test_option 9 "11.4.5.2.3.1.9" "Select Refresh Rate Selection (DECSRFR)" "<27> P" 3
-	choose_single_test_option 10 "11.4.5.2.3.1.10" "Select Set-Up Language (DECSSL)" "<27> P" 3
+	choose_single_test_option 2 "11.4.5.2.3.1.2" "Select Communication Port (DECSCP)" "<27> P" 1
+	choose_single_test_option 3 "11.4.5.2.3.1.3" "Select Communication Speed (DECSCS)" "<27> P" 1
+	choose_single_test_option 4 "11.4.5.2.3.1.4" "Select Digital Printed Data Type (DECSDPT)" "<27> P" 1
+	choose_single_test_option 5 "11.4.5.2.3.1.5" "Select Disconnect Delay Time (DECSDDT)" "<27> P" 1
+	choose_single_test_option 6 "11.4.5.2.3.1.6" "Select Flow Control Type (DECSFC)" "<27> P" 1
+	choose_single_test_option 7 "11.4.5.2.3.1.7" "Select Printer Type (DECSPRTT)" "<27> P" 1
+	choose_single_test_option 8 "11.4.5.2.3.1.8" "Select ProPrinter Character Set (DECSPPCS)" "<27> P" 1
+	choose_single_test_option 9 "11.4.5.2.3.1.9" "Select Refresh Rate Selection (DECSRFR)" "<27> P" 1
+	choose_single_test_option 10 "11.4.5.2.3.1.10" "Select Set-Up Language (DECSSL)" "<27> P" 1
 	
-	choose_multi_test_option 11 "11.4.5.2.3.1.11.1" "Set Cursor Style (DECSCUSR) - Blinking Rectangle 1/8" "<27> P" 3
-	do_test "11.4.5.2.3.11.2" "Set Cursor Style (DECSCUSR) - Blinking Rectangle 2/8" "<27> P" 3
-	do_test "11.4.5.2.3.11.3" "Set Cursor Style (DECSCUSR) - Non-Blinking Rectangle 3/8" "<27> P" 3
-	do_test "11.4.5.2.3.11.4" "Set Cursor Style (DECSCUSR) - Blinking Underline 4/8" "<27> P" 3
-	do_test "11.4.5.2.3.11.5" "Set Cursor Style (DECSCUSR) - Non-Blinking Rectangle 5/8" "<27> P" 3
-	do_test "11.4.5.2.3.11.6" "Set Cursor Style (DECSCUSR) - Blinking Vertical Bar 6/8" "<27> P" 3
-	do_test "11.4.5.2.3.11.7" "Set Cursor Style (DECSCUSR) - Non-Blinking Vertical Bar 7/8" "<27> P" 3
-	do_test "11.4.5.2.3.11.8" "Set Cursor Style (DECSCUSR) - Rectangle 8/8" "<27> P" 3
+	choose_multi_test_option 11 "11.4.5.2.3.1.11.1" "Set Cursor Style (DECSCUSR) - Blinking Rectangle 1/8" "<27> P" 1
+	do_test "11.4.5.2.3.11.2" "Set Cursor Style (DECSCUSR) - Blinking Rectangle 2/8" "<27> P" 1
+	do_test "11.4.5.2.3.11.3" "Set Cursor Style (DECSCUSR) - Non-Blinking Rectangle 3/8" "<27> P" 1
+	do_test "11.4.5.2.3.11.4" "Set Cursor Style (DECSCUSR) - Blinking Underline 4/8" "<27> P" 1
+	do_test "11.4.5.2.3.11.5" "Set Cursor Style (DECSCUSR) - Non-Blinking Rectangle 5/8" "<27> P" 1
+	do_test "11.4.5.2.3.11.6" "Set Cursor Style (DECSCUSR) - Blinking Vertical Bar 6/8" "<27> P" 1
+	do_test "11.4.5.2.3.11.7" "Set Cursor Style (DECSCUSR) - Non-Blinking Vertical Bar 7/8" "<27> P" 1
+	do_test "11.4.5.2.3.11.8" "Set Cursor Style (DECSCUSR) - Rectangle 8/8" "<27> P" 1
 	wait_for_menu_prompt
 	
-	choose_single_test_option 12 "11.4.5.2.3.1.12" "Set Key Click Volume (DECSKCV)" "<27> P" 3
-	choose_single_test_option 13 "11.4.5.2.3.1.13" "Set Lock Key Style (DECSLCK)" "<27> P" 3
-	choose_single_test_option 14 "11.4.5.2.3.1.14" "Set Margin Bell Volume (DECSMBV)" "<27> P" 3
+	choose_single_test_option 12 "11.4.5.2.3.1.12" "Set Key Click Volume (DECSKCV)" "<27> P" 1
+	choose_single_test_option 13 "11.4.5.2.3.1.13" "Set Lock Key Style (DECSLCK)" "<27> P" 1
+	choose_single_test_option 14 "11.4.5.2.3.1.14" "Set Margin Bell Volume (DECSMBV)" "<27> P" 1
 	
 	pop_menu # 11.4.5.2.3.1: VT510 Status-Strings Reports
 	
@@ -3710,11 +3724,11 @@ def test_11_4_6_v520_screen_display {
 	choose_submenu_option 4 "11.4" "VT520 Tests"
 	choose_submenu_option 6 "11.4.6" "VT520 Screen-Display Tests"
 	
-	choose_multi_test_option 1 "11.4.6.1.1" "Test No Clear on Column Change (DECNCSM) - 80 columns cleared" "cleared (80-columns)" 3
-	do_test "11.4.6.1.2" "Test No Clear on Column Change (DECNCSM) - 132 columns cleared" "cleared (132-columns)" 3
-	do_test "11.4.6.1.3" "Test No Clear on Column Change (DECNCSM) - 80 columns filled" "filled (80-columns)" 3
-	do_test "11.4.6.1.4" "Test No Clear on Column Change (DECNCSM) - 132 columns filled" "filled (80 of 132-columns)" 3
-	do_test "11.4.6.1.5" "Test No Clear on Column Change (DECNCSM) - 80 columns cleared" "cleared (80-columns)" 3
+	choose_multi_test_option 1 "11.4.6.1.1" "Test No Clear on Column Change (DECNCSM) - 80 columns cleared" "cleared (80-columns)" 1
+	do_test "11.4.6.1.2" "Test No Clear on Column Change (DECNCSM) - 132 columns cleared" "cleared (132-columns)" 1
+	do_test "11.4.6.1.3" "Test No Clear on Column Change (DECNCSM) - 80 columns filled" "filled (80-columns)" 1
+	do_test "11.4.6.1.4" "Test No Clear on Column Change (DECNCSM) - 132 columns filled" "filled (80 of 132-columns)" 1
+	do_test "11.4.6.1.5" "Test No Clear on Column Change (DECNCSM) - 80 columns cleared" "cleared (80-columns)" 1
 	wait_for_menu_prompt
 	
 	choose_multi_test_option 2 "11.4.6.2.1" "Test Set Cursor Style (DECSCUSR) - Blinking Rectangle" "blinking rectangle"
@@ -4102,9 +4116,9 @@ def test_11_8_xterm_features {
 				do_test "11.8.7.3.3" "Switch to/from alternate screen (xterm) 3/3" "this line." 5
 				wait_for_menu_prompt
 				
-				choose_multi_test_option 4 "11.8.7.4.1" "Improved alternate screen (XFree86 xterm mode 1047) 1/4" ""
-				do_test "11.8.7.4.2" "Improved alternate screen (XFree86 xterm mode 1047) 2/4" ""
-				do_test "11.8.7.4.3" "Improved alternate screen (XFree86 xterm mode 1047) 3/4" ""
+				choose_multi_test_option 4 "11.8.7.4.1" "Improved alternate screen (XFree86 xterm mode 1047) 1/3" "" 1
+				do_test "11.8.7.4.2" "Improved alternate screen (XFree86 xterm mode 1047) 2/3" "" 1
+				do_test "11.8.7.4.3" "Improved alternate screen (XFree86 xterm mode 1047) 3/3" "" 1
 
 				# The previous test requests a cursor position report, but
 				# vttest may not wait long enough resulting in it being dumped
