@@ -28,7 +28,7 @@ on it affects every character received until the attribute is turned back off.
 
 Future needs based on what other terminals support might include:
 - _Four_ additional underline styles (Double, Dashed, Dotted, Wavy) - needs at
-  least 3 bits
+  least 3 bits (two of which could come from underlined and erased)
 - Xterm double-underline (which can be set in combination with regular underline
   and possibly reported by DECRQSS)
 - Superscript
@@ -42,11 +42,11 @@ Future needs based on what other terminals support might include:
   - Is control character (dotted underline?)
   
 
-Combined, these would need 7 bits. Right now there are two unused, and four
-more could probably be freed-up giving seven total by:
-- Combining `Underline`, `Erased` and one of the unused bits into a single three
-  bit field. Erased is mutually exclusive with all attributes, so storing it as
-  a kind of underline style should be fine:
+Combined, these would need seven bits. Right now there are two unused, and four
+more could probably be freed-up giving six total by:
+- Combining `Underline`, `Erased` and one of the unused bits into a single 
+  three-bit field. Erased is mutually exclusive with all attributes, so storing 
+  it as a kind of underline style should be fine:
     - 0 - Not erased, not underlined
     - 1 - Underlined
     - 2 - Double Underlined
@@ -119,5 +119,5 @@ screen and so are affected by things move (or destroy) cells like IL and DL.
 |     4 |  0x08 | Bottom Border | DECterm Ruled Line Bottom Border |
 
 At this time Cell Attribute storage is only sized for four bits per character 
-cell, but if a need for more ever arises it can trivially be increased to a full
-eight bits per cell.
+cell, but if a need for more ever arises, it can trivially be increased to a 
+full eight bits per cell.
