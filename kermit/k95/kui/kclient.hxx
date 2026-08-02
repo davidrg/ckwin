@@ -108,16 +108,21 @@ private:    // this section is for performance
     vt_cell_attr_t* cellAttrBuffer;
     _K_WORK_STORE* kws;
 
-    cell_video_attr_t prevAttr;
     vt_char_attr_t prevEffect;
     vt_cell_attr_t prevCellAttr;
-    COLORREF textColor;
+
 
     int wc;
     int vscrollpos;
     int hscrollpos;
 
     void ToggleCursor(HDC, LPRECT);
+
+    static int PrepareWorkStore(
+        _K_WORK_STORE* workStore,
+        _K_CLIENT_PAINT *clientPaint,
+        const KSoftFont *softFont,
+        int lineHeight, int cellWidth, int xoffset, int twid);
 
     static void SetWorkStoreRect(RECT* rect, _K_WORK_STORE* kws, KFont *font,
         int terminalCellsWide, int terminalCellsHigh, int margin);

@@ -22,7 +22,8 @@ typedef struct _K_WORK_STORE {
     int               length;
     int               x;
     int               y;
-    cell_video_attr_t attr;
+    COLORREF          fgAttr;
+    COLORREF          bgAttr;
     vt_char_attr_t    effect;
     vt_cell_attr_t    cellAttr;
     char              fontBuffer;
@@ -53,6 +54,7 @@ extern int smooth_scroll_top, smooth_scroll_bottom;
 extern int smooth_scroll_left, smooth_scroll_right;
 extern vscrn_t vscrn[];
 extern int scrollflag[];
+extern bool flipscrnflag[] ;
 extern enum markmodes markmodeflag[] ;
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
@@ -192,9 +194,6 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , saveHorzIsV(0)
     , font( 0 )
     , processKey( FALSE )
-#ifndef CK_COLORS_24BIT
-    , prevAttr( cell_video_attr_init_vio_attribute(255) )
-#endif /* CK_COLORS_24BIT */
     , prevEffect( uchar(-1) )
     , prevCellAttr( 0 )
     , _xoffset( 0 )
@@ -209,13 +208,6 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
 {
     InitializeCriticalSection(&csDraw);
 
-#ifdef CK_COLORS_24BIT
-#if _MSC_VER < 1800
-    prevAttr = cell_video_attr_from_vio_attribute(255);
-#else
-     prevAttr = cell_video_attr_init_vio_attribute(255);
-#endif
-#endif /* CK_COLORS_24BIT */
     vert = new KScroll( kg, TRUE, TRUE );
     horz = new KScroll( kg, FALSE, TRUE );
 
@@ -1180,63 +1172,9 @@ void KClient::writeMe()
         ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
     }
 
-    // Figure out which soft fonts are valid
-    int validSoftFonts[DRCS_BUFFERS];
-    for (int j = 1; j <= DRCS_BUFFERS; j++) {
-        validSoftFonts[j-1] = softFont.fontValid(j);
-    }
-
     // Then paint the data
-    // This code batches up strings with matching attributes so multiple
-    // characters can be painted in one go. Soft-fonts are counted as a kind of
-    // attribute here, so characters using a one soft-font will not be included
-    // with a batch of characters using another soft-font or no soft-font at all
-    wc = 0;
-    int xpos, i;
-    int totlen = clientPaint->len;
-    cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
-    ushort lattr = ushort(-1);
-    vt_char_attr_t effect = ushort(-1);
-    vt_cell_attr_t cellAttr = 0;
-    int lastDrcsBufferId = NO_SOFT_FONT;
-    // The following collects up contiguous strings of text that are all on the
-    // same line and have the same attributes, allowing the text to be painted
-    // in one go rather than a character at a time.
-    for( i = 0; i < totlen; i++ )
-    {
-        int bufferId = DRCS_BUFFER_ID(textBuffer[i]);
-        if (bufferId != NO_SOFT_FONT && !validSoftFonts[bufferId-1]) {
-            /* This character is associated with a soft-font, but the font
-             * doesn't exist. This shouldn't really happen outside of looking at
-             * the scrollback after a hard reset, so just replace the character
-             * with the backwards question mark in the normal font. */
-            bufferId = NO_SOFT_FONT;
-            textBuffer[i] = 0x2426; // backwards question mark
-        }
-
-        xpos = i % twid;
-        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr)
-                || effectBuffer[i] != effect
-                || cellAttrBuffer[i] != cellAttr
-                || lastDrcsBufferId != bufferId )
-        {
-            kws = &(workStore[wc]);
-
-            kws->x = xpos * font->getFontW() - _xoffset;
-            kws->y = (i / twid) * lineHeight;
-
-            kws->offset = i;
-            if( wc )
-                workStore[wc-1].length = i - workStore[wc-1].offset;
-            attr = kws->attr = attrBuffer[i];
-            effect = kws->effect = effectBuffer[i];
-            cellAttr = kws->cellAttr = cellAttrBuffer[i];
-            lastDrcsBufferId = kws->fontBuffer = bufferId;
-            wc++;
-        }
-    }
-    if( wc )
-        workStore[wc-1].length = i - workStore[wc-1].offset;
+    wc = PrepareWorkStore(workStore, clientPaint, &softFont,
+        lineHeight, font->getFontW(), _xoffset, twid);
 
     Bool blinkOn = FALSE;
     Bool blink = FALSE;
@@ -1269,7 +1207,10 @@ void KClient::writeMe()
     RECT rect;
     BOOL anyRuledLines = FALSE;
     bool overline = FALSE;
+    COLORREF prevFgAttr = workStore[0].fgAttr + 1; // Initialise to something
+    COLORREF prevBgAttr = workStore[0].bgAttr + 1; // different.
     ws_blinking = 0;
+    int i;
     for( i = 0; i < wc; i++ )
     {
         kws = &(workStore[i]);
@@ -1280,18 +1221,18 @@ void KClient::writeMe()
             ws_blinking = 1;
         }
 
-        if( !cell_video_attr_equal(prevAttr, kws->attr) )
-        {
-            prevAttr = kws->attr;
+        if (prevFgAttr != kws->fgAttr) {
+            prevFgAttr = kws->fgAttr;
 
-            /* These are the default colors used by the console window, set by   */
-            /* the SET GUI RGB commands and a few escape sequences               */
-			SetBkColor( hdc(), cell_video_attr_background_rgb(prevAttr));
-            textColor = cell_video_attr_foreground_rgb(prevAttr);
-			SetTextColor( hdc(), textColor);
+            SetTextColor( hdc(), prevFgAttr);
 
             DeleteObject(underlinePen);
-            underlinePen = CreatePen(PS_SOLID, 1, textColor);
+            underlinePen = CreatePen(PS_SOLID, 1, prevFgAttr);
+        }
+
+        if (prevBgAttr != kws->bgAttr) {
+            prevBgAttr = kws->bgAttr;
+            SetBkColor( hdc(), prevBgAttr );
         }
 
         if (prevCellAttr != kws->cellAttr ) {
@@ -1316,11 +1257,11 @@ void KClient::writeMe()
                   VT_CHAR_ATTR_REVERSE
                 | VT_CHAR_ATTR_OVERLINE
                 | VT_CHAR_ATTR_BLINK
+                | VT_CHAR_ATTR_DIM
                 ;
 
             Bool normal = (prevEffect & ~non_font_attributes) == VT_CHAR_ATTR_NORMAL;
             Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
-            Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
 			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
@@ -1331,28 +1272,13 @@ void KClient::writeMe()
                 // DECSTGLT says we should show attributes as colors. DECATCUM
                 // and DECATCBM *may* say we should still do true underline and
                 // true blink even while doing these as colors.
-                bold = FALSE; dim = FALSE; italic = FALSE;
+                bold = FALSE; italic = FALSE;
 
                 underline = decatcum && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
                 blink = decatcbm && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
                 normal = !underline && !blink;
             }
-
-            COLORREF newTextColor = textColor;
-
-			if (dim) {
-				// Cut the colours intensity by dividing each component by 2.
-				// We can just quickly do this with a right-shift. Because there
-			    // are three separate numbers packed in we need to mask out the
-				// high bit of each as part of this so that the low bit of each
-				// value to the left is erased.
-				newTextColor = (textColor >> 1) & 0x7F7F7F;
-			}
-            SetTextColor( hdc(), newTextColor);
-
-            DeleteObject(underlinePen);
-            underlinePen = CreatePen(PS_SOLID, 1, newTextColor);
 
             if( normal )
                 getFont()->resetFont( hdc() );
@@ -1442,7 +1368,7 @@ void KClient::writeMe()
     // this.
     for( i = 0; i < thi; i++ )
     {
-        lattr = lineAttr[i];
+        ushort lattr = lineAttr[i];
         if( lattr == VT_LINE_ATTR_NORMAL )
             continue;
 
@@ -1708,6 +1634,102 @@ void KClient::writeMe()
     horz->setPos( hscrollpos );
 }
 
+int KClient::PrepareWorkStore(
+    _K_WORK_STORE* workStore,
+    _K_CLIENT_PAINT *clientPaint,
+    const KSoftFont *softFont,
+    int lineHeight, int cellWidth, int xoffset, int twid
+    ) {
+    // Figure out which soft fonts are valid
+    int validSoftFonts[DRCS_BUFFERS];
+    for (int j = 1; j <= DRCS_BUFFERS; j++) {
+        validSoftFonts[j-1] = softFont->fontValid(j);
+    }
+
+    ushort* textBuffer = clientPaint->textBuffer;
+    const cell_video_attr_t* attrBuffer = clientPaint->attrBuffer;
+    const vt_char_attr_t* effectBuffer = clientPaint->effectBuffer;
+    const vt_cell_attr_t* cellAttrBuffer = clientPaint->cellAttrBuffer;
+
+    // This code batches up strings with matching attributes so multiple
+    // characters can be painted in one go. Soft-fonts are counted as a kind of
+    // attribute here, so characters using a one soft-font will not be included
+    // with a batch of characters using another soft-font or no soft-font at all
+    int wc = 0;
+    int xpos, i;
+    int totlen = clientPaint->len;
+    COLORREF fgAttr = 0;
+    COLORREF bgAttr = 0;
+    vt_char_attr_t effect = ushort(-1);
+    vt_cell_attr_t cellAttr = 0;
+    int lastDrcsBufferId = NO_SOFT_FONT;
+
+    for( i = 0; i < totlen; i++ )
+    {
+        int bufferId = DRCS_BUFFER_ID(textBuffer[i]);
+        if (bufferId != NO_SOFT_FONT && !validSoftFonts[bufferId-1]) {
+            /* This character is associated with a soft-font, but the font
+             * doesn't exist. This shouldn't really happen outside of looking at
+             * the scrollback after a hard reset, so just replace the character
+             * with the backwards question mark in the normal font. */
+            bufferId = NO_SOFT_FONT;
+            textBuffer[i] = 0x2426; // backwards question mark
+        }
+
+        COLORREF thisFgAttr = cell_video_attr_foreground_rgb(attrBuffer[i]);
+        COLORREF thisBgAttr = cell_video_attr_background_rgb(attrBuffer[i]);
+        vt_char_attr_t thisEffect = effectBuffer[i];
+
+        // Apply dim attribute. Ideally, this would have been done by
+        // ComputeColorFromAttr. But it can only return RGB values in 24bit
+        // colour builds, so that would prevent us from applying the dim
+        // attribute properly in non-24bit builds. So we've got to do it here.
+        if (thisEffect & VT_CHAR_ATTR_DIM && truedim &&
+                decstglt != DECSTGLT_ALTERNATE) {
+            bool reverse = thisEffect & VT_CHAR_ATTR_REVERSE;
+            if (flipscrnflag[VTERM]) {
+                reverse = !reverse;
+            }
+
+            if (reverse) {
+                thisBgAttr = (thisBgAttr >> 1) & 0x7F7F7F;
+            } else {
+                thisFgAttr = (thisFgAttr >> 1) & 0x7F7F7F;
+            }
+
+            // Clear the dim attribute - we've handled it now, so nothing else
+            // in the renderer needs to see it.
+            thisEffect &= ~VT_CHAR_ATTR_DIM;
+        }
+
+        xpos = i % twid;
+        if( !xpos || thisFgAttr != fgAttr || thisBgAttr != bgAttr
+                || thisEffect != effect
+                || cellAttrBuffer[i] != cellAttr
+                || lastDrcsBufferId != bufferId )
+        {
+            _K_WORK_STORE* kws = &(workStore[wc]);
+
+            kws->x = xpos * cellWidth - xoffset;
+            kws->y = (i / twid) * lineHeight;
+
+            kws->offset = i;
+            if( wc )
+                workStore[wc-1].length = i - workStore[wc-1].offset;
+            fgAttr = kws->fgAttr = thisFgAttr;
+            bgAttr = kws->bgAttr = thisBgAttr;
+            effect = kws->effect = thisEffect;
+            cellAttr = kws->cellAttr = cellAttrBuffer[i];
+            lastDrcsBufferId = kws->fontBuffer = bufferId;
+            wc++;
+        }
+    }
+    if( wc )
+        workStore[wc-1].length = i - workStore[wc-1].offset;
+
+    return wc;
+}
+
 void KClient::SetWorkStoreRect(RECT* rect, _K_WORK_STORE* kws, KFont *font,
         int terminalCellsWide, int terminalCellsHigh, int margin) {
 
@@ -1832,10 +1854,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
     uchar *workBuf;
     allocateClientPaintBuffers(&clientPaint, maxcells, &workBuf);
     ushort* textBuffer            = clientPaint.textBuffer;
-    cell_video_attr_t* attrBuffer = clientPaint.attrBuffer;
-    vt_char_attr_t* effectBuffer  = clientPaint.effectBuffer;
     ushort* lineAttr              = clientPaint.lineAttr;
-	vt_cell_attr_t* cellAttrBuffer	= clientPaint.cellAttrBuffer;
 
     K_WORK_STORE *workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
@@ -1849,86 +1868,43 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
     }
 
     // Collect data up into runs of text with the same attributes
-    int xoffset = 0, yoffset = 0;  // Used by scrolling
-    int wc = 0;
-    int xpos, i;
-    int totlen = clientPaint.len;
-    _K_WORK_STORE* kws;
-
-    cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
-    ushort lattr = ushort(-1);
-    vt_char_attr_t effect = ushort(-1);
-	vt_cell_attr_t cellAttr = 0;
-    int lastDrcsBufferId = NO_SOFT_FONT;
-    for( i = 0; i < totlen; i++ )
-    {
-        int bufferId = DRCS_BUFFER_ID(textBuffer[i]);
-        if (bufferId != NO_SOFT_FONT && !validSoftFonts[bufferId-1]) {
-            /* This character is associated with a soft-font, but the font
-             * doesn't exist. This shouldn't really happen outside of looking at
-             * the scrollback after a hard reset, so just replace the character
-             * with the backwards question mark in the normal font. */
-            bufferId = NO_SOFT_FONT;
-            textBuffer[i] = 0x2426; // backwards question mark
-        }
-
-        xpos = i % twid;
-        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr)
-					|| effectBuffer[i] != effect
-					|| cellAttrBuffer[i] != cellAttr
-                    || lastDrcsBufferId != bufferId )
-        {
-            kws = &(workStore[wc]);
-
-            kws->x = xpos * font->getFontW() - xoffset;
-            kws->y = (i / twid) * font->getFontSpacedH();
-
-            kws->offset = i;
-            if( wc )
-                workStore[wc-1].length = i - workStore[wc-1].offset;
-            attr = kws->attr = attrBuffer[i];
-            effect = kws->effect = effectBuffer[i];
-			cellAttr = kws->cellAttr = cellAttrBuffer[i];
-            lastDrcsBufferId = kws->fontBuffer = bufferId;
-            wc++;
-        }
-    }
-    if( wc )
-        workStore[wc-1].length = i - workStore[wc-1].offset;
+    int fontw = font->getFontW();
+    int wc = KClient::PrepareWorkStore(workStore, &clientPaint, &softFont,
+        font->getFontSpacedH(), fontw, 0, twid);
 
     int interSpace[MAXNUMCOL];
-    int fontw = font->getFontW();
+    int i;
     for( i = 0; i < MAXNUMCOL; i++ )
         interSpace[i] = fontw;
 
     // Output text in runs with matching attributes
     RECT rect;
     BOOL anyRuledLines = FALSE;
-    cell_video_attr_t prevAttr = cell_video_attr_init_vio_attribute(255);
     vt_char_attr_t prevEffect = uchar(-1);
     vt_cell_attr_t prevCellAttr = 0;
     COLORREF textColor;
     HPEN underlinePen = (HPEN) CreatePen(PS_SOLID, 1, 0); /* Temporary */
     BOOL blink;
     bool overline = FALSE;
+    COLORREF prevFgAttr = 0;
+    COLORREF prevBgAttr = 255;
 	Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
     for( i = 0; i < wc; i++ )
     {
-        kws = &(workStore[i]);
-        if( !cell_video_attr_equal(prevAttr, kws->attr) )
-        {
-            prevAttr = kws->attr;
+        _K_WORK_STORE* kws = &(workStore[i]);
 
-            /* These are the default colors used by the console window           */
-            /* This needs to be replaced by a class that allows the color values */
-            /* to be set by the user and stored somewhere.                       */
-            /* The RGBTable is now set via SET GUI RGB commands.                 */
-            SetBkColor( hdc, cell_video_attr_background_rgb(prevAttr));
-            textColor = cell_video_attr_foreground_rgb(prevAttr);
-            SetTextColor( hdc, textColor);
+        if (prevFgAttr != kws->fgAttr) {
+            prevFgAttr = kws->fgAttr;
+
+            SetTextColor( hdc, prevFgAttr);
 
             DeleteObject(underlinePen);
-            underlinePen = CreatePen(PS_SOLID, 1, textColor);
+            underlinePen = CreatePen(PS_SOLID, 1, prevFgAttr);
+        }
+
+        if (prevBgAttr != kws->bgAttr) {
+            prevBgAttr = kws->bgAttr;
+            SetBkColor( hdc, prevBgAttr );
         }
 
         // If a soft-font is being used, we can skip all of this as none of
@@ -1943,11 +1919,11 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
                   VT_CHAR_ATTR_REVERSE
                 | VT_CHAR_ATTR_OVERLINE
                 | VT_CHAR_ATTR_BLINK
+                | VT_CHAR_ATTR_DIM
                 ;
 
             Bool normal = (prevEffect & ~non_font_attributes) == VT_CHAR_ATTR_NORMAL;
             Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
-            Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
 			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
@@ -1958,28 +1934,13 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
                 // DECSTGLT says we should show attributes as colors. DECATCUM
                 // and DECATCBM *may* say we should still do true underline and
                 // true blink even while doing these as colors.
-                bold = FALSE; dim = FALSE; italic = FALSE;
+                bold = FALSE; italic = FALSE;
 
                 underline = decatcum && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
                 blink = decatcbm && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
                 normal = !underline && !blink;
             }
-
-            COLORREF newTextColor = textColor;
-
-            if (dim) {
-                // Cut the colours intensity by dividing each component by 2.
-                // We can just quickly do this with a right-shift. Because there
-                // are three separate numbers packed in we need to mask out the
-                // high bit of each as part of this so that the low bit of each
-                // value to the left is erased.
-                newTextColor = (textColor >> 1) & 0x7F7F7F;
-            }
-            SetTextColor( hdc, newTextColor);
-
-            DeleteObject(underlinePen);
-            underlinePen = CreatePen(PS_SOLID, 1, newTextColor);
 
             if( normal )
                 font->resetFont( hdc );
@@ -2075,7 +2036,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
         SelectObject( hdcScratch, scratchBitmap );
         for( i = 0; i < thi; i++ )
         {
-            lattr = lineAttr[i];
+            ushort lattr = lineAttr[i];
             if( lattr == VT_LINE_ATTR_NORMAL )
                 continue;
 
@@ -2126,7 +2087,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
         HPEN ruledLinePen = CreatePen(PS_SOLID, 1, rgb);
 
         for( i = 0; i < wc; i++ ) {
-            kws = &(workStore[i]);
+            _K_WORK_STORE* kws = &(workStore[i]);
 
             rlLeft = kws->cellAttr & CA_ATTR_LEFT_BORDER;
             rlTop = kws->cellAttr & CA_ATTR_TOP_BORDER;
