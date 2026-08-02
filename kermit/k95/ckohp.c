@@ -352,7 +352,7 @@ void
 hpascii( int ch )
 {
     int i=0,j=0,m=0,n=0,x=0,y=0,z=0;
-    vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ;
+    vtattrib attr={0,0,0,0,0,0,0,0,0,0,0, 0, 0, 0, 0} ;
     viocell blankvcell;
     char debbuf[256]="";
     extern vscrn_t vscrn[];

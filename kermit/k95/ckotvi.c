@@ -300,7 +300,7 @@ tvictrl( int ch )
         if ( writeprotect ) {
             int xs = VscrnGetWidth(VTERM);
             int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-            vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+            vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
             for ( y = 0 ; y < ys ; y++ )
                 for ( x = 0 ; x < xs ; x++ ) {
                     vta = VscrnGetVtCharAttr( VTERM, x, y ) ;
@@ -492,7 +492,7 @@ tviascii( int ch )
                 if ( writeprotect ) {
                     int xs = VscrnGetWidth(VTERM);
                     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                    vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+                    vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
                     for ( y = 0 ; y < ys ; y++ )
                         for ( x = 0 ; x < xs ; x++ ) {
                             vta = VscrnGetVtCharAttr( VTERM, x, y ) ;
@@ -508,7 +508,7 @@ tviascii( int ch )
                 /* (do not reset protect mode)                           */
                 int xs = VscrnGetWidth(VTERM);
                 int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+                vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
 
                 if ( debses )
                     break;
@@ -886,7 +886,7 @@ tviascii( int ch )
                     if ( writeprotect ) {
                         int xs = VscrnGetWidth(VTERM);
                         int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+                        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
                         for ( y = 0 ; y < ys ; y++ )
                             for ( x = 0 ; x < xs ; x++ ) {
                                 vta = VscrnGetVtCharAttr( VTERM, x, y ) ;
@@ -907,7 +907,7 @@ tviascii( int ch )
                     if ( writeprotect ) {
                         int xs = VscrnGetWidth(VTERM);
                         int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+                        vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
                         for ( y = 0 ; y < ys ; y++ )
                             for ( x = 0 ; x < xs ; x++ ) {
                                 vta = VscrnGetVtCharAttr( VTERM, x, y ) ;

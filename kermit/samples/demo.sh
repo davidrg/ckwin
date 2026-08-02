@@ -414,6 +414,7 @@ BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
 F_STATUS_LINE=1    # New in 1.1.8 (November 1996)
 F_TRUE_COLOR=1     # New in beta 8
 F_STRIKETHROUGH=1  # New in beta 8
+F_OVERLINE=1       # New in beta 8
 F_RULED_LINES=1    # New in beta 8
 F_SOFT_FONT=1      # New in beta 8
 F_EXTENDED_UL=0    # -- Additional underline styles not supported yet
@@ -447,6 +448,7 @@ if [[ $IS_K95 == "yes" ]]; then
     VERSION=$K95_VERSION_L
     # These things all new in K95 3.0 Beta 8
     F_TRUE_COLOR=0
+    F_OVERLINE=0
     F_STRIKETHROUGH=0
     F_RULED_LINES=0
     F_SOFT_FONT=0
@@ -616,10 +618,13 @@ fi
 printf '\n'
 
 # Line 4 - Standard Attributes
-printf ' * \x1b[3mOptional\x1b[0m true attribute support:'
+printf ' * \x1b[3mOptional\x1b[0m true attributes:'
 printf ' \x1b[2mDim\x1b[0m'
 printf ' \x1b[1mBold\x1b[0m'
 printf ' \x1b[3mItalic\x1b[0m'
+if [ "$F_OVERLINE" = "1" ]; then
+  printf ' \x1b[53mOver \x1b[4m&\x1b[55m'
+fi
 printf ' \x1b[4mUnderline\x1b[0m'
 if [ "$F_STRIKETHROUGH" = "1" ]; then
 	printf ' \x1b[9mCrossed-out\x1b[0m'
@@ -1045,6 +1050,11 @@ if [ "$F_SOFT_FONT" = "1" ] && [ "$F_VT520_FEATURES" = "1" ]; then
     printf '\x1b[5;65H\x1b[18*z\x1b[5H'
     printf '\x1b8'  # Restore cursor
   fi
+  if [ "$F_OVERLINE" = "1" ]; then
+      printf '\x1b7'  # Save cursor
+      printf '\x1b[5;45H\x1b[18*z\x1b[5H'
+      printf '\x1b8'  # Restore cursor
+    fi
   if [ "$F_RECTOPS" = "1" ]; then
       printf '\x1b7'  # Save cursor
       printf '\x1b[%s;77H\x1b[16*z\x1b[5H' $((VT420_LINE))

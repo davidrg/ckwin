@@ -161,6 +161,7 @@ private:    // this section is for performance
     HBRUSH disabledBrush;
     HBRUSH bgBrush;
     HPEN ruledLinePen;
+    HPEN underlinePen;
     cell_video_attr_t normalAttr;
     bool screenNormal;
     DWORD savebgcolor;

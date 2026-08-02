@@ -361,7 +361,7 @@ extern int ntermfont, tt_font, tt_font_size;
 extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
     colorreverse, colorcmd, coloritalic, colorblink, colorbold, colordim,
-	colorcursor, colorcrossedout;
+	colorcursor, colorcrossedout, coloroverline;
 extern cell_video_attr_t savedcolorselect, savedcolorcursor;
 extern int priority;
 extern struct keytab prtytab[];
@@ -6557,6 +6557,28 @@ shotrm() {
         print_color("%-8s", FALSE, colorcrossedout);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+        printf(" Color:");
+        row = VscrnGetCurPos(VCMD)->y+1;
+        VscrnWrtCharStrAtt(VCMD, "overline",   8, row,  9, &coloroverline );
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+        /* Foreground color names */
+        printf("%6s: ", "fore");
+        print_color("%-8s", TRUE, coloroverline);
+
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+        /* Background color names */
+        printf("%6s: ", "back");
+        print_color("%-8s", FALSE, coloroverline);
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6567,7 +6589,7 @@ shotrm() {
 				   use_bold_attr;
 		extern int savedtruereverse, savedtrueunderline, savedtruedim,
 					savedtruebold, savedtrueitalic, savedtrueblink,
-                    savedtruecrossedout;
+                    savedtruecrossedout, savedtrueoverline;
 
 		/* The saved values are initialised to the same values as the non-saved
 		 * variants, and *only* updated by the "SET TERM ATTR" command, where
@@ -6577,17 +6599,18 @@ shotrm() {
 		 * the current active value */
 
         printf(
-	    " Attribute:  blink: %-3s  bold: %-3s  dim: %-3s  italic: %-3s\n",
+	    " Attribute:  blink: %-3s  bold: %-3s  crossed-out: %-3s  dim: %-3s  italic: %-3s\n",
 	        savedtrueblink?"on": (use_blink_attr?"off (color)":"off"),
 	        savedtruebold?"on": (use_bold_attr?"off (color)":"off"),
+	        savedtruecrossedout?"on":"off",
 	        savedtruedim?"on": (dim_is_color?"off (color)":"off"),
 			trueitalic?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-        printf("             reverse: %-3s  underline: %-3s  crossed-out: %-3s\n",
+        printf("             overline: %-3s  reverse: %-3s  underline: %-3s\n",
+                savedtrueoverline?"on":"off",
                 savedtruereverse?"on":"off",
-                savedtrueunderline?"on":"off",
-                savedtruecrossedout?"on":"off");
+                savedtrueunderline?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {

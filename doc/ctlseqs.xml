@@ -14136,7 +14136,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 52</ctlseq>
                 <ref src="e48:76"/>
             </section>
-            <section role="parameter" title="Overline On" not-implemented="true" todo="true">
+            <section role="parameter" title="Overline On">
                 <ctlseq><param-single/> = 53</ctlseq>
                 <ref src="e48:76"/>
                 <ref src="dap:166"/>
@@ -14148,7 +14148,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="e48:76"/>
             </section>
 
-            <section role="parameter" title="Overline Off" not-implemented="true" todo="true">
+            <section role="parameter" title="Overline Off">
                 <ctlseq><param-single/> = 55</ctlseq>
                 <ref src="e48:76"/>
                 <ref src="dap:166"/>
@@ -17053,6 +17053,14 @@ DCS $ q 3 , } ST</pre>
                     </td>
                 </tr>
                 <tr>
+                    <td>53</td>
+                    <td><badge name="k95"/>Overline</td>
+                </tr>
+                <tr>
+                    <td>53</td>
+                    <td><badge name="k95"/>Not Overline</td>
+                </tr>
+                <tr>
                     <td>
                         38:5:Ps
                     </td>
@@ -17939,8 +17947,8 @@ DCS $ q 3 , } ST</pre>
                     <td>
                         All attributes reversed. For backwards compatibility,
                         only those supported by the VT420 and VT520 are included
-                        in this operation - Italic, Dim, and Crossed-Out are
-                        excluded.
+                        in this operation - Italic, Dim, Crossed-Out and
+                        Overline are excluded.
                     </td>
                 </tr>
                 <tr>
@@ -17974,6 +17982,10 @@ DCS $ q 3 , } ST</pre>
                 <tr>
                     <td>9</td>
                     <td><badge name="k95"/>Crossed-out</td>
+                </tr>
+                <tr>
+                    <td>53</td>
+                    <td><badge name="k95"/>Overline</td>
                 </tr>
             </table>
             <p>

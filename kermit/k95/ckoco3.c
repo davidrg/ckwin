@@ -331,6 +331,7 @@ cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27)
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
 cell_video_attr_t     colorcrossedout = cell_video_attr_init_vio_attribute(0x10);
+cell_video_attr_t     coloroverline   = cell_video_attr_init_vio_attribute(0xF0);
 #ifdef CK_COLORS_24BIT
 /* Entry 8 in the VT525 palette is black, so if we can default these to RGB */
 cell_video_attr_t     colordim        = cell_video_attr_init_rgb_attribute(192, 192, 192, 0, 0, 0);
@@ -361,9 +362,11 @@ int bold_font_only = FALSE;    /* Only do a bold font, not bold + bright? */
 #ifdef KUI
 int trueitalic    = TRUE ;
 int truecrossedout = TRUE;
+int trueoverline  = TRUE ;
 #else /* KUI */
 int trueitalic    = FALSE ;
 int truecrossedout = FALSE;
+int trueoverline  = FALSE ;
 #endif /* KUI */
 int colorAttPriority = TRUE ; /* Attribute colors take priority over SGR colors */
 /* xterm defaults this to FALSE, while K95 defaults it to TRUE */
@@ -378,9 +381,11 @@ int savedtruebold      = TRUE ;
 #ifdef KUI
 int savedtrueitalic    = TRUE ;
 int savedtruecrossedout = TRUE;
+int savedtrueoverline  = TRUE ;
 #else /* KUI */
 int savedtrueitalic    = FALSE ;
 int savedtruecrossedout = FALSE ;
+int savedtrueoverline  = FALSE ;
 #endif /* KUI */
 
 enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
@@ -464,17 +469,19 @@ cell_video_attr_t                       /* Video attribute bytes */
 	dimattribute=cell_video_attr_init_vio_attribute(0),
     saveddimattribute[SAVED_CURSORS]={0,0,0,0,0},
     crossedoutattribute=cell_video_attr_init_vio_attribute(0),
-    savedcrossedoutattribute[SAVED_CURSORS]={0,0,0,0,0}
+    savedcrossedoutattribute[SAVED_CURSORS]={0,0,0,0,0},
+    overlineattribute=cell_video_attr_init_vio_attribute(0),
+    savedoverlineattribute[SAVED_CURSORS]={0,0,0,0,0}
     ;
 
 cell_video_attr_t decatc_colors[16];
 
-vtattrib attrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+vtattrib attrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
          savedattrib[SAVED_CURSORS]={
-                {0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
-         cmdattrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
+         cmdattrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 extern int wherex[];                    /* Screen column, 1-based */
 extern int wherey[];                    /* Screen row, 1-based */
@@ -7368,6 +7375,7 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
 		dimattribute=swapcolors(dimattribute);
 		blinkattribute=swapcolors(blinkattribute);
         crossedoutattribute=swapcolors(crossedoutattribute);
+        overlineattribute=swapcolors(overlineattribute);
         attribute = swapcolors( attribute );
     } else if ( vmode == VCMD ) {
         colorcmd = swapcolors(colorcmd);
@@ -7964,7 +7972,7 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys ;
     int x  = wherex[VTERM]-1 ;
     int y ;
-    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     viocell cell;
 
     cell.c = fillchar;
@@ -8325,7 +8333,7 @@ selclrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
     int x  = wherex[VTERM]-1 ;
     int y ;
-    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta ={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     viocell cell;
 
     cell.c = fillchar;
@@ -8421,7 +8429,7 @@ boxrect_escape( BYTE vmode, int row, int col )
 {
     int brow, bcol, erow, ecol, x, y ;
     viocell cell ;
-    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
     if ( vmode == VTERM ) {
         cell.video_attr = attribute ;
@@ -8991,6 +8999,9 @@ deccara_attribute(vt_char_attr_t a, int pn) {
         case 9: if (ISK95(tt_type_mode))
             a |= VT_CHAR_ATTR_CROSSEDOUT;
             break;
+        case 53: if (ISK95(tt_type_mode))
+            a &= VT_CHAR_ATTR_OVERLINE;
+            break;
         case 22:
             a &= ~VT_CHAR_ATTR_BOLD;
             if (ISK95(tt_type_mode)) a &= ~VT_CHAR_ATTR_DIM;
@@ -9009,6 +9020,9 @@ deccara_attribute(vt_char_attr_t a, int pn) {
             break;
         case 29: if (ISK95(tt_type_mode))
             a &= ~VT_CHAR_ATTR_CROSSEDOUT;
+            break;
+        case 55: if (ISK95(tt_type_mode))
+            a &= ~VT_CHAR_ATTR_OVERLINE;
             break;
     }
     return a;
@@ -10997,6 +11011,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor X/Y only, 1 = all */
         savedboldattribute[slot] = boldattribute;
 		saveddimattribute[slot] = dimattribute;
         savedcrossedoutattribute[slot] = crossedoutattribute;
+        savedoverlineattribute[slot] = overlineattribute;
         savedattrib[slot] = attrib;            /* Current DEC character attributes */
         saverelcursor[slot] = relcursor;       /* Cursor addressing mode */
         savedwrap[slot]     = tt_wrap;         /* Wrap mode */
@@ -11050,6 +11065,7 @@ restorecurpos(int vmode, int x) {
             boldattribute=savedboldattribute[slot];
 			dimattribute=saveddimattribute[slot];
             crossedoutattribute=savedcrossedoutattribute[slot];
+            overlineattribute=savedoverlineattribute[slot];
             attrib = savedattrib[slot];
             relcursor = saverelcursor[slot];   /* Restore cursor addressing mode */
 
@@ -11173,6 +11189,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     boldattribute    = colorbold;
 	dimattribute     = colordim;
     crossedoutattribute = colorcrossedout;
+    overlineattribute = coloroverline;
 
     saveddefaultattribute[VTERM] = colornormal; /* Default saved values */
     savedunderlineattribute[VTERM] = colorunderline ;
@@ -11184,6 +11201,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedboldattribute[VTERM]  = colorbold;
 	saveddimattribute[VTERM] = colordim;
     savedcrossedoutattribute[VTERM] = colorcrossedout;
+    savedoverlineattribute[VTERM] = coloroverline;
     savedattribute[VTERM] = attribute;
 	use_bold_attr = bold_is_color;
 	use_blink_attr = blink_is_color;
@@ -11193,6 +11211,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
 	truereverse = savedtruereverse;
 	trueunderline = savedtrueunderline;
+    trueoverline = savedtrueoverline;
 	truedim = savedtruedim;
 	truebold = savedtruebold ;
 	trueitalic = savedtrueitalic;
@@ -12894,6 +12913,8 @@ resetcolors( int x )
 				byteswapcolors(colordim);
             crossedoutattribute =
                 byteswapcolors(colorcrossedout);
+            overlineattribute =
+                byteswapcolors(overlineattribute);
         }
         else {
             defaultattribute = colornormal ;
@@ -12905,6 +12926,7 @@ resetcolors( int x )
             boldattribute  = colorbold;
 			dimattribute   = colordim;
             crossedoutattribute = colorcrossedout;
+            overlineattribute = coloroverline;
         }
         attribute = defaultattribute ;
         borderattribute = colorborder ;
@@ -17333,6 +17355,10 @@ dodcs( void )
                             strcat(sgrbuf, bgbuf);
                         }
 
+                        if (ISK95(tt_type_mode) && attrib.overline) {
+                            strcat(sgrbuf, ";53");
+                        }
+
                         /* Append final character (overwriting the trailing ';'),
                          * then assemble full DECRPSS response */
                         strcat(sgrbuf, "m");
@@ -18378,7 +18404,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                     /* now to process it  */
                     USHORT Row, Col;
                     viocell  vio={0,0};
-                    vtattrib vta={0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                    vtattrib vta={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
                     pScrnBufInf = (PCONSOLE_SCREEN_BUFFER_INFO) vtnt_buf;
                     pCursor = (PCOORD) ((PCHAR) pScrnBufInf
@@ -19036,7 +19062,7 @@ scrninit() {
 void
 wrtch(unsigned short ch) {
     viocell cell;
-    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     int vmode = decsasd == SASD_TERMINAL ? VTERM : VSTATUS ;
     extern int k95stdio,k95stdin,k95stdout;
 
@@ -20656,7 +20682,8 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
            (WPattrib.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
            (WPattrib.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
            (WPattrib.wyseattr   ? WY_CHAR_ATTR           : 0) |
-		   (WPattrib.crossedout  ? VT_CHAR_ATTR_CROSSEDOUT:0) ;
+		   (WPattrib.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
+		   (WPattrib.overline   ? VT_CHAR_ATTR_OVERLINE  : 0) ;
         }
 
         if (vtattr & VT_CHAR_ATTR_HYPERLINK)
@@ -20713,6 +20740,9 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
                 else if ((vtattr & VT_CHAR_ATTR_CROSSEDOUT) &&
                          !truecrossedout /* crossed-out simulated by color */ )
                     colorval = crossedoutattribute;
+                else if ((vtattr & VT_CHAR_ATTR_OVERLINE) &&
+                         !trueoverline /* crossed-out simulated by color */ )
+                    colorval = overlineattribute;
                 else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
                     /* a graphic character */
                     colorval = graphicattribute ;
@@ -20866,7 +20896,7 @@ static bool  private=FALSE;
 static bool  ansiext=FALSE;
 static bool  zdsext=FALSE;
 static bool  kermext=FALSE;
-static vtattrib blankattrib={0,0,0,0,0,0,0,0,0,0,0,1 /* erased */,0,0};
+static vtattrib blankattrib={0,0,0,0,0,0,0,0,0,0,0,0,1 /* erased */,0,0};
 
 void
 vtcsi(void)
@@ -21062,6 +21092,7 @@ vtcsi(void)
             attrib.graphic = FALSE ;
             attrib.wyseattr = FALSE ;
 			attrib.crossedout = FALSE ;
+            attrib.overline = FALSE ;
             attrib.erased = FALSE;
             attrib.hyperlink = FALSE;
             attrib.linkid = 0;
@@ -21754,6 +21785,12 @@ vtcsi(void)
                                                     a &= ~VT_CHAR_ATTR_CROSSEDOUT;
                                                 else
                                                     a |= VT_CHAR_ATTR_CROSSEDOUT;
+                                            }
+                                            if (pn[z] == 53) {
+                                                if ( a & VT_CHAR_ATTR_OVERLINE )
+                                                    a &= ~VT_CHAR_ATTR_OVERLINE;
+                                                else
+                                                    a |= VT_CHAR_ATTR_OVERLINE;
                                             }
                                         }
 
@@ -24785,6 +24822,7 @@ vtcsi(void)
                         attrib.graphic = FALSE ;
                         attrib.dim = FALSE ;
 						attrib.crossedout = FALSE ;
+                        attrib.overline = FALSE ;
                         attrib.erased = FALSE;
                         attrib.wyseattr = FALSE ;
                         attrib.hyperlink = FALSE;
@@ -25038,6 +25076,7 @@ vtcsi(void)
                             attrib.wyseattr = FALSE ;
                             attrib.hyperlink = FALSE;
 							attrib.crossedout = FALSE;
+                            attrib.overline = FALSE;
                             attrib.erased = FALSE;
                             attrib.linkid = 0;
 
@@ -25687,6 +25726,16 @@ vtcsi(void)
                                 */
                                 break;
                             }
+                        case 53:
+                            if (ISK95(tt_type_mode)) {
+                                attrib.overline = TRUE;
+                            }
+                            break;
+                        case 55:
+                            if (ISK95(tt_type_mode)) {
+                                attrib.overline = FALSE;
+                            }
+                            break;
                         case 90: /* Colors */
                         case 91:
                         case 92:

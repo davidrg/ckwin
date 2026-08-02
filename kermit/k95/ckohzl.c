@@ -353,7 +353,7 @@ hzlascii( int ch )
             /* Home Cursor and Clear Screen to Protected Spaces */
             int xs = VscrnGetWidth(VTERM);
             int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-            vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0}; /* Protected */
+            vtattrib vta = {0,0,0,0,0,1,0,0,0,0,0, 0, 0, 0, 0}; /* Protected */
             if ( debses )
                 break;
             clrscreen( VTERM, SP ) ;

@@ -113,6 +113,7 @@ extern cell_video_attr_t graphicattribute ;
 extern cell_video_attr_t underlineattribute ;
 extern cell_video_attr_t borderattribute ;
 extern cell_video_attr_t crossedoutattribute;
+extern cell_video_attr_t overlineattribute;
 
 extern vtattrib attrib, cmdattrib;
 extern bool cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[] ;
@@ -2071,6 +2072,7 @@ USHORT vtattrib_to_int(vtattrib vta) {
                 (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
                 (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
                 (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
+                (vta.overline   ? VT_CHAR_ATTR_OVERLINE  : 0) |
                 (vta.erased     ? VT_CHAR_ATTR_ERASED    : 0) |
                 (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
                 (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
@@ -2717,6 +2719,7 @@ VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
     vta.graphic         = attr & VT_CHAR_ATTR_GRAPHIC ? 1 : 0 ;
     vta.wyseattr        = attr & WY_CHAR_ATTR ? 1 : 0 ;
     vta.crossedout      = attr & VT_CHAR_ATTR_CROSSEDOUT ? 1 : 0 ;
+    vta.overline        = attr & VT_CHAR_ATTR_OVERLINE ? 1 : 0 ;
     vta.erased          = attr & VT_CHAR_ATTR_ERASED ? 1 : 0 ;
     vta.hyperlink       = attr & VT_CHAR_ATTR_HYPERLINK ? 1 : 0;
     vta.linkid          = attr & VT_CHAR_ATTR_HYPERLINK ? line->hyperlinks[x] : 0;
@@ -5934,7 +5937,7 @@ VscrnInit( BYTE vmode )
    extern int scrninitialized[] ;
    extern cell_video_attr_t colornormal, colorunderline, colorborder,
     colorreverse, colorgraphic, colorcmd, coloritalic, colorblink, colorbold,
-    colordim, colorcrossedout ;
+    colordim, colorcrossedout, coloroverline ;
    BYTE clrscr = 0 ;
 #ifndef KUI
    CK_VIDEOMODEINFO m;
@@ -6001,6 +6004,7 @@ VscrnInit( BYTE vmode )
           blinkattribute = colorblink ;
           boldattribute = colorbold ;
           crossedoutattribute = colorcrossedout ;
+          overlineattribute = coloroverline;
           dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
 #ifdef KUI

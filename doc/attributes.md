@@ -6,34 +6,33 @@ are unused and available for new features.
 In ANSI emulations these are _mostly_ set via SGR - once the attribute is turned
 on it affects every character received until the attribute is turned back off.
 
-| Bit |  Value | Purpose        | Notes                                                                              |
-|-----|--------|----------------|------------------------------------------------------------------------------------|
-|     | 0x0000 | Normal         | No attributes set                                                                  |
-| 1   | 0x0001 | Bold           |                                                                                    |
-| 2   | 0x0002 | Underline      |                                                                                    |
-| 3   | 0x0004 | Blink          |                                                                                    |
-| 4   | 0x0008 | Reverse Video  |                                                                                    |
-| 5   | 0x0010 | Invisible      |                                                                                    |
-| 6   | 0x0020 | Protected      |                                                                                    |
-| 7   | 0x0040 | Graphic        | _Possibly_ not really used for anything?                                           |
-| 8   | 0x0080 | Dim            |                                                                                    |
-| 9   | 0x0100 | Wyse Character | _Possibly_ WYSE emulations only?                                                   |
-| 10  | 0x0200 | Erased         | Erased (empty/"null") cell. Formerly KUI_CHAR_ATTR_UPPER_HALF but never used.      |
-| 11  | 0x0400 | _unused_       | Not currently used for anything. Formerly KUI_CHAR_ATTR_LOWER_HALF but never used. |
-| 12  | 0x0800 | Italic         |                                                                                    |
-| 13  | 0x1000 | Hyperlink      | cell is part of a hyperlink                                                        |
-| 14  | 0x2000 | Crossed-out    |                                                                                    |
-| 15  | 0x4000 | _unused_       | Not currently used for anything                                                    |
-| 16  | 0x8000 | _unused_       | Not currently used for anything                                                    |
+| Bit |  Value | Purpose        | Notes                                                                         |
+|-----|--------|----------------|-------------------------------------------------------------------------------|
+|     | 0x0000 | Normal         | No attributes set                                                             |
+| 1   | 0x0001 | Bold           |                                                                               |
+| 2   | 0x0002 | Underline      |                                                                               |
+| 3   | 0x0004 | Blink          |                                                                               |
+| 4   | 0x0008 | Reverse Video  |                                                                               |
+| 5   | 0x0010 | Invisible      |                                                                               |
+| 6   | 0x0020 | Protected      |                                                                               |
+| 7   | 0x0040 | Graphic        | _Possibly_ not really used for anything?                                      |
+| 8   | 0x0080 | Dim            |                                                                               |
+| 9   | 0x0100 | Wyse Character | _Possibly_ WYSE emulations only?                                              |
+| 10  | 0x0200 | Erased         | Erased (empty/"null") cell. Formerly KUI_CHAR_ATTR_UPPER_HALF but never used. |
+| 11  | 0x0400 | Overline       | Formerly KUI_CHAR_ATTR_LOWER_HALF but never used.                             |
+| 12  | 0x0800 | Italic         |                                                                               |
+| 13  | 0x1000 | Hyperlink      | cell is part of a hyperlink                                                   |
+| 14  | 0x2000 | Crossed-out    |                                                                               |
+| 15  | 0x4000 | _unused_       | Not currently used for anything                                               |
+| 16  | 0x8000 | _unused_       | Not currently used for anything                                               |
 
 Future needs based on what other terminals support might include:
 - _Four_ additional underline styles (Double, Dashed, Dotted, Wavy) - needs at
-  least 3 bits
+  least 3 bits (two of which could come from underlined and erased)
 - Xterm double-underline (which can be set in combination with regular underline
   and possibly reported by DECRQSS)
 - Superscript
 - Subscript
-- Overline (DECSGR)
 - Slow Blink
 - Marking escape sequences in debug mode. This would probably take a few
   attributes which would all be mutually exclusive with SGR attributes 
@@ -43,11 +42,11 @@ Future needs based on what other terminals support might include:
   - Is control character (dotted underline?)
   
 
-Combined these would need 8 bits. Right now there are three unused, and four
-more could probably be freed up giving seven total by:
-- Combining `Underline`, `Erased` and one of the unused bits into a single three
-  bit field. Erased is mutually exclusive with all attributes, so storing it as
-  a kind of underline style should be fine:
+Combined, these would need seven bits. Right now there are two unused, and four
+more could probably be freed-up giving six total by:
+- Combining `Underline`, `Erased` and one of the unused bits into a single 
+  three-bit field. Erased is mutually exclusive with all attributes, so storing 
+  it as a kind of underline style should be fine:
     - 0 - Not erased, not underlined
     - 1 - Underlined
     - 2 - Double Underlined
@@ -61,7 +60,7 @@ more could probably be freed up giving seven total by:
 If more attribute bits are _really_ needed, in 24bit color builds there are four
 bits in the color attribute that are unlikely to be needed for anything else.
 
-Beyond that expanding attribute storage would be necessary.
+Beyond that, expanding attribute storage would be necessary.
 
 ## Line Attributes - 1 byte
 These are per line, and they do scroll with the terminal. 
@@ -120,5 +119,5 @@ screen and so are affected by things move (or destroy) cells like IL and DL.
 |     4 |  0x08 | Bottom Border | DECterm Ruled Line Bottom Border |
 
 At this time Cell Attribute storage is only sized for four bits per character 
-cell, but if a need for more ever arises it can trivially be increased to a full
-eight bits per cell.
+cell, but if a need for more ever arises, it can trivially be increased to a 
+full eight bits per cell.
