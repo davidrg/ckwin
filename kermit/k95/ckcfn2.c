@@ -1339,6 +1339,16 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
   too long because of extra control fields in a long packet.
   - fdc 13 September 2022
 */
+/*
+
+  Note: Per the comment above, an attempt was made to use a
+  threshold of > 96 to optimize a border case where the sent packet was
+  too long due to long-packet header overhead. However, this was
+  incorrect as it allowed short packets of length 95 and 96 to be built.
+  These produced invalid/non-printable length bytes (0x7f and 0x80)
+  that were rejected by the receiver's packet parser.
+  - jgoerzen 20 June 2026
+*/
     debug(F101,"SPACK LP decision lpcapu","",lpcapu);
     debug(F101,"SPACK LP decision len","",len);
     debug(F101,"SPACK LP decision bctl","",bctl);
@@ -1346,7 +1356,15 @@ spack(pkttyp,n,len,d) char pkttyp; int n, len; CHAR *d;
 
     longpkt = 0;
     if (lpcapu > 0) { /* Only if long packet capability has been negotiated */
-        longpkt = (len + bctl + 2) > 96; 
+        /*
+          A short packet length field can only hold a single printable ASCII character.
+          Since tochar(x) is x + 32, and the maximum printable ASCII character is '~' (126),
+          the maximum value that can be encoded in the length field is 126 - 32 = 94.
+          Any packet where (len + bctl + 2) exceeds 94 must therefore be sent as a
+          long packet (extended length) to avoid invalid length bytes like 0x7f (DEL/rubout)
+          or 0x80 (non-ASCII), which would cause the receiver to reject the packet.
+        */
+        longpkt = (len + bctl + 2) > 94;
         /* Len + Seq + Type + Data + Blockcheck */
         /*  1     1     2      n       1-3      */
     }
