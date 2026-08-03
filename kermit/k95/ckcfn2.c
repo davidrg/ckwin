@@ -555,7 +555,16 @@ input() {
 			debug(F101,"input return pre-stashed packet","",rsn);
 			dumprbuf();
 			rdatap = r_pkt[x].pk_adr;   /* like rpack would do. */
-			rln = (int)strlen((char *) rdatap);
+/*
+  This previously used strlen() on rdatap, but that breaks when the packet's
+  data contains a NULL, as could be the case under, at least, SET CONTROL
+  UNPREFIX ALL.
+
+  Since rpack() already recorded the true length in r_pkt[x].pk_len when this
+  packet was first parsed and stashed, use that instead of recalculating
+  from the data itself.
+*/
+			rln = r_pkt[x].pk_len;
 			type = r_pkt[x].pk_typ;
 			break;
 		    }
@@ -3269,6 +3278,7 @@ rpack() {
     r_pkt[k].pk_seq = rsn;		/* Record in packet info structure */
     r_pkt[k].pk_typ = type;		/* Sequence, type,... */
     r_pkt[k].pk_adr = rdatap;		/* pointer to data buffer */
+    r_pkt[k].pk_len = rln;		/* and its length, for later replay */
     if (local) {			/* Save a function call! */
 	int x = 0;
 	if (fdispla != XYFD_N) x = 1;
