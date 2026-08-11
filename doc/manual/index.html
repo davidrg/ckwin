@@ -6511,6 +6511,11 @@ your color scheme for each connection in the Dialer on the Terminal page.
 <td>Black
 <td>Yellow
 <td><tt>set terminal color selection</tt>
+<tr>
+<td>Cursor (K95G only)
+<td>Black
+<td>#c0c0c0
+<td><tt>set terminal color cursor</tt>
 </table>
 </blockquote>
 <p>
@@ -6620,6 +6625,19 @@ a white-on-cyan status line, use:
   set terminal color terminal black lgray
   set terminal color status white cyan
 </pre>
+
+<p>
+K95G supports xterms larger 256-color palette as well as direct 24bit RGB color
+by default (this can be changed with <tt>set terminal color palette</tt>).
+Colors from the xterm palette can be specified by number using the INDEX keyword
+while RGB values can be given directly following the RGB keyword. For example,
+set a the status line to an amber red 255, green 176, blue 0) foreground
+with a SeaGreen3 (color 78) background:
+<p>
+<pre>
+  set terminal color status rgb 255 176 0 index 78
+</pre>
+
 
 <p>
 You should avoid using high-intensity colors in the terminal screen as either
