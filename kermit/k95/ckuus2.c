@@ -774,11 +774,11 @@ static char * hmxygui[] = {
 " ",
 "SET GUI STATUSBAR { ON, OFF }",
 "  Shows or hides the statusbar. Only works if K95G was not started with",
-"  the --nostatusbar or --nobars command line options."
+"  the --nostatusbar or --nobars command line options.",
 " ",
 "SET GUI TOOLBAR VISIBLE { ON, OFF }",
 "  Shows or hides the toolbar. Only works if K95G was not started with ",
-"  the --notoolbar or --nobars command line options."
+"  the --notoolbar or --nobars command line options.",
 " ",
 "SET GUI WINDOW POSITION x y",
 "  Moves the C-Kermit window to the given X,Y coordinates, pixels from top",
