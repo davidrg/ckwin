@@ -6176,7 +6176,11 @@ extern int inserver;
 #endif /* IKSD */
 
 static char myprtfstr[2*CMDBL];
+
+#ifdef IKSD
 static char myprtfstr2[2*CMDBL];
+#endif /* IKSD */
+
 /*
 * printf for console
 */
