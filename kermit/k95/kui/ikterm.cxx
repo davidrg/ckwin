@@ -537,6 +537,8 @@ BOOL IKTerm::getCursorPos()
 	int cursor_page = vbuf->cursor.p;
 	int cursor_x = vbuf->cursor.x;
 	int cursor_y = vbuf->cursor.y;
+    USHORT lineattr = VscrnGetLineVtAttr(vnum,cursor_y);
+    BOOL cursor_dwl = lineattr & VT_LINE_ATTR_DOUBLE_WIDE || lineattr & VT_LINE_ATTR_DOUBLE_HIGH;
 	int page_top = page->top;
 	int page_linecount = page->linecount;
 	int page_scrolltop = page->scrolltop;
@@ -573,6 +575,7 @@ BOOL IKTerm::getCursorPos()
     }
     else {
         kcp->cursorPt.x = cursor_x;
+        kcp->cursorDoubleWideLine = cursor_dwl;
         kcp->cursorPt.y = cursor_y + cursor_offset;
         kcp->cursorVisible = TRUE;
     }

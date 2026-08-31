@@ -795,11 +795,16 @@ void KClient::checkBlink()
             else                        // underline
                 adjustedH = kglob->sysMets->borderHeight() + 1;
 
-            cursorRect.left = clientPaint->cursorPt.x * font->getFontW()
+            int fontW = font->getFontW();
+            if (clientPaint->cursorDoubleWideLine) {
+                fontW *= 2;
+            }
+
+            cursorRect.left = clientPaint->cursorPt.x * fontW
                 - _xoffset;
             cursorRect.top = clientPaint->cursorPt.y * font->getFontSpacedH()
                 + ( font->getFontH() - adjustedH );
-            cursorRect.right = cursorRect.left + font->getFontW();
+            cursorRect.right = cursorRect.left + fontW;
             cursorRect.bottom = cursorRect.top + adjustedH;
 
             if ( cursorena[vmode] && cursor_on_visible_page(vmode) || markmodeflag[vmode] != notmarking ) {
@@ -1457,11 +1462,16 @@ void KClient::writeMe()
         else                        // underline
             adjustedH = kglob->sysMets->borderHeight() + 1;
 
-        cursorRect.left = clientPaint->cursorPt.x * font->getFontW() 
+        int fontW = font->getFontW();
+        if (clientPaint->cursorDoubleWideLine) {
+            fontW *= 2;
+        }
+
+        cursorRect.left = clientPaint->cursorPt.x * fontW
                 - _xoffset;
         cursorRect.top = clientPaint->cursorPt.y * font->getFontSpacedH() 
                 + ( font->getFontH() - adjustedH );
-        cursorRect.right = cursorRect.left + font->getFontW();
+        cursorRect.right = cursorRect.left + fontW;
         cursorRect.bottom = cursorRect.top + adjustedH;
         ToggleCursor( hdc(), &cursorRect );
         cursor_displayed = 1;
@@ -1882,7 +1892,6 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin, bool blinkO
     BOOL anyRuledLines = FALSE;
     vt_char_attr_t prevEffect = uchar(-1);
     vt_cell_attr_t prevCellAttr = 0;
-    COLORREF textColor;
     HPEN underlinePen = (HPEN) CreatePen(PS_SOLID, 1, 0); /* Temporary */
     BOOL blink;
     bool overline = FALSE;

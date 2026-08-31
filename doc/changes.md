@@ -539,6 +539,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    underscore when it should have been the empty character / null.
  - Fixed SGR font attributes not turning off if the reverse video attribute is 
    set (K95 bug 843)
+ - Fixed cursor positioning on double-height/double-wide lines in K95G (K95 bug 844)
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
