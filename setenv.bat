@@ -609,6 +609,10 @@ set CKB_OS2_COMPATIBLE=no
 
 wcc386 . <nul >nul 2>&1
 if %errorlevel% == 0 goto :watcomc
+
+echo Compiler:
+cl 2>&1 | findstr /C:"Version"
+
 cl 2>&1 | findstr /C:"Version 19.4" > nul
 if %errorlevel% == 0 goto :vc144
 cl 2>&1 | findstr /C:"Version 19.3" > nul
@@ -945,6 +949,8 @@ REM requires Windows NT 3.5x or 4.0 (2000 and newer are unsupported)
 :unsupported
 echo.
 echo -- Unsupported compiler: %CK_COMPILER_NAME% --
+echo Compiler:
+cl 2>&1 | findstr /C:"Version"
 echo Kermit 95 has not been tested with this compiler and may not build.
 echo.
 goto :cvcend
