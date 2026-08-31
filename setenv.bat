@@ -613,6 +613,8 @@ if %errorlevel% == 0 goto :watcomc
 echo Compiler:
 cl 2>&1 | findstr /C:"Version"
 
+cl 2>&1 | findstr /C:"Version 19.5" > nul
+if %errorlevel% == 0 goto :vc145
 cl 2>&1 | findstr /C:"Version 19.4" > nul
 if %errorlevel% == 0 goto :vc144
 cl 2>&1 | findstr /C:"Version 19.3" > nul
@@ -940,6 +942,12 @@ goto :cvcdone
 :vc144
 set CK_COMPILER_NAME=Visual C++ 2022 17.10+ (14.4)
 set CKB_MSC_VER=194
+set CKF_SUPERLAT=unsupported
+goto :cvcdone
+
+:vc145
+set CK_COMPILER_NAME=Visual C++ 2026 18.00+ (14.5)
+set CKB_MSC_VER=195
 set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
