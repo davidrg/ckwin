@@ -12,6 +12,7 @@ typedef struct _K_CLIENT_PAINT {
     int             len;
     BOOL            cursorVisible;
     POINT           cursorPt;
+    BOOL            cursorDoubleWideLine;
 
     unsigned long   beg;            // for vertical scrollbar
     unsigned long   top;
