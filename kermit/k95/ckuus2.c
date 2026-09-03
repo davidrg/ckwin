@@ -8663,7 +8663,14 @@ static char *hxyterm[] = {
 "  to escape sequences from the other computer.  ENABLED by default.",
 #endif /* NT */
 " ",
-
+"SET TERMINAL VT-GRAPHICS-IN-UTF8-MODE { ON, OFF }",
+"  Normally in UTF-8 mode ISO-2022 character sets are unavailable unless the",
+"  host first switches the terminal to ISO-2022 mode. When this setting is ON",
+"  the DEC Special Graphics character set and any downloaded soft character",
+"  sets may be designated while in UTF-8 mode allowing compatibility with",
+"  older software unaware of UTF-8. All other character sets remain",
+"  unavailable while in UTF-8 mode.",
+" ",
 "SET TERMINAL VT-LANGUAGE <language>",
 "  Specifies the National Replacement Character Set (NRC) to be used when",
 "  NRC mode is activated.  The default is \"North American\".",

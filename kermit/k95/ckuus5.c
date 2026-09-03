@@ -5822,7 +5822,12 @@ shotcs(csl,csr) int csl, csr;
                 csl == TX_UNDEF ? "undefined" : txrinfo[csl]->keywd);
 
     if ( tt_utf8 ) {
-        printf("   Remote: UTF-8\n");
+        extern int vt_graphics_in_utf8;
+        if (vt_graphics_in_utf8) {
+            printf("   Remote: UTF-8 (DEC Special Graphics and soft character sets available)\n");
+        } else {
+            printf("   Remote: UTF-8\n");
+        }
     } else {
         printf("   Remote: %sG0: %s (%s)\n",
            GL == &G[0] ? "GL->" : GR == &G[0] ? "GR->" : "    ",

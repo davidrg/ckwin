@@ -514,6 +514,7 @@ char htab[MAXTERMCOL+2] = DEFTABS       /* Default tab settings */
 
 static int achar;                       /* Global - current character */
 int tt_utf8 = 0;                        /* Is UTF8 mode active ? */
+int vt_graphics_in_utf8 = 0;            /* Allow TX_DECSPEC in UTF8 mode? */
 
 struct _vtG G[4] = {
     TX_ASCII,   TX_ASCII,  cs94, cs94, TRUE,  TRUE, TRUE, NULL, NULL, NULL, NULL, TRUE,
@@ -11653,20 +11654,23 @@ int vt_macro_in() {
 /*
   The flow of characters from the communication device to the screen is:
 
-                           +---(debug)----+
-                           |              |
-  rdcomwrtscr --> cwrite --+--> vt100 --> wrtch
-                                       |              |
-                                       +--> vtescape--+
+                                            +---(debug)----+
+                                            |              |
+  rdcomwrtscr --> scriptwrtbuf --> cwrite --+--> vt100 --> wrtch
+                                            |              |
+                                            +--> vtescape--+
 
-  rdcomwrtscr() reads character from communication device via ttinc() and:
+  rdcomwrtscr() reads character from communication device via ttinc() and
+  passes all output characters to scriptwrtbuf()
+
+  scriptwrtbuf()
    - converts 8-bit controls to 7-bit ESC sequences
    - handles TELNET negotiations
    - handles SO/SI (NOTE: this prevents
    - handles charset translation
    - handles newline-mode and cr-display
    - handles connection loss
-   - passes all output chars to cwrite()
+   - Passes characters to cwrite()
 
   cwrite()
    - handles debug output, direct to wrtch().
@@ -12110,6 +12114,17 @@ scriptwrtbuf(unsigned short word)
 #ifdef CK_TRIGGER
     extern char * tt_trigger[], * triggerval;
 #endif /* CK_TRIGGER */
+    int utf8_active = tt_utf8;
+
+    /* If we're in UTF-8 mode, but the host has asked for a soft character set
+     * or the DEC Special Graphics character set, we'll break the rules and
+     * allow it. But only if the vt-graphics-in-utf8 setting is on. */
+    if (tt_utf8 && vt_graphics_in_utf8 && (
+           GNOW->designation == TX_DECSPEC
+        || GNOW->designation == TX_DRCS_1
+        || GNOW->designation == TX_DRCS_2 )) {
+        utf8_active = FALSE;
+    }
 
     /*debug(F111,"scriptwrtbuf","word",word);*/
 
@@ -12226,7 +12241,7 @@ pushed:
         f_popped = 0;
 
         /* Handle the UTF8 conversion if we are in that mode */
-        if ( tt_utf8 ) {
+        if ( utf8_active ) {
             USHORT * ucs2 = NULL;
             int rc = utf8_to_ucs2( (CHAR)(c & 0xFF), &ucs2 );
             if ( rc > 0 )
@@ -12274,9 +12289,9 @@ pushed:
         if ((ISVT220(tt_type_mode) ||
              ISANSI(tt_type_mode)) &&
              !xprint ) {                /* VT220 and above... */
-                cx = tt_utf8 ? c : c & cmask & pmask;   /* C1 check must be masked */
+                cx = utf8_active ? c : c & cmask & pmask;   /* C1 check must be masked */
 
-            if (!tt_utf8 && ( GR->c1 ) &&
+            if (!utf8_active && ( GR->c1 ) &&
                  (cx > 127) && (cx < 160) /* It's a C1 character */
                  ) {
                 f_pushed = 1;
@@ -12288,7 +12303,7 @@ pushed:
 
     if (c >= 0) {                       /* Got character with no error? */
         if ( !xprint ) {
-            if (!tt_utf8)
+            if (!utf8_active)
                c = c & cmask & pmask ;  /* Maybe strip 8th bit */
 #ifndef NOXFER
             if ( (IsConnectMode() && autodl) ||
@@ -12296,7 +12311,7 @@ pushed:
                 autodown( c ) ;                 /* Download? */
 #endif /* NOXFER */
             if (escstate == ES_NORMAL) {
-                if ( !tt_utf8 )
+                if ( !utf8_active )
                     c = rtolxlat(c);
             }
             else {
@@ -20122,6 +20137,10 @@ settermtype( int x, int prompts )
 		/* Assume UTF-8 remote by default. Second parameter is ignored for
 		 * TX_UTF8. */
 		setremcharset(TX_UTF8, -1);
+
+        /* And allow the DEC Special Graphics character set in UTF-8 mode like
+         * xterm does. */
+        vt_graphics_in_utf8 = TRUE;
 #endif /* CKOUNI */
 #endif /* UNICODE */
 
@@ -20217,6 +20236,10 @@ settermtype( int x, int prompts )
 				 * support then override all of the above with UTF-8. Second
 				 * parameter is ignored for TX_UTF8. */
 				setremcharset(TX_UTF8, -1);
+
+                /* And allow the DEC Special Graphics character set in UTF-8
+                 * mode like the modern linux console terminal does */
+                vt_graphics_in_utf8 = TRUE;
 #endif /* CKOUNI */
 #endif /* UNICODE */
 

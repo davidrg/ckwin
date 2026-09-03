@@ -777,6 +777,16 @@ horizontally</a>. Not supported in K95G.
 
 <p>
 
+<dt><tt>SET TERMINAL VT-GRAPHICS-IN-UTF8-MODE <i>{</i> ON, OFF <i>}</i></tt>
+<dd>Normally in UTF-8 mode ISO-2022 character sets are unavailable unless the
+    host first switches the terminal to ISO-2022 mode. When this setting is ON
+    the DEC Special Graphics character set and any downloaded soft character
+    sets may be designated while in UTF-8 mode allowing compatibility with
+    older software unaware of UTF-8. All other character sets remain
+    unavailable while in UTF-8 mode.
+
+<p>
+
 <dt><tt>SET TERMINAL VT-LANGUAGE <i>language</i></tt>
 <dd>Specifies the National Replacement Character Set (NRC) to be used when
 NRC mode is activated.  The default is "North American".

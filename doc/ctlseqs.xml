@@ -2698,16 +2698,29 @@ DECTSR		462
             <ref src="dap:170"/>
             <p>Select IBM Proprinter emulation mode</p>
         </section>
-        <section role="ctlseq" id="sdc" mnemonic="ROCS" ctlseq="ESC % @" title="Select default character set">
+        <section role="ctlseq" id="sdc" mnemonic="ROCS" ctlseq="ESC % @"
+                 title="Select default character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
             <termsupp first="xterm" series="xt" additional="putty wt"/>
             <ref src="dap:160"/>
             <p>Return to ISO-2022 mode</p>
         </section>
-        <section role="ctlseq" id="sutf8" ctlseq="ESC % G" title="Select UTF-8 character set">
+        <section role="ctlseq" id="sutf8" mnemonic="DOCS" ctlseq="ESC % G"
+                 title="Select UTF-8 character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-G.F93"/>
             <termsupp first="xterm" series="xt" additional="putty wt"/>
-            <p>Select UTF-8 character set with standard return</p>
+            <p>
+                Designate UTF-8 coding system with standard return. Switches
+                the terminal to UTF-8 mode where ISO-2022 rules do not apply. To
+                return to ISO-2022 mode, use <a href="#sdc">ROCS</a>.
+            </p>
+            <p>
+                If the VT-GRAPHICS-IN-UTF8-MODE setting is enabled, Kermit 95
+                will still allow the DEC Special Graphics and any downloaded
+                soft character sets to be used in UTF8 mode for compatibility
+                with legacy software that does not know how to switch the
+                terminal out of UTF-8 mode.
+            </p>
         </section>
         <section role="ctlseq" id="sg0" ctlseq="ESC ( C" mnemonic="SCS" title="Designate G0 Character Set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-lparen-C.F20"/>

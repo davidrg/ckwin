@@ -170,6 +170,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Proper Smooth Scroll is now supported in K95G.
  - New `CLEAR TERMINAL SCROLLBACK-ONLY` command. Clears the scrollback while
    preserving current terminal screen contents.
+ - New option to allow the DEC Special Graphics character set to be used while
+   in UTF-8 mode without having to use ROCS and DOCS to temporarily switch out
+   of UTF-8 mode. This is similar to xterms vt100Graphics resource, and PuTTYs
+   "Enable VT100 line drawing even in UTF-8 mode" setting. It is off by default
+   for all terminal types except k95 and linux.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
