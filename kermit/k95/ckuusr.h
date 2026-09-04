@@ -1354,6 +1354,7 @@ struct stringint {			/* String and (wide) integer */
 #define     TTS_SMOOTH   1
 #define     TTS_SMOOTH_2 2
 #define     TTS_SMOOTH_4 3
+#define   XYTVGUTF8 72  /* SET TERM VT-GRAPHICS-IN-UTF8 */
 #endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */

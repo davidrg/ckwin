@@ -537,6 +537,11 @@ DECTSR		462
                 uri="https://ecma-international.org/wp-content/uploads/ECMA-35_6th_edition_december_1994.pdf"
                 uri-type="pdf-page"
                 sort-order="20"/>
+        <refsrc name="iso-ir"
+                key="isoir"
+                uri="https://web.archive.org/web/20230512232742/https://itscj.ipsj.or.jp/english/vbcqpr00000004qn-att/ISO-IR.pdf"
+                uri-type="pdf-page"
+                sort-order="20"/>
         <refsrc name="dec-std-070"
                 key="070"
                 uri="https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf"
@@ -1765,7 +1770,7 @@ DECTSR		462
             <dd><a href="https://ecma-international.org/wp-content/uploads/ECMA-48_5th_edition_june_1991.pdf">
                 Standard ECMA-48: Control Functions for Coded Character Sets</a>
                 - both the PDF page number and document page number is given (e.g., p35/49—numbered page 35,
-                PDF page 49)</dd>
+                PDF page 49). Equivalent to ISO/IEC 6429</dd>
             <dt>dec-std-070</dt>
             <dd><a href="https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf">
                 DEC STD 070 Video Systems Reference Manual
@@ -1802,10 +1807,10 @@ DECTSR		462
         <p>Additional reference documentation that may be useful includes:</p>
         <ul>
             <li><a href="https://ecma-international.org/wp-content/uploads/ECMA-35_6th_edition_december_1994.pdf">
-                Standard ECMA-35: Character Code Structure and Extension Techniques
+                Standard ECMA-35: Character Code Structure and Extension Techniques. Equivalent to ISO/IEC 2022
             </a></li>
             <li><a href="https://ecma-international.org/wp-content/uploads/ECMA-43_3rd_edition_december_1991.pdf">
-                Standard ECMA-43: 8-Bit Coded Character Set Structure and Rules
+                Standard ECMA-43: 8-Bit Coded Character Set Structure and Rules. Equivalent to ISO/IEC 4873
             </a></li>
         </ul>
     </section>
@@ -2698,16 +2703,44 @@ DECTSR		462
             <ref src="dap:170"/>
             <p>Select IBM Proprinter emulation mode</p>
         </section>
-        <section role="ctlseq" id="sdc" mnemonic="ROCS" ctlseq="ESC % @" title="Select default character set">
-            <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
-            <termsupp first="xterm" series="xt" additional="putty wt"/>
-            <ref src="dap:160"/>
-            <p>Return to ISO-2022 mode</p>
-        </section>
-        <section role="ctlseq" id="sutf8" ctlseq="ESC % G" title="Select UTF-8 character set">
-            <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-G.F93"/>
-            <termsupp first="xterm" series="xt" additional="putty wt"/>
-            <p>Select UTF-8 character set with standard return</p>
+        <section role="ctlseq" id="docs" mnemonic="DOCS"
+                 title="Designate Other Coding System">
+            <ctlseq>
+                ESC % <param-char symbol="F"/>
+            </ctlseq>
+            <ref src="e35:51"/>
+            <p>
+                Switches the terminal to a different coding system identified
+                the specified final byte.
+            </p>
+            <section role="parameter" id="sdc" mnemonic="ROCS" ctlseq="@"
+                     title="ISO-2022">
+                <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
+                <termsupp first="xterm" series="xt" additional="putty wt"/>
+                <ref src="dap:160"/>
+                <ref src="e35:52"/>
+                <p>
+                Switches the terminal to ISO-2022 mode restoring any previous
+                ISO-2022 state.
+                </p>
+            </section>
+            <section role="parameter" id="sutf8" ctlseq="G" title="UTF-8">
+                <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-G.F93"/>
+                <ref src="isoir:20"/>
+                <termsupp first="xterm" series="xt" additional="putty wt"/>
+                <p>
+                    Switches the terminal to UTF-8 mode saving any existing
+                    ISO-2022 state and allowing a later return to ISO-2022 mode
+                    via <a href="#sdc">ROCS</a>.
+                </p>
+                <p>
+                    If the VT-GRAPHICS-IN-UTF8-MODE setting is enabled,
+                    Kermit 95 will still allow the DEC Special Graphics and any
+                    downloaded soft character sets to be used in UTF8 mode for
+                    compatibility with legacy software that does not know how to
+                    switch the terminal out of UTF-8 mode.
+                </p>
+            </section>
         </section>
         <section role="ctlseq" id="sg0" ctlseq="ESC ( C" mnemonic="SCS" title="Designate G0 Character Set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-lparen-C.F20"/>

@@ -1109,6 +1109,7 @@ static struct keytab trmtab[] = {
 #ifdef NT
     { "video-change",      XYTVCH,   0 },
 #endif /* NT */
+    { "vt-graphics-in-utf8-mode", XYTVGUTF8, 0 },
     { "vt-language",       XYTVTLNG, 0 },
     { "vt-nrc-mode",       XYTVTNRC, 0 },
 #endif /* OS2 */
@@ -4368,7 +4369,10 @@ setremcharset(x, z) int x, z;
 #ifdef CKOUNI
     else if (x == TX_UTF8) {
         tcs_transp = 0;
-        tt_utf8 = 1;            /* Turn it on if we are UTF8 */
+
+        /* If we're not already in UTF-8 mode, switch to UTF-8 mode saving
+         * ISO-2022 state along the way. */
+        if (!tt_utf8) docs_utf8();
         return;
     }
 #endif /* CKOUNI */
@@ -6374,6 +6378,12 @@ settrm() {
           return(success = 1);
       }
 #ifndef NOCSETS
+      case XYTVGUTF8: {     /* SET TERM VT-GRAPHICS-IN-UTF8-MODE */
+          extern int vt_graphics_in_utf8;
+          if ((x = seton(&vt_graphics_in_utf8)) < 0)
+              return(x);
+          return(success = 1);
+      }
       case XYTVTLNG:        /* SET TERM DEC-LANGUAGE */
         if ((y = cmkey(vtlangtab,nvtlangtab,"VT language",
                        IS97801(tt_type_mode)?"german":"north-american",

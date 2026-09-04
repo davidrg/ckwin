@@ -7713,6 +7713,16 @@ Of course host-based forms-filling applications can be written using
 UTF-8 rather than ISO 2022, but you probably won't find any, except maybe
 in new or experimental versions of Linux, or maybe in Plan 9.
 
+<p>
+
+You can optionally allow the use of the DEC Special Graphics character set and
+any downloaded soft character sets using the
+<tt>SET TERM VT-GRAHPICS-IN-UTF8-MODE ON</tt> command. This allows for
+compatibility with software running in a UTF-8 environment that has not been
+updated to use UTF-8 line drawing characters, or that relies on downloaded soft
+character sets. The setting is on by default for the linux terminal type
+(matching the linux console terminal), and also the k95 terminal type as this
+is the behaviour of most other terminals today.
 
 <h3>Switching Fonts</h3>
 

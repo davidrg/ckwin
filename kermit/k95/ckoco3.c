@@ -514,6 +514,7 @@ char htab[MAXTERMCOL+2] = DEFTABS       /* Default tab settings */
 
 static int achar;                       /* Global - current character */
 int tt_utf8 = 0;                        /* Is UTF8 mode active ? */
+int vt_graphics_in_utf8 = 0;            /* Allow TX_DECSPEC in UTF8 mode? */
 
 struct _vtG G[4] = {
     TX_ASCII,   TX_ASCII,  cs94, cs94, TRUE,  TRUE, TRUE, NULL, NULL, NULL, NULL, TRUE,
@@ -533,6 +534,15 @@ struct _vtG QsavedG[4],
             *QsavedGL = NULL,
             *QsavedGR = NULL,
             *QsavedSSGL = NULL;
+
+/* ISO/IEC 2022:1994 section 15.4.2 says that ISO-2022 state must be saved when
+ * switching to another coding system (UTF-8) and restored when switching back.
+ */
+static int utf8Saved = FALSE;
+static struct _vtG utf8SavedG[4];
+static struct _vtG *utf8SavedGL = NULL;
+static struct _vtG *utf8SavedGR = NULL;
+static struct _vtG *utf8SavedGNOW = NULL;
 
 bool     printregion    = FALSE; /* Print extent = full screen */
 bool     xprintff       = FALSE; /* Print formfeed */
@@ -11304,6 +11314,13 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     GNOW = GL = &G[0] ;
     GR = ISLINUX(tt_type_mode) ? &G[1] : ISVT220(tt_type_mode) ? &G[2] : &G[1];
     SSGL = NULL ;
+    if (tt_utf8) {
+        /* Refresh saved ISO-2022 state */
+        docs_utf8();
+    } else {
+        /* Currently in ISO-2022 mode, no saved state */
+        utf8Saved = FALSE;
+    }
     decnrcm = decnrcm_usr;
     setdecsasd(SASD_TERMINAL);
     if ( IS97801(tt_type_mode) )
@@ -11653,20 +11670,23 @@ int vt_macro_in() {
 /*
   The flow of characters from the communication device to the screen is:
 
-                           +---(debug)----+
-                           |              |
-  rdcomwrtscr --> cwrite --+--> vt100 --> wrtch
-                                       |              |
-                                       +--> vtescape--+
+                                            +---(debug)----+
+                                            |              |
+  rdcomwrtscr --> scriptwrtbuf --> cwrite --+--> vt100 --> wrtch
+                                            |              |
+                                            +--> vtescape--+
 
-  rdcomwrtscr() reads character from communication device via ttinc() and:
+  rdcomwrtscr() reads character from communication device via ttinc() and
+  passes all output characters to scriptwrtbuf()
+
+  scriptwrtbuf()
    - converts 8-bit controls to 7-bit ESC sequences
    - handles TELNET negotiations
    - handles SO/SI (NOTE: this prevents
    - handles charset translation
    - handles newline-mode and cr-display
    - handles connection loss
-   - passes all output chars to cwrite()
+   - Passes characters to cwrite()
 
   cwrite()
    - handles debug output, direct to wrtch().
@@ -12110,6 +12130,17 @@ scriptwrtbuf(unsigned short word)
 #ifdef CK_TRIGGER
     extern char * tt_trigger[], * triggerval;
 #endif /* CK_TRIGGER */
+    int utf8_active = tt_utf8;
+
+    /* If we're in UTF-8 mode, but the host has asked for a soft character set
+     * or the DEC Special Graphics character set, we'll break the rules and
+     * allow it. But only if the vt-graphics-in-utf8 setting is on. */
+    if (tt_utf8 && vt_graphics_in_utf8 && (
+           GNOW->designation == TX_DECSPEC
+        || GNOW->designation == TX_DRCS_1
+        || GNOW->designation == TX_DRCS_2 )) {
+        utf8_active = FALSE;
+    }
 
     /*debug(F111,"scriptwrtbuf","word",word);*/
 
@@ -12226,7 +12257,7 @@ pushed:
         f_popped = 0;
 
         /* Handle the UTF8 conversion if we are in that mode */
-        if ( tt_utf8 ) {
+        if ( utf8_active ) {
             USHORT * ucs2 = NULL;
             int rc = utf8_to_ucs2( (CHAR)(c & 0xFF), &ucs2 );
             if ( rc > 0 )
@@ -12274,9 +12305,9 @@ pushed:
         if ((ISVT220(tt_type_mode) ||
              ISANSI(tt_type_mode)) &&
              !xprint ) {                /* VT220 and above... */
-                cx = tt_utf8 ? c : c & cmask & pmask;   /* C1 check must be masked */
+                cx = utf8_active ? c : c & cmask & pmask;   /* C1 check must be masked */
 
-            if (!tt_utf8 && ( GR->c1 ) &&
+            if (!utf8_active && ( GR->c1 ) &&
                  (cx > 127) && (cx < 160) /* It's a C1 character */
                  ) {
                 f_pushed = 1;
@@ -12288,7 +12319,7 @@ pushed:
 
     if (c >= 0) {                       /* Got character with no error? */
         if ( !xprint ) {
-            if (!tt_utf8)
+            if (!utf8_active)
                c = c & cmask & pmask ;  /* Maybe strip 8th bit */
 #ifndef NOXFER
             if ( (IsConnectMode() && autodl) ||
@@ -12296,7 +12327,7 @@ pushed:
                 autodown( c ) ;                 /* Download? */
 #endif /* NOXFER */
             if (escstate == ES_NORMAL) {
-                if ( !tt_utf8 )
+                if ( !utf8_active )
                     c = rtolxlat(c);
             }
             else {
@@ -12886,6 +12917,34 @@ csetchar(enum charsetsize size, int cset) {
         }
     }
     return "?";
+}
+
+/* Save ISO-2022 state and switch to UTF-8 */
+void
+docs_utf8() {
+    int i;
+    for (i = 0; i < 4; i++) utf8SavedG[i] = G[i];
+    utf8SavedGL = GL;
+    utf8SavedGR = GR;
+    utf8SavedGNOW = GNOW;
+    utf8Saved = TRUE;
+    tt_utf8 = 1;
+}
+
+/* Return to ISO-2022 restoring any previously saved state */
+void
+docs_iso2022() {
+    if (utf8Saved) {
+        int i;
+        /* Restore ISO-2022 state to how it was when we switched
+         * to UTF-8 (ISO/IEC 2022:1994 section 15.4.2) */
+        for (i = 0; i < 4; i++) G[i] = utf8SavedG[i];
+        GL = utf8SavedGL;
+        GR = utf8SavedGR;
+        GNOW = utf8SavedGNOW;
+        utf8Saved = FALSE;
+    }
+    tt_utf8 = 0;
 }
 
 void
@@ -20122,6 +20181,10 @@ settermtype( int x, int prompts )
 		/* Assume UTF-8 remote by default. Second parameter is ignored for
 		 * TX_UTF8. */
 		setremcharset(TX_UTF8, -1);
+
+        /* And allow the DEC Special Graphics character set in UTF-8 mode like
+         * xterm does. */
+        vt_graphics_in_utf8 = TRUE;
 #endif /* CKOUNI */
 #endif /* UNICODE */
 
@@ -20217,6 +20280,10 @@ settermtype( int x, int prompts )
 				 * support then override all of the above with UTF-8. Second
 				 * parameter is ignored for TX_UTF8. */
 				setremcharset(TX_UTF8, -1);
+
+                /* And allow the DEC Special Graphics character set in UTF-8
+                 * mode like the modern linux console terminal does */
+                vt_graphics_in_utf8 = TRUE;
 #endif /* CKOUNI */
 #endif /* UNICODE */
 
@@ -20428,6 +20495,12 @@ settermtype( int x, int prompts )
     GNOW = GL = &G[0] ;
     GR = ISLINUX(tt_type_mode) ? &G[1] : ISVT220(tt_type_mode) ? &G[2] : &G[1];
     SSGL = NULL ;
+
+    if (tt_utf8) {
+        /* If we're in UTF-8 mode, save current ISO-2022 state so there is
+         * something to return to */
+        docs_utf8();
+    }
 
     if ( ISQNX(tt_type) ) {
         user_erasemode = TRUE;
@@ -29562,14 +29635,14 @@ vtescape( void )
                   }
               }
               break;
-        case '%':       /* Non-ISO 2022 character sets */
+        case '%':       /* DOCS - Non-ISO 2022 character sets */
               achar = (escnext<=esclast)?escbuffer[escnext++]:0;
               switch ( achar ) {
               case '@':         /* Return to ISO 2022 mode */
-                  tt_utf8 = 0;
+                  docs_iso2022();
                   break;
               case 'G':         /* UTF-8 with standard return */
-                  tt_utf8 = 1;
+                  docs_utf8();
                   break;
               }
               break;
