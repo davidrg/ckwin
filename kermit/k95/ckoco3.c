@@ -535,6 +535,15 @@ struct _vtG QsavedG[4],
             *QsavedGR = NULL,
             *QsavedSSGL = NULL;
 
+/* ISO/IEC 2022:1994 section 15.4.2 says that ISO-2022 state must be saved when
+ * switching to another coding system (UTF-8) and restored when switching back.
+ */
+static int utf8Saved = FALSE;
+static struct _vtG utf8SavedG[4];
+static struct _vtG *utf8SavedGL = NULL;
+static struct _vtG *utf8SavedGR = NULL;
+static struct _vtG *utf8SavedGNOW = NULL;
+
 bool     printregion    = FALSE; /* Print extent = full screen */
 bool     xprintff       = FALSE; /* Print formfeed */
 bool     turnonprinter  = FALSE; /* Time to turn on printer */
@@ -11305,6 +11314,13 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     GNOW = GL = &G[0] ;
     GR = ISLINUX(tt_type_mode) ? &G[1] : ISVT220(tt_type_mode) ? &G[2] : &G[1];
     SSGL = NULL ;
+    if (tt_utf8) {
+        /* Refresh saved ISO-2022 state */
+        docs_utf8();
+    } else {
+        /* Currently in ISO-2022 mode, no saved state */
+        utf8Saved = FALSE;
+    }
     decnrcm = decnrcm_usr;
     setdecsasd(SASD_TERMINAL);
     if ( IS97801(tt_type_mode) )
@@ -12901,6 +12917,34 @@ csetchar(enum charsetsize size, int cset) {
         }
     }
     return "?";
+}
+
+/* Save ISO-2022 state and switch to UTF-8 */
+void
+docs_utf8() {
+    int i;
+    for (i = 0; i < 4; i++) utf8SavedG[i] = G[i];
+    utf8SavedGL = GL;
+    utf8SavedGR = GR;
+    utf8SavedGNOW = GNOW;
+    utf8Saved = TRUE;
+    tt_utf8 = 1;
+}
+
+/* Return to ISO-2022 restoring any previously saved state */
+void
+docs_iso2022() {
+    if (utf8Saved) {
+        int i;
+        /* Restore ISO-2022 state to how it was when we switched
+         * to UTF-8 (ISO/IEC 2022:1994 section 15.4.2) */
+        for (i = 0; i < 4; i++) G[i] = utf8SavedG[i];
+        GL = utf8SavedGL;
+        GR = utf8SavedGR;
+        GNOW = utf8SavedGNOW;
+        utf8Saved = FALSE;
+    }
+    tt_utf8 = 0;
 }
 
 void
@@ -20451,6 +20495,12 @@ settermtype( int x, int prompts )
     GNOW = GL = &G[0] ;
     GR = ISLINUX(tt_type_mode) ? &G[1] : ISVT220(tt_type_mode) ? &G[2] : &G[1];
     SSGL = NULL ;
+
+    if (tt_utf8) {
+        /* If we're in UTF-8 mode, save current ISO-2022 state so there is
+         * something to return to */
+        docs_utf8();
+    }
 
     if ( ISQNX(tt_type) ) {
         user_erasemode = TRUE;
@@ -29585,14 +29635,14 @@ vtescape( void )
                   }
               }
               break;
-        case '%':       /* Non-ISO 2022 character sets */
+        case '%':       /* DOCS - Non-ISO 2022 character sets */
               achar = (escnext<=esclast)?escbuffer[escnext++]:0;
               switch ( achar ) {
               case '@':         /* Return to ISO 2022 mode */
-                  tt_utf8 = 0;
+                  docs_iso2022();
                   break;
               case 'G':         /* UTF-8 with standard return */
-                  tt_utf8 = 1;
+                  docs_utf8();
                   break;
               }
               break;

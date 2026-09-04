@@ -4369,7 +4369,10 @@ setremcharset(x, z) int x, z;
 #ifdef CKOUNI
     else if (x == TX_UTF8) {
         tcs_transp = 0;
-        tt_utf8 = 1;            /* Turn it on if we are UTF8 */
+
+        /* If we're not already in UTF-8 mode, switch to UTF-8 mode saving
+         * ISO-2022 state along the way. */
+        if (!tt_utf8) docs_utf8();
         return;
     }
 #endif /* CKOUNI */

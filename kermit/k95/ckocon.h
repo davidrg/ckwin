@@ -1941,6 +1941,9 @@ _PROTOTYP(unsigned char palette_max_index, (int));
 
 _PROTOTYP(USHORT vtattrib_to_int,(vtattrib));
 
+_PROTOTYP(void docs_iso2022, (void));
+_PROTOTYP(void docs_utf8, (void));
+
 typedef struct _hyperlink {
     int index;
     int type;
