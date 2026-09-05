@@ -258,7 +258,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b143">SCOANSI and AT386 emulation vs CSI 10/11/12 m</a>
 <li><tt>[+] (K)</tt> <a href="#b144">Bad characters in Registration name</a>
 <li><tt>[+] (K)</tt> <a href="#b145">SET MODEM commands in K95CUSTOM.INI are ignored by Dialer</a>
-<li><tt>[ ] (K)</tt> <a href="#b146">Completion does not work with directory names</a>
+<li><tt>[+] (K)</tt> <a href="#b146">Completion does not work with directory names</a>
 <li><tt>[ ] (K)</tt> <a href="#b147">Command-line editing doesn't use PC editing keys</a>
 <li><tt>[ ] (K)</tt> <a href="#b148">The DIRECTORY and TYPE commands are too slow</a>
 <li><tt>[+] (K)</tt> <a href="#b149">DIRECTORY command gives spurious error message</a>
@@ -3457,19 +3457,18 @@ misbehave</a></h3>
 
 <h3><a name="b323">323. How can I use SSH to make secure connections?</a></h3>
 
-You don't, at least not for now.  SSH uses
-encryption algorithms that fall under one or more of the following: are
-prorietary, patented, require licensing, and/or are regulated for export by
-the US Government.  They cannot be implemented in Kermit products without
-either significant increases in the price of the software, maintenance of
-separate versions for US and non-US markets, and halting distribution of
-source code (for C-Kermit), binaries, and patches via the Web.
-<p>
 Kermit 95 1.1.16-1.1.19 have added support for Kerberos, SSL/TLS, and other
-forms of security.  SSH might come later, after its patents expire.
+forms of security.
+<p>
+Kermit 95 1.1.21 added SSH support (based on OpenSSH), and Kermit 95 3.0 beta 2
+switched the SSH limplementation to libssh. As of version 3.0, SSH is only
+supported on Windows XP SP3 or newer.
 
 <h3><a name="b324">324. Why can't I pick any Windows font I want?</a></h3>
 
+As of K95 v2.0 you <em>can</em> pick any Windows font you want, but only in
+K95G. For the console version of K95, read on.
+<p>
 In Windows 95, the available font sizes are listed in the font-size dropdown
 list in the console window toolbar.  The repertoire of the font is the current
 console code page, such as CP437, CP850, CP862, etc.  See Item 5 for further
@@ -3480,8 +3479,7 @@ In Windows NT, you have a wider selection of fonts, including Unicode fonts
 still can't use just any font in the system; only the ones listed in the Fonts
 section of console window Properties dialog.  NT includes and excludes fonts
 from this list based on spacing, proportionality, height/width ratio, encoding,
-and other factors.  The GUI version of K95 will not suffer the same
-constraints.
+and other factors.
 
 <h3><a name="b325">325. Data loss on Meridian Technology SuperLAT connections</a></h3>
 
