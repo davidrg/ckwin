@@ -216,7 +216,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[*] (K,M)</tt> <a href="#b104">East European keyboard features might not work in Windows 95</a>
 <li><tt>[+] (K)</tt> <a href="#b105">VT emulation DCS/OSC/APC/etc bugs</a>
 <li><tt>[+] (K)</tt> <a href="#b106">Terminal color bugs in version 1.1.4</a>
-<li><tt>[ ] (K)</tt> <a href="#b107">VT220/320 downloadable fonts / soft character sets don't work</a>
+<li><tt>[+] (K)</tt> <a href="#b107">VT220/320 downloadable fonts / soft character sets don't work</a>
 <li><tt>[+] (K)</tt> <a href="#b108">SET TERMINAL CHARACTER-SET PORTUGUESE didn't work</a>
 <li><tt>[+] (K)</tt> <a href="#b109">VT emulation and SET TERMINAL CHARACTER-SET FINNISH (etc) bug</a>
 <li><tt>[+] (K)</tt> <a href="#b110">Autodownload versus SET TERM CHARACTER-SET</a>
@@ -2003,10 +2003,8 @@ from ANSI code pages to OEM code pages is performed using Win32 API calls.
 
 <h3><a name="b107">107. VT220/320 downloadable fonts / soft character sets don't work</a></h3>
 
-We never said they did.  Not only that, K95's terminal-to-host reports
-notify the host that they are not supported.  This feature can not be
-implemented in a Console program.  It is on the list for consideration in the
-full GUI version.
+Downloadable fonts / soft character sets are supported as of v3.0 beta 8 in
+K95G only.
 
 <h3><a name="b108">108. SET TERMINAL CHARACTER-SET PORTUGUESE didn't work</a></h3>
 
