@@ -16745,6 +16745,13 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q:Ps-=-6.1ED9"/>
                 <termsupp first="xterm" series="xt" additional="tt wt"/>
             </section>
+            <section role="parameter" id="decscusr-7" mnemonic=""
+                     title="Initial resources"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 7</ctlseq>
+                <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q:Ps-=-7.1EDA"/>
+                <termsupp first="xterm" series="xt" additional=""/>
+            </section>
         </section>
         <section role="ctlseq" groups="isvt220" id="decsca" mnemonic="DECSCA" title="Select Character Attributes">
             <ctlseq>CSI <param-single/> " q</ctlseq>
@@ -20721,6 +20728,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 21</ctlseq>
                 <ref src="vt52x:310"/>
                 <ref src="vws:101"/>
+                <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-2-1.1017"
                 <termsupp first="vws" series="vt" additional="vt520 putty wt"/>
                 <p>Sets the window title to the value supplied, up to 63
                     characters.</p>
