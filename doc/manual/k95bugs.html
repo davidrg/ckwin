@@ -2992,6 +2992,11 @@ The problem is fixed in version 1.1.16.
 
 <h3><a name="b259">259. HINT: How to disable scrollback</a></h3>
 
+To disable scrollback, use the <tt>NOSCROLL</tt> command or start Kermit 95 with
+the <tt>--noscroll</tt> command-line option. When disabled in this way it can't
+be re-enabled without restarting Kermit 95.
+
+<!--
 There is no way specify a scrollback buffer size of 0, or for that matter,
 less than 512 lines.  Thus, SET TERM SCROLLBACK 0 can't be used to disable
 scrollback.  Instead, assign \Kignore (or any other non-scrollback related
@@ -3002,6 +3007,7 @@ verb, etc) to the scrollback keys; for example:
   set key \4388 \Kignore ; Ignore the Home key
 </pre><p>
 and so on.
+-->
 
 <h3><a name="b260">260. Wildcard sends don't work right in XYZMODEM</a></h3>
 
