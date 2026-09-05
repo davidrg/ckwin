@@ -21718,6 +21718,16 @@ vtcsi(void)
                         case 20: /* LNM */
                             pn[2] = tt_crd && tnlm ? 1 : 2 ;
                             break;
+                        case 33: /* WYSTCURM */
+                            if (ISWY370(tt_type_mode)) {
+                                pn[2] = !tt_cursor_blink ? 1 : 2;
+                            }
+                            break;
+                        case 34: /* WYULCURM */
+                            if (ISWY370(tt_type_mode)) {
+                                pn[2] = tt_cursor == TTC_ULINE ? 1 : 2;
+                            }
+                            break;
                         default:
                             pn[2] = 0 ; /* unrecognized mode */
                             break;
@@ -23629,9 +23639,14 @@ vtcsi(void)
                             case 32:        /* WYCTRSAVM - Screen Saver off */
                                 break;
                             case 33:        /* WYSTCURM - Cursor steady */
+                                if (   ISWY370(tt_type_mode)
+                                    || ISWY60(tt_type_mode)) {
+                                    tt_cursor_blink = 0;
+                                }
                                 break;
                             case 34:        /* WYULCURM - Underline cursor */
-                                if ( ISWY370(tt_type_mode) ) {
+                                if (   ISWY370(tt_type_mode)
+                                    || ISWY60(tt_type_mode)) {
                                     tt_cursor = TTC_ULINE ;
                                     setcursormode();
                                 }
@@ -24263,9 +24278,14 @@ vtcsi(void)
                            case 32:        /* WYCTRSAVM - Screen Saver on */
                                break;
                            case 33:        /* WYSTCURM - Cursor blinking */
+                               if (   ISWY370(tt_type_mode)
+                                   || ISWY60(tt_type_mode)) {
+                                   tt_cursor_blink = 1;
+                               }
                                break;
                            case 34:        /* WYULCURM - Block cursor */
-                               if ( ISWY370(tt_type_mode) ) {
+                               if (   ISWY370(tt_type_mode)
+                                   || ISWY60(tt_type_mode)) {
                                    tt_cursor = TTC_BLOCK ;
                                    setcursormode() ;
                                }

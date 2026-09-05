@@ -117,7 +117,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <!ELEMENT termsupp EMPTY>
         <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print|wz|dtc|wrq) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt22z|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06|reflection2) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt22z|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06|reflection2|wy60) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -407,6 +407,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                - Add reference links to and any new escape sequences found in:
                    - The VT320 manual: EK-VT320-RM manual (if/when it turns up online)
                    - VT240, VT340 manuals
+                   - Wyse WY-60: https://bitsavers.org/pdf/wyse/WY-60/880261-01A_WY-60_Programmers_Guide_Jan87.pdf
                    - The Sun console (man wscons)
                    - The SCO console (?)
                         Documented here: http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html
@@ -617,11 +618,17 @@ DECTSR		462
                 uri-type="pdf-page"
                 sort-order="120"
                 badge="vt52"/>
+        <refsrc name="wy60"
+                key="wy60"
+                uri="https://bitsavers.org/pdf/wyse/WY-60/880261-01A_WY-60_Programmers_Guide_Jan87.pdf"
+                uri-type="pdf-page"
+                sort-order="130"
+                badge="wy60"/>
         <refsrc name="wy370"
                 key="wy370"
                 uri="https://bitsavers.org/pdf/wyse/WY-370/881133-02A_WY-370_Programmers_Guide_Jun90.pdf"
                 uri-type="pdf-page"
-                sort-order="130"
+                sort-order="131"
                 badge="wy370"/>
         <refsrc name="xterm"
                 key="xt"
@@ -9698,17 +9705,19 @@ DCS $ q 3 , } ST</pre>
                 <p badges="scoansi">Ignored</p>
             </section>
             <section role="parameter" mnemonic="WYSTCURM" id="sm-33"
-                     not-implemented="true" title="Cursor steady">
+                     title="Cursor steady" badges="wy370 wy60">
                 <ctlseq><param-single/> = 33</ctlseq>
                 <ref src="wy370:26"/>
-                <termsupp first="wy370" series="wyse" additional="tt"/>
+                <ref src="wy60:80"/>
+                <termsupp first="wy60" series="wyse" additional="wy370 tt"/>
                 <p badges="scoansi">Ignored</p>
             </section>
             <section role="parameter" mnemonic="WYULCURM" id="sm-34"
-                     groups="wy370" title="Underline cursor">
+                     badges="wy370 wy60" title="Underline cursor">
                 <ctlseq><param-single/> = 34</ctlseq>
                 <ref src="wy370:26"/>
-                <termsupp first="wy370" series="wyse" additional="tt putty"/>
+                <ref src="wy60:80"/>
+                <termsupp first="wy60" series="wyse" additional="wy370 tt putty"/>
                 <p>Changes to the underline cursor</p>
             </section>
             <section role="parameter" mnemonic="WYCLRM" id="sm-35"
@@ -11727,18 +11736,21 @@ DCS $ q 3 , } ST</pre>
                 <ref src="wy370:26"/>
                 <p badges="scoansi">Ignored</p>
             </section>
-            <section role="parameter" not-implemented="true" id="rm-33"
+            <section role="parameter" id="rm-33" badges="wy370 wy60"
                      mnemonic="WYSTCURM" title="Cursor blinking">
                 <ctlseq><param-single/> = 33</ctlseq>
                 <ref src="wy370:26"/>
-                <termsupp first="wy370" series="wyse" additional="tt"/>
+                <ref src="wy60:80"/>
+                <termsupp first="wy60" series="wyse" additional="wy370 tt"/>
                 <p badges="scoansi">Ignored</p>
             </section>
-            <section role="parameter" badges="wy370" mnemonic="WYULCURM" id="rm-34"
+            <section role="parameter" badges="wy370 wy60"
+                     mnemonic="WYULCURM" id="rm-34"
                      title="Block cursor">
                 <ctlseq><param-single/> = 34</ctlseq>
                 <ref src="wy370:26"/>
-                <termsupp first="wy370" series="wyse" additional="tt putty"/>
+                <ref src="wy60:80"/>
+                <termsupp first="wy60" series="wyse" additional="wy370 tt putty"/>
                 <p>Switch to block cursor</p>
             </section>
             <section role="parameter" not-implemented="true" id="rm-35"
@@ -15431,14 +15443,16 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt52x:263"/>
                     <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 tt wt"/>
                 </section>
-                <section role="parameter" not-implemented="true" id="rqm-33"
+                <section role="parameter" id="rqm-33" badges="wy370"
                          mnemonic="WYSTCURM" title="Cursor blinking">
                     <ctlseq><param-single/> = 33</ctlseq>
                     <ref src="wy370:26"/>
                     <termsupp first="wy370" series="wyse" additional="tt"/>
                     <p badges="scoansi">Ignored</p>
                 </section>
-                <section role="parameter" badges="wy370" mnemonic="WYULCURM" id="rqm-34"
+                <section role="parameter" badges="wy370"
+                         mnemonic="WYULCURM" id="rqm-34"
+                         not-implemented="true"
                          title="Block cursor">
                     <ctlseq><param-single/> = 34</ctlseq>
                     <ref src="wy370:26"/>
