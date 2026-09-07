@@ -12134,12 +12134,17 @@ scriptwrtbuf(unsigned short word)
 
     /* If we're in UTF-8 mode, but the host has asked for a soft character set
      * or the DEC Special Graphics character set, we'll break the rules and
-     * allow it. But only if the vt-graphics-in-utf8 setting is on. */
-    if (tt_utf8 && vt_graphics_in_utf8 && (
-           GNOW->designation == TX_DECSPEC
-        || GNOW->designation == TX_DRCS_1
-        || GNOW->designation == TX_DRCS_2 )) {
-        utf8_active = FALSE;
+     * allow it. But only if the vt-graphics-in-utf8 setting is on and its a
+     * 7-bit character. 8-bit characters are still assumed to be unicode. */
+    if (tt_utf8 && vt_graphics_in_utf8 && word <= 127) {
+        struct _vtG *GLATER = SSGL == NULL ? GL : SSGL;
+
+        if (   GLATER->designation == TX_DECSPEC
+            || GLATER->designation == TX_DRCS_1
+            || GLATER->designation == TX_DRCS_2 ) {
+
+            utf8_active = FALSE;
+        }
     }
 
     /*debug(F111,"scriptwrtbuf","word",word);*/
