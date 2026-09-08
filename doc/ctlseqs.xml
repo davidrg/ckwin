@@ -1476,8 +1476,7 @@ DECTSR		462
             <dt>VT220</dt>
             <dd>
                 Emulation is complete except for the VT100 confidence tests (not
-                applicable to a terminal emulator) and support for downloadable
-                soft-character sets.
+                applicable to a terminal emulator).
             </dd>
             <dt>DEC VT420</dt>
             <dd>
@@ -2745,7 +2744,9 @@ DECTSR		462
                     Kermit 95 will still allow the DEC Special Graphics and any
                     downloaded soft character sets to be used in UTF8 mode for
                     compatibility with legacy software that does not know how to
-                    switch the terminal out of UTF-8 mode.
+                    switch the terminal out of UTF-8 mode. This applies only to
+                    7-bit characters - all 8-bit characters are still assumed to
+                    be unicode.
                 </p>
             </section>
         </section>
