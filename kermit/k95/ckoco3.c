@@ -18936,19 +18936,8 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                   pu1recv || pu2recv || c1strrecv) {
             if (apclength < apcbuflen)    /* If in APC string, */
               apcbuf[apclength++] = ch;   /* deposit this character */
-            else {                        /* Buffer overrun */
-                apcrecv = FALSE ;         /* Discard what we got */
-                dcsrecv = FALSE ;
-                oscrecv = FALSE ;
-                oscterm = 0;
-                pmrecv  = FALSE ;
-                pu1recv = FALSE ;
-                pu2recv = FALSE ;
-                c1strrecv = FALSE ;
-                apclength = 0;            /* and go back to normal */
-                apcbuf[0] = 0;            /* Not pretty, but what else */
-                escstate = ES_NORMAL ;
-            }
+                                          /* Buffer overrun */
+                                          /* Discard until end of string */
         }
 #endif /* CK_APC */
         break;                          /* Absorb all other characters. */
