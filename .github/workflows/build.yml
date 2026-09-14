@@ -30,6 +30,8 @@ env:
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
   OPENSSL_ARM_VERSION: 3.5.8
+  # And Itanium is using a pretty old compiler which sometimes has issues
+  OPENSSL_IA64_VERSION: 3.5.7
   # OpenSSL 3.5.5 isn't compatible with MinGW
   OPENSSL_MINGW_VERSION: 3.5.8
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
@@ -889,7 +891,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Select configuration
         id: cfg
-        run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
+        run: echo "openssl=${{env.OPENSSL_IA64_VERSION}}" >> "$GITHUB_OUTPUT"
         shell: bash
 
       ##########################################################################
