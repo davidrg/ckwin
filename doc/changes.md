@@ -209,7 +209,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    the `SHOW VERSIONS` output going forward
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
- - Upgrade OpenSSL to 3.5.7
+ - Upgrade OpenSSL to 3.5.8 (3.5.7 for Itanium)
  - Drastic improvements in terminal throughput which helps when you accidentally
    cat a large file:
    - SSH connections are around 33x faster
