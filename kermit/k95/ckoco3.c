@@ -16833,6 +16833,14 @@ doosc( BOOL finished ) {
 #endif /* KUI */
                     }
                 }
+
+                /* Clean up the OSC-52 buffer */
+                if (osc52_buf != NULL) {
+                    free(osc52_buf);
+                    osc52_buf = NULL;
+                    osc52_len = 0;
+                }
+
                 break;
             }
             case 60: /* XTQALLOWED - query allowed features */
