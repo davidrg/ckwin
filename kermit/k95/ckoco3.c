@@ -15987,998 +15987,1084 @@ int colorspec(int *achar, int* apcnext) {
  */
 #define APC_TITLE_BUF_LEN 64
 
+#define OSC52_MAX_LEN 100000
+
+#define OSC_UNKNOWN -1
+#define OSC_IGNORED -2
+
+/* When finished is TRUE, it indicates that the end of the OSC string has been
+ * reached and no further data will arrive. When FALSE, a new byte has been
+ * deposited in apcbuf. */
 void
-doosc( void ) {
-	int num = 0;
-	int apcnext = 0;
+doosc( BOOL finished ) {
+    static char* osc52_buf = NULL;
+    static int osc52_len = 0;
+    static int num = OSC_UNKNOWN;
+    static int apcnext = 0;
 
     debug(F111, "OSC string", apcbuf, apclength);
 
     if ( debses )              /* If TERMINAL DEBUG ON */
-      return ;                 /* don't do anything    */
+        return ;                 /* don't do anything    */
 
-    /* The contents of apcbuf *should* be of the form:
-     *    <OSC> number ; string <ST>
-     * But for compatibility with aixterm and xterm, we also accept:
-     *    <OSC> number ; string <BEL>
-     * When the string is terminated with <BEL>, the oscterm variable will be
-	 * set to 7 (BEL).
-     *
-     * Additionally, there are a few exceptions to the above rules supposedly
-     * from dtterm:
-     *    <OSC> I string <ST/BEL>
-	 *    <OSC> l string <ST/BEL>
-	 *    <OSC> L string <ST/BEL>
-     * And one from the VT5xx series:
-     *    <OSC> 2 L ; string <ST/BEL>
-     */
-
-    achar = (apcnext<apclength)?apcbuf[apcnext++]:0;
-
-    /* Check the first character to deal with OSC sequences that start with a
-     * letter rather than a number. If the first character is a digit instead,
-	 * then read in the number to deal wioth the normal
-     * <OSC> number ; string <ST/BEL> form.*/
-    switch (achar) {
-      case 'I': /* dtterm - set icon to file */
-        /* We can't really do this sensibly as the string will almost certainly
-         * refer to some file on the remote host and we don't really have a
-         * reliable way of getting at that from here. */
-        debug(F111, "OSC I: dtterm - set icon file", apcbuf, apclength);
-		return;
-      case 'l': /* dtterm - set window title */
-		num = 0;  /* fall through to number */
-        achar = (apcnext<apclength)?apcbuf[apcnext++]:0;
-        debug(F111, "OSC l: dtterm - set window title", apcbuf, apclength);
-        if (achar != ';') {
-          debug(F111, "Expected 'OSC l ; <string>' sequence, got 'OSC l <string>'", apcbuf, apclength);
-          return;
+    if (num == OSC_UNKNOWN) {
+        /* Clean up any left over osc52 buffer before we start processing a new
+         * OSC */
+        if (osc52_buf != NULL) {
+            free(osc52_buf);
+            osc52_buf = NULL;
+            osc52_len = 0;
         }
-        break;
-      case 'L': /* dtterm - set icon label */
-        /* On Windows, the nearest equivalent would be setting the task bar
-         * label, something Windows doesn't let you do. The taskbar label will
-         * always be the window title.
+
+        /* If we're going to start processing early, we need to be sure we've
+         * got enough to read in the OSC number first. The only way we can be
+         * sure prior to the end of the OSC string is to look for a semicolon.
          */
-        debug(F111, "OSC L: dtterm - set icon label", apcbuf, apclength);
-        return;
-      default:  /* Look for a number */
-		if (!isdigit(achar)) {
-			debug(F111, "OSC string first character unrecongised", apcbuf, apclength);
-			return;
-		}
-        while (isdigit(achar)) {
-        	num = (num * 10) + achar - 48;
-            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-    	}
-    }
-
-    debug(F111, "OSC", "num", num);
-
-    if (num == 2 && achar == 'L') {
-        /* <OSC> 2 L ; name <ST>
-	     * DECSIN - Set Icon Name.
-         * Not currently supported as Win32 doesn't provide a way of setting the
-         * task bar button label to something other than the window title */
-        debug(F100, "DECSIN - Set Icon Title", 0, 0);
-        return;
-    } else if (achar != ';' && apcnext <= apclength) {
-        /* If there is more following the number, it should be separated from the
-         * number by a semicolon. If there is *only* the number (eg, OSC 104 ST)
-         * then don't require the semicolon. */
-        debug(F111, "Invalid OSC - expected ';' following number", apcbuf, apclength);
-        debug(F101, "Invalid OSC - achar", 0, achar);
-        return;
-    }
-
-    /* AIXTERM */
-    /*   0 - Set Icon and Title */
-    /*   1 - Set Icon only      */
-    /*   2 - Set Title only     */
-
-    switch ( num ) {
-    case 0:  /* dtterm, xterm - set icon name and window title */
-    case 2:  /* dtterm, xterm - Set Window Title */
-	case 21: /* VT520 - DECSWT - Set Window Title */
-    {
-        /* the rest of the apcbuffer is the Window Title */
-        char wtitle[APC_TITLE_BUF_LEN] ;
-        int i, j = 0 ;
-
-        /* Take 1 off to leave room for the NUL at the end */
-        for ( i=apcnext; i < APC_TITLE_BUF_LEN - 1 && i < apclength; i++ ) {
-            wtitle[j] = apcbuf[i] ;
-            j++;
+        if (!finished) {
+            int next = 0;
+            while (next < apclength && apcbuf[next] != ';') next++;
+            if (next == apclength)
+                return; /* Don't have enough yet */
         }
 
-        if ( i > 0 && apcbuf[i-1] == 0x07 ) {
-            /* XTERMs may append a Beep indicator at the end */
-            wtitle[j-1] = NUL ;
-            bleep(BP_NOTE);
-        }
-        else {
-            wtitle[j] = NUL ;
-		}
+        /* We now either have the full OSC string, or we've read up to the first
+         * semicolon. Figure out what number it is. */
 
-        debug(F110, "OSC 0/2/21: set window title", wtitle, 0);
+        /* The contents of apcbuf *should* be of the form:
+         *    <OSC> number ; string <ST>
+         * But for compatibility with aixterm and xterm, we also accept:
+         *    <OSC> number ; string <BEL>
+         * When the string is terminated with <BEL>, the oscterm variable will be
+	     * set to 7 (BEL).
+         *
+         * Additionally, there are a few exceptions to the above rules supposedly
+         * from dtterm:
+         *    <OSC> I string <ST/BEL>
+	     *    <OSC> l string <ST/BEL>
+	     *    <OSC> L string <ST/BEL>
+         * And one from the VT5xx series:
+         *    <OSC> 2 L ; string <ST/BEL>
+         */
 
-        if (!os2settitle(wtitle,1)) {
-            bleep(BP_FAIL);
-            debug(F110,"doosc os2settitle fails",wtitle,0);
+        achar = (apcnext<apclength)?apcbuf[apcnext++]:0;
+
+        /* Check the first character to deal with OSC sequences that start with a
+         * letter rather than a number. If the first character is a digit instead,
+         * then read in the number to deal wioth the normal
+         * <OSC> number ; string <ST/BEL> form.*/
+        switch (achar) {
+            case 'I': /* dtterm - set icon to file */
+                /* We can't really do this sensibly as the string will almost certainly
+                 * refer to some file on the remote host and we don't really have a
+                 * reliable way of getting at that from here. */
+                debug(F111, "OSC I: dtterm - set icon file", apcbuf, apclength);
+                num = OSC_IGNORED;
+                break;
+            case 'l': /* dtterm - set window title */
+                num = 0;
+                achar = (apcnext<apclength)?apcbuf[apcnext++]:0;
+                debug(F111, "OSC l: dtterm - set window title", apcbuf, apclength);
+                if (achar != ';') {
+                    debug(F111, "Expected 'OSC l ; <string>' sequence, got 'OSC l <string>'", apcbuf, apclength);
+                    num = OSC_IGNORED;
+                }
+                break;
+            case 'L': /* dtterm - set icon label */
+                /* On Windows, the nearest equivalent would be setting the task bar
+                 * label, something Windows doesn't let you do. The taskbar label will
+                 * always be the window title.
+                 */
+                debug(F111, "OSC L: dtterm - set icon label", apcbuf, apclength);
+                num = OSC_IGNORED;
+                break;
+            default:  /* Look for a number */
+                if (!isdigit(achar)) {
+                    debug(F111, "OSC string first character unrecongised", apcbuf, apclength);
+                    num = OSC_IGNORED;
+                    break;
+                }
+                num = 0;
+                while (isdigit(achar)) {
+                    num = (num * 10) + achar - 48;
+                    achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+                }
         }
-        break;
+
+        debug(F111, "OSC", "num", num);
+
+        if (num == 2 && achar == 'L') {
+            /* <OSC> 2 L ; name <ST>
+             * DECSIN - Set Icon Name.
+             * Not currently supported as Win32 doesn't provide a way of setting the
+             * task bar button label to something other than the window title */
+            debug(F100, "DECSIN - Set Icon Title", 0, 0);
+            num = OSC_IGNORED;
+        } else if (achar != ';' && apcnext <= apclength) {
+            /* If there is more following the number, it should be separated from the
+             * number by a semicolon. If there is *only* the number (eg, OSC 104 ST)
+             * then don't require the semicolon. */
+            debug(F111, "Invalid OSC - expected ';' following number", apcbuf, apclength);
+            debug(F101, "Invalid OSC - achar", 0, achar);
+            num = OSC_IGNORED;
+        }
     }
-    case 1: /* dtterm, xterm - set Icon Name */
-        debug(F111, "OSC 1: set icon name", apcbuf, apclength);
-		/* Not currently supported as Win32 doesn't provide a way of setting the
-         * task bar button label to something other than the window title.
-		 * Chances are effectively nothing happens here with xterm too for
-		 * similar reasons - most modern window manages probably don't support
-		 * it either.
-		 *
-		 * Tera Term overwrites the window title with this value.
-		 * iTerm2 uses this to set the tab name rather than window title
-		 */
-        break;
+
+    /* If we're doing an OSC-52, accumulate the payload in another buffer so we
+     * can exceed the size limit of apcbuf. While this is a bit of a pain, its
+     * preferable to just expanding apcbuf and increasing K95s resting memory
+     * consumption by 90KB. */
+    if (num == 52) {
+        /* Append the unprocessed data in apcbuf to the end of osc52_buf
+         * then reset apcbuf for the next data */
+        int copylen = apclength - apcnext;
+        int osc52_free = OSC52_MAX_LEN - osc52_len;
+        if (copylen > osc52_free) {
+            /* For now we'll just truncate instead of resizing the OSC-52
+             * buffer. There has to be /some/ limit to how much clipboard data
+             * we'll accept */
+            copylen = osc52_free;
+        }
+        if (copylen > 0) {
+            if (osc52_buf == NULL) {
+                osc52_buf = malloc(OSC52_MAX_LEN);
+            }
+            memcpy(osc52_buf + osc52_len, apcbuf + apcnext, copylen);
+            osc52_len += copylen;
+            apcnext = 0;
+            apclength = 0;
+        }
+    }
+
+    if (finished) {
+        /* The full OSC has been received. Time to finish up any processing; we
+         * won't get another chance. */
+
+        /* AIXTERM */
+        /*   0 - Set Icon and Title */
+        /*   1 - Set Icon only      */
+        /*   2 - Set Title only     */
+
+        /* No early returns! After the switch we have to reset this functions
+         * state. */
+        switch ( num ) {
+            case OSC_IGNORED:
+                break;
+            case 0:  /* dtterm, xterm - set icon name and window title */
+            case 2:  /* dtterm, xterm - Set Window Title */
+            case 21: /* VT520 - DECSWT - Set Window Title */
+            {
+                /* the rest of the apcbuffer is the Window Title */
+                char wtitle[APC_TITLE_BUF_LEN] ;
+                int i, j = 0 ;
+
+                /* Take 1 off to leave room for the NUL at the end */
+                for ( i=apcnext; i < APC_TITLE_BUF_LEN - 1 && i < apclength; i++ ) {
+                    wtitle[j] = apcbuf[i] ;
+                    j++;
+                }
+
+                if ( i > 0 && apcbuf[i-1] == 0x07 ) {
+                    /* XTERMs may append a Beep indicator at the end */
+                    wtitle[j-1] = NUL ;
+                    bleep(BP_NOTE);
+                }
+                else {
+                    wtitle[j] = NUL ;
+                }
+
+                debug(F110, "OSC 0/2/21: set window title", wtitle, 0);
+
+                if (!os2settitle(wtitle,1)) {
+                    bleep(BP_FAIL);
+                    debug(F110,"doosc os2settitle fails",wtitle,0);
+                }
+                break;
+            }
+            case 1: /* dtterm, xterm - set Icon Name */
+                debug(F111, "OSC 1: set icon name", apcbuf, apclength);
+                /* Not currently supported as Win32 doesn't provide a way of setting the
+                 * task bar button label to something other than the window title.
+                 * Chances are effectively nothing happens here with xterm too for
+                 * similar reasons - most modern window manages probably don't support
+                 * it either.
+                 *
+                 * Tera Term overwrites the window title with this value.
+                 * iTerm2 uses this to set the tab name rather than window title
+                 */
+                break;
 
 #ifdef KUI
-	case 5:   /* xterm : Change Special Color Number*/
-    case 4: { /* xterm : Change color number */
-        /* Text is: c ; spec ; c ; spec ; c ; spec ; ...
-         * Where c is:
-		 *   - An index into the current palette (case 4)
-         *   - One of the special color numbers added to the size of the
-         *     current palette (case 4)
-         *   - One of the special color numbers (case 5)
-         * And spec is the name of a color specification as per XParseColor.
-         * Any number of c;spec pairs can be supplied. If spec is a "?", then
-         * K95 responds with the escape sequence for setting that color pair.
-		 *
-         * Special Color Numbers (case 5):
-         *    0   - Bold color (boldattribute)
-         *    1   - Underline color (underlineattribute)
-         *    2   - Blink color (blinkattribute_
-         *    3   - Reverse color (reverseattribute)
-         *    4   - Italic color (italicattribute)
-         *
-		 * Special Color Numbers (case 4, example for the 256-color palette):
-         *    256   - Bold color (boldattribute))
-         *    257   - Underline color (underlineattribute)
-         *    258   - Blink color (blinkattribute)
-         *    259   - Reverse color (reverseattribute)
-         *    260   - Italic color (italicattribute)
- 	     */
+            case 5:   /* xterm : Change Special Color Number*/
+            case 4: { /* xterm : Change color number */
+                /* Text is: c ; spec ; c ; spec ; c ; spec ; ...
+                 * Where c is:
+                 *   - An index into the current palette (case 4)
+                 *   - One of the special color numbers added to the size of the
+                 *     current palette (case 4)
+                 *   - One of the special color numbers (case 5)
+                 * And spec is the name of a color specification as per XParseColor.
+                 * Any number of c;spec pairs can be supplied. If spec is a "?", then
+                 * K95 responds with the escape sequence for setting that color pair.
+                 *
+                 * Special Color Numbers (case 5):
+                 *    0   - Bold color (boldattribute)
+                 *    1   - Underline color (underlineattribute)
+                 *    2   - Blink color (blinkattribute_
+                 *    3   - Reverse color (reverseattribute)
+                 *    4   - Italic color (italicattribute)
+                 *
+                 * Special Color Numbers (case 4, example for the 256-color palette):
+                 *    256   - Bold color (boldattribute))
+                 *    257   - Underline color (underlineattribute)
+                 *    258   - Blink color (blinkattribute)
+                 *    259   - Reverse color (reverseattribute)
+                 *    260   - Italic color (italicattribute)
+                  */
 
-        ULONG *palette = NULL;
-        int palette_max = 15;
-        int idx = 0, pal_idx = 0;
-        char buf[256];
+                ULONG *palette = NULL;
+                int palette_max = 15;
+                int idx = 0, pal_idx = 0;
+                char buf[256];
 
-        debug(F111, "OSC 4/5: Change color number", apcbuf, apclength);
+                debug(F111, "OSC 4/5: Change color number", apcbuf, apclength);
 
-        palette_max = current_palette_max_index();
-        palette = current_palette_rgb_table();
+                palette_max = current_palette_max_index();
+                palette = current_palette_rgb_table();
 
-		debug(F101, "OSC 4/5 palette_max", 0, palette_max);
+                debug(F101, "OSC 4/5 palette_max", 0, palette_max);
 
-        if (num == 5) {  /* Change Special Color Number */
-			palette_max = 0;
-        }
-
-        /* Format of string is:
-    		c;spec;c;spec;c;spec...
-         */
-        do {
-			int idx = 0, color = 0;
-
-            /* Ready the next character! */
-    		achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-
-            if (!isdigit(achar)) {
-				debug(F111, "OSC 4/5: Expected digit", "apcnext", apcnext);
-            	debug(0, "OSC 4/5: Expected digit", "achar", achar);
-				break;
-        	}
-
-            /* Get c */
-			while (isdigit(achar)) {
-        		idx = (idx * 10) + achar - 48;
-            	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-    		}
-
-            debug(F111, "OSC 4/5: start pair", "idx", idx);
-
-            /* A few colors in the 0-15 range are swapped around in the K95
-             * palette for historic OS/2 reasons, so transalte the normal index
-             * to one that accounts for this. */
-            pal_idx = color_index_to_vio(idx);
-
-            if (achar != ';') {
-                debug(0, "OSC 4/5: Expected ';' following color index, got", "achar", achar);
-            }
-            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-
-			/* Get spec */
-			color = colorspec(&achar, &apcnext);
-
-			if (color == COLORSPEC_INVALID) continue;  /* Invalid colorspec */
-
-			if (color == COLORSPEC_QUERY) {  /* c;? */
-                /* Query */
-                debug(F100, "OSC 4/5: got query", 0, 0);
-
-				if (idx > palette_max || num == 5) {
-					int r, g, b, ok = TRUE;
-					cell_video_attr_t attr;
-
-					if (num != 5) idx -= palette_max + 1;
-                	switch(idx) {
-						/* These all set the foreground only. */
-                    	case 0: /* Bold attribute */
-							attr = boldattribute;
-							break;
-                   		case 1: /* underline attribute */
-							attr = underlineattribute;
-							break;
-                		case 2: /* blink attribute */
-							attr = blinkattribute;
-							break;
-    	                case 3: /* Reverse attribute */
-							attr = reverseattribute;
-							break;
-						case 4: /* Italic attribute */
-							attr = italicattribute;
-							break;
-					    default:
-							debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
-							ok = FALSE;
-					}
-
-					if (ok) {
-						int color = cell_video_attr_foreground_rgb(attr);
-						r =  color & 0x000000FF;
-                		g = (color & 0x0000FF00)>>8;
-                		b = (color & 0x00FF0000)>>16;
-						_snprintf(buf, sizeof(buf),
-	                          		oscterm == BEL ? "\033]%d;%d;rgb:%04x/%04x/%04x\07"
-                            	      	           : "\033]%d;%d;rgb:%04x/%04x/%04x\033\\",
-                       	      		num, idx,r * 257,g * 257,b * 257);
-						buf[255] = 0;
-						sendchars(buf, strlen(buf));
-					}
-				} else if (idx >= 0) {
-                	color = palette[pal_idx];
-					_snprintf(buf, sizeof(buf),
-                              oscterm == BEL ? "\033]%d;%d;rgb:%04x/%04x/%04x\07"
-                                             : "\033]%d;%d;rgb:%04x/%04x/%04x\033\\",
-                              num, idx,
-							  (palette[idx] & 0x000000FF) * 257,  /* Red */
-                              ((palette[idx] & 0x0000FF00)>>8) * 257, /* Green */
-                              ((palette[idx] & 0x00FF0000)>>16) * 257); /* Blue */
-					buf[255] = 0;
-					sendchars(buf, strlen(buf));
-                } else {
-                  	debug(F111, "OSC 4/5: query index out of range for current palette", "index", idx);
+                if (num == 5) {  /* Change Special Color Number */
+                    palette_max = 0;
                 }
-            } else if (idx > palette_max || num == 5) {  /* OSC 4/5: Set attribute color */
-				int r,g,b;
 
-				if (num != 5) idx -= palette_max + 1;
-                debug(F111, "OSC 4/5: Set special color", "idx", idx);
-                debug(F111, "OSC 4/5: Set special color", "color", color);
+                /* Format of string is:
+                    c;spec;c;spec;c;spec...
+                 */
+                do {
+                    int idx = 0, color = 0;
 
-				r =  color & 0x000000FF;
-                g = (color & 0x0000FF00)>>8;
-                b = (color & 0x00FF0000)>>16;
+                    /* Ready the next character! */
+                    achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
 
-                switch(idx) {
-					/* Aside from the reverse attribute, these all set the
-					 * foreground only. */
-                    case 0: /* Bold attribute */
-						boldattribute = cell_video_attr_set_fg_rgb(boldattribute, r, g, b);
-						break;
-                    case 1: /* underline attribute */
-						underlineattribute = cell_video_attr_set_fg_rgb(underlineattribute, r, g, b);
-						break;
-                	case 2: /* blink attribute */
-						blinkattribute = cell_video_attr_set_fg_rgb(blinkattribute, r, g, b);
-						break;
-                    case 3: /* Reverse attribute */
-						reverseattribute = cell_video_attr_set_bg_rgb(reverseattribute, r, g, b);
-						break;
-					case 4: /* Italic attribute */
-						italicattribute = cell_video_attr_set_fg_rgb(italicattribute, r, g, b);
-						break;
-				    default:
-						debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
-                }
-            } else { /* OSC 4: Set Palette Color */
-              	debug(F111, "OSC 4: set palette color", "index", idx);
-                debug(F111, "OSC 4: set palette color", "color", color);
-                palette[pal_idx] = color;
+                    if (!isdigit(achar)) {
+                        debug(F111, "OSC 4/5: Expected digit", "apcnext", apcnext);
+                        debug(0, "OSC 4/5: Expected digit", "achar", achar);
+                        break;
+                    }
+
+                    /* Get c */
+                    while (isdigit(achar)) {
+                        idx = (idx * 10) + achar - 48;
+                        achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+                    }
+
+                    debug(F111, "OSC 4/5: start pair", "idx", idx);
+
+                    /* A few colors in the 0-15 range are swapped around in the K95
+                     * palette for historic OS/2 reasons, so transalte the normal index
+                     * to one that accounts for this. */
+                    pal_idx = color_index_to_vio(idx);
+
+                    if (achar != ';') {
+                        debug(0, "OSC 4/5: Expected ';' following color index, got", "achar", achar);
+                    }
+                    achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+                    /* Get spec */
+                    color = colorspec(&achar, &apcnext);
+
+                    if (color == COLORSPEC_INVALID) continue;  /* Invalid colorspec */
+
+                    if (color == COLORSPEC_QUERY) {  /* c;? */
+                        /* Query */
+                        debug(F100, "OSC 4/5: got query", 0, 0);
+
+                        if (idx > palette_max || num == 5) {
+                            int r, g, b, ok = TRUE;
+                            cell_video_attr_t attr;
+
+                            if (num != 5) idx -= palette_max + 1;
+                            switch(idx) {
+                                /* These all set the foreground only. */
+                                case 0: /* Bold attribute */
+                                    attr = boldattribute;
+                                    break;
+                                case 1: /* underline attribute */
+                                    attr = underlineattribute;
+                                    break;
+                                case 2: /* blink attribute */
+                                    attr = blinkattribute;
+                                    break;
+                                case 3: /* Reverse attribute */
+                                    attr = reverseattribute;
+                                    break;
+                                case 4: /* Italic attribute */
+                                    attr = italicattribute;
+                                    break;
+                                default:
+                                    debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
+                                    ok = FALSE;
+                            }
+
+                            if (ok) {
+                                int color = cell_video_attr_foreground_rgb(attr);
+                                r =  color & 0x000000FF;
+                                g = (color & 0x0000FF00)>>8;
+                                b = (color & 0x00FF0000)>>16;
+                                _snprintf(buf, sizeof(buf),
+                                              oscterm == BEL ? "\033]%d;%d;rgb:%04x/%04x/%04x\07"
+                                                             : "\033]%d;%d;rgb:%04x/%04x/%04x\033\\",
+                                                 num, idx,r * 257,g * 257,b * 257);
+                                buf[255] = 0;
+                                sendchars(buf, strlen(buf));
+                            }
+                        } else if (idx >= 0) {
+                            color = palette[pal_idx];
+                            _snprintf(buf, sizeof(buf),
+                                      oscterm == BEL ? "\033]%d;%d;rgb:%04x/%04x/%04x\07"
+                                                     : "\033]%d;%d;rgb:%04x/%04x/%04x\033\\",
+                                      num, idx,
+                                      (palette[idx] & 0x000000FF) * 257,  /* Red */
+                                      ((palette[idx] & 0x0000FF00)>>8) * 257, /* Green */
+                                      ((palette[idx] & 0x00FF0000)>>16) * 257); /* Blue */
+                            buf[255] = 0;
+                            sendchars(buf, strlen(buf));
+                        } else {
+                            debug(F111, "OSC 4/5: query index out of range for current palette", "index", idx);
+                        }
+                    } else if (idx > palette_max || num == 5) {  /* OSC 4/5: Set attribute color */
+                        int r,g,b;
+
+                        if (num != 5) idx -= palette_max + 1;
+                        debug(F111, "OSC 4/5: Set special color", "idx", idx);
+                        debug(F111, "OSC 4/5: Set special color", "color", color);
+
+                        r =  color & 0x000000FF;
+                        g = (color & 0x0000FF00)>>8;
+                        b = (color & 0x00FF0000)>>16;
+
+                        switch(idx) {
+                            /* Aside from the reverse attribute, these all set the
+                             * foreground only. */
+                            case 0: /* Bold attribute */
+                                boldattribute = cell_video_attr_set_fg_rgb(boldattribute, r, g, b);
+                                break;
+                            case 1: /* underline attribute */
+                                underlineattribute = cell_video_attr_set_fg_rgb(underlineattribute, r, g, b);
+                                break;
+                            case 2: /* blink attribute */
+                                blinkattribute = cell_video_attr_set_fg_rgb(blinkattribute, r, g, b);
+                                break;
+                            case 3: /* Reverse attribute */
+                                reverseattribute = cell_video_attr_set_bg_rgb(reverseattribute, r, g, b);
+                                break;
+                            case 4: /* Italic attribute */
+                                italicattribute = cell_video_attr_set_fg_rgb(italicattribute, r, g, b);
+                                break;
+                            default:
+                                debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
+                        }
+                    } else { /* OSC 4: Set Palette Color */
+                        debug(F111, "OSC 4: set palette color", "index", idx);
+                        debug(F111, "OSC 4: set palette color", "color", color);
+                        palette[pal_idx] = color;
+                    }
+                } while (achar == ';');
+
+                break;
             }
-        } while (achar == ';');
-
-        break;
-    }
 #endif /* KUI */
 
-    case 6:
-    case 106: { /* xterm : Enable/disable special color number */
-		int idx = 0, f = 0;
+            case 6:
+            case 106: { /* xterm : Enable/disable special color number */
+                int idx = 0, f = 0;
 
-    	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+                achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
 
-        if (!isdigit(achar)) {
-			debug(F111, "OSC 6/106: Expected digit", "apcnext", apcnext);
-            debug(0, "OSC 6/106: Expected digit", "achar", achar);
-			break;
-        }
-
-        /* Get c */
-		while (isdigit(achar)) {
-        	idx = (idx * 10) + achar - 48;
-           	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-    	}
-
-        if (achar != ';') {
-			/* Xterm does nothing if no parameter is received after the special
-			 * color number */
-            debug(0, "OSC 6/106: Expected ';' following color index, got", "achar", achar);
-			break;
-        }
-        achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-
-        /* Get f */
-		while (isdigit(achar)) {
-        	f = (f * 10) + achar - 48;
-           	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-    	}
-
-		if (f < 0) {
-			debug(F100, "OSC 6/106: Missing second parameter", 0, 0);
-			break;
-		}
-
-		if (!f) debug(F111, "OSC 6/106: Enable true attribute", "idx", idx);
-		else debug(F111, "OSC 6/106: Disable true attribute", "idx", idx);
-
-		switch(idx) {
-            case 0: /* Bold attribute */
-				truebold = !f;
-				use_bold_attr = f;
-				break;
-            case 1: /* underline attribute */
-				trueunderline = !f;
-				break;
-            case 2: /* blink attribute */
-				trueblink = !f;
-				use_blink_attr = f;
-				break;
-            case 3: /* Reverse attribute */
-				truereverse = !f;
-				break;
-			case 4: /* Italic attribute */
-				trueitalic = !f;
-				break;
-			case 5: /* colorAttrMode */
-                /* When this is turned on via .Xresources, it causes attribute
-                 * colors to take priority over SGR colors (K95s default
-                 * behaviour), while when off SGR colors take priority.
-                 * When this is turned on or off via OSC-106, xterm(390) doesn't
-                 * obviously change its behaviour - possibly a bug. */
-                colorAttPriority = f;
-			default:
-				debug(F101, "OSC 6/106: Unknown or Unsupported Special Color Number", 0, idx);
-        }
-
-        break;
-    }
-    case 7: /* TODO - Misc - inform current working directory */
-		break; /* https://github.com/davidrg/ckwin/issues/413 */
-	case 8: /* TODO - misc - hyperlink */
-		break; /* https://github.com/davidrg/ckwin/issues/123 */
-    /* Set various special colors. Each one consumes one parameter, sets
-     *  the associated color, then if there are further parameters remaining in
-     *  the osc string it falls through to the next case */
-	case 10: /* set defaultattribute foreground */
-	case 11: /* set defaultattribute background */
-	case 12: /* set set text cursor color */
-	case 13: /* TODO: set pointer color foreground*/
-	case 14: /* TODO: set pointer color background */
-	case 15: /* TODO: set tektronix foreground */
-	case 16: /* TODO: set tektronix background */
-	case 17: /* set colorselect background */
-	case 18: /* TODO: set set tektronix cursor color */
-	case 19: { /* set colorselect foreground color */
-		int current_color_id = num - 1;
-		char buf[256];
-
-		debug(F101, "OSC 10-19: Change dynamic color, starting from:", 0, num);
-
-		/* Format of string is:
-    		c;spec;spec;spec...
-         */
-        do {
-			int color = 0;
-			current_color_id++;
-
-			if (current_color_id > 19) break; /* finished */
-
-            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-
-			/* Get spec */
-			color = colorspec(&achar, &apcnext);
-
-			if (color == COLORSPEC_INVALID) continue;  /* Invalid colorspec */
-
-			if (color == COLORSPEC_QUERY) {  /* ? */
-                /* Query */
-				int r, g, b, ok = TRUE;
-				cell_video_attr_t attr;
-
-				debug(F100, "OSC 10-19: got query", 0, 0);
-
-                switch(current_color_id) {
-                    case 10: /* defaultattribute foreground */
-						color = cell_video_attr_foreground_rgb(defaultattribute);
-						break;
-                   	case 11: /* defaultattribute background */
-						color = cell_video_attr_background_rgb(defaultattribute);
-						break;
-					case 12: /* colorcursor background */
-						color = cell_video_attr_background_rgb(colorcursor);
-						break;
-					case 17: /* colorselect background */
-						color = cell_video_attr_background_rgb(colorselect);
-		 				break;
-					case 19: /* colorselect foreground */
-						color = cell_video_attr_foreground_rgb(colorselect);
-						break;
-					default:
-						color = 0;
-						debug(F101, "OSC 10-19: Unknown or Unsupported Dynamic Color Number", 0, current_color_id);
-						ok = FALSE;
-				}
-
-				if (ok) {
-					r =  color & 0x000000FF;
-                	g = (color & 0x0000FF00)>>8;
-                	b = (color & 0x00FF0000)>>16;
-					_snprintf(buf, sizeof(buf),
-	                          	oscterm == BEL ? "\033]%d;rgb:%04x/%04x/%04x\07"
-                            	      	       : "\033]%d;rgb:%04x/%04x/%04x\033\\",
-                       	      	current_color_id, r * 257,g * 257,b * 257);
-					buf[255] = 0;
-					sendchars(buf, strlen(buf));
-				}
-            } else {  /* OSC 10-19: Set attribute color */
-				int r,g,b;
-
-                debug(F111, "OSC 10-19: Set dynamic color", "current_color_id", current_color_id);
-                debug(F111, "OSC 10-19: Set dynamic color", "color", color);
-
-				r =  color & 0x000000FF;
-                g = (color & 0x0000FF00)>>8;
-                b = (color & 0x00FF0000)>>16;
-
-                switch(current_color_id) {
-                    case 10: /* defaultattribute foreground */
-						defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
-						break;
-                   	case 11: /* defaultattribute background */
-						defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
-						break;
-					case 12: /* colorcursor background */
-						colorcursor = cell_video_attr_set_bg_rgb(colorcursor, r, g, b);
-		 				break;
-					case 17: /* colorselect background */
-						colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
-		 				break;
-					case 19: /* colorselect foreground */
-						colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
-						break;
-				    default:
-						debug(F101, "OSC 10-19: Unknown or Unsupported Special Color Number", 0, current_color_id);
+                if (!isdigit(achar)) {
+                    debug(F111, "OSC 6/106: Expected digit", "apcnext", apcnext);
+                    debug(0, "OSC 6/106: Expected digit", "achar", achar);
+                    break;
                 }
+
+                /* Get c */
+                while (isdigit(achar)) {
+                    idx = (idx * 10) + achar - 48;
+                    achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+                }
+
+                if (achar != ';') {
+                    /* Xterm does nothing if no parameter is received after the special
+                     * color number */
+                    debug(0, "OSC 6/106: Expected ';' following color index, got", "achar", achar);
+                    break;
+                }
+                achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+                /* Get f */
+                while (isdigit(achar)) {
+                    f = (f * 10) + achar - 48;
+                    achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+                }
+
+                if (f < 0) {
+                    debug(F100, "OSC 6/106: Missing second parameter", 0, 0);
+                    break;
+                }
+
+                if (!f) debug(F111, "OSC 6/106: Enable true attribute", "idx", idx);
+                else debug(F111, "OSC 6/106: Disable true attribute", "idx", idx);
+
+                switch(idx) {
+                    case 0: /* Bold attribute */
+                        truebold = !f;
+                        use_bold_attr = f;
+                        break;
+                    case 1: /* underline attribute */
+                        trueunderline = !f;
+                        break;
+                    case 2: /* blink attribute */
+                        trueblink = !f;
+                        use_blink_attr = f;
+                        break;
+                    case 3: /* Reverse attribute */
+                        truereverse = !f;
+                        break;
+                    case 4: /* Italic attribute */
+                        trueitalic = !f;
+                        break;
+                    case 5: /* colorAttrMode */
+                        /* When this is turned on via .Xresources, it causes attribute
+                         * colors to take priority over SGR colors (K95s default
+                         * behaviour), while when off SGR colors take priority.
+                         * When this is turned on or off via OSC-106, xterm(390) doesn't
+                         * obviously change its behaviour - possibly a bug. */
+                        colorAttPriority = f;
+                    default:
+                        debug(F101, "OSC 6/106: Unknown or Unsupported Special Color Number", 0, idx);
+                }
+
+                break;
             }
-        } while (achar == ';');
+            case 7: /* TODO - Misc - inform current working directory */
+                break; /* https://github.com/davidrg/ckwin/issues/413 */
+            case 8: /* TODO - misc - hyperlink */
+                break; /* https://github.com/davidrg/ckwin/issues/123 */
+                /* Set various special colors. Each one consumes one parameter, sets
+                 *  the associated color, then if there are further parameters remaining in
+                 *  the osc string it falls through to the next case */
+            case 10: /* set defaultattribute foreground */
+            case 11: /* set defaultattribute background */
+            case 12: /* set set text cursor color */
+            case 13: /* TODO: set pointer color foreground*/
+            case 14: /* TODO: set pointer color background */
+            case 15: /* TODO: set tektronix foreground */
+            case 16: /* TODO: set tektronix background */
+            case 17: /* set colorselect background */
+            case 18: /* TODO: set set tektronix cursor color */
+            case 19: { /* set colorselect foreground color */
+                int current_color_id = num - 1;
+                char buf[256];
 
-        break;
-		}
-	case 22: /* xterm - Change pointer shape */
-	case 46: /* xterm - change log file */
-	case 50: /* xterm - set font */
-	case 51: /* xterm - reserved for emacs shell */
-	case 52: { /* xterm - manipulate selection data */
-        /* Format is OSC 52 ; Pc ; Pd ST
-           Where Pc is some combination of zero or more of:
-                c, p, q, s, 0, 1, 2, 3, 4, 5, 6, 7
-           This specifies which of xterms various buffers we're manipulating.
-           Windows only has one (the clipboard), and its not worth emulating
-           the rest unless someone can point at an application that uses them.
-           So we just ignore this first parameter */
+                debug(F101, "OSC 10-19: Change dynamic color, starting from:", 0, num);
 
-        /* Don't use any of the code here as a good example for how to properly
-            do character set/unicode conversion in Kermit 95. I just copied
-            how it *appears* to be done elsewhere - I don't know if any of this
-            is truly correct -- DG */
+                /* Format of string is:
+                    c;spec;spec;spec...
+                 */
+                do {
+                    int color = 0;
+                    current_color_id++;
 
+                    if (current_color_id > 19) break; /* finished */
+
+                    achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+                    /* Get spec */
+                    color = colorspec(&achar, &apcnext);
+
+                    if (color == COLORSPEC_INVALID) continue;  /* Invalid colorspec */
+
+                    if (color == COLORSPEC_QUERY) {  /* ? */
+                        /* Query */
+                        int r, g, b, ok = TRUE;
+                        cell_video_attr_t attr;
+
+                        debug(F100, "OSC 10-19: got query", 0, 0);
+
+                        switch(current_color_id) {
+                            case 10: /* defaultattribute foreground */
+                                color = cell_video_attr_foreground_rgb(defaultattribute);
+                                break;
+                            case 11: /* defaultattribute background */
+                                color = cell_video_attr_background_rgb(defaultattribute);
+                                break;
+                            case 12: /* colorcursor background */
+                                color = cell_video_attr_background_rgb(colorcursor);
+                                break;
+                            case 17: /* colorselect background */
+                                color = cell_video_attr_background_rgb(colorselect);
+                                break;
+                            case 19: /* colorselect foreground */
+                                color = cell_video_attr_foreground_rgb(colorselect);
+                                break;
+                            default:
+                                color = 0;
+                                debug(F101, "OSC 10-19: Unknown or Unsupported Dynamic Color Number", 0, current_color_id);
+                                ok = FALSE;
+                        }
+
+                        if (ok) {
+                            r =  color & 0x000000FF;
+                            g = (color & 0x0000FF00)>>8;
+                            b = (color & 0x00FF0000)>>16;
+                            _snprintf(buf, sizeof(buf),
+                                          oscterm == BEL ? "\033]%d;rgb:%04x/%04x/%04x\07"
+                                                         : "\033]%d;rgb:%04x/%04x/%04x\033\\",
+                                             current_color_id, r * 257,g * 257,b * 257);
+                            buf[255] = 0;
+                            sendchars(buf, strlen(buf));
+                        }
+                    } else {  /* OSC 10-19: Set attribute color */
+                        int r,g,b;
+
+                        debug(F111, "OSC 10-19: Set dynamic color", "current_color_id", current_color_id);
+                        debug(F111, "OSC 10-19: Set dynamic color", "color", color);
+
+                        r =  color & 0x000000FF;
+                        g = (color & 0x0000FF00)>>8;
+                        b = (color & 0x00FF0000)>>16;
+
+                        switch(current_color_id) {
+                            case 10: /* defaultattribute foreground */
+                                defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
+                                break;
+                            case 11: /* defaultattribute background */
+                                defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
+                                break;
+                            case 12: /* colorcursor background */
+                                colorcursor = cell_video_attr_set_bg_rgb(colorcursor, r, g, b);
+                                break;
+                            case 17: /* colorselect background */
+                                colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
+                                break;
+                            case 19: /* colorselect foreground */
+                                colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
+                                break;
+                            default:
+                                debug(F101, "OSC 10-19: Unknown or Unsupported Special Color Number", 0, current_color_id);
+                        }
+                    }
+                } while (achar == ';');
+
+                break;
+            }
+            case 22: /* xterm - Change pointer shape */
+            case 46: /* xterm - change log file */
+            case 50: /* xterm - set font */
+            case 51: /* xterm - reserved for emacs shell */
+                break;
+            case 52: { /* xterm - manipulate selection data */
+                /* Format is OSC 52 ; Pc ; Pd ST
+                   Where Pc is some combination of zero or more of:
+                        c, p, q, s, 0, 1, 2, 3, 4, 5, 6, 7
+                   This specifies which of xterms various buffers we're manipulating.
+                   Windows only has one (the clipboard), and its not worth emulating
+                   the rest unless someone can point at an application that uses them.
+                   So we just ignore this first parameter */
+
+                /* Don't use any of the code here as a good example for how to properly
+                    do character set/unicode conversion in Kermit 95. I just copied
+                    how it *appears* to be done elsewhere - I don't know if any of this
+                    is truly correct -- DG */
+
+                int osc52next = 0;
 #ifdef NT
-        int use_unicode = (ck_isunicode() && !isWin95());
+                int use_unicode = (ck_isunicode() && !isWin95());
 #endif /* NT */
 
-        achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-        while (strchr("cps01234567", achar)) {
-            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-        }
+                achar = (osc52next<=osc52_len)?osc52_buf[osc52next++]:0;
+                while (strchr("cps01234567", achar)) {
+                    achar = (osc52next<=osc52_len)?osc52_buf[osc52next++]:0;
+                }
 
-        if (achar == ';') {
-            /* Pd is either '?' to query the current clipboard contents, or
-             * it contains base64 encoded data to set the clipboard to.
-             */
-            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+                if (achar == ';') {
+                    /* Pd is either '?' to query the current clipboard contents, or
+                     * it contains base64 encoded data to set the clipboard to.
+                     */
+                    achar = (osc52next<=osc52_len)?osc52_buf[osc52next++]:0;
 
-            if (achar == '?' && apcnext == apclength) {
+                    if (achar == '?' && osc52next == osc52_len) {
 
-                /* Its a query */
-                if (tt_clipboard_read >= CLIPBOARD_ALLOW) {
-                    char* clipboardData = 0;
-                    int clipboardDataLen = 0;
+                        /* Its a query */
+                        if (tt_clipboard_read >= CLIPBOARD_ALLOW) {
+                            char* clipboardData = 0;
+                            int clipboardDataLen = 0;
 
 #ifdef KUI
 #ifdef CK_SHELL_NOTIFY
-                    if (tt_clipboard_read == CLIPBOARD_ALLOW_NOTIFY) {
-                        KuiShowNotification(
-                            KUI_NOTIF_I_INFO,
-                            "Clipboard Read",
-                            "Clipboard read by remote host allowed");
-                    }
+                            if (tt_clipboard_read == CLIPBOARD_ALLOW_NOTIFY) {
+                                KuiShowNotification(
+                                    KUI_NOTIF_I_INFO,
+                                    "Clipboard Read",
+                                    "Clipboard read by remote host allowed");
+                            }
 #endif /* CK_SHELL_NOTIFY */
 #endif /* KUI */
 
-                    /* Get data from the clipboard. On Windows NT, this will
-                     * be Unicode text and will need converting to the remote
-                     * character set. On Windows 9x and OS/2, we just send the
-                     * clipboard text as-is after base64-encoding*/
+                            /* Get data from the clipboard. On Windows NT, this will
+                             * be Unicode text and will need converting to the remote
+                             * character set. On Windows 9x and OS/2, we just send the
+                             * clipboard text as-is after base64-encoding*/
 #ifdef NT
-                    if (use_unicode) {
-                        USHORT * pUClipbrdData = GetUnicodeClipboardContent();
+                            if (use_unicode) {
+                                USHORT * pUClipbrdData = GetUnicodeClipboardContent();
 
-                        /* Convert from UCS-2 to whatever the remote charset is */
-                        if ( pUClipbrdData ) {
-                            int i=0, j=0, len = 0, nbytes;
-                            unsigned char * bytes;
+                                /* Convert from UCS-2 to whatever the remote charset is */
+                                if ( pUClipbrdData ) {
+                                    int i=0, j=0, len = 0, nbytes;
+                                    unsigned char * bytes;
 
-                            len = wcslen(pUClipbrdData);
-                            debug(F111,"Clipboard","pUClipbrdData length",len);
+                                    len = wcslen(pUClipbrdData);
+                                    debug(F111,"Clipboard","pUClipbrdData length",len);
 
-                            nbytes = utorxlat(pUClipbrdData[0], &bytes);
-                            if ( nbytes > 0 )
-                                clipboardDataLen = nbytes;
-                            for ( i=1; i<len; i++ ) {
-                                if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
-                                    nbytes = utorxlat(pUClipbrdData[i], &bytes);
+                                    nbytes = utorxlat(pUClipbrdData[0], &bytes);
                                     if ( nbytes > 0 )
-                                        clipboardDataLen += nbytes;
-                                }
-                            }
+                                        clipboardDataLen = nbytes;
+                                    for ( i=1; i<len; i++ ) {
+                                        if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
+                                            nbytes = utorxlat(pUClipbrdData[i], &bytes);
+                                            if ( nbytes > 0 )
+                                                clipboardDataLen += nbytes;
+                                        }
+                                    }
 
-                            clipboardData = (unsigned char *) malloc(clipboardDataLen+1);
-                            memset(clipboardData, 0, clipboardDataLen+1);
+                                    clipboardData = (unsigned char *) malloc(clipboardDataLen+1);
+                                    memset(clipboardData, 0, clipboardDataLen+1);
 
-                            nbytes = utorxlat(pUClipbrdData[0], &bytes);
-                            while ( nbytes-- > 0 )
-                                clipboardData[j++] = *bytes++;
-                            for ( i=1; i<len; i++ ) {
-                                if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
-                                    nbytes = utorxlat(pUClipbrdData[i], &bytes);
+                                    nbytes = utorxlat(pUClipbrdData[0], &bytes);
                                     while ( nbytes-- > 0 )
                                         clipboardData[j++] = *bytes++;
+                                    for ( i=1; i<len; i++ ) {
+                                        if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
+                                            nbytes = utorxlat(pUClipbrdData[i], &bytes);
+                                            while ( nbytes-- > 0 )
+                                                clipboardData[j++] = *bytes++;
+                                        }
+                                    }
+
+                                    free( pUClipbrdData ) ;
                                 }
-                            }
-
-                            free( pUClipbrdData ) ;
-                        }
-                    } else {
+                            } else {
 #endif /* NT */
-                        clipboardData = GetClipboardContent();
-                        clipboardDataLen = strlen(clipboardData);
+                                clipboardData = GetClipboardContent();
+                                clipboardDataLen = strlen(clipboardData);
 #ifdef NT
-                    }
+                            }
 #endif /* NT */
 
-                    if (clipboardData != NULL) {
-                        /* Allocate memory for the maximum length the base64
-                         * encoded data could be */
-                        int rc;
-                        int encodedLen = 1 + (int)(ceil(clipboardDataLen/3.0)*4);
-                        char* encodedData = malloc(encodedLen);
-                        memset(encodedData, 0, encodedLen);
+                            if (clipboardData != NULL) {
+                                /* Allocate memory for the maximum length the base64
+                                 * encoded data could be */
+                                int rc;
+                                int encodedLen = 1 + (int)(ceil(clipboardDataLen/3.0)*4);
+                                char* encodedData = malloc(encodedLen);
+                                memset(encodedData, 0, encodedLen);
 
-                        /* Encode it... */
-                        if ((rc = b8tob64(clipboardData, -1, encodedData, encodedLen)) >= 0) {
-                            /* Send it in the form: OSC 52 ;; data ST */
-                            sendchars("\033]52;;", 6);
-                            sendchars(encodedData, rc);
-                            sendchars("\033\\", 2);
-                        } else {
-                            debug(F111, "base64 encode of clipboard data failed", "rc", rc);
-                        }
-
-                        free(clipboardData);
-                        free(encodedData);
-                    }
-                }
-#ifdef KUI
-#ifdef CK_SHELL_NOTIFY
-                else if (tt_clipboard_read == CLIPBOARD_DENY_NOTIFY) {
-                    KuiShowNotification(
-                        KUI_NOTIF_I_WARN,
-                        "Clipboard Read",
-                        "Clipboard read by remote host denied. You can enable "
-                        "clipboard access (or disable this "
-                        "notification) with the SET TERM CLIPBOARD-ACCESS "
-                        "command");
-                }
-#endif /* CK_SHELL_NOTIFY */
-#endif /* KUI */
-            } else {
-                /* Its a clipboard write */
-                if (tt_clipboard_write >= CLIPBOARD_ALLOW) {
-                    /* +1 for null termination, +1 because apcnext is already
-                     * pointing one character in */
-                    int cliplen = (apclength - apcnext) + 2;
-                    char* encoded = malloc(cliplen);
-                    char* decoded = malloc(cliplen);
-                    int rc;
-					memset( encoded, 0, cliplen ) ;
-				    memset( decoded, 0, cliplen ) ;
-
-#ifdef KUI
-#ifdef CK_SHELL_NOTIFY
-                    if (tt_clipboard_write == CLIPBOARD_ALLOW_NOTIFY) {
-                        KuiShowNotification(
-                            KUI_NOTIF_I_INFO,
-                            "Clipboard Write",
-                            "Clipboard write by remote host allowed");
-                    }
-#endif /* CK_SHELL_NOTIFY */
-#endif /* KUI */
-
-                    strncpy(encoded, apcbuf+apcnext - 1, cliplen);
-
-					/* Reset the base64 decoder */
-					b64tob8(NULL, 0, NULL, 0);
-
-                    /* Base64 decode the clipboard data and set it */
-                    rc = b64tob8(encoded, cliplen, decoded, cliplen);
-
-					/* Reset the base64 decoder some more */
-					b64tob8(NULL, 0, NULL, 0);
-
-                    if (rc > 0) {
-                        /* Worst case: each UTF-8 character becomes one UCS-2
-                         * character. */
-                        USHORT* ucs2_string = malloc(sizeof(USHORT) * cliplen);
-                        memset(ucs2_string, 0, sizeof(USHORT) * cliplen);
-
-                        /* Ok, now we have a slight difficulty: the new data for
-                         * the clipboard has bypassed all normal characterset
-                         * translation/unicode conversion because it was hidden
-                         * away in base64 form. So now we've got to do all that
-                         * work here */
-
-                        /* The code here all works with UCS-2 because,
-                         * unfortunately, thats all Kermit 95 supports at
-                         * present. At some point we need a utf8-to-utf16
-                         * conversion function so we can support more than just
-                         * the basic multilingual plane, but thats a big job. */
-
-                        if (tt_utf8) {
-                            /* We're in UTF-8 mode - everything else the host is
-                             * sending us is assumed to be in UTF-8, so the new
-                             * text for the clipboard probably is too. So we
-                             * now need to convert it to UCS-2 to hand off to
-                             * Windows. */
-
-                            int utf8_idx, ucs2_idx = 0, rc;
-                            USHORT *us = NULL;
-
-                            for (utf8_idx = 0; decoded[utf8_idx] != '\0'; utf8_idx++) {
-                                rc = utf8_to_ucs2(decoded[utf8_idx], &us);
-                                if (rc == 0) {
-                                    /* UTF-8 sequence decoded, we have a UCS-2
-                                       character */
-                                    ucs2_string[ucs2_idx] = *us;
-                                    ucs2_idx++;
-                                } else if (rc < 0) {
-                                    /* Decoding failed. Output U+FFFD */
-                                    ucs2_string[ucs2_idx] = 0xfffd;
-                                    ucs2_idx++;
+                                /* Encode it... */
+                                if ((rc = b8tob64(clipboardData, -1, encodedData, encodedLen)) >= 0) {
+                                    /* Send it in the form: OSC 52 ;; data ST */
+                                    sendchars("\033]52;;", 6);
+                                    sendchars(encodedData, rc);
+                                    sendchars("\033\\", 2);
+                                } else {
+                                    debug(F111, "base64 encode of clipboard data failed", "rc", rc);
                                 }
-                                /* Else more UTF-8 bytes are needed to assemble
-                                 * the UCS-2 character. Continue. */
-                            }
-                        } else {
-                            int i;
-                            /* Remote is some 7-bit or 8-bit character set.
-                             * Windows wants UCS-2, so we need to convert it. */
 
-                            for (i = 0; decoded[i] != '\0'; i++) {
-                                if (decoded[i] >= 128)
-                                    ucs2_string[i] = (*xl_u[tcsr])(decoded[i]);
-                                else
-                                    ucs2_string[i] = decoded[i];
-                                    /* Some other code passes it through TX_IBMC0GRPH
-                                        if its not a control character we act on */
+                                free(clipboardData);
+                                free(encodedData);
                             }
                         }
-
-#ifdef NT
-                        if (use_unicode) {
-                            rc = CopyToClipboard((BYTE*)ucs2_string,
-                                                 sizeof(USHORT) * cliplen);
-                        } else
-#endif /* NT */
-                        {
-                            /* We've now got the clipboard data as a UCS-2
-                             * string, but we're on Windows 9x or OS/2 (or NT
-                             * with Unicode support turned off), so we need to
-                             * now convert it back from UCS-2 to whatever the
-                             * local character set is */
-                            int i;
-
-                            memset(decoded, 0, cliplen);
-                            for (i = 0; ucs2_string[i] != '\0'; i++) {
-                                decoded[i] = ucs2_string[i] >= 128 ?
-                                    (*xl_tx[tcsl])(ucs2_string[i]) : ucs2_string[i];
-                            }
-
-                            rc = CopyToClipboard(decoded, cliplen);
-                        }
-                    } else {
-                        CopyToClipboard("", 1);
-                    }
-
-                    free(encoded);
-                    free(decoded);
-                }
 #ifdef KUI
 #ifdef CK_SHELL_NOTIFY
-                else if (tt_clipboard_write == CLIPBOARD_DENY_NOTIFY) {
-                    KuiShowNotification(
-                            KUI_NOTIF_I_WARN,
-                            "Clipboard Write",
-                            "Clipboard write by remote host denied. You can "
-                            "enable clipboard access (or disable this "
-                            "notification) with the SET TERM CLIPBOARD-ACCESS "
-                            "command");
-                }
+                        else if (tt_clipboard_read == CLIPBOARD_DENY_NOTIFY) {
+                            KuiShowNotification(
+                                KUI_NOTIF_I_WARN,
+                                "Clipboard Read",
+                                "Clipboard read by remote host denied. You can enable "
+                                "clipboard access (or disable this "
+                                "notification) with the SET TERM CLIPBOARD-ACCESS "
+                                "command");
+                        }
 #endif /* CK_SHELL_NOTIFY */
 #endif /* KUI */
+                    } else {
+                        /* Its a clipboard write */
+                        if (tt_clipboard_write >= CLIPBOARD_ALLOW) {
+                            /* +1 for null termination, +1 because osc52next is already
+                             * pointing one character in */
+                            int cliplen = (osc52_len - osc52next) + 2;
+                            char* encoded = malloc(cliplen);
+                            char* decoded = malloc(cliplen);
+                            int rc;
+                            memset( encoded, 0, cliplen ) ;
+                            memset( decoded, 0, cliplen ) ;
+
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+                            if (tt_clipboard_write == CLIPBOARD_ALLOW_NOTIFY) {
+                                KuiShowNotification(
+                                    KUI_NOTIF_I_INFO,
+                                    "Clipboard Write",
+                                    "Clipboard write by remote host allowed");
+                            }
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+
+                            strncpy(encoded, osc52_buf+osc52next - 1, cliplen);
+
+                            /* Reset the base64 decoder */
+                            b64tob8(NULL, 0, NULL, 0);
+
+                            /* Base64 decode the clipboard data and set it */
+                            rc = b64tob8(encoded, cliplen, decoded, cliplen);
+
+                            /* Reset the base64 decoder some more */
+                            b64tob8(NULL, 0, NULL, 0);
+
+                            if (rc > 0) {
+                                /* Worst case: each UTF-8 character becomes one UCS-2
+                                 * character. */
+                                USHORT* ucs2_string = malloc(sizeof(USHORT) * cliplen);
+                                memset(ucs2_string, 0, sizeof(USHORT) * cliplen);
+
+                                /* Ok, now we have a slight difficulty: the new data for
+                                 * the clipboard has bypassed all normal characterset
+                                 * translation/unicode conversion because it was hidden
+                                 * away in base64 form. So now we've got to do all that
+                                 * work here */
+
+                                /* The code here all works with UCS-2 because,
+                                 * unfortunately, thats all Kermit 95 supports at
+                                 * present. At some point we need a utf8-to-utf16
+                                 * conversion function so we can support more than just
+                                 * the basic multilingual plane, but thats a big job. */
+
+                                if (tt_utf8) {
+                                    /* We're in UTF-8 mode - everything else the host is
+                                     * sending us is assumed to be in UTF-8, so the new
+                                     * text for the clipboard probably is too. So we
+                                     * now need to convert it to UCS-2 to hand off to
+                                     * Windows. */
+
+                                    int utf8_idx, ucs2_idx = 0, rc;
+                                    USHORT *us = NULL;
+
+                                    for (utf8_idx = 0; decoded[utf8_idx] != '\0'; utf8_idx++) {
+                                        rc = utf8_to_ucs2(decoded[utf8_idx], &us);
+                                        if (rc == 0) {
+                                            /* UTF-8 sequence decoded, we have a UCS-2
+                                               character */
+                                            ucs2_string[ucs2_idx] = *us;
+                                            ucs2_idx++;
+                                        } else if (rc < 0) {
+                                            /* Decoding failed. Output U+FFFD */
+                                            ucs2_string[ucs2_idx] = 0xfffd;
+                                            ucs2_idx++;
+                                        }
+                                        /* Else more UTF-8 bytes are needed to assemble
+                                         * the UCS-2 character. Continue. */
+                                    }
+                                } else {
+                                    int i;
+                                    /* Remote is some 7-bit or 8-bit character set.
+                                     * Windows wants UCS-2, so we need to convert it. */
+
+                                    for (i = 0; decoded[i] != '\0'; i++) {
+                                        if (decoded[i] >= 128)
+                                            ucs2_string[i] = (*xl_u[tcsr])(decoded[i]);
+                                        else
+                                            ucs2_string[i] = decoded[i];
+                                        /* Some other code passes it through TX_IBMC0GRPH
+                                            if its not a control character we act on */
+                                    }
+                                }
+
+#ifdef NT
+                                if (use_unicode) {
+                                    rc = CopyToClipboard((BYTE*)ucs2_string,
+                                                         sizeof(USHORT) * cliplen);
+                                } else
+#endif /* NT */
+                                {
+                                    /* We've now got the clipboard data as a UCS-2
+                                     * string, but we're on Windows 9x or OS/2 (or NT
+                                     * with Unicode support turned off), so we need to
+                                     * now convert it back from UCS-2 to whatever the
+                                     * local character set is */
+                                    int i;
+
+                                    memset(decoded, 0, cliplen);
+                                    for (i = 0; ucs2_string[i] != '\0'; i++) {
+                                        decoded[i] = ucs2_string[i] >= 128 ?
+                                            (*xl_tx[tcsl])(ucs2_string[i]) : ucs2_string[i];
+                                    }
+
+                                    rc = CopyToClipboard(decoded, cliplen);
+                                }
+                            } else {
+                                CopyToClipboard("", 1);
+                            }
+
+                            free(encoded);
+                            free(decoded);
+                        }
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+                        else if (tt_clipboard_write == CLIPBOARD_DENY_NOTIFY) {
+                            KuiShowNotification(
+                                    KUI_NOTIF_I_WARN,
+                                    "Clipboard Write",
+                                    "Clipboard write by remote host denied. You can "
+                                    "enable clipboard access (or disable this "
+                                    "notification) with the SET TERM CLIPBOARD-ACCESS "
+                                    "command");
+                        }
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+                    }
+                }
+
+                /* Clean up the OSC-52 buffer */
+                if (osc52_buf != NULL) {
+                    free(osc52_buf);
+                    osc52_buf = NULL;
+                    osc52_len = 0;
+                }
+
+                break;
             }
-        }
-        break;
-    }
-	case 60: /* XTQALLOWED - query allowed features */
-	case 61: /* XTQDISALLOWED - query disallowed features */
-        break;
+            case 60: /* XTQALLOWED - query allowed features */
+            case 61: /* XTQDISALLOWED - query disallowed features */
+                break;
 
 #ifdef KUI
-	case 105:   /* xterm - reset special color number */
-	case 104: { /* xterm - reset color number */
-		/* 104 ; c ; c ; c ; ...   - reset specified color numbers*/
-		/* 104     - reset all color numbers */
+            case 105:   /* xterm - reset special color number */
+            case 104: { /* xterm - reset color number */
+                /* 104 ; c ; c ; c ; ...   - reset specified color numbers*/
+                /* 104     - reset all color numbers */
 
-        ULONG *palette = NULL, *saved = NULL;
-        int palette_max = current_palette_max_index();
-        palette = current_palette_rgb_table();
-        saved = current_palette_saved_rgb_table();
+                ULONG *palette = NULL, *saved = NULL;
+                int palette_max = current_palette_max_index();
+                palette = current_palette_rgb_table();
+                saved = current_palette_saved_rgb_table();
 
-        debug(F111, "OSC 104/105: Reset color number", apcbuf, apclength);
+                debug(F111, "OSC 104/105: Reset color number", apcbuf, apclength);
 
-        /* No parameters! Reset everything! */
-        if (apcnext > apclength || apcnext+1 > apclength) {
-			if (num == 104) {
-				/* reset color palette */
-				int i;
-                debug(F100, "OSC 104: Resetting color palette", 0, 0);
-                for (i = 0; i <= palette_max; i++) palette[i] = saved[i];
-			} else {
-                debug(F100, "OSC 105: Resetting special colors", 0, 0);
-				if (decscnm) boldattribute = byteswapcolors(colorbold);
-				else boldattribute  = colorbold;
+                /* No parameters! Reset everything! */
+                if (apcnext > apclength || apcnext+1 > apclength) {
+                    if (num == 104) {
+                        /* reset color palette */
+                        int i;
+                        debug(F100, "OSC 104: Resetting color palette", 0, 0);
+                        for (i = 0; i <= palette_max; i++) palette[i] = saved[i];
+                    } else {
+                        debug(F100, "OSC 105: Resetting special colors", 0, 0);
+                        if (decscnm) boldattribute = byteswapcolors(colorbold);
+                        else boldattribute  = colorbold;
 
-				if (decscnm) underlineattribute = byteswapcolors(colorunderline);
-				else underlineattribute  = colorunderline;
+                        if (decscnm) underlineattribute = byteswapcolors(colorunderline);
+                        else underlineattribute  = colorunderline;
 
-				if (decscnm) blinkattribute = byteswapcolors(colorblink);
-				else blinkattribute  = colorblink;
+                        if (decscnm) blinkattribute = byteswapcolors(colorblink);
+                        else blinkattribute  = colorblink;
 
-				if (decscnm) reverseattribute = byteswapcolors(colorreverse);
-				else reverseattribute  = colorreverse;
+                        if (decscnm) reverseattribute = byteswapcolors(colorreverse);
+                        else reverseattribute  = colorreverse;
 
-				if (decscnm) italicattribute = byteswapcolors(coloritalic);
-				else italicattribute  = coloritalic;
-			}
-        }
+                        if (decscnm) italicattribute = byteswapcolors(coloritalic);
+                        else italicattribute  = coloritalic;
+                    }
+                }
 
-        if (num == 105) {  /* Reset Special Color Number */
-			palette_max = 0;
-        }
+                if (num == 105) {  /* Reset Special Color Number */
+                    palette_max = 0;
+                }
 
-        /* format of string is:
-			c;c;c;c;c;c...
-         */
-        do {
-            int idx = 0, pal_idx = 0;
-            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-
-            /* Get c */
-			while (isdigit(achar)) {
-        		idx = (idx * 10) + achar - 48;
-            	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
-    		}
-
-            debug(F111, "OSC 104/105: ", "idx", idx);
-
-            /* A few colors in the 0-15 range are swapped around in the K95
-             * palette for historic OS/2 reasons, so transalte the normal index
-             * to one that accounts for this. */
-            pal_idx = color_index_to_vio(idx);
-
-            if (idx > palette_max || num == 105) {
-                if (num == 105) idx -= palette_max + 1;
-                debug(F111, "OSC 104/105: Reset special color", "idx", idx);
-
-                /* This is only available in builds with 24-bit RGB support. In
-				 * 16/256 color builds, the color attribute isn't capable of
-				 * storing RGB values.
+                /* format of string is:
+                    c;c;c;c;c;c...
                  */
+                do {
+                    int idx = 0, pal_idx = 0;
+                    achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
 
-                switch(idx) {
-                    case 0: /* Bold attribute */
-						if (decscnm) boldattribute = byteswapcolors(colorbold);
-						else boldattribute  = colorbold;
-						break;
-                    case 1: /* underline attribute */
-						if (decscnm) underlineattribute = byteswapcolors(colorunderline);
-						else underlineattribute  = colorunderline;
-						break;
-                	case 2: /* blink attribute */
-						if (decscnm) blinkattribute = byteswapcolors(colorblink);
-						else blinkattribute  = colorblink;
-						break;
-                    case 3: /* Reverse attribute */
-						if (decscnm) reverseattribute = byteswapcolors(colorreverse);
-						else reverseattribute  = colorreverse;
-						break;
-					case 4: /* Italic attribute */
-						if (decscnm) italicattribute = byteswapcolors(coloritalic);
-						else italicattribute  = coloritalic;
-						break;
-				    default:
-						debug(F101, "OSC 104/105: Unknown or Unsupported Special Color Number", 0, idx);
-                }
-            } else {
-                debug(F111, "OSC 104/105: Resetting color", "idx", idx);
-                palette[pal_idx] = saved[pal_idx];
+                    /* Get c */
+                    while (isdigit(achar)) {
+                        idx = (idx * 10) + achar - 48;
+                        achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+                    }
+
+                    debug(F111, "OSC 104/105: ", "idx", idx);
+
+                    /* A few colors in the 0-15 range are swapped around in the K95
+                     * palette for historic OS/2 reasons, so transalte the normal index
+                     * to one that accounts for this. */
+                    pal_idx = color_index_to_vio(idx);
+
+                    if (idx > palette_max || num == 105) {
+                        if (num == 105) idx -= palette_max + 1;
+                        debug(F111, "OSC 104/105: Reset special color", "idx", idx);
+
+                        /* This is only available in builds with 24-bit RGB support. In
+                         * 16/256 color builds, the color attribute isn't capable of
+                         * storing RGB values.
+                         */
+
+                        switch(idx) {
+                            case 0: /* Bold attribute */
+                                if (decscnm) boldattribute = byteswapcolors(colorbold);
+                                else boldattribute  = colorbold;
+                                break;
+                            case 1: /* underline attribute */
+                                if (decscnm) underlineattribute = byteswapcolors(colorunderline);
+                                else underlineattribute  = colorunderline;
+                                break;
+                            case 2: /* blink attribute */
+                                if (decscnm) blinkattribute = byteswapcolors(colorblink);
+                                else blinkattribute  = colorblink;
+                                break;
+                            case 3: /* Reverse attribute */
+                                if (decscnm) reverseattribute = byteswapcolors(colorreverse);
+                                else reverseattribute  = colorreverse;
+                                break;
+                            case 4: /* Italic attribute */
+                                if (decscnm) italicattribute = byteswapcolors(coloritalic);
+                                else italicattribute  = coloritalic;
+                                break;
+                            default:
+                                debug(F101, "OSC 104/105: Unknown or Unsupported Special Color Number", 0, idx);
+                        }
+                    } else {
+                        debug(F111, "OSC 104/105: Resetting color", "idx", idx);
+                        palette[pal_idx] = saved[pal_idx];
+                    }
+
+                } while (achar == ';');
+
+                break;
             }
-
-        } while (achar == ';');
-
-        break;
-    }
 #endif /* KUI */
 
-	case 110: /* xterm - reset attribute foreground */
-		if ( decscnm ) {  /* Reverse screen? Set FG to colornormal BG*/
+            case 110: /* xterm - reset attribute foreground */
+                if ( decscnm ) {  /* Reverse screen? Set FG to colornormal BG*/
 #ifdef CK_COLORS_24BIT
-			if (!cell_video_attr_bg_is_indexed(colornormal)) {
-				/* Background has an RGB color */
-				int r, g, b;
-				r = cell_video_attr_bg_rgb_r(colornormal);
-				g = cell_video_attr_bg_rgb_g(colornormal);
-				b = cell_video_attr_bg_rgb_b(colornormal);
-				defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
-			} else
+                    if (!cell_video_attr_bg_is_indexed(colornormal)) {
+                        /* Background has an RGB color */
+                        int r, g, b;
+                        r = cell_video_attr_bg_rgb_r(colornormal);
+                        g = cell_video_attr_bg_rgb_g(colornormal);
+                        b = cell_video_attr_bg_rgb_b(colornormal);
+                        defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
+                    } else
 #endif
-				defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
-						cell_video_attr_background(colornormal));
-		} else {
+                        defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
+                                cell_video_attr_background(colornormal));
+                } else {
 #ifdef CK_COLORS_24BIT
-			if (!cell_video_attr_fg_is_indexed(colornormal)) {
-				/* Foreground has an RGB color */
-				int r, g, b;
-				r = cell_video_attr_fg_rgb_r(colornormal);
-				g = cell_video_attr_fg_rgb_g(colornormal);
-				b = cell_video_attr_fg_rgb_b(colornormal);
-				defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
-			} else
+                    if (!cell_video_attr_fg_is_indexed(colornormal)) {
+                        /* Foreground has an RGB color */
+                        int r, g, b;
+                        r = cell_video_attr_fg_rgb_r(colornormal);
+                        g = cell_video_attr_fg_rgb_g(colornormal);
+                        b = cell_video_attr_fg_rgb_b(colornormal);
+                        defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
+                    } else
 #endif
-				defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
-					cell_video_attr_foreground(colornormal));
-		}
-		break;
-	case 111: /* xterm - reset attribute background */
-		if ( decscnm ) {  /* Reverse screen? Set VG to colornormal FG*/
+                        defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
+                            cell_video_attr_foreground(colornormal));
+                }
+                break;
+            case 111: /* xterm - reset attribute background */
+                if ( decscnm ) {  /* Reverse screen? Set VG to colornormal FG*/
 #ifdef CK_COLORS_24BIT
-			if (!cell_video_attr_fg_is_indexed(colornormal)) {
-				/* Foreground has an RGB color */
-				int r, g, b;
-				r = cell_video_attr_fg_rgb_r(colornormal);
-				g = cell_video_attr_fg_rgb_g(colornormal);
-				b = cell_video_attr_fg_rgb_b(colornormal);
-				defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
-			} else
+                    if (!cell_video_attr_fg_is_indexed(colornormal)) {
+                        /* Foreground has an RGB color */
+                        int r, g, b;
+                        r = cell_video_attr_fg_rgb_r(colornormal);
+                        g = cell_video_attr_fg_rgb_g(colornormal);
+                        b = cell_video_attr_fg_rgb_b(colornormal);
+                        defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
+                    } else
 #endif
-				defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
-						cell_video_attr_foreground(colornormal));
-		} else {
+                        defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
+                                cell_video_attr_foreground(colornormal));
+                } else {
 #ifdef CK_COLORS_24BIT
-			if (!cell_video_attr_bg_is_indexed(colornormal)) {
-				/* Background has an RGB color */
-				int r, g, b;
-				r = cell_video_attr_bg_rgb_r(colornormal);
-				g = cell_video_attr_bg_rgb_g(colornormal);
-				b = cell_video_attr_bg_rgb_b(colornormal);
-				defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
-			} else
+                    if (!cell_video_attr_bg_is_indexed(colornormal)) {
+                        /* Background has an RGB color */
+                        int r, g, b;
+                        r = cell_video_attr_bg_rgb_r(colornormal);
+                        g = cell_video_attr_bg_rgb_g(colornormal);
+                        b = cell_video_attr_bg_rgb_b(colornormal);
+                        defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
+                    } else
 #endif
-				defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
-					cell_video_attr_background(colornormal));
-		}
-		break;
-	case 112: /* xterm - reset text cursor color */
+                        defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
+                            cell_video_attr_background(colornormal));
+                }
+                break;
+            case 112: /* xterm - reset text cursor color */
 #ifdef CK_COLORS_24BIT
-		if (!cell_video_attr_bg_is_indexed(savedcolorcursor)) {
-			/* Background has an RGB color */
-			int r, g, b;
-			r = cell_video_attr_bg_rgb_r(savedcolorcursor);
-			g = cell_video_attr_bg_rgb_g(savedcolorcursor);
-			b = cell_video_attr_bg_rgb_b(savedcolorcursor);
-			colorcursor = cell_video_attr_set_bg_rgb(savedcolorcursor, r, g, b);
-		} else
+                if (!cell_video_attr_bg_is_indexed(savedcolorcursor)) {
+                    /* Background has an RGB color */
+                    int r, g, b;
+                    r = cell_video_attr_bg_rgb_r(savedcolorcursor);
+                    g = cell_video_attr_bg_rgb_g(savedcolorcursor);
+                    b = cell_video_attr_bg_rgb_b(savedcolorcursor);
+                    colorcursor = cell_video_attr_set_bg_rgb(savedcolorcursor, r, g, b);
+                } else
 #endif
-			colorcursor = cell_video_attr_set_bg_color(colorcursor,
-				cell_video_attr_background(savedcolorcursor));
-		break;
-	case 113: /* xterm - reset pointer foreground color */
-	case 114: /* xterm - reset pointer background color */
-	case 115: /* xterm - reset tektronix foreground */
-	case 116: /* xterm - reset tektronix background */
-		break;
-	case 117: /* xterm - reset highlight background color */
+                    colorcursor = cell_video_attr_set_bg_color(colorcursor,
+                        cell_video_attr_background(savedcolorcursor));
+                break;
+            case 113: /* xterm - reset pointer foreground color */
+            case 114: /* xterm - reset pointer background color */
+            case 115: /* xterm - reset tektronix foreground */
+            case 116: /* xterm - reset tektronix background */
+                break;
+            case 117: /* xterm - reset highlight background color */
 #ifdef CK_COLORS_24BIT
-		if (!cell_video_attr_bg_is_indexed(savedcolorselect)) {
-			/* Background has an RGB color */
-			int r, g, b;
-			r = cell_video_attr_bg_rgb_r(savedcolorselect);
-			g = cell_video_attr_bg_rgb_g(savedcolorselect);
-			b = cell_video_attr_bg_rgb_b(savedcolorselect);
-			colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
-		} else
+                if (!cell_video_attr_bg_is_indexed(savedcolorselect)) {
+                    /* Background has an RGB color */
+                    int r, g, b;
+                    r = cell_video_attr_bg_rgb_r(savedcolorselect);
+                    g = cell_video_attr_bg_rgb_g(savedcolorselect);
+                    b = cell_video_attr_bg_rgb_b(savedcolorselect);
+                    colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
+                } else
 #endif
-			colorselect = cell_video_attr_set_bg_color(colorselect,
-				cell_video_attr_background(savedcolorselect));
-		break;
-	case 118: /* xterm - reset tektronix cursor color */
-		break;
-	case 119: /* xterm - reset highlight foreground color */
+                    colorselect = cell_video_attr_set_bg_color(colorselect,
+                        cell_video_attr_background(savedcolorselect));
+                break;
+            case 118: /* xterm - reset tektronix cursor color */
+                break;
+            case 119: /* xterm - reset highlight foreground color */
 #ifdef CK_COLORS_24BIT
-		if (!cell_video_attr_fg_is_indexed(savedcolorselect)) {
-			/* Background has an RGB color */
-			int r, g, b;
-			r = cell_video_attr_fg_rgb_r(savedcolorselect);
-			g = cell_video_attr_fg_rgb_g(savedcolorselect);
-			b = cell_video_attr_fg_rgb_b(savedcolorselect);
-			colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
-		} else
+                if (!cell_video_attr_fg_is_indexed(savedcolorselect)) {
+                    /* Background has an RGB color */
+                    int r, g, b;
+                    r = cell_video_attr_fg_rgb_r(savedcolorselect);
+                    g = cell_video_attr_fg_rgb_g(savedcolorselect);
+                    b = cell_video_attr_fg_rgb_b(savedcolorselect);
+                    colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
+                } else
 #endif
-			colorselect = cell_video_attr_set_fg_color(colorselect,
-				cell_video_attr_foreground(savedcolorselect));
-		break;
+                    colorselect = cell_video_attr_set_fg_color(colorselect,
+                        cell_video_attr_foreground(savedcolorselect));
+                break;
+        }
+
+        num = OSC_UNKNOWN;
+        apcnext = 0;
     }
 }
 
@@ -18928,27 +19014,20 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             apcbuf[apclength] = NUL; /* terminate it */
                                        /* process it */
             if (!debses)
-                doosc() ;
+                doosc(TRUE) ;
             oscrecv = FALSE ;
             oscterm = 0;
         }
         else if (apcrecv || dcsrecv || oscrecv || pmrecv ||
                   pu1recv || pu2recv || c1strrecv) {
-            if (apclength < apcbuflen)    /* If in APC string, */
-              apcbuf[apclength++] = ch;   /* deposit this character */
-            else {                        /* Buffer overrun */
-                apcrecv = FALSE ;         /* Discard what we got */
-                dcsrecv = FALSE ;
-                oscrecv = FALSE ;
-                oscterm = 0;
-                pmrecv  = FALSE ;
-                pu1recv = FALSE ;
-                pu2recv = FALSE ;
-                c1strrecv = FALSE ;
-                apclength = 0;            /* and go back to normal */
-                apcbuf[0] = 0;            /* Not pretty, but what else */
-                escstate = ES_NORMAL ;
-            }
+            if (apclength < apcbuflen) {    /* If in APC string, */
+                apcbuf[apclength++] = ch;   /* deposit this character */
+                if (oscrecv) {
+                    doosc(FALSE);
+                }
+            }                               /* Else buffer overrun */
+                                            /* Discard until end of string */
+
         }
 #endif /* CK_APC */
         break;                          /* Absorb all other characters. */
@@ -19059,7 +19138,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                      ISDECTERM(tt_type_mode) || ISVTSTAR(tt_type_mode) )
                 {                            /* process it */
                     if (!debses)
-                      doosc() ;
+                      doosc(TRUE) ;
                 }
                 oscrecv = FALSE ;
                 oscterm = 0;

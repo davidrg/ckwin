@@ -20938,6 +20938,10 @@ DCS $ q 3 , } ST</pre>
                     individually via the <tt>SET TERMINAL CLIPBOARD-ACCESS</tt>
                     command.
                 </p>
+                <p>
+                    The maximum length for the OSC-52 payload is 100KB. Any
+                    additional data is ignored.
+                </p>
             </section>
             <section role="parameter" id="osc-60" mnemonic="XTQALLOWED"
                      title="Query allowed features"
