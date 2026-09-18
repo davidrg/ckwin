@@ -21502,7 +21502,7 @@ vtcsi(void)
                         /* DECRQDE - Windows Reports */
                         char decrpde[32] ;
                         sprintf(decrpde,"[%d;%d;%d;%d;%d\"w",
-                                 VscrnGetHeight(VTERM),
+                                 VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
                                  VscrnGetWidth(VTERM),
                                  1,
                                  1,
