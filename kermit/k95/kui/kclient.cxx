@@ -205,6 +205,8 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , smoothScrollProgress( 0.0 )
     , smoothScrollTime( 0 )
     , smoothScrollRendering ( FALSE )
+    , bitmapWidth(-1)
+    , bitmapHeight(-1)
 {
     InitializeCriticalSection(&csDraw);
 
@@ -445,6 +447,37 @@ void KClient::getCreateInfo( K_CREATEINFO* info )
         | WS_HSCROLL | WS_VSCROLL | WS_CLIPSIBLINGS;
 }
 
+void KClient::recreateBitmaps() {
+    int w,h;
+
+    if (bitmapWidth < 0 || bitmapHeight < 0) {
+        // Start out with screen dimensions. This *should* be enough normally.
+        w = kglob->sysMets->screenWidth();
+        h = kglob->sysMets->screenHeight();
+    } else {
+        // Widget has been resized. Get its new dimensions.
+        RECT rect;
+        if (!GetWindowRect(hWnd, &rect)) return;
+
+        w = rect.right;
+        h = rect.bottom;
+    }
+
+    // Resize device context bitmaps if necessary.
+    if (w > bitmapWidth || h > bitmapHeight) {
+        compatBitmap = CreateCompatibleBitmap(_hdcScreen, w, h);
+        HBITMAP old = (HBITMAP)SelectObject( _hdc, compatBitmap );
+        if (old != NULL) DeleteObject(old);
+
+        scratchBitmap = CreateCompatibleBitmap(_hdcScreen, w, h);
+        old = (HBITMAP)SelectObject( _hdcScratch, scratchBitmap );
+        if (old != NULL) DeleteObject(old);
+
+        bitmapWidth = w;
+        bitmapHeight = h;
+    }
+}
+
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 void KClient::createWin( KWin* par )
@@ -466,16 +499,8 @@ void KClient::createWin( KWin* par )
     //
     _hdcScreen = GetDC( hWnd );
     _hdc = CreateCompatibleDC( _hdcScreen );
-    compatBitmap = CreateCompatibleBitmap( _hdcScreen
-        , kglob->sysMets->screenWidth()
-        , kglob->sysMets->screenHeight() );
     _hdcScratch = CreateCompatibleDC( _hdcScreen );
-    scratchBitmap = CreateCompatibleBitmap( _hdcScreen
-        , kglob->sysMets->screenWidth()
-        , kglob->sysMets->screenHeight() );
-
-    SelectObject( _hdc, compatBitmap );
-    SelectObject( _hdcScratch, scratchBitmap );
+    recreateBitmaps();
 
     HBITMAP bitmap = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_BITMAP1) );
     disabledBrush = CreatePatternBrush( bitmap );
@@ -591,6 +616,8 @@ void KClient::size( int width, int height )
         , 0, 0
         , width, height
         , SWP_NOMOVE | SWP_NOZORDER );
+
+    recreateBitmaps();
 
 #if 0
     if( kglob->mouseEffect == TERM_MOUSE_NO_EFFECT ) {

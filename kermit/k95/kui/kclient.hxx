@@ -144,6 +144,8 @@ private:    // this section is for performance
     bool getSmoothScrollDrawInfo();
     int smoothScrollOffset(int lineHeight) const;
 
+    void recreateBitmaps();
+
     CRITICAL_SECTION csDraw;
 
     IKTerm* ikterm;
@@ -160,6 +162,8 @@ private:    // this section is for performance
     HDC _hdcSScrollBlinkOff;
     HBITMAP compatBitmap;
     HBITMAP scratchBitmap;
+    int bitmapWidth;
+    int bitmapHeight;
     HBITMAP scrollBlinkOnBitmap;
     HBITMAP scrollBlinkOffBitmap;
     HRGN hrgnPaint;
