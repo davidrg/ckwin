@@ -551,7 +551,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed APC, DCS, OSC, PM, PU1, PU2 and SOS strings longer than 4K causing K95
    to exist string absorption. Caused the first 4K of the APC/DCS/OSC to be
    discarded and the remainder written to the terminal. While this behaviour was
-   intentional, it was incorrect and doesn't match any real terminal. 
+   intentional, it was incorrect and doesn't match any real terminal.
+ - Fixed rendering on large window sizes (this time for good I hope!)
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

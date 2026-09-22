@@ -205,6 +205,8 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , smoothScrollProgress( 0.0 )
     , smoothScrollTime( 0 )
     , smoothScrollRendering ( FALSE )
+    , bitmapWidth(-1)
+    , bitmapHeight(-1)
 {
     InitializeCriticalSection(&csDraw);
 
@@ -445,6 +447,48 @@ void KClient::getCreateInfo( K_CREATEINFO* info )
         | WS_HSCROLL | WS_VSCROLL | WS_CLIPSIBLINGS;
 }
 
+void KClient::recreateBitmaps() {
+    int w,h;
+
+    if (bitmapWidth < 0 || bitmapHeight < 0) {
+        // Start out with screen dimensions. This *should* be enough normally.
+        w = kglob->sysMets->screenWidth();
+        h = kglob->sysMets->screenHeight();
+    } else {
+        // Widget has been resized. Get its new dimensions.
+        getSize(w, h);
+    }
+
+    // Resize device context bitmaps if necessary.
+    if (w > bitmapWidth || h > bitmapHeight) {
+        compatBitmap = CreateCompatibleBitmap(_hdcScreen, w, h);
+        HGDIOBJ old = SelectObject( _hdc, compatBitmap );
+        if (old != NULL) DeleteObject(old);
+
+        scratchBitmap = CreateCompatibleBitmap(_hdcScreen, w, h);
+        old = SelectObject( _hdcScratch, scratchBitmap );
+        if (old != NULL) DeleteObject(old);
+
+        // Recreate the smooth-scroll bitmaps too if they exist.
+        if (_hdcSScrollBlinkOn) {
+            scrollBlinkOnBitmap = CreateCompatibleBitmap(_hdcScreen, w, h);
+            old = SelectObject( _hdcSScrollBlinkOn, scrollBlinkOnBitmap );
+            if (old != NULL) DeleteObject(old);
+        }
+        if (_hdcSScrollBlinkOff) {
+            scrollBlinkOffBitmap = CreateCompatibleBitmap(_hdcScreen, w, h);
+            old = SelectObject( _hdcSScrollBlinkOff, scrollBlinkOffBitmap );
+            if (old != NULL) DeleteObject(old);
+        }
+
+        if (hrgnPaint) DeleteObject( hrgnPaint );
+        hrgnPaint = CreateRectRgn( 0, 0, w, h );
+
+        bitmapWidth = w;
+        bitmapHeight = h;
+    }
+}
+
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 void KClient::createWin( KWin* par )
@@ -466,16 +510,8 @@ void KClient::createWin( KWin* par )
     //
     _hdcScreen = GetDC( hWnd );
     _hdc = CreateCompatibleDC( _hdcScreen );
-    compatBitmap = CreateCompatibleBitmap( _hdcScreen
-        , kglob->sysMets->screenWidth()
-        , kglob->sysMets->screenHeight() );
     _hdcScratch = CreateCompatibleDC( _hdcScreen );
-    scratchBitmap = CreateCompatibleBitmap( _hdcScreen
-        , kglob->sysMets->screenWidth()
-        , kglob->sysMets->screenHeight() );
-
-    SelectObject( _hdc, compatBitmap );
-    SelectObject( _hdcScratch, scratchBitmap );
+    recreateBitmaps();
 
     HBITMAP bitmap = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_BITMAP1) );
     disabledBrush = CreatePatternBrush( bitmap );
@@ -530,9 +566,7 @@ void KClient::createWin( KWin* par )
 void KClient::clearPaintRgn()
 {
     if( !hrgnPaint ) {
-        hrgnPaint = CreateRectRgn( 0, 0
-            , kglob->sysMets->screenWidth()
-            , kglob->sysMets->screenHeight() );
+        return;
     }
 
     PaintRgn( _hdc, hrgnPaint );
@@ -591,6 +625,8 @@ void KClient::size( int width, int height )
         , 0, 0
         , width, height
         , SWP_NOMOVE | SWP_NOZORDER );
+
+    recreateBitmaps();
 
 #if 0
     if( kglob->mouseEffect == TERM_MOUSE_NO_EFFECT ) {
@@ -926,15 +962,13 @@ bool KClient::getSmoothScrollDrawInfo() {
         if (_hdcSScrollBlinkOn == 0) {
             _hdcSScrollBlinkOn = CreateCompatibleDC( _hdcScreen );
             scrollBlinkOnBitmap = CreateCompatibleBitmap( _hdcScreen
-                    , kglob->sysMets->screenWidth()
-                    , kglob->sysMets->screenHeight() );
+                    , bitmapWidth, bitmapHeight );
             SelectObject(_hdcSScrollBlinkOn, scrollBlinkOnBitmap);
         }
         if (_hdcSScrollBlinkOff == 0) {
             _hdcSScrollBlinkOff = CreateCompatibleDC( _hdcScreen );
             scrollBlinkOffBitmap = CreateCompatibleBitmap( _hdcScreen
-                    , kglob->sysMets->screenWidth()
-                    , kglob->sysMets->screenHeight() );
+                    , bitmapWidth, bitmapHeight );
             SelectObject(_hdcSScrollBlinkOff, scrollBlinkOffBitmap);
         }
 

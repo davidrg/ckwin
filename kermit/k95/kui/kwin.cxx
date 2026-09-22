@@ -94,9 +94,12 @@ void KWin::size( int width, int height )
 void KWin::getSize( int& w, int& h )
 {
     RECT rect;
-    GetWindowRect( hWnd, &rect );
-    w = rect.right - rect.left;
-    h = rect.bottom - rect.top;
+    if (GetWindowRect( hWnd, &rect )) {
+        w = rect.right - rect.left;
+        h = rect.bottom - rect.top;
+    } else {
+        w = h = 0;
+    }
 }
 
 /*------------------------------------------------------------------------
