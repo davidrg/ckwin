@@ -234,6 +234,7 @@ char *copyright[] = {
 "THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT",
 "(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE",
 "OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+" ",
 #endif /* pdp11 */
 
 #ifdef OS2
@@ -244,7 +245,6 @@ char *copyright[] = {
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
-" ",
 "Portions Copyright (C) 1990, Massachusetts Institute of Technology.",
 #ifdef CK_ENCRYPTION
 "Portions Copyright (C) 1991, 1993 Regents of the University of California.",
