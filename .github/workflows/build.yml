@@ -31,7 +31,7 @@ env:
   # got to use 3.2 or newer for that.
   OPENSSL_ARM_VERSION: 3.5.9
   # And Itanium is using a pretty old compiler which sometimes has issues
-  OPENSSL_IA64_VERSION: 3.5.9
+  OPENSSL_IA64_VERSION: 3.5.7
   # OpenSSL 3.5.5 isn't compatible with MinGW
   OPENSSL_MINGW_VERSION: 3.5.9
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
