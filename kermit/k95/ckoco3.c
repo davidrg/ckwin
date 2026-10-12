@@ -9148,8 +9148,8 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
      */
 
     /* k is the number of parameters supplied. pn a global
-                         * and not erased so any parameter values not supplied
-                         * may contain stuff from a previous control sequence*/
+     * and not erased so any parameter values not supplied
+     * may contain stuff from a previous control sequence */
     if (k < 4) pn[4] = 0;
     if (k < 3) pn[3] = 0;
     if (k < 2) pn[2] = 0;
@@ -9184,14 +9184,16 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
                     /* Changing colours with DECCARA is an extension which
                      * STD-070 implies should be supported by the VT525:
                      * https://j4james.github.io/vtdocs/EL-00070-05.html#5-174
-                     * So for now the VT525 is assumed to support it.
+                     * j4james confirms that the VT525 does *not* support this
+                     * however, so its only supported as a K95-specific
+                     * extension.
                      */
-                    if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
+                    if (ISK95(tt_type_mode)) {
                         cell_video_attr_t attr = line->cells[area.left+x-1].video_attr;
                         if (pn[z] == 0 && colorreset) {
                             attr = defaultattribute;
                         }
-                        else if ((pn[z] == 38 || pn[z] == 48) && ISK95(tt_type_mode)) {
+                        else if (pn[z] == 38 || pn[z] == 48) {
                             /* Handle indexed or RGB colour. We explicitly do
                              * not support the semi-colon based syntax because:
                              *  - It breaks the standard
@@ -9229,12 +9231,12 @@ change_attributes_in_rectangle(int vmode, int pn[], int k, unsigned short* j,
                     vt_char_attr_t a = line->vt_char_attrs[x];
                     line->vt_char_attrs[x] = deccara_attribute(a, pn[z]);
 
-                    if (ISK95(tt_type_mode) || ISVT525(tt_type_mode)) {
+                    if (ISK95(tt_type_mode)) {
                         cell_video_attr_t attr = line->cells[x].video_attr;
                         if (pn[z] == 0 && colorreset) {
                             attr = defaultattribute;
                         }
-                        else if ((pn[z] == 38 || pn[z] == 48) && ISK95(tt_type_mode)) {
+                        else if (pn[z] == 38 || pn[z] == 48) {
                             /* Handle indexed or RGB colour. We explicitly do
                              * not support the semi-colon based syntax because:
                              *  - It breaks the standard
