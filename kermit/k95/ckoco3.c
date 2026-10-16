@@ -21449,6 +21449,14 @@ vtcsi(void)
                         case TT_VT320:
                         case TT_VT320PC:
                         case TT_WY370:
+                        case TT_VT330:
+                        case TT_VT340:
+                        case TT_VTSTAR:
+                        case TT_DECTERM:
+                        case TT_VT420:
+                        case TT_VT520:
+                        case TT_XTERM:
+                        case TT_K95:
                             tt_type_mode = TT_VT102 ;
                             break;
                         }
@@ -21460,6 +21468,14 @@ vtcsi(void)
                         case TT_VT320:
                         case TT_VT320PC:
                         case TT_WY370:
+                        case TT_VT330:
+                        case TT_VT340:
+                        case TT_VTSTAR:
+                        case TT_DECTERM:
+                        case TT_VT420:
+                        case TT_VT520:
+                        case TT_XTERM:
+                        case TT_K95:
                             tt_type_mode = tt_type;
                             break;
                         }
@@ -21473,6 +21489,39 @@ vtcsi(void)
                         case TT_VT320:
                         case TT_VT320PC:
                         case TT_WY370:
+                        case TT_VT330:
+                        case TT_VT340:
+                        case TT_VTSTAR:
+                        case TT_DECTERM:
+                        case TT_VT420:
+                        case TT_VT520:
+                        case TT_XTERM:
+                        case TT_K95:
+                            tt_type_mode = tt_type ;
+                            if ( k > 1 && pn[2] == 1 )
+                                send_c1 = FALSE ; /* 7-bit */
+                            else
+                                send_c1 = TRUE ; /* 8-bit */
+                        }
+                        break;
+                    case 64:
+                        switch (tt_type) {
+                        case TT_VT420:
+                        case TT_VT520:
+                        case TT_XTERM:
+                        case TT_K95:
+                            tt_type_mode = tt_type ;
+                            if ( k > 1 && pn[2] == 1 )
+                                send_c1 = FALSE ; /* 7-bit */
+                            else
+                                send_c1 = TRUE ; /* 8-bit */
+                        }
+                        break;
+                    case 65:
+                        switch (tt_type) {
+                        case TT_VT520:
+                        case TT_XTERM:
+                        case TT_K95:
                             tt_type_mode = tt_type ;
                             if ( k > 1 && pn[2] == 1 )
                                 send_c1 = FALSE ; /* 7-bit */
