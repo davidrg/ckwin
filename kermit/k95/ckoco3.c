@@ -27647,7 +27647,7 @@ vtcsi(void)
                         int width, height;
 
                         width = VscrnGetWidth(vmode);
-                        height = VscrnGetHeight(vmode);
+                        height = VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0);
 
                         sprintf(buf, "[8;%d;%dt", height, width);
                         sendescseq(buf);
