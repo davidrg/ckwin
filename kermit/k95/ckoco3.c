@@ -8702,11 +8702,6 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                  *       calculation to match the real terminal we'll need to do
                  *       Unicode->VT conversion here. */
 
-                if (a == VT_CHAR_ATTR_ERASED) {
-                    /* Unoccupied character cells are excluded from the checksum */
-                    continue;
-                }
-
                 if (include_color) {
                     /* These will be 0 for RGB colours */
                     fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
@@ -8761,15 +8756,20 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                     bgcoloridx = color_index_from_vio(bgcoloridx);
                 }
 
-                checksum -= c;
+                /* Unoccupied character cells are excluded from the checksum */
+                if (a != VT_CHAR_ATTR_ERASED) {
+                    checksum -= c;
 
-                /* The VT420, VT520 and VT525 only support these attributes */
-                if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
-                if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
-                if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
-                if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
-                if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
-                if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
+                    /* The VT420, VT520 and VT525 only support these attributes */
+                    if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
+                    if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
+                    if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
+                    if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
+                    if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
+                    if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
+                }
+
+                /* But erased cells can still have colour... */
                 if (include_color) {
                     checksum -= (unsigned short)fgcoloridx << 4;
                     checksum -= bgcoloridx;
