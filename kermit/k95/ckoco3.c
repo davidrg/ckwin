@@ -3362,7 +3362,7 @@ char * ekeys[] = {
 /* And close to 108 DG keys (regular and unix modes) */
 /* 153 SNI 97801 keys */
 char * udkfkeys[200];  /* let udkreset() initialize them */
-int udklock = 0 ;      /* Are User Defined Keys locked? */
+int udklock = 1 ;      /* Are User Defined Keys locked? */
 
 #ifndef NOKVERBS
 extern struct keytab kverbs[] ;         /* Kverbs table  */
@@ -17130,8 +17130,8 @@ dodcs( void )
      *     tt_type_mode >= TT_VT320 && tt_type_mode <= TT_WY370
      * Compared to ISVT320() this excludes TT_97801 and TT_AAA. I have no idea
      * what those terminals implement or if there was any particular reason for
-     * their exclusion, but excluding TT_VT220 was almost certainly by accient
-     * as it *does* support at least one DCS sequence here - DECUDK.
+     * their exclusion, but excluding TT_VT220 was almost certainly by accident
+     * as it *does* support at least two DCS sequence here - DECUDK and DECDLD.
      * So now we allow ISVT320() in here, plus TT_VT220 and a few others, but
      * exclude TT_97801 and TT_AAA as before just in case there was some
      * particular reason for their exclusion.
@@ -29383,7 +29383,7 @@ vtescape( void )
 #ifdef CK_APC
 #ifndef NOSETKEY
 #ifndef NOKVERBS
-                if ( next == quote )
+                if ( next == quote && !udklock)
                 {
                     /* assign the string to the function key */
                     if ( udkfkeys[fn] ) {

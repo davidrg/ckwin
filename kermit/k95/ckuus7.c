@@ -1026,6 +1026,9 @@ static struct keytab trmtab[] = {
     { "local-character-set", XYTLCS,  CM_INV },
 #endif /* OS2 */
 #endif /* NOCSETS */
+#ifdef OS2
+    { "lock-key-definitions", XYTLOCKKEYS,     0 },
+#endif /* OS2 */
     { "locking-shift", XYTSO,     0 },
 #ifdef OS2
     { "margin-bell",   XYTMBEL,   0 },
@@ -5110,6 +5113,15 @@ settrm() {
         }
         return(success = 1);
         break;
+
+      case XYTLOCKKEYS: {               /* SET TERMINAL LOCK-KEY-DEFINITIONS */
+          y = seton(&x);                  /* Go parse ON or OFF */
+          if (y > 0) {                    /* Command succeeded? */
+              extern int udklock;
+              udklock = x;
+          }
+          return(y);
+      }
 
       case XYTANS: {                    /* SET TERMINAL ANSWERBACK */
 /*

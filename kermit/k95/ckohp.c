@@ -799,6 +799,7 @@ hpascii( int ch )
                     char label[80]="";
                     char string[160]="";
                     int ch3=0, keyi=0, i=0;     /* work variables */
+                    extern int udklock;
 
                     do {
                         if ((x = hpparam(&n,&ch3,&y)) < 0)
@@ -885,6 +886,8 @@ hpascii( int ch )
                     debug(F110,"HPTERM String",string,0);
 
                     if ( debses )
+                        break;
+                    if ( udklock )
                         break;
                     if ( use < 0 || use > 2 ||
                          use == 1 /* we don't support local mode */)
@@ -2884,6 +2887,7 @@ hpascii( int ch )
                 /* set Softkey default values */
                 char string[3];
                 int keyi;
+                extern int udklock;
 
                 if ( deblog ) {
                     sprintf(debbuf, "ESC %c", ch);
@@ -2891,6 +2895,8 @@ hpascii( int ch )
                            debbuf,0);
                 }
                 if ( debses )
+                    break;
+                if ( udklock )
                     break;
                 sprintf(string,"%c%c",ESC,ch);
                 keyi = ch - 'p';

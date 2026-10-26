@@ -620,12 +620,15 @@ tviascii( int ch )
                 /*       Reprogram any individual editing key */
                 if ( ISTVI950(tt_type_mode) ) {
                     int p1, p2, k=-1;
+                    extern int udklock;
 
                     if ((p1 = tviinc()) < 0)
                         break;
                     if ((p2 = tviinc()) < 0)
                         break;
                     if ( debses )
+                        break;
+                    if ( udklock )
                         break;
                     switch ( p1 ) {
                     case '0':   /* Shift Send */
