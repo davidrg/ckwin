@@ -3362,7 +3362,7 @@ char * ekeys[] = {
 /* And close to 108 DG keys (regular and unix modes) */
 /* 153 SNI 97801 keys */
 char * udkfkeys[200];  /* let udkreset() initialize them */
-int udklock = 1 ;      /* Are User Defined Keys locked? */
+int udklock = 1, udklock_usr = 1 ;      /* Are User Defined Keys locked? */
 
 #ifndef NOKVERBS
 extern struct keytab kverbs[] ;         /* Kverbs table  */
@@ -9670,8 +9670,7 @@ udkreset( void )
 {
     int i;
 
-    /*udklock = FALSE;*/                   /* Unlock User Defined Keys */
-    /* We no longer leave UDKs unlocked by default for better security */
+    udklock = udklock_usr;             /* Restore user setting */
 
     for ( i=0 ; i<200 ; i++ )          /* Reset the User Defined Keys */
     {
