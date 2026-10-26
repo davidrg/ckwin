@@ -10439,6 +10439,16 @@ udkreset( void )
         udkfkeys[7]  = strdup("\033[19;2~");
         udkfkeys[8]  = strdup("\033[20;2~");
         udkfkeys[9]  = strdup("\033[21;2~");
+        udkfkeys[10] = strdup("\033[1;4P");        /* F10 */
+        udkfkeys[11] = strdup("\033[1;4Q");
+        udkfkeys[12] = strdup("\033[1;4R");
+        udkfkeys[13] = strdup("\033[1;4S");
+        udkfkeys[14] = strdup("\033[15;4~");
+        udkfkeys[15] = strdup("\033[17;4~");
+        udkfkeys[16] = strdup("\033[18;4~");
+        udkfkeys[17] = strdup("\033[19;4~");
+        udkfkeys[18] = strdup("\033[20;4~");
+        udkfkeys[19] = strdup("\033[21;4~");
     }
 }
 
