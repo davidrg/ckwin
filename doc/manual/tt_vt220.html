@@ -1,0 +1,546 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+    <META name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kermit 95 - VT220 Emulation</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>VT220 Emulation in Kermit 95</h2>
+
+<p>
+Kermit 95 includes a fairly comprehensive VT220 emulation including features
+rarely implemented by other terminal emulators such as soft character sets
+(soft fonts / dynamically redefined character sets) and smooth-scroll.
+
+<p>
+VT220 is also Kermit 95s <em>default</em> emulation as it is present in most
+hosts terminfo database. You can also choose from one of two VT220 emulation
+options by selecting either <tt>vt220</tt> or <tt>vt220pc</tt> from the
+drop-down list on the toolbar (K95G) or using the <tt>SET TERMINAL TYPE</tt>
+command.
+
+<h3>Key Map</h3>
+<p>The VT220 and VT220PC terminal types differ only in their default keymap:</p>
+<table border="1">
+    <tr>
+        <th rowspan="2">PC Key</th>
+        <th colspan="2">VT220</th>
+        <th colspan="2">VT220PC</th>
+    </tr>
+    <tr>
+        <th>VT Key</th>
+        <th>Kverb</th>
+        <th>VT Key</th>
+        <th>Kverb</th>
+    </tr>
+    <tr>
+        <td>F1</td>
+        <td>Gold</td>
+        <td><tt>\Kgold</tt></td>
+        <td>F1</td>
+        <td><tt>\Kdecf01</tt></td>
+    </tr>
+    <tr>
+        <td>F2</td>
+        <td>PF2</td>
+        <td><tt>\Kpf2</tt></td>
+        <td>F2</td>
+        <td><tt>\Kdecf02</tt></td>
+    </tr>
+    <tr>
+        <td>F3</td>
+        <td>PF3</td>
+        <td><tt>\Kpf3</tt></td>
+        <td>F3</td>
+        <td><tt>\Kdecf03</tt></td>
+    </tr>
+    <tr>
+        <td>F4</td>
+        <td>PF4</td>
+        <td><tt>\Kpf4</tt></td>
+        <td>F4</td>
+        <td><tt>\Kdecf04</tt></td>
+    </tr>
+    <tr>
+        <td>F5</td>
+        <td>Break</td>
+        <td><tt>\Kbreak</tt></td>
+        <td>F5</td>
+        <td><tt>\Kdecf05</tt></td>
+    </tr>
+
+    <tr>
+        <td>Gray PgUp</td>
+        <td>Scroll Up</td>
+        <td><tt>\Kupscn</tt></td>
+        <td>Previous</td>
+        <td><tt>\Kdecprev</tt></td>
+    </tr>
+    <tr>
+        <td>Gray PgDown</td>
+        <td>Scroll Down</td>
+        <td><tt>\Kdnscn</tt></td>
+        <td>Next</td>
+        <td><tt>\Kdecnext</tt></td>
+    </tr>
+    <tr>
+        <td>Gray End</td>
+        <td>Scroll Bottom</td>
+        <td><tt>\Kendscn</tt></td>
+        <td>Find</td>
+        <td><tt>\Kdecfind</tt></td>
+    </tr>
+    <tr>
+        <td>Gray Home</td>
+        <td>Scroll Top</td>
+        <td><tt>\Khomscn</tt></td>
+        <td>Home</td>
+        <td><tt>\Kdechome</tt></td>
+    </tr>
+    <tr>
+        <td>Gray Insert</td>
+        <td></td>
+        <td><tt></tt></td>
+        <td>Insert</td>
+        <td><tt>\Kdecinsert</tt></td>
+    </tr>
+</table>
+
+<p>
+For more on the keymap used by Kermit 95s VT220 emulation, see:
+<a href="https://www.kermitproject.org/k95vtfk.html">
+    Kermit 95 VT220 / VT320 Function Key Mapping</a>
+
+<h2>Differences in K95s VT220 emulation</h2>
+<p>
+Any differences between Kermit 95s VT220 emulation and a real VT220 except for
+those noted below are likely a bug.
+
+<h3>Functionality</h3>
+<p>The following functions are implemented differently in Kermit 95 vs a real VT220:</p>
+<dl>
+    <dt>132 Column Mode</dt>
+    <dd>Instead of using a condensed font in 132-column mode, Kermit 95 changes
+        the window size.
+    </dd>
+    <dt>VT100 Confidence Tests (DECTST)</dt>
+    <dd>Kermit 95 does not implement this function</dd>
+    <dt>Interlaced Video Mode (DECINLM)</dt>
+    <dd>Kermit 95 does not implement this mode</dd>
+</dl>
+
+<h3>Settings</h3>
+<p>VT settings map on to Kermit 95 settings as follows. Note that Kermit 95s
+defaults for some settings differ from that of a real VT220, and Kermit 95 lacks
+equivalents of some settings.
+
+<table border="1">
+    <tr>
+        <th>Set-Up Screen</th>
+        <th>VT Setting</th>
+        <th>VT220 Default</th>
+        <th>K95 Default</th>
+        <th>K95 Setting</th>
+        <th>Notes</th>
+    </tr>
+    <tr>
+        <td rowspan="5"></td>
+        <td>On Line/Local</td>
+        <td>On Line</td>
+        <td></td>
+        <td></td>
+        <td>K95 does not implement a Local mode</td>
+    </tr>
+    <tr>
+        <td>Clear Display</td>
+        <td colspan="2">n/a (action)</td>
+        <td><tt>CLEAR TERMINAL-SCREEN ALL</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Clear Comm</td>
+        <td colspan="2">n/a (action)</td>
+        <td><tt>
+            CLEAR DEVICE-AND-INPUT<br>
+            CLEAR KEYBOARD-BUFFER</tt>
+        </td>
+        <td>These commands aren't an exact equivalent. They don't cancel or
+            reset printing or abort any escape sequences in progress.
+        </td>
+    </tr>
+    <tr>
+        <td>Reset Terminal</td>
+        <td colspan="2">n/a (action)</td>
+        <td><tt>\Kreset</tt></td>
+        <td>Use <em>Reset Terminal</em> from the Actions menu, or enter
+            <tt>\Kreset</tt> at the command screen.
+        </td>
+    </tr>
+    <tr>
+        <td>Keyboard</td>
+        <td>North American</td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td rowspan="7">Display</td>
+        <td>80/132 Columns</td>
+        <td colspan="2">80 columns</td>
+        <td><tt>SET TERMINAL WIDTH</tt></td>
+        <td>K95 allows arbitrary widths to be set</td>
+    </tr>
+    <tr>
+        <td>Control Representation</td>
+        <td>Interpret Controls</td>
+        <td></td>
+        <td></td>
+        <td>K95 does not provide a command for togging this option.
+        </td>
+    </tr>
+    <tr>
+        <td>Auto Wrap</td>
+        <td>Off</td>
+        <td>On</td>
+        <td><tt>SET TERMINAL WRAP</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Scroll</td>
+        <td>Smooth</td>
+        <td>Jump</td>
+        <td><tt>SET TERMINAL SCROLL-MODE</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+
+        <td>Text, Screen</td>
+        <td>Light Text, Dark Screen</td>
+        <td></td>
+        <td><tt>SET TERMINAL COLOR TERMINAL</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Text Cursor</td>
+        <td colspan="2">Cursor</td>
+        <td><tt>SET TERMINAL CURSOR</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Cursor Style</td>
+        <td>Block</td>
+        <td>Underline</td>
+        <td><tt>SET TERMINAL CURSOR</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td rowspan="8">General</td>
+        <td>Mode</td>
+        <td>VT200 Mode, 7-bit</td>
+        <td>VT200 Mode, 8-bit</td>
+        <td>
+            <tt>SET TERMINAL TYPE</tt><br>
+            <tt>SET TERMINAL BYTESIZE</tt>
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>VT100 Mode Terminal ID</td>
+        <td colspan="2">VT220</td>
+        <td><tt>SET TERMINAL TYPE</tt></td>
+        <td>Dedicated VT100, VT101 and VT102 emulations are available</td>
+    </tr>
+    <tr>
+        <td>User Defined Keys</td>
+        <td>Unlocked</td>
+        <td>Locked</td>
+        <td><tt>SET TERMINAL LOCK-KEY-DEFINITIONS</tt></td>
+        <td>Locked by default in K95 for security</td>
+    </tr>
+    <tr>
+        <td>User Features</td>
+        <td>Unlocked</td>
+        <td></td>
+        <td></td>
+        <td>K95 does not support this feature</td>
+    </tr>
+    <tr>
+        <td>Character Set Mode</td>
+        <td>National</td>
+        <td></td>
+        <td><tt>SET TERMINAL CHARACTER-SET</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Keypad</td>
+        <td colspan="2">Numeric</td>
+        <td><tt>SET TERMINAL KEYPAD-MODE</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Cursor Keys</td>
+        <td colspan="2">Normal</td>
+        <td><tt>SET TERMINAL ARROW-KEYS</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>New Line</td>
+        <td colspan="2">No New Line</td>
+        <td><tt>SET TERMINAL NEWLINE-MODE</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td rowspan="10">Communications</td>
+        <td>Transmit</td>
+        <td>4800</td>
+        <td></td>
+        <td rowspan="2"><tt>SET SPEED</tt></td>
+        <td rowspan="2">K95 does not allow setting separate transmit/receive speeds</td>
+    </tr>
+    <tr>
+        <td>Receive</td>
+        <td colspan="2">Transmit</td>
+    </tr>
+    <tr>
+        <td>XOFF</td>
+        <td>XOFF at 64</td>
+        <td></td>
+        <td><tt>SET FLOW</tt></td>
+        <td>
+            K95 doesn't support setting when XOFF occurs. RTS/CTS flow control
+            is also supported.
+        </td>
+    </tr>
+    <tr>
+        <td>Bits</td>
+        <td colspan="2">8</td>
+        <td><tt>SET TERMINAL BYTESIZE</tt></td>
+        <td>K95 uses the terminal bytesize for serial data bits</td>
+    </tr>
+    <tr>
+        <td>Parity</td>
+        <td>No Parity</td>
+        <td></td>
+        <td><tt>SET PARITY</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Stop Bit</td>
+        <td>1</td>
+        <td></td>
+        <td><tt>SET STOP-BITS</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Local Echo</td>
+        <td colspan="2">Off</td>
+        <td><tt>SET LOCAL-ECHO</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Port</td>
+        <td>EIA port, Data Leads Only</td>
+        <td></td>
+        <td><tt>SET LINE</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Disconnect, ___ Delay</td>
+        <td>Disconnect, 2s Delay</td>
+        <td></td>
+        <td></td>
+        <td>K95 doesn't allow changing the disconnect delay.</td>
+    </tr>
+    <tr>
+        <td>______ Transmit</td>
+        <td>Limited Transmit</td>
+        <td>Unlimited Transmit</td>
+        <td><tt>SET OUTPUT PACING</tt></td>
+        <td>K95 allows setting a per-output-character delay</td>
+    </tr>
+    <tr>
+        <td rowspan="8">Printer*</td>
+        <td>Speed</td>
+        <td>4800</td>
+        <td></td>
+        <td><tt>SET PRINTER /SPEED:</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Mode</td>
+        <td>Normal</td>
+        <td></td>
+        <td><tt>SET TERMINAL PRINT</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Bits</td>
+        <td>8</td>
+        <td></td>
+        <td><tt></tt></td>
+        <td>K95 does not support this setting</td>
+    </tr>
+    <tr>
+        <td>Parity</td>
+        <td>None</td>
+        <td></td>
+        <td><tt>SET PRINTER /PARITY:</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Stop Bits</td>
+        <td>1</td>
+        <td></td>
+        <td></td>
+        <td>K95 does not support this setting</td>
+    </tr>
+    <tr>
+        <td>Print...</td>
+        <td colspan="2">Full Page</td>
+        <td></td>
+        <td>K95 does not support this setting</td>
+    </tr>
+    <tr>
+        <td>Printed Data Type</td>
+        <td>Print National Only</td>
+        <td></td>
+        <td><tt>SET PRINTER /CHARACTER-SET:</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Print Terminator</td>
+        <td>Terminator = FF</td>
+        <td>No Terminator</td>
+        <td><tt>SET PRINTER /END-OF-JOB-STRING:</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td rowspan="10">Keyboard</td>
+        <td>Typewriter/Data Processing Keys</td>
+        <td>Typewriter</td>
+        <td></td>
+        <td></td>
+        <td>K95 does not support this setting or the Data Processing Keys option</td>
+    </tr>
+    <tr>
+        <td>Caps/Shift Lock</td>
+        <td>Caps Lock</td>
+        <td></td>
+        <td></td>
+        <td>K95 does not support this setting or the Data Processing Keys option</td>
+    </tr>
+    <tr>
+        <td>Auto Repeat</td>
+        <td colspan="2">On</td>
+        <td></td>
+        <td>K95 only supports changing this setting via DECARM</td>
+    </tr>
+    <tr>
+        <td>Keyclick</td>
+        <td>On</td>
+        <td>Off</td>
+        <td><tt>\Kkeyclick</tt></td>
+        <td>This setting is available from the Actions menu in K95G, and can be
+            toggled via the <tt>\Kkeyclick</tt> Kverb (you can enter it as a
+            command)
+        </td>
+    </tr>
+    <tr>
+        <td>Margin Bell</td>
+        <td>On</td>
+        <td>Off</td>
+        <td><tt>SET TERMINAL MARGIN-BELL</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Warning Bell</td>
+        <td colspan="2">On</td>
+        <td><tt>SET BELL</tt></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Break</td>
+        <td colspan="2">On</td>
+        <td></td>
+        <td>The break key can be unmapped with <tt>SET KEY</tt></td>
+    </tr>
+    <tr>
+        <td>Auto Answerback</td>
+        <td>On</td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Answerback</td>
+        <td></td>
+        <td></td>
+        <td><tt>SET TERMINAL ANSWERBACK MESSAGE</tt></td>
+        <td>K95 does not support setting arbitrary answerback messages</td>
+    </tr>
+    <tr>
+        <td>Answerback Concealed</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>K95 does not support this setting</td>
+    </tr>
+    <tr>
+        <td rowspan="3">Tab</td>
+        <td>Clear All Tabs</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td rowspan="3">
+            K95 does not implement commands for manipulating tab stops. Tab
+            stops can only be manipulated via control sequences.
+        </td>
+    </tr>
+    <tr>
+        <td>Set 8 Column Tabs</td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>Set Tab Stops</td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+* K95 also supports printer connectivity options besides serial. See
+<a href="printer.html">Printer Setup and Troubleshooting</a> for more
+information on printing options.
+
+<p>If you want Kermit 95s VT220 emulation to use similar defaults to a real
+VT220, you can put the following in your <tt>k95custom.ini</tt> so that they run
+automatically when the VT220 or VT220PC terminal emulations are chosen.
+<pre>
+    def tt_vt220 {
+        set terminal wrap off
+        set terminal scroll-mode smooth
+        set terminal color terminal lgray black
+        set terminal cursor full on
+        set terminal bytesize 7
+        set terminal lock-key-definitions off  ; Enable DECUDK - a security risk
+        set terminal sgr-colors off            ; A real VT220 doesn't support color
+    }
+
+    def tt_vt220pc {
+        tt_vt220
+    }
+
+    ; K95s terminal emulator is initialised to VT220 before any startup scripts
+    ; are run, so this is required to ensure tt_vt220 runs on startup.
+    if equal \v(terminal) vt220 tt_vt220
+</pre>
+
+<p>
+<hr>
+<p>
+
+    <i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>
