@@ -35,7 +35,7 @@ DEFINES=-DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-DDYNAMIC -DKANJI -DNETCONN -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET \
        	-DRLOGCODE -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL -DNEWFTP \
        	-DNO_DNS_SRV -DNO_KERBEROS -DNO_SRP -DNO_SSL_KRB5 \
-       	-DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP -DNOREXX
+       	-DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP -DNOREXX -DUSE_STRERROR
 # -DZLIB : Only if built with zlib. Probably not actually used so doesn't matter.
 # -DCK_CONPTY : PTY support on Windows 10+, doesn't currently build with MinGW
 # SRP, Kerberos: Currently requires Visual C++ or Open Watcom due to lvalue casts.
