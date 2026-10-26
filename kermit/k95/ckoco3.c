@@ -11391,7 +11391,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	tt_term_scroll = 1;
     decspma_max_page = -1;
 
-    udkreset() ;                        /* Reset UDKs     */
+    if (x) {
+        udkreset() ;                    /* Reset UDKs     */
+    }
     deccolm = FALSE;                    /* default column mode */
     tt_cols[VTERM] = tt_cols_usr ;
 #ifdef KUI
