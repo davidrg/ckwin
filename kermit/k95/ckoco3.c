@@ -9669,7 +9669,10 @@ void
 udkreset( void )
 {
     int i;
-    udklock = FALSE;                   /* Unlock User Defined Keys */
+
+    /*udklock = FALSE;*/                   /* Unlock User Defined Keys */
+    /* We no longer leave UDKs unlocked by default for better security */
+
     for ( i=0 ; i<200 ; i++ )          /* Reset the User Defined Keys */
     {
        if ( udkfkeys[i] )
@@ -10421,6 +10424,22 @@ udkreset( void )
                 }
             }
         }
+    }
+
+    /* xterm treats Shift+F1..F12 as function keys F13-F24. To retain
+     * compatibility with DECUDK, we preload the UDK slots with what xterm sends
+     * for Shift+F1..F12. */
+    if (ISK95(tt_type)) {
+        udkfkeys[0]  = strdup("\033[1;2P");        /* F1 */
+        udkfkeys[1]  = strdup("\033[1;2Q");
+        udkfkeys[2]  = strdup("\033[1;2R");
+        udkfkeys[3]  = strdup("\033[1;2S");
+        udkfkeys[4]  = strdup("\033[15;2~");
+        udkfkeys[5]  = strdup("\033[17;2~");
+        udkfkeys[6]  = strdup("\033[18;2~");
+        udkfkeys[7]  = strdup("\033[19;2~");
+        udkfkeys[8]  = strdup("\033[20;2~");
+        udkfkeys[9]  = strdup("\033[21;2~");
     }
 }
 

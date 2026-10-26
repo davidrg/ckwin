@@ -6018,6 +6018,10 @@ defk95km( int tt) {
 		insertkeymap( tt, 379, mkkeyevt(F_KVERB | K_DECF12 )) || /* F12 */
 
 		/* Function Keys 13-24 */
+#ifdef COMMENT
+		/* Shift+F1...10 are assigned to K_UDKF1...10 as in VT emulations. For
+		 * compatibility with xterm, UDKs are initialised to what xterm sends
+		 * for Shift+F1...10 over in function udkreset() in ckoco3.c.    */
 		insertkeymap( tt, 880, mkliteralevt("\033[1;2P")) || /* Shift+F1 */
 		insertkeymap( tt, 881, mkliteralevt("\033[1;2Q")) || /* Shift+F2 */
 		insertkeymap( tt, 882, mkliteralevt("\033[1;2R")) || /* Shift+F3 */
@@ -6028,6 +6032,7 @@ defk95km( int tt) {
 		insertkeymap( tt, 887, mkliteralevt("\033[19;2~")) || /* Shift+F8 */
 		insertkeymap( tt, 888, mkliteralevt("\033[20;2~")) || /* Shift+F9 */
 		insertkeymap( tt, 889, mkliteralevt("\033[21;2~")) || /* Shift+F10 */
+#endif /* COMMENT */
 		insertkeymap( tt, 890, mkliteralevt("\033[23;2~")) || /* Shift+F11 */
 		insertkeymap( tt, 891, mkliteralevt("\033[24;2~")) || /* Shift+F12 */
 

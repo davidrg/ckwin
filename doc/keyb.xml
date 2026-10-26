@@ -1067,8 +1067,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F1</td>
                 <td>\880</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf1">\Kudkf1</a></td>
-                <td><tt>\{27}[1\{59}2P</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf1">\Kudkf1</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f01">\Ksni_s_f01</a></td>
                 <td colspan="3"><a href="#kverb_Kansif13">\Kansif13</a></td>
@@ -1080,8 +1079,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F2</td>
                 <td>\881</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf2">\Kudkf2</a></td>
-                <td><tt>\{27}[1\{59}2Q</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf2">\Kudkf2</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f02">\Ksni_s_f02</a></td>
                 <td colspan="3"><a href="#kverb_Kansif14">\Kansif14</a></td>
@@ -1093,8 +1091,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F3</td>
                 <td>\882</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf3">\Kudkf3</a></td>
-                <td><tt>\{27}[1\{59}2R</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf3">\Kudkf3</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f03">\Ksni_s_f03</a></td>
                 <td colspan="3"><a href="#kverb_Kansif15">\Kansif15</a></td>
@@ -1106,8 +1103,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F4</td>
                 <td>\883</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf4">\Kudkf4</a></td>
-                <td><tt>\{27}[1\{59}2S</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf4">\Kudkf4</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f04">\Ksni_s_f04</a></td>
                 <td colspan="3"><a href="#kverb_Kansif16">\Kansif16</a></td>
@@ -1119,8 +1115,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F5</td>
                 <td>\884</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf5">\Kudkf5</a></td>
-                <td><tt>\{27}[15\{59}2~</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf5">\Kudkf5</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f05">\Ksni_s_f05</a></td>
                 <td colspan="3"><a href="#kverb_Kansif17">\Kansif17</a></td>
@@ -1132,8 +1127,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F6</td>
                 <td>\885</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf6">\Kudkf6</a></td>
-                <td><tt>\{27}[17\{59}2~</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf6">\Kudkf6</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f06">\Ksni_s_f06</a></td>
                 <td colspan="3"><a href="#kverb_Kansif18">\Kansif18</a></td>
@@ -1145,8 +1139,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F7</td>
                 <td>\886</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf7">\Kudkf7</a></td>
-                <td><tt>\{27}[18\{59}2~</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf7">\Kudkf7</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f07">\Ksni_s_f07</a></td>
                 <td colspan="3"><a href="#kverb_Kansif19">\Kansif19</a></td>
@@ -1158,8 +1151,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F8</td>
                 <td>\887</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf8">\Kudkf8</a></td>
-                <td><tt>\{27}[19\{59}2~</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf8">\Kudkf8</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f08">\Ksni_s_f08</a></td>
                 <td colspan="3"><a href="#kverb_Kansif20">\Kansif20</a></td>
@@ -1171,8 +1163,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F9</td>
                 <td>\888</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf9">\Kudkf9</a></td>
-                <td><tt>\{27}[20\{59}2~</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf9">\Kudkf9</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f09">\Ksni_s_f09</a></td>
                 <td colspan="3"><a href="#kverb_Kansif21">\Kansif21</a></td>
@@ -1184,8 +1175,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Shift-F10</td>
                 <td>\889</td>
                 <td style="not-mapped" colspan="4"/>
-                <td colspan="5"><a href="#kverb_Kudkf10">\Kudkf10</a></td>
-                <td><tt>\{27}[21\{59}2~</tt></td>
+                <td colspan="6"><a href="#kverb_Kudkf10">\Kudkf10</a></td>
                 <td style="not-mapped" colspan="2"/>
                 <td><a href="#kverb_Ksni_s_f10">\Ksni_s_f10</a></td>
                 <td colspan="3"><a href="#kverb_Kansif22">\Kansif22</a></td>
