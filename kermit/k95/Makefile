@@ -52,7 +52,7 @@ KUILDFLAGS=$(LDFLAGS) -Wl,-subsystem,windows
 #-march=i686
 CCDEBUG=-g3 -ggdb
 CCRELEASE= -O2
-CFLAGS=-funsigned-char $(CCRELEASE) # can flip to CCDEBUG
+CFLAGS=-funsigned-char --std=gnu89 $(CCRELEASE) # can flip to CCDEBUG
 CXXFLAGS=-funsigned-char
 
 LIBS=-lws2_32 -lspoolss -lwinspool -lgdi32 -lwinmm -lversion
