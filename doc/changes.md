@@ -10,7 +10,7 @@ log living in the [Whats New in 3.0](whats-new.md) document. When the final
 release of v3.0 eventually happens, the details about the various v3.0 
 eventually be moved elsewhere, with the full v3.0 change log taking their place.
 
-## Kermit 95 v3.0 beta 8 - Date TBD, likely mid-2026
+## Kermit 95 v3.0 beta 8 - Date TBD, likely late-2026/early-2027
 
 This release comes with *significant* changes to the way Kermit 95 handles
 color. While every effort has been made to ensure there are no unexpected
@@ -39,6 +39,14 @@ def tt_linux {
 	set term remote ascii G0
 }
 ```
+
+### Host Programmable Key Definitions Now Locked by Default
+The ability for the host to modify Kermit 95s keymap via functions such as User 
+Defined Keys in DEC VT emulations, and equivalents in other emulations is now 
+disabled by default in the interests of improving security.
+
+If you have a host application that relies on this feature, use the command
+`SET TERM LOCk-KEY-DEFINITIONS OFF`.
 
 ### A New Terminal Type: K95
 This release of Kermit 95 includes a new "K95" terminal type which aims for
@@ -175,6 +183,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    of UTF-8 mode. This is similar to xterms vt100Graphics resource, and PuTTYs
    "Enable VT100 line drawing even in UTF-8 mode" setting. It is off by default
    for all terminal types except k95 and linux.
+ - New `SET TERMINAL LOCK-KEY-DEFINITIONS` command. When set to ON (the 
+   default), this setting prevents the host from modifying the keymap using 
+   methods such as DECUDK.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))

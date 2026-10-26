@@ -471,6 +471,17 @@ number tells Kermit 95 add the specified amount of spacing between screen
 lines.
 
 <p>
+<dt><tt>SET TERMINAL LOCK-KEY-DEFINITIONS <i>{</i> OFF, ON <i>}</i></tt>
+<dd>Some terminal emulations allow the host to alter some part of the keymap. As
+this can be a security risk, this setting allows you to prevent the keymap from
+being altered by the host. You should leave this setting ON unless you know
+that your software relies on altering the keymap via functions such as DECUDK.
+This setting does not affect changes made to the keymap via the command screen
+(eg, SET KEY). You can view the state of this setting via <tt>SHOW UDK</tt>.
+This setting was added in Kermit 95 v3.0. In previous versions key definitions
+could only be locked by the host.
+
+<p>
 <dt><tt>SET TERMINAL LOCKING-SHIFT <i>{</i> OFF, ON <i>}</i></tt>
 <dd>Tells Kermit 95 whether to send Shift-In/Shift-Out (Ctrl-O and Ctrl-N) to
 switch between 7-bit and 8-bit characters sent during terminal emulation

@@ -8415,6 +8415,16 @@ static char *hxyterm[] = {
 "  Valid values range from 1.0 to 3.0 inclusive.",
 " ",
 #endif /* KUI */
+"SET TERMINAL LOCK-KEY-DEFINITIONS { OFF, ON }",
+"  Some terminal emulations allow the host to alter some part of the keymap. As",
+"  this can be a security risk, this setting allows you to prevent the keymap",
+"  from being altered by the host. You should leave this setting ON unless you",
+"  know that your software relies on altering the keymap via functions such as",
+"  DECUDK. This setting does not affect changes made to the keymap via the ",
+"  command command screen (eg, SET KEY). You can view the state of this setting",
+"  via SHOW UDK. This setting was added in Kermit 95 v3.0. In previous versions",
+"  key definitions could only be locked by the host.",
+" ",
 #endif /* OS2 */
 
 #ifndef NOCSETS

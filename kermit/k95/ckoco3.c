@@ -3362,7 +3362,7 @@ char * ekeys[] = {
 /* And close to 108 DG keys (regular and unix modes) */
 /* 153 SNI 97801 keys */
 char * udkfkeys[200];  /* let udkreset() initialize them */
-int udklock = 0 ;      /* Are User Defined Keys locked? */
+int udklock = 1 ;      /* Are User Defined Keys locked? */
 
 #ifndef NOKVERBS
 extern struct keytab kverbs[] ;         /* Kverbs table  */
@@ -29383,7 +29383,7 @@ vtescape( void )
 #ifdef CK_APC
 #ifndef NOSETKEY
 #ifndef NOKVERBS
-                if ( next == quote )
+                if ( next == quote && !udklock)
                 {
                     /* assign the string to the function key */
                     if ( udkfkeys[fn] ) {

@@ -2356,6 +2356,8 @@ wyseascii( int ch )
                     break;
                 }
                 else {
+                    extern int udklock;
+
                     debug(F110,"Wyse Escape","Assign Key Definition",0);
                     i = 0 ;
                     while ( (keydef[i]=wyinc()) != DEL )
@@ -2363,6 +2365,8 @@ wyseascii( int ch )
                     keydef[i] = NUL ;
 
                     if ( debses )
+                        break;
+                    if ( udklock )
                         break;
                     if ( key >= '@' && key <= 'O' ) {
                         keyi = key-'@';
@@ -4578,6 +4582,7 @@ wyseascii( int ch )
                         break;
                 }
                 else {
+                    extern int udklock;
                     int label = ( (key >= '0' && key <= '7') ||
                               (key >= 'P' && key <= '_') );
 
@@ -4589,6 +4594,10 @@ wyseascii( int ch )
 
                     if ( debses ) {
                         debug(F110,"Wyse Escape","Program key or label",0);
+                        break;
+                    }
+
+                    if ( udklock ) {
                         break;
                     }
 
