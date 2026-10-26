@@ -947,8 +947,13 @@ main(argc, argv) int argc; char *argv[]; {
     if (isatty(fileno(stdin)))
 #endif /* if _MSC_VER < 1900 */
 #else
+#ifdef __GNUC__
+    /* MinGW */
+    if (isatty(fileno(stdin)))
+#else /* __GNUC__ */
     /* Not Visual C++ - assume it behaves like old Visual C++ */
     if (_isatty(stdin->_file))
+#endif /* __GNUC__ */
 #endif
 #endif /* __WATCOMC__ */
 #else
