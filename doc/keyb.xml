@@ -481,7 +481,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         </p>
 
         <p>
-            In addition to the terminal-specific keymaps shown int he table
+            In addition to the terminal-specific keymaps shown in the table
             below (which can be modified with <tt>SET TERMINAL KEY</tt>), there
             are the additional <a href="#kmode">Special Keyboard Modes</a> which
             act as an overlay to modify the underlying terminal-specific keymap
