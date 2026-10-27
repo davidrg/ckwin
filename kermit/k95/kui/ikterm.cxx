@@ -390,7 +390,9 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                             if ( RequestVscrnMutex( vnum, -1 ) )
                                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
-                            vt_char_attrs = line->vt_char_attrs[x+xho];
+                            /* Throw away the erased flag - the renderer doesn't care
+                             * about it, and it messes with its attribute batching */
+                            vt_char_attrs = line->vt_char_attrs[x+xho] & ~VT_CHAR_ATTR_ERASED;
                             cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                             /* Give mutex back */
@@ -423,7 +425,9 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                         if ( RequestVscrnMutex( vnum, -1 ) )
                             return FALSE;
 #endif /* NEW_EXCLUSIVE */
-                        vt_char_attrs = line->vt_char_attrs[x+xho];
+                        /* Throw away the erased flag - the renderer doesn't care
+                             * about it, and it messes with its attribute batching */
+                        vt_char_attrs = line->vt_char_attrs[x+xho] & ~VT_CHAR_ATTR_ERASED;
                         cell_attrs = CELL_ATTR_GET(line,x+xho);
 #ifdef NEW_EXCLUSIVE
                         /* Give mutex back */
