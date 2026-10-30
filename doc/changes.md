@@ -565,6 +565,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    intentional, it was incorrect and doesn't match any real terminal.
  - Fixed rendering on large window sizes (this time for good I hope!)
  - Fixed DEC UDKs being reset on soft terminal reset
+ - Fixed a potential buffer overflow in DECUDK processing
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

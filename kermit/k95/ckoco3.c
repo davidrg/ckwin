@@ -17152,6 +17152,12 @@ dodcs( void )
     int pn[11];
     int i,k,l;
     int dcsnext = 0 ;
+    /* The VT220 only has 256 bytes of UDK memory, so thats the maximum for any
+     * one key definition as well as all key definitions combined. The VT420
+     * bumps this up to 768 but we don't support that yet. UDK_KEYDEF_MAX is
+     * intentionally one less that the size of keydef to allow for null
+     * termination of the string. */
+    const int UDK_KEYDEF_MAX = 255;
     char keydef[257] ; /* UDK defs can't be longer than 256 chars */
     char c;
 
@@ -17845,6 +17851,10 @@ dodcs( void )
                     while ( apcbuf[dcsnext] != ';' &&
                             dcsnext < apclength ) {
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+
+                        /* Prevent overflow of keydef */
+                        if (l > UDK_KEYDEF_MAX) continue;
+
                         c = 0 ;
                         if ( isxdigit(achar) )
                         {
