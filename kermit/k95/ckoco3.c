@@ -17808,6 +17808,9 @@ dodcs( void )
                 if ( k<1 )
                     pn[1] = 0 ;
 
+                if (pn[2] > 1 || pn[1] > 1)
+                    return;  /* Parameter out of range */
+
                 if ( udklock )
                     return;  /* do nothing if the UDKs are locked */
 
