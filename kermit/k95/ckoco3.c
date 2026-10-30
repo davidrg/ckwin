@@ -17834,6 +17834,22 @@ dodcs( void )
 
                     /* Check for proper separator */
                     if ( achar != '/') {
+#ifndef COMMENT
+                        /* Skip null key definition */
+                        while (achar != ';') {
+                            achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        }
+                        continue;
+#else /* COMMENT */
+                        /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
+                         * VT520 (v2.1) don't behave like this, and STD 070 says
+                         * we shouldn't do this. If we encounter a null key
+                         * definition we should just ignore it and continue on.
+                         * This code left commented just in case there is some
+                         * terminal out there that really *should* behave like
+                         * this, in which case the appropriate check on tt_type
+                         * should be added. */
+
                         /* if error, call cwrite() on rest of DCS         */
                         /* including ST.  Actually, in a real VT terminal */
                         /* we wouldn't even wait until this point to      */
@@ -17846,6 +17862,7 @@ dodcs( void )
                         cwrite(ESC);
                         cwrite('\\');
                         return ;
+#endif /* COMMENT */
                     }
 
                     /* Get the key definition */
