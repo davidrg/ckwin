@@ -3362,7 +3362,7 @@ char * ekeys[] = {
 /* And close to 108 DG keys (regular and unix modes) */
 /* 153 SNI 97801 keys */
 char * udkfkeys[200];  /* let udkreset() initialize them */
-int udklock = 1 ;      /* Are User Defined Keys locked? */
+int udklock = 1, udklock_usr = 1 ;      /* Are User Defined Keys locked? */
 
 #ifndef NOKVERBS
 extern struct keytab kverbs[] ;         /* Kverbs table  */
@@ -9669,7 +9669,9 @@ void
 udkreset( void )
 {
     int i;
-    udklock = FALSE;                   /* Unlock User Defined Keys */
+
+    udklock = udklock_usr;             /* Restore user setting */
+
     for ( i=0 ; i<200 ; i++ )          /* Reset the User Defined Keys */
     {
        if ( udkfkeys[i] )
@@ -10421,6 +10423,32 @@ udkreset( void )
                 }
             }
         }
+    }
+
+    /* xterm treats Shift+F1..F12 as function keys F13-F24. To retain
+     * compatibility with DECUDK, we preload the UDK slots with what xterm sends
+     * for Shift+F1..F12. */
+    if (ISK95(tt_type)) {
+        udkfkeys[0]  = strdup("\033[1;2P");        /* F1 */
+        udkfkeys[1]  = strdup("\033[1;2Q");
+        udkfkeys[2]  = strdup("\033[1;2R");
+        udkfkeys[3]  = strdup("\033[1;2S");
+        udkfkeys[4]  = strdup("\033[15;2~");
+        udkfkeys[5]  = strdup("\033[17;2~");
+        udkfkeys[6]  = strdup("\033[18;2~");
+        udkfkeys[7]  = strdup("\033[19;2~");
+        udkfkeys[8]  = strdup("\033[20;2~");
+        udkfkeys[9]  = strdup("\033[21;2~");
+        udkfkeys[10] = strdup("\033[1;4P");        /* F10 */
+        udkfkeys[11] = strdup("\033[1;4Q");
+        udkfkeys[12] = strdup("\033[1;4R");
+        udkfkeys[13] = strdup("\033[1;4S");
+        udkfkeys[14] = strdup("\033[15;4~");
+        udkfkeys[15] = strdup("\033[17;4~");
+        udkfkeys[16] = strdup("\033[18;4~");
+        udkfkeys[17] = strdup("\033[19;4~");
+        udkfkeys[18] = strdup("\033[20;4~");
+        udkfkeys[19] = strdup("\033[21;4~");
     }
 }
 
@@ -11372,7 +11400,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	tt_term_scroll = 1;
     decspma_max_page = -1;
 
-    udkreset() ;                        /* Reset UDKs     */
+    if (x) {
+        udkreset() ;                    /* Reset UDKs     */
+    }
     deccolm = FALSE;                    /* default column mode */
     tt_cols[VTERM] = tt_cols_usr ;
 #ifdef KUI
@@ -17122,6 +17152,12 @@ dodcs( void )
     int pn[11];
     int i,k,l;
     int dcsnext = 0 ;
+    /* The VT220 only has 256 bytes of UDK memory, so thats the maximum for any
+     * one key definition as well as all key definitions combined. The VT420
+     * bumps this up to 768 but we don't support that yet. UDK_KEYDEF_MAX is
+     * intentionally one less that the size of keydef to allow for null
+     * termination of the string. */
+    const int UDK_KEYDEF_MAX = 255;
     char keydef[257] ; /* UDK defs can't be longer than 256 chars */
     char c;
 
@@ -17772,6 +17808,9 @@ dodcs( void )
                 if ( k<1 )
                     pn[1] = 0 ;
 
+                if (pn[2] > 1 || pn[1] > 1)
+                    return;  /* Parameter out of range */
+
                 if ( udklock )
                     return;  /* do nothing if the UDKs are locked */
 
@@ -17781,6 +17820,13 @@ dodcs( void )
 
                 while ( dcsnext < apclength ) {
                     /* look for patterns of XX/string; */
+
+                    /* TODO -
+                     *  - VT420 and up:
+                     *    - Per key limit should be 768 bytes
+                     *    - Modifier keys: none, Shift (default), Alt, Alt+Shift
+                     *  - VT52x supports specifying Direction (Kyn/Stn/Dir)
+                     */
 
                     key=0;
                     /* which key to assign to? */
@@ -17795,6 +17841,22 @@ dodcs( void )
 
                     /* Check for proper separator */
                     if ( achar != '/') {
+#ifndef COMMENT
+                        /* Skip null key definition */
+                        while (achar != ';') {
+                            achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        }
+                        continue;
+#else /* COMMENT */
+                        /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
+                         * VT520 (v2.1) don't behave like this, and STD 070 says
+                         * we shouldn't do this. If we encounter a null key
+                         * definition we should just ignore it and continue on.
+                         * This code left commented just in case there is some
+                         * terminal out there that really *should* behave like
+                         * this, in which case the appropriate check on tt_type
+                         * should be added. */
+
                         /* if error, call cwrite() on rest of DCS         */
                         /* including ST.  Actually, in a real VT terminal */
                         /* we wouldn't even wait until this point to      */
@@ -17807,6 +17869,7 @@ dodcs( void )
                         cwrite(ESC);
                         cwrite('\\');
                         return ;
+#endif /* COMMENT */
                     }
 
                     /* Get the key definition */
@@ -17815,6 +17878,10 @@ dodcs( void )
                     while ( apcbuf[dcsnext] != ';' &&
                             dcsnext < apclength ) {
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+
+                        /* Prevent overflow of keydef */
+                        if (l > UDK_KEYDEF_MAX) continue;
+
                         c = 0 ;
                         if ( isxdigit(achar) )
                         {
@@ -17837,6 +17904,15 @@ dodcs( void )
                         }
                     }   
 
+#ifdef COMMENT
+                    /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
+                     * VT520 (v2.1) don't behave like this. If they encounter
+                     * an odd number of hex digits then the odd hex digit is
+                     * discarded and processing continues. STD 070 says that in
+                     * this situation the current key definition and the rest of
+                     * DECUDK should be ignored in this situation, so I can't
+                     * rule out some DEC terminal actually behaving in this way
+                     * so for now its just commented out. */
                     if ( i == 1 ||
                          apcbuf[dcsnext] != ';' &&
                          dcsnext < apclength ){
@@ -17853,6 +17929,7 @@ dodcs( void )
                         cwrite('\\');
                         return ;
                     }
+#endif /* COMMENT */
 
                     i = -1 ;
                     switch ( key ) {

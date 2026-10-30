@@ -5117,8 +5117,8 @@ settrm() {
       case XYTLOCKKEYS: {               /* SET TERMINAL LOCK-KEY-DEFINITIONS */
           y = seton(&x);                  /* Go parse ON or OFF */
           if (y > 0) {                    /* Command succeeded? */
-              extern int udklock;
-              udklock = x;
+              extern int udklock, udklock_usr;
+              udklock = udklock_usr = x;
           }
           return(y);
       }
