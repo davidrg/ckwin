@@ -17880,6 +17880,15 @@ dodcs( void )
                         }
                     }   
 
+#ifdef COMMENT
+                    /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
+                     * VT520 (v2.1) don't behave like this. If they encounter
+                     * an odd number of hex digits then the odd hex digit is
+                     * discarded and processing continues. STD 070 says that in
+                     * this situation the current key definition and the rest of
+                     * DECUDK should be ignored in this situation, so I can't
+                     * rule out some DEC terminal actually behaving in this way
+                     * so for now its just commented out. */
                     if ( i == 1 ||
                          apcbuf[dcsnext] != ';' &&
                          dcsnext < apclength ){
@@ -17896,6 +17905,7 @@ dodcs( void )
                         cwrite('\\');
                         return ;
                     }
+#endif /* COMMENT */
 
                     i = -1 ;
                     switch ( key ) {
