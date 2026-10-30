@@ -17821,6 +17821,13 @@ dodcs( void )
                 while ( dcsnext < apclength ) {
                     /* look for patterns of XX/string; */
 
+                    /* TODO -
+                     *  - VT420 and up:
+                     *    - Per key limit should be 768 bytes
+                     *    - Modifier keys: none, Shift (default), Alt, Alt+Shift
+                     *  - VT52x supports specifying Direction (Kyn/Stn/Dir)
+                     */
+
                     key=0;
                     /* which key to assign to? */
                     achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
