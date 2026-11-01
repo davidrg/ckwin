@@ -17952,6 +17952,7 @@ dodcs( void )
                     /* Get the key definition */
                     l = 0 ; /* characters in definition */
                     i = 0 ; /* which pass? */
+                    keydef[l] = '\0'; /* Handle empty key definition */
                     while ( apcbuf[dcsnext] != ';' &&
                             dcsnext < apclength ) {
                         achar = get_udk_dcs_byte(&dcsnext);
