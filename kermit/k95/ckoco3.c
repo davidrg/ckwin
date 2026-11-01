@@ -12342,7 +12342,27 @@ pushed:
         if ((ISVT220(tt_type_mode) ||
              ISANSI(tt_type_mode)) &&
              !xprint ) {                /* VT220 and above... */
-                cx = utf8_active ? c : c & cmask & pmask;   /* C1 check must be masked */
+
+            if (!utf8_active && ( GR->c1 )) {
+                if (c == 0x9a) {
+                    /* The DEC VT220 and up don't implement SCI. If it is
+                     * received while processing an escape sequence it acts
+                     * similar to CAN. If we convert SCI to its two byte
+                     * representation here, we get ESC Z which is DECID. And the
+                     * VT220 and up *do* implement that.
+                     *
+                     * So instead here we'll just convert SCI to CAN. This
+                     * should have the same overall effect while not producing
+                     * any unexpected side-effects like responding with the DA1
+                     * string.
+                     */
+                    /* TODO: There are probably more C1 control codes that
+                     *       should be handled in this way */
+                    c = CAN;
+                }
+            }
+
+            cx = utf8_active ? c : c & cmask & pmask;   /* C1 check must be masked */
 
             if (!utf8_active && ( GR->c1 ) &&
                  (cx > 127) && (cx < 160) /* It's a C1 character */

@@ -572,6 +572,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed null key definitions causing the remainder of a DECUDK sequence to be
    dumped to the terminal. This behaviour was inconsistent with the VT220, 
    VT420, and VT520. Null key definitions are now ignored as per DEC STD 070.
+ - Fixed C1 control code SCI being interpreted as DECID
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
