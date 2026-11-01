@@ -17972,22 +17972,28 @@ dodcs( void )
                         }
                         else {
                             keydef[l] = c ;
+                            keydef[l+1] = '\0';
                             i = 1 ;
                         }
                     }   
 
-#ifdef COMMENT
-                    /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
-                     * VT520 (v2.1) don't behave like this. If they encounter
-                     * an odd number of hex digits then the odd hex digit is
-                     * discarded and processing continues. STD 070 says that in
-                     * this situation the current key definition and the rest of
-                     * DECUDK should be ignored in this situation, so I can't
-                     * rule out some DEC terminal actually behaving in this way
-                     * so for now its just commented out. */
                     if ( i == 1 ||
                          apcbuf[dcsnext] != ';' &&
                          dcsnext < apclength ){
+#ifndef COMMENT
+                        /* Discard the last char received if we didn't receive
+                         * both hex digits for it. */
+                        keydef[l] = '\0';
+#else /* COMMENT */
+                        /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
+                         * VT520 (v2.1) don't behave like this. If they encounter
+                         * an odd number of hex digits then the odd hex digit is
+                         * discarded and processing continues. STD 070 says that in
+                         * this situation the current key definition and the rest of
+                         * DECUDK should be ignored in this situation, so I can't
+                         * rule out some DEC terminal actually behaving in this way
+                         * so for now its just commented out. */
+
                         /* if error, call cwrite() on rest of DCS         */
                         /* including ST.  Actually, in a real VT terminal */
                         /* we wouldn't even wait until this point to      */
@@ -18000,8 +18006,8 @@ dodcs( void )
                         cwrite(ESC);
                         cwrite('\\');
                         return ;
-                    }
 #endif /* COMMENT */
+                    }
 
                     i = -1 ;
                     switch ( key ) {
