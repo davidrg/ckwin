@@ -18045,7 +18045,8 @@ dodcs( void )
                     }
                     if ( i>= 0 )
                     {
-                        if ( udkfkeys[i] ) {
+                        /* TODO: For VT520, do as for K95 */
+                        if ( udkfkeys[i] && (!ISK95(tt_type) || strlen(keydef) ) ) {
                             free( udkfkeys[i] ) ;
                             udkfkeys[i]=NULL;
                         }
