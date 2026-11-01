@@ -10426,10 +10426,12 @@ udkreset( void )
         }
     }
 
-    /* xterm treats Shift+F1..F12 as function keys F13-F24. To retain
-     * compatibility with DECUDK, we preload the UDK slots with what xterm sends
-     * for Shift+F1..F12. */
-    if (ISK95(tt_type)) {
+    /* xterm (and the VT520 with certain keyboards) treats Shift+F1..F12 as
+     * function keys F13-F24. And both xterm and the VT520 send DECFNK when a
+     * key has not had something assigned to it via DECUDK. So for now we
+     * pre-initialise these with DECFNK.
+     * */
+    if (ISK95(tt_type) /* || ISVT520(tt_type) */) {
         udkfkeys[0]  = strdup("\033[1;2P");        /* F1 */
         udkfkeys[1]  = strdup("\033[1;2Q");
         udkfkeys[2]  = strdup("\033[1;2R");
