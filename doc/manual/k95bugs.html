@@ -1017,6 +1017,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b842">842. Japanese-roman character set does not work</a>
 <li><tt>[+] (K)</tt> <a href="#b843">843. SGR font attributes do not turn off if the reverse video attribute is set </a>
 <li><tt>[+] (K)</tt> <a href="#b844">844. Cursor positioning on double-width lines in K95G</a>
+<li><tt>[+] (K)</tt> <a href="#b845">845. APC causes subsequent string escape sequences (DCS, OSC, etc) to be interpreted as APC</a>
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
     -->
@@ -8230,6 +8231,22 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/561">Issue #561 on Github</a>
+
+<h3><a name="b845">845. APC causes subsequent string escape sequences (DCS, OSC, etc) to be interpreted as APC</a></h3>
+<p>
+    When K95 receives an APC escape sequence it fails to clear the APC flag
+    whether or not the APC sequence is processed. This causes subsequent OSC,
+    DCS and other string-type control sequences to be interprted as APC instead
+    of their correct type until the terminal is reset. If APC is enabled, using
+    an OSC (like setting the title) or DCS (like setting user-defined keys) may
+    cause errors to appear on the command screen.
+</p>
+<p>
+    This affects all releases of Kermit 95 since at least 1.1.11 (February
+    1997). Older releases were not available for testing, but its possible the
+    bug may have been introduced as early as 1.1.7 (July 1996). It is fixed in
+    K95 3.0.0 beta 8.
+</p>
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>

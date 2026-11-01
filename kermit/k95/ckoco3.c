@@ -18920,6 +18920,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             } else {
                 vtescape();                               /* Go act on it. */
             }
+            break;
         case 'P':                       /* Device Control String (DCS) Introducer */
             if ( !xprint) {
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
@@ -19187,6 +19188,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
 #ifdef CK_APC
             if (apcrecv && apclength > 0)/* If it was an APC string, */
             {
+                apcrecv = FALSE;
                 apcbuf[apclength] = NUL; /* terminate it */
                 if ((apcstatus & APC_ON) && !debses) {
                     apc_command(APC_REMOTE,apcbuf);

@@ -573,6 +573,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    dumped to the terminal. This behaviour was inconsistent with the VT220, 
    VT420, and VT520. Null key definitions are now ignored as per DEC STD 070.
  - Fixed C1 control code SCI being interpreted as DECID
+ - Fixed APC causing all subsequent OSC, DCS and other string-type escape 
+   sequences to be processed as APC (and so likely producing errors on the 
+   command screen if APC is enabled) until terminal reset (K95 bug 845).
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
