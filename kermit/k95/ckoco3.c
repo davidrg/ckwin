@@ -785,6 +785,7 @@ int 	 tt_sync_output = FALSE;
 int      tt_sync_output_timeout = 0;
 #endif /* KUI */
 int      holdscreen = FALSE ;
+bool     tt_strict = FALSE;             /* Strict emulation (no extensions)? */
 
 int      escstate = ES_NORMAL;
 int      escnext = 1;
@@ -12358,6 +12359,19 @@ pushed:
                      */
                     /* TODO: There are probably more C1 control codes that
                      *       should be handled in this way */
+                    c = CAN;
+                } else if (!ISVT320(tt_type) && (
+                       c == 0x98 /* SOS */
+                    || (tt_strict && c == 0x9D) /* OSC */
+                    || c == 0x9E /* PM */
+                    || (c == 0x9F && tt_strict && !(apcstatus & APC_ON)) /* APC */
+                    )) {
+                    /* The VT220 also doesn't implement any of these. While
+                     * converting them to their two-byte representation doesn't
+                     * cause misinterpretation, it also causes the subsequent
+                     * string to be swallowed which is not what a real VT220
+                     * does. So convert to CAN.
+                     */
                     c = CAN;
                 }
             }

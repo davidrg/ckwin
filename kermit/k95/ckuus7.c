@@ -1082,6 +1082,7 @@ static struct keytab trmtab[] = {
     { "sni-scrollmode",              XYTSNISM, CM_INV },
     { "spacing-attribute-character", XYTSAC,   CM_INV },
     { "statusline",                  XYTSTAT,  0 },
+    { "strict-emulation",            XYTSTRICT, CM_INV },
     { "tra",                         XYTCTS,   CM_INV|CM_ABR },
     { "transmit-timeout",            XYTCTS,   0 },
 #endif /* OS2 */
@@ -5119,6 +5120,14 @@ settrm() {
           if (y > 0) {                    /* Command succeeded? */
               extern int udklock, udklock_usr;
               udklock = udklock_usr = x;
+          }
+          return(y);
+      }
+      case XYTSTRICT: {               /* SET TERMINAL STRICT-EMULATION */
+          y = seton(&x);                  /* Go parse ON or OFF */
+          if (y > 0) {                    /* Command succeeded? */
+              extern bool tt_strict;
+              tt_strict = x;
           }
           return(y);
       }
