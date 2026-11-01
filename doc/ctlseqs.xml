@@ -3990,27 +3990,523 @@ DECTSR		462
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm"/>
             <!-- aka WYUDK -->
             <ctlseq>
-                DCS <param-single/> ; <param-single/> | <param-text/> ST
+                DCS <param-single symbol="Pe"/> ; <param-single symbol="Pl"/> | <param-text symbol="key-definition-strings"/> ST
             </ctlseq>
-            <p>The first parameter can be either 0 (clear all UDK definitions before
-                starting, default), or 1 (erase below).</p>
-            <p>The second parameter can be either 0 (lock the keys, default), or 1 (do not
-                lock the keys)</p>
-
-            <!-- TODO: the third parameter should indicate if the key is shifted or not. We
-                       don't appear to support this currently. K95 also does not allow
-                       specifying the direction of the key. -->
-
             <p>
-                The third parameter is a ;-seperated list of key definitions. A key
-                definition consists of the key code for one of the function keys, a / character
-                and then the string to send in response to that function key being pressed.
+                Programs the response to pressing one or more of the user-defined
+                function keys (Shift+F1 through F20). If key definitions are
+                locked (<tt>SET TERM LOCK-KEY-DEFINITIONS ON</tt>, the default)
+                then DECUDK is ignored. You can view the current state of the
+                user-defined keys with <tt>SHOW UDK</tt>, and query for it with
+                <a href="#dsr-udk">DSR-25</a>.
             </p>
 
+            <p>
+                While DECs hardware terminals offered a fixed amount of space
+                available to store all key definitions (256 bytes on the VT220,
+                768 bytes on the VT420 and VT520), Kermit 95 instead currently
+                enforces a per-key limit of 256 bytes.
+            </p>
+
+            <section role="text" title="Parameter Pe: Erase Control">
+                <p>Specifies which existing key definitions should be erased.
+                    Valid values are:
+                </p>
+                <ul>
+                    <li>0 = erase all definitions before loading new definitions (default).</li>
+                    <li>1 = erase individual key definitions as new definitions are loaded </li>
+                </ul>
+                <p>
+                    Using Pe=1, you can modify only some key definitions without
+                    having to reload all definitions.
+                </p>
+            </section>
+            <section role="text" title="Parameter Pl: Lock control">
+                <p>
+                    Specifies if key definitions should be locked upon completion
+                    of DECDLD to prevent subsequent modification, or if they
+                    should be left unlocked. Valid values are:
+                </p>
+                <ul>
+                    <li>0 = Lock key definitions</li>
+                    <li>1 = Leave key definitions unlocked</li>
+                </ul>
+                <p>
+                    If key definitions are locked (Pl=0), only the user can
+                    unlock them again using the
+                    <tt>SET TERM LOCK-KEY-DEFINITIONS OFF</tt> command.
+                </p>
+                <p>
+                    In the interests of security, host applications should not
+                    leave key definitions unlocked.
+                </p>
+            </section>
+            <!-- TODO: the third parameter should indicate if the key is
+                    shifted or not. We don't support this currently. K95 also
+                    does not allow specifying the direction of the key. -->
+            <section role="text" title="Key Definition Strings">
+                <p>
+                    The command string portion of the DCS sequence contains zero
+                    or more <em>key definition strings</em> separated by the
+                    semicolon character (';'). Each key definition
+                    string is of the form <tt>Kyn/Kstn</tt> where Kyn is the key
+                    number, and Kstn is the new definition for that key.
+                </p>
+                <!-- TODO: the VT52x appears to support an extended syntax:
+                        Kyn/Stn/Dir -->
+                <p>Note that key numbers 16, 22, 27 and 30 are skipped. Valid
+                    key numbers are:
+                </p>
+                <table>
+                    <tr>
+                        <th>Key number (Kyn)</th>
+                        <th>Key</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td>F1</td>
+                        <td>VT420 or higher</td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td>F2</td>
+                        <td>VT420 or higher</td>
+                    </tr>
+                    <tr>
+                        <td>13</td>
+                        <td>F3</td>
+                        <td>VT420 or higher</td>
+                    </tr>
+                    <tr>
+                        <td>14</td>
+                        <td>F4</td>
+                        <td>VT420 or higher</td>
+                    </tr>
+                    <tr>
+                        <td>15</td>
+                        <td>F5</td>
+                        <td>VT420 or higher</td>
+                    </tr>
+                    <tr>
+                        <td>17</td>
+                        <td>F6</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>18</td>
+                        <td>F7</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>19</td>
+                        <td>F8</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>20</td>
+                        <td>F9</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>21</td>
+                        <td>F10</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>23</td>
+                        <td>F11</td>
+                        <td>Shift+Alt+F1 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>24</td>
+                        <td>F12</td>
+                        <td>Shift+Alt+F2 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>25</td>
+                        <td>F13</td>
+                        <td>Shift+Alt+F3 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>26</td>
+                        <td>F14</td>
+                        <td>Shift+Alt+F4 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>28</td>
+                        <td>F15</td>
+                        <td>The HELP key on an LK450 keyboard. Shift+Alt+F5 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>29</td>
+                        <td>F16</td>
+                        <td>The DO key on an LK450 keyboard. Shift+Alt+F6 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>31</td>
+                        <td>F17</td>
+                        <td>Shift+Alt+F7 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>32</td>
+                        <td>F18</td>
+                        <td>Shift+Alt+F8 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>33</td>
+                        <td>F19</td>
+                        <td>Shift+Alt+F9 on keyboards with 12 function keys.</td>
+                    </tr>
+                    <tr>
+                        <td>34</td>
+                        <td>F20</td>
+                        <td>Shift+Alt+F10 on keyboards with 12 function keys.</td>
+                    </tr>
+                </table>
+
+                <p>
+                    The key definition (Kstn) is written as a sequence of hex
+                    digit pairs, which are the charactes in the following
+                    ranges:
+                </p>
+                <ul>
+                    <li>0 through 9</li>
+                    <li>A through F</li>
+                    <li>a through f</li>
+                </ul>
+                <p>
+                    Each pair of hex digits represents a single 8-bit byte.
+                    For example the hex digits <tt>4B</tt> represent the letter
+                    K. The digits <tt>4B65726D697420393521</tt> represent the
+                    string <tt>Kermit 95!</tt>. This string could be bound to
+                    Shift+F6 with the DCS sequence
+                    <tt><cc>DCS</cc>0;1|18/4B65726D697420393521<cc>ST</cc></tt>
+                    which would erase all key definitions, assign the string to
+                    key 18 (F7), then finish leaving key definitions unlocked.
+                </p>
+                <p>
+                    If a key definition contains an uneven number of hex digits
+                    this is an error, and Kermit 95 will ignore the final hex
+                    digit in keeping with the DEC terminals it emulates.
+                </p>
+                <p>
+                    The characters HT (TAB), LF, VT, FF and CR can be included
+                    in the key definition string for formatting purposes (they
+                    are ignored when DECUDK is processed).
+                </p>
+                <p>
+                    Kermits 95s <tt>\fhexify</tt> function may be useful for
+                    converting strings to hex format. For example, typing
+                    <tt>echo \fhexify(Hello!)</tt> at the K95 prompt will output
+                    <tt>48656C6C6F21</tt> which you can then use with DECUDK.
+                    The reverse of this function, <tt>\funhexify</tt>, is also
+                    available if you wish to decode key definitions.
+                </p>
+                <p>
+                    As a final example, you could bind the string "Hello, " to
+                    Shift+F6 and "Kermit 95!" to Shift=F7 with the following
+                    DCS sequence:
+                    <tt><cc>DCS</cc>0;1|17/48656C6C6F2C20;18/4B65726D697420393521<cc>ST</cc></tt>
+                </p>
+            </section>
+            <section title="Undefined Behaviour" role="text" id="decudk-undefined">
+                <p>
+                    The DECUDK specification leaves some behaviour undefined.
+                    Where possible, Kermit 95 attempts to match the behaviour of
+                    the DEC products it emulates regardless, though at the time
+                    this was feature was last updated only a VT220, VT420 and
+                    VT520 were available for testing. Kermit 95s other terminal
+                    emulations may not exactly match their respective terminals.
+                </p>
+                <p>
+                    The following bytes have behaviours undefined by the DECUDK
+                    specification, and so kermit 95 assigns them meaning as
+                    described:
+                </p>
+                <dl>
+                    <dt>0x00 through 0x17, 0x19, 0x1C through 0x2E, 0x3A,
+                        0x3C through 0x40, 0x47 through 0x60, 0x67 through 0x7F,
+                        0x80 (VT220 only), 0xA0 through 0xAF, 0xBA through 0xC0,
+                        0xC7 through 0xE0, 0xE7 through 0xFF
+                    </dt>
+                    <dd>Ignored</dd>
+
+                    <dt>0xB0 through 0xB9</dt>
+                    <dd>Treated as 0x30 through 0x39 (the digits 0...9)</dd>
+
+                    <dt>0xC1 through 0xC6</dt>
+                    <dd>Treated as 0x41 through 0xF6 (the digits A...F)</dd>
+
+                    <dt>0xE1 through 0xE6</dt>
+                    <dd>Treated as 0x61 through 0x66 (the digits a...f)</dd>
+
+                    <dt>0x18, 0x1A, 0x1B, 0x80 (VT320+), 0x81 through 0x9F</dt>
+                    <dd>Aborts the DECUDK sequence; the byte and remainder of
+                        the DECUDK sequence will be processed as normal input
+                        potentially being dumped to the terminal. SUB (0x1A)
+                        will print a reverse question mark, IND (0x84) and NEL
+                        (0x85) will go down a line, etc.
+                    </dd>
+                </dl>
+                <!--
+                TODO: K95 aborts leave the second UDK slot outputing DECFN
+                    The VT520 doesn't seem to. Does it leave UDK slots as
+                    UDK slots until the end of DECUDK?
+
+                    These characters are an error with undefined processing.
+                    STD-070 recommends they be ignored.
+
+                    Observed behaviours
+                        ign     Ignored
+                        ilock   Input is locked until communications reset
+                        abort   Further processing is canceled and dumps the reset to the terminal
+                        rabrt   Prints reverse question mark and dumps the rest to the terminal
+                        cheva   Outputs the double chevron (>) character then dumps the rest to the terminal. The double chevron replaces first character of the rest of the dcs buffer
+                        nsabt   Aborts dumping the rest to the terminal except the leading semicolon. (18/41 instead of ;18/41)
+                        nlabr   Outputs a new line then dumps the rest to the terminal
+                        blabr   Goes back a line then dumps the reset to the terminal
+                        sabrt   Silent abort - cancels further processing, does not dump to terminal
+                        int-@   interpreted, @ is the resulting character
+
+                    chr hex vt220 vt420 vt520 k95
+                    === === ===== ===== ===== =====
+                    NUL 00  ign   ign   ign   ign
+                    SOH 01  ign   ign   ign   ign
+                    STX 02  ign   ign   ign   ign
+                    ETX 03  ign   ign   ign   ign
+                    EOT 04  ign   ign   ign   ign
+                    ENQ 05  ign   ign   ign   ign
+                    ACK 06  ign   ign   ign   ign
+                    BEL 07  ign   ign   ign   ign
+                     SO 0E  ign   ign   ign   ign
+                     SI 0F  ign   ign   ign   ign
+                    DLE 10  ign   ign   ign   ign
+                    DC1 11  ign   ign   ign   ign
+                    DC2 12  ign   ign   ign   ign
+                    DC3 13  ilock ilock ilock ign    K95 differs!
+                    DC4 14  ign   ign   ign   ign
+                    NAK 15  ign   ign   ign   ign
+                    SYN 16  ign   ign   ign   ign
+                    ETB 17  ign   ign   ign   ign
+                    CAN 18  abort abort abort abort
+                     EM 19  ign   ign   ign   ign
+                    SUB 1A  rabrt rabrt rabrt rabrt
+                    ESC 1B  nsabt nsabt nsabt nsabrt       (except when followed by '\')
+                     FS 1C  ign   ign   ign   ign
+                     GS 1D  ign   ign   ign   ign
+                     RS 1E  ign   ign   ign   ign
+                     US 1F  ign   ign   ign   ign
+                     SP 20  ign   ign   ign   ign
+                      ! 21  ign   ign   ign   ign
+                      " 22  ign   ign   ign   ign
+                      # 23  ign   ign   ign   ign
+                      $ 24  ign   ign   ign   ign
+                      % 25  ign   ign   ign   ign
+                      & 26  ign   ign   ign   ign
+                      ' 27  ign   ign   ign   ign
+                      ( 28  ign   ign   ign   ign
+                      ) 29  ign   ign   ign   ign
+                      * 2A  ign   ign   ign   ign
+                      + 2B  ign   ign   ign   ign
+                      , 2C  ign   ign   ign   ign
+                      - 2D  ign   ign   ign   ign
+                      . 2E  ign   ign   ign   ign
+                      : 3A  ign   ign   ign   ign
+                      < 3C  ign   ign   ign   ign
+                      = 3D  ign   ign   ign   ign
+                      > 3E  ign   ign   ign   ign
+                      ? 3F  ign   ign   ign   ign
+                      @ 40  ign   ign   ign   ign
+                      G 47  ign   ign   ign   ign
+                      H 48  ign   ign   ign   ign
+                      I 49  ign   ign   ign   ign
+                      J 4A  ign   ign   ign   ign
+                      K 4B  ign   ign   ign   ign
+                      L 4C  ign   ign   ign   ign
+                      M 4D  ign   ign   ign   ign
+                      N 4E  ign   ign   ign   ign
+                      O 4F  ign   ign   ign   ign
+                      P 50  ign   ign   ign   ign
+                      Q 51  ign   ign   ign   ign
+                      R 52  ign   ign   ign   ign
+                      S 53  ign   ign   ign   ign
+                      T 54  ign   ign   ign   ign
+                      U 55  ign   ign   ign   ign
+                      V 56  ign   ign   ign   ign
+                      W 57  ign   ign   ign   ign
+                      X 58  ign   ign   ign   ign
+                      Y 59  ign   ign   ign   ign
+                      Z 5A  ign   ign   ign   ign
+                      [ 5B  ign   ign   ign   ign
+                      \ 5C  ign   ign   ign   ign
+                      ] 5D  ign   ign   ign   ign
+                      ^ 5E  ign   ign   ign   ign
+                      _ 5F  ign   ign   ign   ign
+                      ` 60  ign   ign   ign   ign
+                      g 67  ign   ign   ign   ign
+                      h 68  ign   ign   ign   ign
+                      i 69  ign   ign   ign   ign
+                      j 6A  ign   ign   ign   ign
+                      k 6B  ign   ign   ign   ign
+                      l 6C  ign   ign   ign   ign
+                      m 6D  ign   ign   ign   ign
+                      n 6E  ign   ign   ign   ign
+                      o 6F  ign   ign   ign   ign
+                      p 70  ign   ign   ign   ign
+                      q 71  ign   ign   ign   ign
+                      r 72  ign   ign   ign   ign
+                      s 73  ign   ign   ign   ign
+                      t 74  ign   ign   ign   ign
+                      u 75  ign   ign   ign   ign
+                      v 76  ign   ign   ign   ign
+                      w 77  ign   ign   ign   ign
+                      x 78  ign   ign   ign   ign
+                      y 79  ign   ign   ign   ign
+                      z 7A  ign   ign   ign   ign
+                      { 7B  ign   ign   ign   ign
+                      | 7C  ign   ign   ign   ign
+                      } 7D  ign   ign   ign   ign
+                      ~ 7E  ign   ign   ign   ign
+                    DEL 7F  ign   ign   ign   ign
+                    PAD 80  ign   abort abort abort  VT220 differs from 420/520. K95 matches
+                    HOP 81  abort abort abort abort
+                    BPH 82  abort abort abort abort
+                    NBH 83  abort abort abort abort
+                    IND 84  nlabr nlabr nlabr nlabr   Performs the IND
+                    NEL 85  nlabr nlabr nlabr nlabr   Performs the NEL
+                    SSA 86  abort abort abort abort
+                    ESA 87  abort abort abort abort
+                    HTS 88  abort abort abort abort
+                    HTJ 89  abort abort abort abort
+                    VTS 8A  abort abort abort abort
+                    PLD 8B  abort abort abort abort
+                    PLU 8C  abort abort abort abort
+                     RI 8D  blabr blabr blabr blabr       Performs the RI
+                    SS2 8E  cheva cheva cheva cheva       does a single shift
+                    SS3 8F  cheva cheva cheva cheva       does a single shift
+                    DCS 90  sabrt sabrt sabrt sabrt
+                    PU1 91  abort abort abort abort
+                    PU2 92  abort abort abort abort
+                    STS 93  abort abort abort abort
+                    CCH 94  abort abort abort abort
+                     MW 95  abort abort abort abort
+                    SPA 96  abort abort abort abort
+                    EPA 97  abort abort abort abort
+                    SOS 98  abort sabrt sabrt sabrt     VT220 differs from 420/520
+                    SGC 99  abort abort abort abort
+                    SCI 9A  abort abort abort abort
+                    CSI 9B  sabrt sabrt sabrt sabrt
+                    OSC 9D  abort sabrt sabrt sabrt      VT220 differs from 420/520
+                     PM 9E  abort sabrt sabrt sbart      VT220 differs from 420/520
+                    APC 9F  abort sabrt sabrt sabrt      VT220 differs from 420/520
+                        A0  ign   ign   ign   ign
+                        A1  ign   ign   ign   ign
+                        A2  ign   ign   ign   ign
+                        A3  ign   ign   ign   ign
+                        A4  ign   ign   ign   ign
+                        A5  ign   ign   ign   ign
+                        A6  ign   ign   ign   ign
+                        A7  ign   ign   ign   ign
+                        A8  ign   ign   ign   ign
+                        A9  ign   ign   ign   ign
+                        AA  ign   ign   ign   ign
+                        AB  ign   ign   ign   ign
+                        AC  ign   ign   ign   ign
+                        AD  ign   ign   ign   ign
+                        AE  ign   ign   ign   ign
+                        AF  ign   ign   ign   ign
+                        B0  int-@ int-@ int-@ int-@
+                        B1  int-A int-A int-A int-A
+                        B2  int-B int-B int-B int-B
+                        B3  int-C int-C int-C int-C
+                        B4  int-D int-D int-D int-D
+                        B5  int-E int-E int-E int-E
+                        B6  int-F int-F int-F int-F
+                        B7  int-G int-G int-G int-G
+                        B8  int-H int-H int-H int-H
+                        B9  int-I int-I int-I int-I
+                        BA  ign   ign   ign   ign
+                        BB  ign   ign   ign   ign
+                        BC  ign   ign   ign   ign
+                        BD  ign   ign   ign   ign
+                        BE  ign   ign   ign   ign
+                        BF  ign   ign   ign   ign
+                        C0  ign   ign   ign   ign
+                        C1  int-J int-J int-J int-J
+                        C2  int-K int-K int-K int-K
+                        C3  int-L int-L int-L int-L
+                        C4  int-M int-M int-M int-M
+                        C5  int-N int-N int-N int-N
+                        C6  int-O int-O int-O int-O
+                        C7  ign   ign   ign   ign
+                        C8  ign   ign   ign   ign
+                        C9  ign   ign   ign   ign
+                        CA  ign   ign   ign   ign
+                        CB  ign   ign   ign   ign
+                        CC  ign   ign   ign   ign
+                        CD  ign   ign   ign   ign
+                        CE  ign   ign   ign   ign
+                        CF  ign   ign   ign   ign
+                        D0  ign   ign   ign   ign
+                        D1  ign   ign   ign   ign
+                        D2  ign   ign   ign   ign
+                        D3  ign   ign   ign   ign
+                        D4  ign   ign   ign   ign
+                        D5  ign   ign   ign   ign
+                        D6  ign   ign   ign   ign
+                        D7  ign   ign   ign   ign
+                        D8  ign   ign   ign   ign
+                        D9  ign   ign   ign   ign
+                        DA  ign   ign   ign   ign
+                        DB  ign   ign   ign   ign
+                        DC  ign   ign   ign   ign
+                        DD  ign   ign   ign   ign
+                        DE  ign   ign   ign   ign
+                        DF  ign   ign   ign   ign
+                        E0  ign   ign   ign   ign
+                        E1  int-J int-J int-J int-J
+                        E2  int-K int-K int-K int-K
+                        E3  int-L int-L int-L int-L
+                        E4  int-M int-M int-M int-M
+                        E5  int-N int-N int-N int-N
+                        E6  int-O int-O int-O int-O
+                        E7  ign   ign   ign   ign
+                        E8  ign   ign   ign   ign
+                        E9  ign   ign   ign   ign
+                        EA  ign   ign   ign   ign
+                        EB  ign   ign   ign   ign
+                        EC  ign   ign   ign   ign
+                        ED  ign   ign   ign   ign
+                        EF  ign   ign   ign   ign
+                        F0  ign   ign   ign   ign
+                        F1  ign   ign   ign   ign
+                        F2  ign   ign   ign   ign
+                        F3  ign   ign   ign   ign
+                        F4  ign   ign   ign   ign
+                        F5  ign   ign   ign   ign
+                        F6  ign   ign   ign   ign
+                        F7  ign   ign   ign   ign
+                        F8  ign   ign   ign   ign
+                        F9  ign   ign   ign   ign
+                        FA  ign   ign   ign   ign
+                        FB  ign   ign   ign   ign
+                        FC  ign   ign   ign   ign
+                        FD  ign   ign   ign   ign
+                        FE  ign   ign   ign   ign
+                        FF  ign   ign   ign   ign
+                -->
+            </section>
+
             <section role="text" title="Not Implemented">
-            <p>K95 does not currently
-                support specifying the shift-state of function keys, or the direction the
-                response to pressing the key is to be sent in.</p>
+                <p>
+                    While Kermit 95 supports some features of DECUDK as it
+                    exists on the VT420 and VT500 such as being able to program
+                    F1 through F5, it does not currently support specifying
+                    the modifier keys or direction the keys response should be
+                    sent in. These features will arrive in some future release
+                    that includes VT420 emulation.
+                </p>
             </section>
         </section>
 
@@ -6147,8 +6643,8 @@ VT420:
                     indicates if the protected attribute is set</li>
                 <li>Sflag is a single byte in the ASCII range where bit 1
                     indicates <a href="#decom">DECOM</a> is set,
-                    bit 2 indicates <a href="ssg2l">SS2</a> is pending,
-                    bit 3 indicates <a href="ssg3l">SS3</a> is pending,
+                    bit 2 indicates <a href="#ssg2l">SS2</a> is pending,
+                    bit 3 indicates <a href="#ssg3l">SS3</a> is pending,
                     and bit 4 indicates the last column flag is set.
                 </li>
                 <li>Spgl is a number from 0 to 3 indicating which of G0, G1, G2 or G3 is invoked into GL</li>
