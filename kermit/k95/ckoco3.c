@@ -17175,6 +17175,40 @@ dopu2( void )
     }
 }
 
+/* Reads the next byte from the DCS buffer for processing DECUDK. DECUDK ignores
+ * certain characters appearing in the command string, so when this function
+ * encounters one it skips over it. */
+int
+get_udk_dcs_byte(int *dcsnext) {
+    int next = *dcsnext;
+    int result = 0;
+
+    bool ign = 0;
+
+    while ( next < apclength && (
+            result <= 0x17 ||                     /* 0x00 - 0x17 ignored */
+            result == 0x19 ||                     /* 0x19 ignored */
+            (result >= 0x1C && result <= 0x2E) || /* 0x1C - 0x2E ignored */
+            result == 0x3A ||                     /* 0x3A ignored */
+            (result >= 0x3C && result <= 0x40) || /* 0x3C - 0x40 ignored */
+            (result >= 0x47 && result <= 0x60) || /* 0x47 - 0x60 ignored */
+            (result >= 0x67 && result <= 0x7F) || /* 0x67 - 0x7F ignored */
+            (result == 0x80 && (                  /* 0x80 ignored by VT220 only */
+                tt_type == TT_VT220 || tt_type == TT_VT220PC)) ||
+            (result >= 0xA0 && result <= 0xAF) || /* 0xA0 - 0xAF ignored */
+            (result >= 0xBA && result <= 0xC0) || /* 0xBA - 0xC0 ignored */
+            (result >= 0xC7 && result <= 0xE0) || /* 0xC7 - 0xE0 ignored */
+            result >= 0xE7                        /* 0xE7 - 0xFF ignored */
+        )) {
+        if (ign) printf("Ignore byte %d char %d (%02x)\n", next, result, result);
+        result = (next<apclength)?apcbuf[next++]:0;
+        ign = 1;
+    }
+
+    *dcsnext = next;
+    return result;
+}
+
 /* ------------------------------------------------------------------ */
 /* dodcs - process DCS sequences (VT320 and higher)                   */
 /*         sequence of apclength in apcbuf                            */
@@ -17864,13 +17898,13 @@ dodcs( void )
 
                     key=0;
                     /* which key to assign to? */
-                    achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                    achar = get_udk_dcs_byte(&dcsnext);
                     if ( achar == ';' )
-                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        achar = get_udk_dcs_byte(&dcsnext);
 
                     while (isdigit(achar)) {                /* Get number */
                         key = (key * 10) + achar - 48;
-                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        achar = get_udk_dcs_byte(&dcsnext);
                     }
 
                     /* Check for proper separator */
@@ -17878,7 +17912,7 @@ dodcs( void )
 #ifndef COMMENT
                         /* Skip null key definition */
                         while (achar != ';') {
-                            achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                            achar = get_udk_dcs_byte(&dcsnext);
                         }
                         continue;
 #else /* COMMENT */
@@ -17911,7 +17945,11 @@ dodcs( void )
                     i = 0 ; /* which pass? */
                     while ( apcbuf[dcsnext] != ';' &&
                             dcsnext < apclength ) {
-                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        achar = get_udk_dcs_byte(&dcsnext);
+
+                        /* get_udk_dcs_byte might skip over a byte leaving us
+                         * on the ';' */
+                        if (achar == ';') break;
 
                         /* Prevent overflow of keydef */
                         if (l > UDK_KEYDEF_MAX) continue;
