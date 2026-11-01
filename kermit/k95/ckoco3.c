@@ -17183,8 +17183,6 @@ get_udk_dcs_byte(int *dcsnext) {
     int next = *dcsnext;
     int result = 0;
 
-    bool ign = 0;
-
     while ( next < apclength && (
             result <= 0x17 ||                     /* 0x00 - 0x17 ignored */
             result == 0x19 ||                     /* 0x19 ignored */
@@ -17200,9 +17198,18 @@ get_udk_dcs_byte(int *dcsnext) {
             (result >= 0xC7 && result <= 0xE0) || /* 0xC7 - 0xE0 ignored */
             result >= 0xE7                        /* 0xE7 - 0xFF ignored */
         )) {
-        if (ign) printf("Ignore byte %d char %d (%02x)\n", next, result, result);
         result = (next<apclength)?apcbuf[next++]:0;
-        ign = 1;
+
+        /* 0xB0 through 0xB9 are treated as 0 to 9.
+         * 0xC1 through 0xC6 are treated as A to F.
+         * 0xE1 through 0xE6 are treated as a to f.
+         * 0xAF is *not* treated as /, and 0xBB is *not* treated as ';' thoguh,
+         * so we can't just subtract 80 from all values in GR. */
+        if ((result >= 0xb0 && result <= 0xb9) ||
+            (result >= 0xc1 && result <= 0xc6) ||
+            (result >= 0xe1 && result <= 0xe6)) {
+            result -= 0x80;
+        }
     }
 
     *dcsnext = next;
