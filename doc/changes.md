@@ -572,6 +572,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed null key definitions causing the remainder of a DECUDK sequence to be
    dumped to the terminal. This behaviour was inconsistent with the VT220, 
    VT420, and VT520. Null key definitions are now ignored as per DEC STD 070.
+ - Fixed DECUDK not correctly ignoring certain bytes in the command string.
  - Fixed C1 control code SCI being interpreted as DECID
  - Fixed APC causing all subsequent OSC, DCS and other string-type escape 
    sequences to be processed as APC (and so likely producing errors on the 
