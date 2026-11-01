@@ -6028,8 +6028,8 @@ defk95km( int tt) {
 		/* Function Keys 13-24 */
 #ifdef COMMENT
 		/* Shift+F1...10 are assigned to K_UDKF1...10 as in VT emulations. For
-		 * compatibility with xterm, UDKs are initialised to what xterm sends
-		 * for Shift+F1...10 over in function udkreset() in ckoco3.c.    */
+		 * compatibility with the VT500 and xterm, UDKs are initialised to
+		 * send DECFNK over in function udkreset() in ckoco3.c.    */
 		insertkeymap( tt, 880, mkliteralevt("\033[1;2P")) || /* Shift+F1 */
 		insertkeymap( tt, 881, mkliteralevt("\033[1;2Q")) || /* Shift+F2 */
 		insertkeymap( tt, 882, mkliteralevt("\033[1;2R")) || /* Shift+F3 */
@@ -6100,9 +6100,9 @@ defk95km( int tt) {
 
 		/* Function Keys 61-63, Alt+Shift+F4-12 */
 #ifdef COMMENT
-		/* Alt+Shift+F1...10 are assigned to K_UDKF1...10 as in VT emulations.
-         * For compatibility with xterm, UDKs are initialised to what xterm
-         * sends for Alt+Shift+F1...10 over in function udkreset() in ckoco3.c.*/
+		/* Alt+Shift+F1...10 are assigned to K_UDKF10...20 as in VT emulations.
+		 * For compatibility with the VT500 and xterm, UDKs are initialised to
+         * send DECFNK over in function udkreset() in ckoco3.c.    */
 		insertkeymap( tt, 2928, mkliteralevt("\033[1;4P" )) || /* Alt+Shift+F1 */
 		insertkeymap( tt, 2929, mkliteralevt("\033[1;4Q" )) || /* Alt+Shift+F2 */
 		insertkeymap( tt, 2930, mkliteralevt("\033[1;4R" )) || /* Alt+Shift+F3 */
