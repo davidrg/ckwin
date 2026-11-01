@@ -18369,27 +18369,35 @@ dodcs( void )
 }
 
 void
-process_canceled_decdld() {
-    /* The VT220 and up will process a DECDLD right up to the CAN or SUB. To
-     * the user, it is as though the CAN/SUB is treated as an ST (though all
-     * but the VT220-420 will also display a reverse question mark for SUB).
-     * This likely isn't *intentional* behaviour, but rather just a case of
-     * these terminals not being able to spend memory on guarding against a
-     * partial font download (would require downloading to a temporary space so
-     * as to not overwrite the existing font until the new one is received
-     * fully). But the why doesn't matter now - it only matters how these
-     * things actually behave. So figure out if we're dealing with a DECDLD and
-     * if we are, process what we've got as the real terminals do. */
+process_canceled_dcs() {
+    /* The VT220 and up will process a DECDLD or DECUDK a right up to the
+     * CAN/SUB/ESC/whatever-caused-an-abort. To the user, it is as though the
+     * CAN/SUB is treated as an ST (though for DECDLD all but the VT220-420
+     * will also display a reverse question mark for SUB). This is because
+     * the VTs process the DCS string as the bytes come in, rather than waiting
+     * for the end of the string before beginning processing. Canceling the the
+     * DCS mid-processing does have observable side-effects when compared to
+     * waiting for the end of the DCS string and never beginning processing if
+     * it was canceled. So for DECDLD and DECUDK, we'll catch this situation
+     * and process what we've got so as to produce the same effect as the real
+     * terminals.
+     *
+     * At some point DCS (and OSC) need to be changed to work in the same way as
+     * the real terminals and process the data as it comes in rather than
+     * accumulating it in a buffer. Regis and perhaps Sixel will likely require
+     * this.
+     */
     if (ISVT220(tt_type) && !debses) {
         int i;
         for (i = 0; i < apclength; i++) {
             /* Scan through the buffer looking for zero or more
-             * parameters followed by a '{'. Any other characters would
+             * parameters followed by a '{' or '|'. Any other characters would
              * not be a valid DECDLD */
             char c = apcbuf[i];
             if (isdigit(c)) continue; /* parameter */
             if (c == ';') continue;   /* parameter separator */
-            if (c == '{') {           /* DECDLD */
+            if (c == '{' ||           /* DECDLD */
+                c == '|' ) {          /* DECUDK */
                 dodcs();
             }
             break;
@@ -18834,7 +18842,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             /* SUB is received.                                                  */
 
             if (dcsrecv) {
-                process_canceled_decdld();
+                process_canceled_dcs();
             }
             escstate = ES_NORMAL;            /* Go back to normal. */
 #ifdef CK_APC
@@ -19300,12 +19308,12 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         } else if (ch == '@' && dcsrecv &&
             (tt_type == TT_VT220 || tt_type == TT_VT220PC) ) {
             /* VT220 ignores a PAD character in the DCS string - at least for
-             * DECDLD */
+             * DECDLD and DECUDK */
             escstate = ES_STRING;
         } else {
 #ifdef CK_APC
             if ( dcsrecv ) {
-                process_canceled_decdld();
+                process_canceled_dcs();
 
                 dcsrecv = FALSE ;
                 apcbuf[0] = NUL ;
@@ -19316,6 +19324,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                     savefiletext[0] = NUL;
                     VscrnIsDirty(VTERM);  /* status line needs to be updated */
                 }
+
+                /* At this point escbuffer should contain ESC P, so back up one
+                 * so that ch goes in directly after the ESC */
+                esclast--;
                 cwrite(ch);
             }
             else {
