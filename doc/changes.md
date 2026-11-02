@@ -579,6 +579,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed APC causing all subsequent OSC, DCS and other string-type escape 
    sequences to be processed as APC (and so likely producing errors on the 
    command screen if APC is enabled) until terminal reset (K95 bug 845).
+ - Fixed DECCARA-0 clearing the protected attribute. While the VT520 does this
+   too, it's likely a bug as the VT420 doesn't do this and the manuals and 
+   STD-070 say nothing about the protected attribute being affected.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
