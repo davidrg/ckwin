@@ -8986,7 +8986,7 @@ static rect_t get_rect_area(int vmode, int page, int top, int left, int bottom, 
 static vt_char_attr_t
 deccara_attribute(vt_char_attr_t a, int pn) {
     switch ( pn ) {
-        case 0:
+        case 0: {
             vt_char_attr_t new_attr = VT_CHAR_ATTR_NORMAL;
 
             if (a & VT_CHAR_ATTR_PROTECTED
@@ -9019,6 +9019,7 @@ deccara_attribute(vt_char_attr_t a, int pn) {
 
             a = new_attr;
             break;
+        }
         case 1:
             a |= VT_CHAR_ATTR_BOLD;
             break;
