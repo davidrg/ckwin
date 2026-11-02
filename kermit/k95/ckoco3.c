@@ -785,6 +785,7 @@ int 	 tt_sync_output = FALSE;
 int      tt_sync_output_timeout = 0;
 #endif /* KUI */
 int      holdscreen = FALSE ;
+bool     tt_strict = FALSE;             /* Strict emulation (no extensions)? */
 
 int      escstate = ES_NORMAL;
 int      escnext = 1;
@@ -3362,7 +3363,7 @@ char * ekeys[] = {
 /* And close to 108 DG keys (regular and unix modes) */
 /* 153 SNI 97801 keys */
 char * udkfkeys[200];  /* let udkreset() initialize them */
-int udklock = 1 ;      /* Are User Defined Keys locked? */
+int udklock = 1, udklock_usr = 1 ;      /* Are User Defined Keys locked? */
 
 #ifndef NOKVERBS
 extern struct keytab kverbs[] ;         /* Kverbs table  */
@@ -9669,7 +9670,9 @@ void
 udkreset( void )
 {
     int i;
-    udklock = FALSE;                   /* Unlock User Defined Keys */
+
+    udklock = udklock_usr;             /* Restore user setting */
+
     for ( i=0 ; i<200 ; i++ )          /* Reset the User Defined Keys */
     {
        if ( udkfkeys[i] )
@@ -10421,6 +10424,34 @@ udkreset( void )
                 }
             }
         }
+    }
+
+    /* xterm (and the VT520 with certain keyboards) treats Shift+F1..F12 as
+     * function keys F13-F24. And both xterm and the VT520 send DECFNK when a
+     * key has not had something assigned to it via DECUDK. So for now we
+     * pre-initialise these with DECFNK.
+     * */
+    if (ISK95(tt_type) /* || ISVT520(tt_type) */) {
+        udkfkeys[0]  = strdup("\033[1;2P");        /* F1 */
+        udkfkeys[1]  = strdup("\033[1;2Q");
+        udkfkeys[2]  = strdup("\033[1;2R");
+        udkfkeys[3]  = strdup("\033[1;2S");
+        udkfkeys[4]  = strdup("\033[15;2~");
+        udkfkeys[5]  = strdup("\033[17;2~");
+        udkfkeys[6]  = strdup("\033[18;2~");
+        udkfkeys[7]  = strdup("\033[19;2~");
+        udkfkeys[8]  = strdup("\033[20;2~");
+        udkfkeys[9]  = strdup("\033[21;2~");
+        udkfkeys[10] = strdup("\033[1;4P");        /* F10 */
+        udkfkeys[11] = strdup("\033[1;4Q");
+        udkfkeys[12] = strdup("\033[1;4R");
+        udkfkeys[13] = strdup("\033[1;4S");
+        udkfkeys[14] = strdup("\033[15;4~");
+        udkfkeys[15] = strdup("\033[17;4~");
+        udkfkeys[16] = strdup("\033[18;4~");
+        udkfkeys[17] = strdup("\033[19;4~");
+        udkfkeys[18] = strdup("\033[20;4~");
+        udkfkeys[19] = strdup("\033[21;4~");
     }
 }
 
@@ -11372,7 +11403,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	tt_term_scroll = 1;
     decspma_max_page = -1;
 
-    udkreset() ;                        /* Reset UDKs     */
+    if (x) {
+        udkreset() ;                    /* Reset UDKs     */
+    }
     deccolm = FALSE;                    /* default column mode */
     tt_cols[VTERM] = tt_cols_usr ;
 #ifdef KUI
@@ -12312,7 +12345,40 @@ pushed:
         if ((ISVT220(tt_type_mode) ||
              ISANSI(tt_type_mode)) &&
              !xprint ) {                /* VT220 and above... */
-                cx = utf8_active ? c : c & cmask & pmask;   /* C1 check must be masked */
+
+            if (!utf8_active && ( GR->c1 )) {
+                if (c == 0x9a) {
+                    /* The DEC VT220 and up don't implement SCI. If it is
+                     * received while processing an escape sequence it acts
+                     * similar to CAN. If we convert SCI to its two byte
+                     * representation here, we get ESC Z which is DECID. And the
+                     * VT220 and up *do* implement that.
+                     *
+                     * So instead here we'll just convert SCI to CAN. This
+                     * should have the same overall effect while not producing
+                     * any unexpected side-effects like responding with the DA1
+                     * string.
+                     */
+                    /* TODO: There are probably more C1 control codes that
+                     *       should be handled in this way */
+                    c = CAN;
+                } else if (!ISVT320(tt_type) && (
+                       c == 0x98 /* SOS */
+                    || (tt_strict && c == 0x9D) /* OSC */
+                    || c == 0x9E /* PM */
+                    || (c == 0x9F && tt_strict && !(apcstatus & APC_ON)) /* APC */
+                    )) {
+                    /* The VT220 also doesn't implement any of these. While
+                     * converting them to their two-byte representation doesn't
+                     * cause misinterpretation, it also causes the subsequent
+                     * string to be swallowed which is not what a real VT220
+                     * does. So convert to CAN.
+                     */
+                    c = CAN;
+                }
+            }
+
+            cx = utf8_active ? c : c & cmask & pmask;   /* C1 check must be masked */
 
             if (!utf8_active && ( GR->c1 ) &&
                  (cx > 127) && (cx < 160) /* It's a C1 character */
@@ -17111,6 +17177,47 @@ dopu2( void )
     }
 }
 
+/* Reads the next byte from the DCS buffer for processing DECUDK. DECUDK ignores
+ * certain characters appearing in the command string, so when this function
+ * encounters one it skips over it. */
+int
+get_udk_dcs_byte(int *dcsnext) {
+    int next = *dcsnext;
+    int result = 0;
+
+    while ( next < apclength && (
+            result <= 0x17 ||                     /* 0x00 - 0x17 ignored */
+            result == 0x19 ||                     /* 0x19 ignored */
+            (result >= 0x1C && result <= 0x2E) || /* 0x1C - 0x2E ignored */
+            result == 0x3A ||                     /* 0x3A ignored */
+            (result >= 0x3C && result <= 0x40) || /* 0x3C - 0x40 ignored */
+            (result >= 0x47 && result <= 0x60) || /* 0x47 - 0x60 ignored */
+            (result >= 0x67 && result <= 0x7F) || /* 0x67 - 0x7F ignored */
+            (result == 0x80 && (                  /* 0x80 ignored by VT220 only */
+                tt_type == TT_VT220 || tt_type == TT_VT220PC)) ||
+            (result >= 0xA0 && result <= 0xAF) || /* 0xA0 - 0xAF ignored */
+            (result >= 0xBA && result <= 0xC0) || /* 0xBA - 0xC0 ignored */
+            (result >= 0xC7 && result <= 0xE0) || /* 0xC7 - 0xE0 ignored */
+            result >= 0xE7                        /* 0xE7 - 0xFF ignored */
+        )) {
+        result = (next<apclength)?apcbuf[next++]:0;
+
+        /* 0xB0 through 0xB9 are treated as 0 to 9.
+         * 0xC1 through 0xC6 are treated as A to F.
+         * 0xE1 through 0xE6 are treated as a to f.
+         * 0xAF is *not* treated as /, and 0xBB is *not* treated as ';' thoguh,
+         * so we can't just subtract 80 from all values in GR. */
+        if ((result >= 0xb0 && result <= 0xb9) ||
+            (result >= 0xc1 && result <= 0xc6) ||
+            (result >= 0xe1 && result <= 0xe6)) {
+            result -= 0x80;
+        }
+    }
+
+    *dcsnext = next;
+    return result;
+}
+
 /* ------------------------------------------------------------------ */
 /* dodcs - process DCS sequences (VT320 and higher)                   */
 /*         sequence of apclength in apcbuf                            */
@@ -17122,6 +17229,12 @@ dodcs( void )
     int pn[11];
     int i,k,l;
     int dcsnext = 0 ;
+    /* The VT220 only has 256 bytes of UDK memory, so thats the maximum for any
+     * one key definition as well as all key definitions combined. The VT420
+     * bumps this up to 768 but we don't support that yet. UDK_KEYDEF_MAX is
+     * intentionally one less that the size of keydef to allow for null
+     * termination of the string. */
+    const int UDK_KEYDEF_MAX = 255;
     char keydef[257] ; /* UDK defs can't be longer than 256 chars */
     char c;
 
@@ -17772,6 +17885,9 @@ dodcs( void )
                 if ( k<1 )
                     pn[1] = 0 ;
 
+                if (pn[2] > 1 || pn[1] > 1)
+                    return;  /* Parameter out of range */
+
                 if ( udklock )
                     return;  /* do nothing if the UDKs are locked */
 
@@ -17782,19 +17898,42 @@ dodcs( void )
                 while ( dcsnext < apclength ) {
                     /* look for patterns of XX/string; */
 
+                    /* TODO -
+                     *  - VT420 and up:
+                     *    - Per key limit should be 768 bytes
+                     *    - Modifier keys: none, Shift (default), Alt, Alt+Shift
+                     *  - VT52x supports specifying Direction (Kyn/Stn/Dir)
+                     */
+
                     key=0;
                     /* which key to assign to? */
-                    achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                    achar = get_udk_dcs_byte(&dcsnext);
                     if ( achar == ';' )
-                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        achar = get_udk_dcs_byte(&dcsnext);
 
                     while (isdigit(achar)) {                /* Get number */
                         key = (key * 10) + achar - 48;
-                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        achar = get_udk_dcs_byte(&dcsnext);
                     }
 
                     /* Check for proper separator */
                     if ( achar != '/') {
+#ifndef COMMENT
+                        /* Skip null key definition */
+                        while (achar != ';') {
+                            achar = get_udk_dcs_byte(&dcsnext);
+                        }
+                        continue;
+#else /* COMMENT */
+                        /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
+                         * VT520 (v2.1) don't behave like this, and STD 070 says
+                         * we shouldn't do this. If we encounter a null key
+                         * definition we should just ignore it and continue on.
+                         * This code left commented just in case there is some
+                         * terminal out there that really *should* behave like
+                         * this, in which case the appropriate check on tt_type
+                         * should be added. */
+
                         /* if error, call cwrite() on rest of DCS         */
                         /* including ST.  Actually, in a real VT terminal */
                         /* we wouldn't even wait until this point to      */
@@ -17807,14 +17946,24 @@ dodcs( void )
                         cwrite(ESC);
                         cwrite('\\');
                         return ;
+#endif /* COMMENT */
                     }
 
                     /* Get the key definition */
                     l = 0 ; /* characters in definition */
                     i = 0 ; /* which pass? */
+                    keydef[l] = '\0'; /* Handle empty key definition */
                     while ( apcbuf[dcsnext] != ';' &&
                             dcsnext < apclength ) {
-                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        achar = get_udk_dcs_byte(&dcsnext);
+
+                        /* get_udk_dcs_byte might skip over a byte leaving us
+                         * on the ';' */
+                        if (achar == ';') break;
+
+                        /* Prevent overflow of keydef */
+                        if (l > UDK_KEYDEF_MAX) continue;
+
                         c = 0 ;
                         if ( isxdigit(achar) )
                         {
@@ -17833,6 +17982,7 @@ dodcs( void )
                         }
                         else {
                             keydef[l] = c ;
+                            keydef[l+1] = '\0';
                             i = 1 ;
                         }
                     }   
@@ -17840,6 +17990,20 @@ dodcs( void )
                     if ( i == 1 ||
                          apcbuf[dcsnext] != ';' &&
                          dcsnext < apclength ){
+#ifndef COMMENT
+                        /* Discard the last char received if we didn't receive
+                         * both hex digits for it. */
+                        keydef[l] = '\0';
+#else /* COMMENT */
+                        /* The VT220 (really VT22Z) v3.1, VT420 (v1.4) and
+                         * VT520 (v2.1) don't behave like this. If they encounter
+                         * an odd number of hex digits then the odd hex digit is
+                         * discarded and processing continues. STD 070 says that in
+                         * this situation the current key definition and the rest of
+                         * DECUDK should be ignored in this situation, so I can't
+                         * rule out some DEC terminal actually behaving in this way
+                         * so for now its just commented out. */
+
                         /* if error, call cwrite() on rest of DCS         */
                         /* including ST.  Actually, in a real VT terminal */
                         /* we wouldn't even wait until this point to      */
@@ -17852,6 +18016,7 @@ dodcs( void )
                         cwrite(ESC);
                         cwrite('\\');
                         return ;
+#endif /* COMMENT */
                     }
 
                     i = -1 ;
@@ -17880,7 +18045,8 @@ dodcs( void )
                     }
                     if ( i>= 0 )
                     {
-                        if ( udkfkeys[i] ) {
+                        /* TODO: For VT520, do as for K95 */
+                        if ( udkfkeys[i] && (!ISK95(tt_type) || strlen(keydef) ) ) {
                             free( udkfkeys[i] ) ;
                             udkfkeys[i]=NULL;
                         }
@@ -18220,27 +18386,35 @@ dodcs( void )
 }
 
 void
-process_canceled_decdld() {
-    /* The VT220 and up will process a DECDLD right up to the CAN or SUB. To
-     * the user, it is as though the CAN/SUB is treated as an ST (though all
-     * but the VT220-420 will also display a reverse question mark for SUB).
-     * This likely isn't *intentional* behaviour, but rather just a case of
-     * these terminals not being able to spend memory on guarding against a
-     * partial font download (would require downloading to a temporary space so
-     * as to not overwrite the existing font until the new one is received
-     * fully). But the why doesn't matter now - it only matters how these
-     * things actually behave. So figure out if we're dealing with a DECDLD and
-     * if we are, process what we've got as the real terminals do. */
+process_canceled_dcs() {
+    /* The VT220 and up will process a DECDLD or DECUDK a right up to the
+     * CAN/SUB/ESC/whatever-caused-an-abort. To the user, it is as though the
+     * CAN/SUB is treated as an ST (though for DECDLD all but the VT220-420
+     * will also display a reverse question mark for SUB). This is because
+     * the VTs process the DCS string as the bytes come in, rather than waiting
+     * for the end of the string before beginning processing. Canceling the the
+     * DCS mid-processing does have observable side-effects when compared to
+     * waiting for the end of the DCS string and never beginning processing if
+     * it was canceled. So for DECDLD and DECUDK, we'll catch this situation
+     * and process what we've got so as to produce the same effect as the real
+     * terminals.
+     *
+     * At some point DCS (and OSC) need to be changed to work in the same way as
+     * the real terminals and process the data as it comes in rather than
+     * accumulating it in a buffer. Regis and perhaps Sixel will likely require
+     * this.
+     */
     if (ISVT220(tt_type) && !debses) {
         int i;
         for (i = 0; i < apclength; i++) {
             /* Scan through the buffer looking for zero or more
-             * parameters followed by a '{'. Any other characters would
+             * parameters followed by a '{' or '|'. Any other characters would
              * not be a valid DECDLD */
             char c = apcbuf[i];
             if (isdigit(c)) continue; /* parameter */
             if (c == ';') continue;   /* parameter separator */
-            if (c == '{') {           /* DECDLD */
+            if (c == '{' ||           /* DECDLD */
+                c == '|' ) {          /* DECUDK */
                 dodcs();
             }
             break;
@@ -18685,7 +18859,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             /* SUB is received.                                                  */
 
             if (dcsrecv) {
-                process_canceled_decdld();
+                process_canceled_dcs();
             }
             escstate = ES_NORMAL;            /* Go back to normal. */
 #ifdef CK_APC
@@ -18823,6 +18997,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             } else {
                 vtescape();                               /* Go act on it. */
             }
+            break;
         case 'P':                       /* Device Control String (DCS) Introducer */
             if ( !xprint) {
                 escstate = ES_STRING;   /* Enter STRING-absorption state */
@@ -19090,6 +19265,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
 #ifdef CK_APC
             if (apcrecv && apclength > 0)/* If it was an APC string, */
             {
+                apcrecv = FALSE;
                 apcbuf[apclength] = NUL; /* terminate it */
                 if ((apcstatus & APC_ON) && !debses) {
                     apc_command(APC_REMOTE,apcbuf);
@@ -19149,12 +19325,12 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         } else if (ch == '@' && dcsrecv &&
             (tt_type == TT_VT220 || tt_type == TT_VT220PC) ) {
             /* VT220 ignores a PAD character in the DCS string - at least for
-             * DECDLD */
+             * DECDLD and DECUDK */
             escstate = ES_STRING;
         } else {
 #ifdef CK_APC
             if ( dcsrecv ) {
-                process_canceled_decdld();
+                process_canceled_dcs();
 
                 dcsrecv = FALSE ;
                 apcbuf[0] = NUL ;
@@ -19165,6 +19341,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                     savefiletext[0] = NUL;
                     VscrnIsDirty(VTERM);  /* status line needs to be updated */
                 }
+
+                /* At this point escbuffer should contain ESC P, so back up one
+                 * so that ch goes in directly after the ESC */
+                esclast--;
                 cwrite(ch);
             }
             else {
