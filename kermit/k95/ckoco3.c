@@ -9029,7 +9029,7 @@ deccara_attribute(vt_char_attr_t a, int pn) {
         case 3: if (ISK95(tt_type_mode))
             a |= VT_CHAR_ATTR_ITALIC;
             break;
-        case 4: if (ISK95(tt_type_mode))
+        case 4: if (ISVT520(tt_type_mode))
             a |= VT_CHAR_ATTR_UNDERLINE;
             break;
         case 5:
@@ -9051,7 +9051,7 @@ deccara_attribute(vt_char_attr_t a, int pn) {
         case 23: if (ISK95(tt_type_mode))
             a &= !VT_CHAR_ATTR_ITALIC;
             break;
-        case 24:
+        case 24: if (ISVT520(tt_type_mode))
             a &= ~VT_CHAR_ATTR_UNDERLINE;
             break;
         case 25:

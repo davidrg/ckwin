@@ -17546,7 +17546,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>4</td>
-                    <td>Underline</td>
+                    <td><badge group="isvt520"/>Underline</td>
                 </tr>
                 <tr>
                     <td>5</td>
@@ -17570,7 +17570,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>24</td>
-                    <td>No underline</td>
+                    <td><badge group="isvt520"/>No underline</td>
                 </tr>
                 <tr>
                     <td>25</td>
