@@ -159,6 +159,7 @@ if touch_files = 1 then do
      * git
      */
      git_date = CKermit('return \Fcommand(git log -1 --pretty="format:%ci" "'git_fn'" 2> nul)')
+     say "Git date for file '"git_fn"' is '"git_date"'"
 end
 
 /*
@@ -245,7 +246,7 @@ do while lines(input_file) = 1
         /* For debugging
         say fields.0 'fields'
         do i = 1 to fields.0
-        say i '»'fields.i'«'
+        say i 'ï¿½'fields.i'ï¿½'
         end*/
 
 
@@ -272,7 +273,7 @@ do while lines(input_file) = 1
         /* For debugging
         say fields.0 'fields'
         do i = 1 to fields.0
-        say i '»'fields.i'«'
+        say i 'ï¿½'fields.i'ï¿½'
         end
         */
 

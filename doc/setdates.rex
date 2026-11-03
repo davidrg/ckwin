@@ -50,7 +50,7 @@ do while lines(modtime_file) = 1
     /* For debugging
     say fields.0 'fields'
     do i = 1 to fields.0
-    say i '»'fields.i'«'
+    say i 'ï¿½'fields.i'ï¿½'
     end*/
 
     if matched < 1 then do
@@ -85,13 +85,13 @@ do while lines(modtime_file) = 1
     file_ts = SysGetFileDateTime(filename, 'm')
     parse var file_ts file_date file_time
 
-    /* For Debugging
+    /* For Debugging */
     say "=========="
     say " Filename:" filename
     say "Timestamp:" timestamp
     say "  File TS:" file_ts
     say "File Date:" file_date
-    */
+
 
     /* The commits that added the Kermit 95 manual to git were all dated
      * 2024-07-24. So any file that has that date doesn't have it because it was

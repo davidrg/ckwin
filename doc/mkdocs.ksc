@@ -157,6 +157,7 @@ else {
 
 if \m(touch_files) {
   .touch_files = 1
+  echo Touching files!
 }
 else {
   .touch_files = 0
@@ -272,6 +273,7 @@ for \%x 1 \fdim(&o) 1 {
     if = \m(touch_files) 1 {
         ; Try with git first, in RFC2822 style: Mon, 19 Aug 2024 19:41:25 +1200
         .touch_date := \Fcommand(git log -1 --pretty="format:%cd" --date=format:%Y:%m:%d:%H:%M:%S \m(file_in) 2> nul)
+        echo Git Date for file \m(file_in) is '\m(touch_date)'
 
         ; Convert to the format required by Touch
         if = \flength(\m(touch_date)) 0 date_to_touch_date {\m(src_date)} 0
