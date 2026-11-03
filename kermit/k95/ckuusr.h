@@ -1125,6 +1125,12 @@ struct stringint {			/* String and (wide) integer */
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
 #define ISVT330(x) (FALSE)
+
+/* All of these should be replaced with ISVT520(x) when that is no longer a
+ * synonym for ISVT320(x). This is temporarily used for behaviours we do *not*
+ * want to temporarily extend to VT320 emulation */
+#define ISVT520_FOR_REAL(x) (FALSE)
+
 #endif /* COMMENT */
 #define ISVT320(x) (x >= TT_VT320 && x <= TT_K95)
 #define ISVT220(x) (x >= TT_VT220 && x <= TT_K95 || \

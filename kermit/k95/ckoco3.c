@@ -8986,9 +8986,40 @@ static rect_t get_rect_area(int vmode, int page, int top, int left, int bottom, 
 static vt_char_attr_t
 deccara_attribute(vt_char_attr_t a, int pn) {
     switch ( pn ) {
-        case 0:
-            a = VT_CHAR_ATTR_NORMAL;
+        case 0: {
+            vt_char_attr_t new_attr = VT_CHAR_ATTR_NORMAL;
+
+            if (a & VT_CHAR_ATTR_PROTECTED
+                && !(ISVT520_FOR_REAL(tt_type) && tt_strict)) {
+                /* DECCARA-0 should not clear the protected attribute according
+                 * to STD-070 and the terminal documentation, so if its
+                 * currently set then preserve that bit.
+                 *
+                 * VT520-BUG
+                 * The VT520 (v2.1) (and I assume VT525) resets the protected
+                 * attribute for DECCARA-0. The VT420 does not, and STD-070 and
+                 * the programmer manual say nothing about the protected
+                 * attribute being reset. We only behave as the VT520 does here
+                 * if strict emulation has been requested. Otherwise we'll fix
+                 * DECs mistake in K95s VT520 emulation. */
+                new_attr |= VT_CHAR_ATTR_PROTECTED;
+            }
+
+            /* Also don't clear hyperlinks */
+            if (a & VT_CHAR_ATTR_HYPERLINK) new_attr |= VT_CHAR_ATTR_HYPERLINK;
+
+            /* Also don't clear the graphic attribute. I'm not entirely sure
+             * what it is/was intended for, but its not settable via DECCARA
+             * so shouldn't be cleared by it either. */
+            if (a & VT_CHAR_ATTR_GRAPHIC) new_attr |= VT_CHAR_ATTR_GRAPHIC;
+
+            /* This WYSE attribute probably shouldn't ever be set in any
+             * emulation that supports DECCARA, but just in case... */
+            if (a & WY_CHAR_ATTR) new_attr |= WY_CHAR_ATTR;
+
+            a = new_attr;
             break;
+        }
         case 1:
             a |= VT_CHAR_ATTR_BOLD;
             break;
@@ -10431,7 +10462,7 @@ udkreset( void )
      * key has not had something assigned to it via DECUDK. So for now we
      * pre-initialise these with DECFNK.
      * */
-    if (ISK95(tt_type) /* || ISVT520(tt_type) */) {
+    if (ISK95(tt_type) || ISVT520_FOR_REAL(tt_type) ) {
         udkfkeys[0]  = strdup("\033[1;2P");        /* F1 */
         udkfkeys[1]  = strdup("\033[1;2Q");
         udkfkeys[2]  = strdup("\033[1;2R");
