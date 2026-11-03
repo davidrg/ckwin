@@ -2292,6 +2292,9 @@ jobs:
           call mkdocs.bat /D
 
           :done
+
+          cd ${{ github.workspace }}\dist\docs\manual
+          dir
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
