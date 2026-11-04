@@ -2044,6 +2044,8 @@ jobs:
       - Build-VisualCxx
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Fetch K95
         uses: actions/download-artifact@v8
         with:
@@ -2270,6 +2272,8 @@ jobs:
       - Build-VisualCxx
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Fetch K95
         uses: actions/download-artifact@v8
         with:
@@ -2313,6 +2317,8 @@ jobs:
       - Build-VisualCxx
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Fetch K95
         uses: actions/download-artifact@v8
         with:
