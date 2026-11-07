@@ -1379,6 +1379,19 @@ void KClient::writeMe()
                     kws->length,
                     (int*)&interSpace );
             } else {
+                if (rect.bottom - rect.top > lineHeight) {
+                    // If there is a margin at the bottom of the terminal area,
+                    // the current line might be taller than the fonts line
+                    // height. KSoftFont doesn't erase the area its writing to,
+                    // so this may leave the margin area unerased and so filled
+                    // with the background erase colour (via the FillRect of
+                    // bgBrush up the top of this function). So we need to erase
+                    // the area ourselves first.
+                    HBRUSH brush = CreateSolidBrush( prevBgAttr );
+                    FillRect( hdc(), &rect, brush );
+                    DeleteObject( brush );
+                }
+
                 softFont.textOut(
                     hdc(),
                     rect.left,
