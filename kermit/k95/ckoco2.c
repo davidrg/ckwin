@@ -2114,7 +2114,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
     /* TX_DECSPEC has a null character in position 5/15 which we need to handle.
      * I'm not confident that everything will handle a null appearing in the
      * terminal buffer, so... */
-    if (Cell.c == NULL) {
+    if (Cell.c == 0) {
         Cell.c = ' ';
         att.erased = TRUE;
     }
