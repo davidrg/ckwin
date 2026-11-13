@@ -4214,9 +4214,10 @@ VscrnMark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
     if ( page->lines[y].markend >= 0 &&
         page->lines[y].markbeg >= 0 ) {
         for ( x = page->lines[y].markend ; x >= page->lines[y].markbeg ; x-- ) {
-            if (page->lines[y].cells[x].c == ' ')
+            if (page->lines[y].cells[x].c == ' '
+                || page->lines[y].vt_char_attrs[x] & VT_CHAR_ATTR_INVISIBLE) {
                 page->lines[y].markshowend-- ;
-            else
+            } else
                 break ;
             }
         }
@@ -4291,9 +4292,10 @@ VscrnUnmark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
     if ( page->lines[y].markend >= 0 &&
         page->lines[y].markbeg >= 0 ) {
         for ( x = page->lines[y].markend ; x >= page->lines[y].markbeg ; x-- ) {
-            if (page->lines[y].cells[x].c == ' ')
+            if (page->lines[y].cells[x].c == ' '
+                || page->lines[y].vt_char_attrs[x] & VT_CHAR_ATTR_INVISIBLE) {
                 page->lines[y].markshowend-- ;
-            else
+            } else
                 break ;
             }
         }
