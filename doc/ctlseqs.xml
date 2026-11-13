@@ -1534,6 +1534,12 @@ DECTSR		462
         </p>
 
         <p>
+            <em>This page is not a comprehensive survey of what is supported by
+                which terminal emulators</em> as unfortunately most terminal
+            emulators don't document what they support.
+        </p>
+
+        <p>
             Whether a terminal appears here or not depends on how important it
             is that Kermit 95 should be compatible with it, and whether good
             enough documentation can be found to provide references for all the
@@ -9393,10 +9399,29 @@ DCS $ q 3 , } ST</pre>
 
             <!-- dtterm (CDE) responds with 62,1,2,6,7,8,9 when emulating a VT220 -->
 
-            <p>For the VT220 and newer, the first value indicates the device
-                class: 61 for VT100, 62 for VT200, 63 for VT300,
-                64 for VT400/VT510, and 65 for VT520/VT525. The remaining values
-                specify <em>extensions</em> and have the following meanings:</p>
+            <p>
+                For the VT220 and newer (or really any device compliant with DECs
+                Video Systems Reference Manual), the first digit indicates the
+                service class: 6 for Character Cell Display, 7 for ANSI Printer.
+                The second digit indicates the level of the service class
+                architecture the device complies with. So 62 would be a Level 2
+                compliant Character Cell Display. To find out the device
+                <em>model</em> (eg, VT220) query the
+                <a href="#da2">Secondary Device Attributes</a>.
+            </p>
+            <p>
+                The remaining values in the primary device attributes response
+                specify specify optional <em>extensions</em> to the supported
+                service class level. Some extensions became mandatory features
+                in higher levels, so a higher level device wouldn't report the
+                extension number (because its not an extension anymore).
+            </p>
+            <p>
+                Below is a list of extensions defined by DEC, plus
+                <em>a couple</em> of 3rd-party extension numbers defined by
+                other terminals. This isn't a comprehensive list of all non-DEC
+                extension numbers.
+            </p>
             <dl>
                 <dt>1</dt>  <!-- vt510, vt420, vt340, vt320, vt220, xt -->
                 <dd>132-columns</dd>
@@ -9438,7 +9463,7 @@ DCS $ q 3 , } ST</pre>
                 <dd>Kanji</dd>
 
                 <dt>11</dt>  <!-- vt1000 -->
-                <dd>Status Display</dd>
+                <dd>Status Display. Required from level 3.</dd>
                 <!-- The status line
                 https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1036
                 -->
@@ -9450,7 +9475,7 @@ DCS $ q 3 , } ST</pre>
                 <dd>Block Mode</dd>
 
                 <dt>14</dt>  <!-- vt1000 -->
-                <dd>8-bit Interface Architecture</dd>
+                <dd>8-bit Interface Architecture. Required from level 3.</dd>
                 <!--
                 See: https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=112
                 This is an extension for level 2, and required for level 3.
@@ -9466,7 +9491,7 @@ DCS $ q 3 , } ST</pre>
                 -->
 
                 <dt not-implemented="true">17</dt>  <!-- vt1000, xt -->
-                <dd>Terminal state interrogation</dd>
+                <dd>Terminal state interrogation. Required from level 3.</dd>
                 <!--
                 DECRQM, DECRPM, DECNKM, DECRQSS, DECPRPSS, DECRQPSR, DECPSR,
                 DECRSPS, DECRQTSR, DECTSR, DECRSTS
@@ -9474,7 +9499,7 @@ DCS $ q 3 , } ST</pre>
                 -->
 
                 <dt not-implemented="true">18</dt>  <!-- vt510, vt420, vt340, vt330, xt -->
-                <dd>Windowing capability</dd>
+                <dd>Windowing capability. Required from level 4.</dd>
                 <!-- DECHCCM, DECVCCM, DECPCCM, DECRQDE, DECSNLS, SU, SD
                 https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=339
                 -->
@@ -9510,7 +9535,7 @@ DCS $ q 3 , } ST</pre>
                 <dd>Arabic Bilingual Mode 3</dd>
 
                 <dt>28</dt>                         <!-- xt -->
-                <dd>Rectangular editing</dd>
+                <dd>Rectangular editing. Required from level 4.</dd>
 
                 <dt not-implemented="true">29</dt>  <!-- xt -->
                 <dd>ANSI text locator</dd>          <!-- TODO: we have this? -->
@@ -9690,27 +9715,16 @@ DCS $ q 3 , } ST</pre>
                     this section is still ignored. This escape is guarded on
                     ISVT220(tt_type) *not* ISVT220(tt_type_mode)
             -->
-            <!-- TODO: This will need changing when we get support for more
-                 VT420 or VT520 escapes
-                 The first parameter is the Product ID:
-                         1 - VT220
-                         2 - VT240
-                        18 - VT330
-                        19 - VT340
-                        24 - VT320
-                        28 - DECterm
-                        32 - VT382J
-                        41 - VT420
-                        42 - VT1000 terminal emulator
-                        44 - VT382T
-                        61 - VT510
-                        64 - VT520
-                        65 - VT525
-                        66 - VTStar
-            -->
             <p>
-                Secondary Device Attributes Report Request. If <param-single/>
-                is 0 then K95 reports one of the following:
+                Secondary Device Attributes Report Request. For DEC VT-like
+                terminals, the first response parameter is the Product ID, the
+                second is the firmware version, and subsequent parameters
+                indicate installed options (or 0 if there are none).
+            </p>
+
+            <p>
+                If Kermit 95 is emulating a VT220-compatible terminal, its
+                responses include:
             </p>
             <table>
                 <tr>
@@ -9736,6 +9750,38 @@ DCS $ q 3 , } ST</pre>
                 </tr>
             </table>
             <!-- Windows Terminal responds as xterm does: 0;10;1c -->
+
+            <p>
+                Other known Product IDs include (but are not limited to -
+                this isn't a comprehensive list):
+            </p>
+            <table>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Product</th>
+                </tr>
+                <tr><td>1</td><td>DEC VT220</td></tr>
+                <tr><td>2</td><td>DEC VT240</td></tr>
+                <tr><td>3</td><td>DEC DECmate II</td></tr>
+                <tr><td>18</td><td>DEC VT330</td></tr>
+                <tr><td>19</td><td>DEC VT340</td></tr>
+                <tr><td>24</td><td>DEC VT320</td></tr>
+                <tr><td>28</td><td>DEC DECterm (software terminal on OpenVMS, Digital UNIX)</td></tr>
+                <tr><td>32</td><td>DEC VT382J</td></tr>
+                <tr><td>41</td><td>DEC VT420</td></tr>
+                <tr><td>42</td><td>DEC VT1000 Terminal Emulator (the VT1000 was an X terminal)</td></tr>
+                <tr><td>44</td><td>DEC VT382T</td></tr>
+                <tr><td>61</td><td>DEC VT510</td></tr>
+                <tr><td>64</td><td>DEC VT520</td></tr>
+                <tr><td>65</td><td>DEC VT525</td></tr>
+                <tr><td>66</td><td>DEC VTstar / Multia VT320e (freeware software terminal for Windows)</td></tr>
+                <tr><td>77</td><td>Mintty</td></tr>
+                <tr><td>82</td><td>Poderosa</td></tr>
+                <tr><td>83</td><td>GNU Screen</td></tr>
+                <tr><td>85</td><td>rxvt-unicode</td></tr>
+                <tr><td>990</td><td>DomTerm</td></tr>
+            </table>
+
         </section>
         <section role="ctlseq" id="hsc" mnemonic="HSC" title="Set cursor type (SCO)" badges="scoansi">
             <ctlseq>CSI = <param-single/> c</ctlseq>
