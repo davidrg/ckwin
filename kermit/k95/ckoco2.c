@@ -5043,6 +5043,10 @@ TermScrnUpd( void * threadinfo)
                                     ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
                             }
+
+                            if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                pDcell->c = ' ';
+                            }
                             (pDcell+1)->c = ' ' ;
                         }
                     }
@@ -5084,6 +5088,10 @@ TermScrnUpd( void * threadinfo)
                                 pDcell->video_attr =
                                     ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
+                            }
+
+                            if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                pDcell->c = ' ';
                             }
                         }
                     }
@@ -5206,6 +5214,10 @@ TermScrnUpd( void * threadinfo)
                                     }
                                     (pDcell+1)->c = ' ' ;
                                 }
+
+                                if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                    pDcell->c = ' ';
+                                }
                             }
                         }
                         else
@@ -5263,6 +5275,10 @@ TermScrnUpd( void * threadinfo)
                                                                  vt_char_attrs );
                                     }
                                 }
+
+                                if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                    pDcell->c = ' ';
+                                }
                             }
                         }
                     }
@@ -5306,7 +5322,12 @@ TermScrnUpd( void * threadinfo)
                                         (pDcell+1)->c = ' ' ;
                                         pDcell->video_attr = (pDcell+1)->video_attr =
                                             ComputeColorFromAttr( avm, pScell->video_attr,
-                                                                 vt_char_attrs );                                    }
+                                                                 vt_char_attrs );
+                                    }
+
+                                    if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                        pDcell->c = ' ';
+                                    }
                                 }
                             }
                         }
@@ -5331,11 +5352,17 @@ TermScrnUpd( void * threadinfo)
                                         pDcell->c = blinkon ?
                                             pScell->c : ' ' ;
                                     }
-                                    else
+                                    else {
                                         pDcell->c = pScell->c ;
+                                    }
+
                                     pDcell->video_attr =
                                         ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
+
+                                    if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                        pDcell->c = ' ';
+                                    }
                                 }
                             }
                         }
@@ -5414,6 +5441,10 @@ TermScrnUpd( void * threadinfo)
                         pDcell->video_attr =
                             ComputeColorFromAttr( avm, pScell->video_attr,
                                                  vt_char_attrs );
+                    }
+
+                    if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                        pDcell->c = ' ';
                     }
                 }
                 c += xs ;

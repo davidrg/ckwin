@@ -19441,8 +19441,13 @@ wrtch(unsigned short ch) {
          ((ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) &&
            (ch == STX || ch == ETX)))
     {                                   /* Treat as a Normal character */
+        /* Since C-Kermit 5A(190), we used to just write invisible characters as
+         * a SPACE. But a real VT doesn't work that way - it deals with it at
+         * render time, and you can see the character is still there in the
+         * buffer via DECRQCRA. So for compatibility we must do the same.
         if (attrib.invisible)
           ch = SP;
+        */
 
         if ( ck_isunicode() && crm && ch < SP ) {
             if ( ISANSI(tt_type_mode) )

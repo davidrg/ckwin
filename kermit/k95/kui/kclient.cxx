@@ -1737,6 +1737,11 @@ int KClient::PrepareWorkStore(
         COLORREF thisBgAttr = cell_video_attr_background_rgb(attrBuffer[i]);
         vt_char_attr_t thisEffect = effectBuffer[i];
 
+        // Apply invisible attribute.
+        if (thisEffect & VT_CHAR_ATTR_INVISIBLE) {
+            textBuffer[i] = ' ';
+        }
+
         // Apply dim attribute. Ideally, this would have been done by
         // ComputeColorFromAttr. But it can only return RGB values in 24bit
         // colour builds, so that would prevent us from applying the dim
