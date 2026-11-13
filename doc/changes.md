@@ -1313,9 +1313,13 @@ Change logs going back to the release of the first version in October 1995 (1.1)
    * Last release for which source code was publicly available until the Kermit 95 2.2 code was open-sourced in 2011
    * [Source](http://www.columbia.edu/kermit/ftp/archives/ckc190.zip), [Binaries](http://www.columbia.edu/kermit/ftp/archives/cko190.zip)
  * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
+   * [Source](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck5a189/)
  * [OS/2 C-Kermit 5A(188) (update)](https://groups.google.com/g/comp.os.os2.apps/c/DesD23imeHI/m/I6-udyEnNhAJ) - 3 February 1993
  * [OS/2 C-Kermit 5A(188)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
  * [OS/2 C-Kermit 5A(179)](https://groups.google.com/g/fj.kermit/c/rG6d5lpJilI/m/b94gm9h4XgIJ) - 14 February 1992
+   * [Source](https://www.digiater.nl/openvms/decus/lt92a/ckermit/)
+ * OS/2 C-Kermit 4F(095) - 31 August 1989
+   * [Source](https://www.columbia.edu/kermit/ftp/archives/ckc095.zip)
  * OS/2 C-Kermit 4F(091) (OS/2 Kermit 1.00) - ??
    * Probably not an "official release" - by this point the OS/2 code was just part of the regular C-Kermit codebase
    * Files: [ckoker.doc](http://www.columbia.edu/kermit/ftp/old/ckermit4f/ckoker.doc),
