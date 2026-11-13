@@ -378,9 +378,13 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                             x+xho >= line->markbeg &&
                             x+xho <= line->markshowend )
                         {
+                            /* Throw away the erased flag - the renderer doesn't care
+                             * about it, and it messes with its attribute batching */
+                            vt_char_attrs = line->vt_char_attrs[x+xho] & ~VT_CHAR_ATTR_ERASED;
+
                             textBuffer[c+x] = line->cells[x+xho].c ;
                             attrBuffer[c+x] = colorselect ;
-                            effectBuffer[c+x] = line->vt_char_attrs[x+xho];
+                            effectBuffer[c+x] = vt_char_attrs;
                             cellAttrBuffer[c+x] = CELL_ATTR_GET(line,x+xho);
                         }
                         else
