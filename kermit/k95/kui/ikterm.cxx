@@ -292,8 +292,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                     if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                         vt_char_attrs |= tt_url_hilite_attr;
                     else if ( tt_url_hilite && incnt < URLMINCNT) {
-                        if ( IsURLChar(cell.c) && 
-                             IsCellPartOfURL(vnum, y, x+xho ) )
+                        if ( IsCellPartOfURL(vnum, y, x+xho, line ) )
                             vt_char_attrs |= tt_url_hilite_attr;
                     }
 
@@ -406,8 +405,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                             if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                 vt_char_attrs |= tt_url_hilite_attr;
                             else if ( tt_url_hilite && incnt < URLMINCNT) {
-                                if ( IsURLChar(line->cells[x+xho].c) &&
-                                     IsCellPartOfURL(vnum, y, x+xho ) )
+                                if ( IsCellPartOfURL(vnum, y, x+xho, line ) )
                                     vt_char_attrs |= tt_url_hilite_attr;
                             }
 
@@ -441,8 +439,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                         if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                             vt_char_attrs |= tt_url_hilite_attr;
                         else if ( tt_url_hilite && incnt < URLMINCNT) {
-                            if ( IsURLChar(line->cells[x+xho].c) &&
-                                 IsCellPartOfURL(vnum, y, x+xho ) )
+                            if ( IsCellPartOfURL(vnum, y, x+xho, line ) )
                                 vt_char_attrs |= tt_url_hilite_attr;
                         }
 
