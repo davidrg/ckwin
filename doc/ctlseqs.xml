@@ -17853,8 +17853,8 @@ DCS $ q 3 , } ST</pre>
             </table>
             <p>
                 So to draw the line on only the top of the rectangle, you would
-                supply the value 4 for <param-single symbol="Pl"/>. To lines on
-                all boundaries to make a box, you would use
+                supply the value 4 for <param-single symbol="Pl"/>. To draw
+                lines on all boundaries to make a box, you would use
                 <param-single symbol="Pl"/>=15 (1+2+4+8).
             </p>
             <p>
@@ -17898,11 +17898,12 @@ DCS $ q 3 , } ST</pre>
                         DECterm does when it repaints its window.
                     </li>
                     <li> <!-- TODO: Does Reflection do the same? -->
-                        The DECterm documentation does not say if
-                        <a href="#decsed">DECSED</a>. DECterm seems to make an
-                        attempt to preserve them, though usually some end up
-                        being cleared. Kermit 95 treates DECSED the same way as
-                        ED - ruled lines are unaffected.
+                        While the DECterm documentation does not say if
+                        <a href="#decsed">DECSED</a> should affect ruled lines,
+                        it does <em>seem</em> to make an attempt to preserve
+                        them though some usually end up being cleared anyway.
+                        Kermit 95 treates DECSED the same way as ED - ruled
+                        lines are unaffected.
                     </li>
                 </ul>
             </section>
@@ -18659,7 +18660,13 @@ DCS $ q 3 , } ST</pre>
             <p>
                 Unlike DECterm, Kermit 95 does not require all five parameters
                 to always be specified if they are not required as this is
-                expected to be a bug in DECterm.
+                expected to be a bug in DECterm. If you want your application
+                to be compatible with DECterm as well as Kermit 95 make sure you
+                specify all parameters even if their values don't matter. For
+                example, to clear the screen of ruled lines in Kermit 95 you can
+                just use <tt><cc>CSI</cc> , t</tt> but for it to work on DECterm
+                as well you must be a bit more verbose:
+                <tt><cc>CSI</cc> 0 ; 0 ; 0 ; 0 ; 0 , t </tt>
             </p>
 
             <p>
