@@ -455,12 +455,21 @@ VscrnSelect( BYTE vmode, int mode )
 #ifdef NT
                 if ( ck_isunicode() ) {
                     extern int tcsl;
-                    *p = xl_tx[tcsl](line->cells[line->markbeg].c);
-                    *pU = line->cells[line->markbeg].c;
+                    if (line->vt_char_attrs[line->markbeg] & VT_CHAR_ATTR_INVISIBLE) {
+                        *p = ' ';
+                        *pU = ' ';
+                    } else {
+                        *p = xl_tx[tcsl](line->cells[line->markbeg].c);
+                        *pU = line->cells[line->markbeg].c;
+                    }
                 } else
 #endif /* NT */
                 {
-                    *pU = *p = line->cells[line->markbeg].c;
+                    if (line->vt_char_attrs[line->markbeg] & VT_CHAR_ATTR_INVISIBLE) {
+                        *pU = ' ';
+                    } else {
+                        *pU = *p = line->cells[line->markbeg].c;
+                    }
                 }
                 p++ ;
                 pU++;

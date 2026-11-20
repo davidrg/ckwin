@@ -292,8 +292,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                     if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                         vt_char_attrs |= tt_url_hilite_attr;
                     else if ( tt_url_hilite && incnt < URLMINCNT) {
-                        if ( IsURLChar(cell.c) && 
-                             IsCellPartOfURL(vnum, y, x+xho ) )
+                        if ( IsCellPartOfURL(vnum, y, x+xho, line ) )
                             vt_char_attrs |= tt_url_hilite_attr;
                     }
 
@@ -378,9 +377,13 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                             x+xho >= line->markbeg &&
                             x+xho <= line->markshowend )
                         {
+                            /* Throw away the erased flag - the renderer doesn't care
+                             * about it, and it messes with its attribute batching */
+                            vt_char_attrs = line->vt_char_attrs[x+xho] & ~VT_CHAR_ATTR_ERASED;
+
                             textBuffer[c+x] = line->cells[x+xho].c ;
                             attrBuffer[c+x] = colorselect ;
-                            effectBuffer[c+x] = line->vt_char_attrs[x+xho];
+                            effectBuffer[c+x] = vt_char_attrs;
                             cellAttrBuffer[c+x] = CELL_ATTR_GET(line,x+xho);
                         }
                         else
@@ -402,8 +405,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                             if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                 vt_char_attrs |= tt_url_hilite_attr;
                             else if ( tt_url_hilite && incnt < URLMINCNT) {
-                                if ( IsURLChar(line->cells[x+xho].c) &&
-                                     IsCellPartOfURL(vnum, y, x+xho ) )
+                                if ( IsCellPartOfURL(vnum, y, x+xho, line ) )
                                     vt_char_attrs |= tt_url_hilite_attr;
                             }
 
@@ -437,8 +439,7 @@ BOOL IKTerm::getDrawInfo(BYTE vscrn_number, bool smoothScroll)
                         if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                             vt_char_attrs |= tt_url_hilite_attr;
                         else if ( tt_url_hilite && incnt < URLMINCNT) {
-                            if ( IsURLChar(line->cells[x+xho].c) &&
-                                 IsCellPartOfURL(vnum, y, x+xho ) )
+                            if ( IsCellPartOfURL(vnum, y, x+xho, line ) )
                                 vt_char_attrs |= tt_url_hilite_attr;
                         }
 

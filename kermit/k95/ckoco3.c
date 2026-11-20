@@ -8696,12 +8696,26 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                 c = line->cells[x].c;
                 a = line->vt_char_attrs[x];
 
+                if (a & VT_CHAR_ATTR_ERASED) {
+                    c = 0;
+                }
+
                 /* TODO: If c is outside the range of values for the latin1
                  *       character set, the calculation here will be incorrect
                  *       as the values the VT420/VT520 assigns to those
                  *       characters unsurprisingly differ from Unicode. For the
                  *       calculation to match the real terminal we'll need to do
                  *       Unicode->VT conversion here. */
+
+                checksum -= c;
+
+                /* The VT420, VT520 and VT525 only support these attributes */
+                if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
+                if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
+                if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
+                if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
+                if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
+                if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
 
                 if (include_color) {
                     /* These will be 0 for RGB colours */
@@ -8755,23 +8769,7 @@ calculate_decrqcra_checksum(int top, int left, int bot, int right, int page,
                      * will fix that up */
                     fgcoloridx = color_index_from_vio(fgcoloridx);
                     bgcoloridx = color_index_from_vio(bgcoloridx);
-                }
 
-                /* Unoccupied character cells are excluded from the checksum */
-                if (a != VT_CHAR_ATTR_ERASED) {
-                    checksum -= c;
-
-                    /* The VT420, VT520 and VT525 only support these attributes */
-                    if (a & VT_CHAR_ATTR_PROTECTED) checksum -= 0x04;
-                    if (a & VT_CHAR_ATTR_INVISIBLE) checksum -= 0x08;
-                    if (a & VT_CHAR_ATTR_UNDERLINE) checksum -= 0x10;
-                    if (a & VT_CHAR_ATTR_REVERSE) checksum -= 0x20;
-                    if (a & VT_CHAR_ATTR_BLINK) checksum -= 0x40;
-                    if (a & VT_CHAR_ATTR_BOLD) checksum -= 0x80;
-                }
-
-                /* But erased cells can still have colour... */
-                if (include_color) {
                     checksum -= (unsigned short)fgcoloridx << 4;
                     checksum -= bgcoloridx;
                 }
@@ -19443,8 +19441,13 @@ wrtch(unsigned short ch) {
          ((ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) &&
            (ch == STX || ch == ETX)))
     {                                   /* Treat as a Normal character */
+        /* Since C-Kermit 5A(190), we used to just write invisible characters as
+         * a SPACE. But a real VT doesn't work that way - it deals with it at
+         * render time, and you can see the character is still there in the
+         * buffer via DECRQCRA. So for compatibility we must do the same.
         if (attrib.invisible)
           ch = SP;
+        */
 
         if ( ck_isunicode() && crm && ch < SP ) {
             if ( ISANSI(tt_type_mode) )

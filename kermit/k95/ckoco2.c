@@ -2114,7 +2114,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
     /* TX_DECSPEC has a null character in position 5/15 which we need to handle.
      * I'm not confident that everything will handle a null appearing in the
      * terminal buffer, so... */
-    if (Cell.c == NULL) {
+    if (Cell.c == 0) {
         Cell.c = ' ';
         att.erased = TRUE;
     }
@@ -4214,9 +4214,10 @@ VscrnMark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
     if ( page->lines[y].markend >= 0 &&
         page->lines[y].markbeg >= 0 ) {
         for ( x = page->lines[y].markend ; x >= page->lines[y].markbeg ; x-- ) {
-            if (page->lines[y].cells[x].c == ' ')
+            if (page->lines[y].cells[x].c == ' '
+                || page->lines[y].vt_char_attrs[x] & VT_CHAR_ATTR_INVISIBLE) {
                 page->lines[y].markshowend-- ;
-            else
+            } else
                 break ;
             }
         }
@@ -4291,9 +4292,10 @@ VscrnUnmark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
     if ( page->lines[y].markend >= 0 &&
         page->lines[y].markbeg >= 0 ) {
         for ( x = page->lines[y].markend ; x >= page->lines[y].markbeg ; x-- ) {
-            if (page->lines[y].cells[x].c == ' ')
+            if (page->lines[y].cells[x].c == ' '
+                || page->lines[y].vt_char_attrs[x] & VT_CHAR_ATTR_INVISIBLE) {
                 page->lines[y].markshowend-- ;
-            else
+            } else
                 break ;
             }
         }
@@ -4501,9 +4503,20 @@ IsURLChar( USHORT ch )
 /*---------------------------------------------------------------------------*/
 /* IsCellPartOfURL                                          | Page: View     */
 /*---------------------------------------------------------------------------*/
-/* This ONLY called from the renderer, so it must be view-page only */
+/* This ONLY called from the renderer, so it must be view-page only
+ *
+ * Checks if a particular cell at coordinates row,col is part of a URL (and so
+ * suitable for highlighting as a URL).
+ *
+ * Parameters:
+ *   mode      vscrn containing the cell to check
+ *   row       Row of the vscrn containing the cell to check
+ *   col       Column of the vscrn containing the cell to check
+ *   row_line  row as a videoline* - as all callers are likely to already have
+ *             this handy it saves this function having to look it up again.
+ */
 int
-IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
+IsCellPartOfURL( BYTE mode, USHORT row, USHORT col, videoline* row_line )
 {
     videoline * line=NULL;
     viocell * cells = NULL;
@@ -4515,6 +4528,26 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
     /* Let's cache these values */
     static int retval = 0;
     static int brow=-1, bcol=-1, erow=-1, ecol=-1, _mode=-1;
+
+    /* Formerly every caller of IsCellPartOfURL only did so after first checking
+     * IsURLChar() for the current character. With the change to store invisible
+     * characters, we also now need to check for the invisible attribute too. As
+     * every caller of IsCellPartOfURL has the videoline handy, its easier to
+     * just pass that in and perform all checks here rather than have every
+     * caller of IsCellPartOfURL handle first calling IsURLChar then checking
+     * attributes.
+     *
+     * As for *why* every caller of IsCellPartOfURL was also calling ISURLChar
+     * directly I'm not really sure. Perhaps an optimisation - skip this
+     * function if the current character isn't valid in a URL anyway. Or maybe
+     * to deal with the fact this function caches its result which might become
+     * invalid if the host modifies a character. */
+    if (!row_line || row_line->width == 0 ||
+        !IsURLChar(row_line->cells[col].c) ||
+        row_line->vt_char_attrs[col] & VT_CHAR_ATTR_INVISIBLE) {
+
+        return(0);
+    }
 
     if ( mode == _mode ) {
         if ( row == brow && col >= bcol ) {
@@ -4545,19 +4578,13 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
     brow = erow = row;
     bcol = ecol = col;
 
-    rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
-    if ( scrollflag[mode] )
-        line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
-    else
-        line = VscrnGetLineFromTop( mode, brow, TRUE );
-    rc = ReleaseVscrnMutex( mode ) ;
-    if ( !line || line->width == 0 )
-        return(retval = 0);
+    line = row_line;
     cells = line->cells;
 
     while(1) {
         while ( bcol >= 0 ) {
-            if ( IsURLChar(cells[bcol].c) ) {
+            if ( IsURLChar(cells[bcol].c) &&
+                !(line->vt_char_attrs[bcol] & VT_CHAR_ATTR_INVISIBLE) ) {
                 bcol--;
             } else {
                 if (first)
@@ -4594,19 +4621,13 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
   bfound:
 
     /* Find the end of the URL */
-    rc = RequestVscrnMutex( mode, SEM_INDEFINITE_WAIT ) ;
-    if ( scrollflag[mode] )
-        line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
-    else
-        line = VscrnGetLineFromTop( mode, erow, TRUE );
-    rc = ReleaseVscrnMutex( mode ) ;
-    if ( !line || line->width == 0 )
-        return(retval = 0);
+    line = row_line;
     cells = line->cells;
 
     while(1) {
         while ( ecol < line->width ) {
-            if (IsURLChar(cells[ecol].c)) {
+            if (IsURLChar(cells[ecol].c) &&
+                !(line->vt_char_attrs[ecol] & VT_CHAR_ATTR_INVISIBLE)) {
                 ecol++;
             } else {
                 ecol--;
@@ -5014,8 +5035,7 @@ TermScrnUpd( void * threadinfo)
                             if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                 vt_char_attrs |= tt_url_hilite_attr;
                             else if ( tt_url_hilite && incnt < URLMINCNT) {
-                                if ( IsURLChar(pScell->c) && 
-                                     IsCellPartOfURL(avm, y, x+xho ) )
+                                if ( IsCellPartOfURL(avm, y, x+xho, line ) )
                                     vt_char_attrs |= tt_url_hilite_attr;
                             }
                             if (vt_char_attrs & VT_CHAR_ATTR_BLINK)
@@ -5043,6 +5063,10 @@ TermScrnUpd( void * threadinfo)
                                     ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
                             }
+
+                            if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                pDcell->c = ' ';
+                            }
                             (pDcell+1)->c = ' ' ;
                         }
                     }
@@ -5056,8 +5080,7 @@ TermScrnUpd( void * threadinfo)
                             if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                 vt_char_attrs |= tt_url_hilite_attr;
                             else if ( tt_url_hilite && incnt < URLMINCNT) {
-                                if ( IsURLChar(pScell->c) && 
-                                     IsCellPartOfURL(avm, y, x+xho ) )
+                                if ( IsCellPartOfURL(avm, y, x+xho, line ) )
                                     vt_char_attrs |= tt_url_hilite_attr;
                             }
                             if (vt_char_attrs & VT_CHAR_ATTR_BLINK)
@@ -5084,6 +5107,10 @@ TermScrnUpd( void * threadinfo)
                                 pDcell->video_attr =
                                     ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
+                            }
+
+                            if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                pDcell->c = ' ';
                             }
                         }
                     }
@@ -5141,8 +5168,7 @@ TermScrnUpd( void * threadinfo)
                                 if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                     vt_char_attrs |= tt_url_hilite_attr;
                                 else if ( tt_url_hilite && incnt < URLMINCNT ) {
-                                    if ( IsURLChar(pScell->c) && 
-                                         IsCellPartOfURL(avm, y, x+xho ) )
+                                    if ( IsCellPartOfURL(avm, y, x+xho, line ) )
                                         vt_char_attrs |= tt_url_hilite_attr;
                                 }
                                 if ( line->markshowend != -1 &&
@@ -5206,6 +5232,10 @@ TermScrnUpd( void * threadinfo)
                                     }
                                     (pDcell+1)->c = ' ' ;
                                 }
+
+                                if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                    pDcell->c = ' ';
+                                }
                             }
                         }
                         else
@@ -5218,8 +5248,7 @@ TermScrnUpd( void * threadinfo)
                                 if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                     vt_char_attrs |= tt_url_hilite_attr;
                                 else if ( tt_url_hilite && incnt < URLMINCNT ) {
-                                    if ( IsURLChar(pScell->c) && 
-                                         IsCellPartOfURL(avm, y, x+xho ) )
+                                    if ( IsCellPartOfURL(avm, y, x+xho, line ) )
                                         vt_char_attrs |= tt_url_hilite_attr;
                                 }
                                 if ( line->markshowend != -1 &&
@@ -5263,6 +5292,10 @@ TermScrnUpd( void * threadinfo)
                                                                  vt_char_attrs );
                                     }
                                 }
+
+                                if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                    pDcell->c = ' ';
+                                }
                             }
                         }
                     }
@@ -5278,8 +5311,7 @@ TermScrnUpd( void * threadinfo)
                                     if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                         vt_char_attrs |= tt_url_hilite_attr;
                                     else if ( tt_url_hilite && incnt < URLMINCNT ) {
-                                        if ( IsURLChar(pScell->c) && 
-                                             IsCellPartOfURL(avm, y, x+xho ) )
+                                        if ( IsCellPartOfURL(avm, y, x+xho, line ) )
                                             vt_char_attrs |= tt_url_hilite_attr;
                                     }
                                     if (vt_char_attrs & VT_CHAR_ATTR_BLINK)
@@ -5306,7 +5338,12 @@ TermScrnUpd( void * threadinfo)
                                         (pDcell+1)->c = ' ' ;
                                         pDcell->video_attr = (pDcell+1)->video_attr =
                                             ComputeColorFromAttr( avm, pScell->video_attr,
-                                                                 vt_char_attrs );                                    }
+                                                                 vt_char_attrs );
+                                    }
+
+                                    if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                        pDcell->c = ' ';
+                                    }
                                 }
                             }
                         }
@@ -5321,8 +5358,7 @@ TermScrnUpd( void * threadinfo)
                                     if ( vt_char_attrs & VT_CHAR_ATTR_HYPERLINK )
                                         vt_char_attrs |= tt_url_hilite_attr;
                                     else if ( tt_url_hilite && incnt < URLMINCNT ) {
-                                        if ( IsURLChar(pScell->c) && 
-                                             IsCellPartOfURL(avm, y, x+xho ) )
+                                        if ( IsCellPartOfURL(avm, y, x+xho, line ) )
                                             vt_char_attrs |= tt_url_hilite_attr;
                                     }
                                     if (vt_char_attrs & VT_CHAR_ATTR_BLINK)
@@ -5331,11 +5367,17 @@ TermScrnUpd( void * threadinfo)
                                         pDcell->c = blinkon ?
                                             pScell->c : ' ' ;
                                     }
-                                    else
+                                    else {
                                         pDcell->c = pScell->c ;
+                                    }
+
                                     pDcell->video_attr =
                                         ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
+
+                                    if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                                        pDcell->c = ' ';
+                                    }
                                 }
                             }
                         }
@@ -5414,6 +5456,10 @@ TermScrnUpd( void * threadinfo)
                         pDcell->video_attr =
                             ComputeColorFromAttr( avm, pScell->video_attr,
                                                  vt_char_attrs );
+                    }
+
+                    if (vt_char_attrs & VT_CHAR_ATTR_INVISIBLE) {
+                        pDcell->c = ' ';
                     }
                 }
                 c += xs ;

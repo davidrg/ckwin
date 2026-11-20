@@ -1909,7 +1909,7 @@ _PROTOTYP( VOID SNI_chcode, (int));
 _PROTOTYP( const char * GetSelection,(void));
 _PROTOTYP( const char * GetURL,(void));
 _PROTOTYP( int          GetURLType, (void));
-_PROTOTYP( int IsCellPartOfURL,( BYTE mode, USHORT row, USHORT col ));
+_PROTOTYP( int IsCellPartOfURL,( BYTE mode, USHORT row, USHORT col, videoline* ));
 _PROTOTYP( int IsURLChar, (USHORT));
 
 _PROTOTYP( int os2_settermheight,(int));
